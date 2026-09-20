@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import APP_NAME, APP_VERSION, settings
+from database.session import dispose_engine
 from routes import health
 from utils.logging_setup import setup_logging
 
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
         settings.public_base_url,
     )
     yield
+    dispose_engine()
     logger.info("[SHUTDOWN] %s encerrado", APP_NAME)
 
 

@@ -10,7 +10,8 @@ __pycache__/
 venv/
 .pytest_cache/
 
-# Banco local e temporários de vídeo
+# Banco local (inclui .db, .db-wal e .db-shm) e temporários de vídeo
+data/
 *.db
 *.sqlite3
 tmp/
@@ -19,6 +20,3 @@ temp/
 # Editor / sistema
 .vscode/
 .DS_Store
-
-# Vari�veis de ambiente locais
-.env
