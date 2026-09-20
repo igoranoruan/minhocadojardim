@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhoca de Jardim — Reutilize o conteúdo que já funcionou</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        * { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        html { scroll-behavior: smooth; }
+        body { background: #050810; color: #f8fafc; }
+        .bg-card { background: #0b1220; border: 1px solid #1b2738; }
+        .bg-card-soft { background: #09101c; border: 1px solid #172235; }
+        .hero-glow { box-shadow: 0 24px 80px rgba(16, 185, 129, 0.08); }
+        .glow-hover { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
+        .glow-hover:hover { box-shadow: 0 18px 50px rgba(16, 185, 129, 0.10); }
+        .bg-gradient-cyber { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
+        .text-gradient { background: linear-gradient(135deg, #34d399 0%, #5eead4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .section-line { border-color: rgba(148, 163, 184, 0.12); }
+        .input-focus:focus { border-color: rgba(16, 185, 129, .75); box-shadow: 0 0 0 3px rgba(16, 185, 129, .08); }
+        .faq-item[open] summary i { transform: rotate(45deg); }
+        .faq-item summary::-webkit-details-marker { display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn .25s ease-out forwards; }
+        @media (max-width: 640px) {
+            .hero-title { font-size: 2.25rem; line-height: 1.06; }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-[#050810]">
+    <div class="w-full">
+        <!-- HEADER -->
+        <header class="w-full border-b border-slate-800/70 bg-[#050810]/95">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
+                <a href="#topo" class="flex items-center gap-3 min-w-0">
+                    <img src="/static/favicon.png" alt="" class="w-9 h-9 object-contain brightness-0 invert" aria-hidden="true">
+                    <span class="font-extrabold tracking-tight text-white text-base sm:text-lg whitespace-nowrap">MINHOCA DE JARDIM</span>
+                </a>
+                <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2 py-1">
+                    Acesso
+                </button>
+            </div>
+        </header>
+
+        <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
+            <!-- HERO -->
+            <section class="pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
+                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-semibold mb-6">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span id="statusContaTexto">Pronto para processar</span>
+                </div>
+
+                <p class="text-emerald-400 text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-4">
+                    FERRAMENTA PARA REUTILIZAÇÃO DE CONTEÚDO
+                </p>
+
+                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight text-white max-w-4xl mx-auto">
+                    Reutilize o conteúdo que já funcionou.
+                </h1>
+
+                <p class="mt-5 text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+                    Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
+                </p>
+
+                <div class="max-w-3xl mx-auto mt-9">
+                    <div class="bg-card p-2 rounded-2xl hero-glow">
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"></i>
+                                <input id="url" type="url" autocomplete="off"
+                                    placeholder="Cole o link do vídeo…"
+                                    class="input-focus w-full h-14 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all">
+                            </div>
+                            <button id="downloadButton" onclick="baixarVideo()"
+                                class="h-14 px-6 sm:px-8 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                                <i class="fa-solid fa-download"></i>
+                                Processar e baixar
+                            </button>
+                        </div>
+
+                        <div class="mt-3 flex flex-col sm:flex-row gap-2">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-file-signature absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
+                                <input id="filename" type="text" maxlength="80" autocomplete="off"
+                                    placeholder="Nome do arquivo (opcional)"
+                                    class="input-focus w-full h-11 pl-10 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none text-xs transition-all">
+                            </div>
+                            <div class="flex items-center px-3 text-[10px] text-slate-500">
+                                <i class="fa-solid fa-circle-info mr-1.5"></i>
+                                Se deixar vazio, usamos um nome automático.
+                            </div>
+                        </div>
+
+                        <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
+                    </div>
+
+                    <div class="flex flex-wrap justify-center gap-3 mt-5 text-xs text-slate-400">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Limpeza de metadados</span>
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Nova versão em MP4</span>
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Sem anúncios</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PROCESSO -->
+            <section class="py-12 sm:py-16 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Do link ao seu editor, sem complicação.</h2>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                    <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">01</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Cole o link</h3>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">Cole o link do conteúdo que você quer reutilizar.</p>
+                    </div>
+
+                    <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">02</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Limpa e prepara</h3>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">A Minhoca processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
+                    </div>
+
+                    <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
+                        <div class="flex items-center gap-3 mb-4">
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">03</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe e reutilize</h3>
+                        </div>
+                        <p class="text-sm text-slate-400 leading-relaxed">Baixe o arquivo e leve para seu editor para adaptar e publicar.</p>
+                    </div>
+                </div>
+
+                <div class="mt-5 bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div>
+                        <h3 class="font-bold text-white">Agora é com você.</h3>
+                        <p class="text-sm text-slate-400 mt-1 leading-relaxed">Pegue o vídeo preparado, faça os ajustes que quiser e publique no seu próprio estilo.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PLANOS -->
+            <section id="secaoPlanos" class="py-12 sm:py-16 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">PLANOS</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Escolha o acesso que faz sentido para você.</h2>
+                    <p class="text-sm text-slate-400 mt-3">Comece simples e escolha o plano conforme o volume de conteúdo que você processa.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                    <div class="bg-card rounded-2xl p-6 flex flex-col">
+                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
+                        <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
+                        <div class="text-xs text-slate-500 mt-1">7 dias</div>
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>10 downloads/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
+                        </ul>
+                        <button onclick="abrirModalPagamento('semanal')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso semanal</button>
+                    </div>
+
+                    <div class="bg-card rounded-2xl p-6 flex flex-col border-emerald-500/70 ring-1 ring-emerald-500/50 relative">
+                        <span class="absolute -top-3 right-5 bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full">Recomendado</span>
+                        <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Mensal</div>
+                        <div class="mt-3 text-4xl font-extrabold text-white">R$ 16,90</div>
+                        <div class="text-xs text-slate-500 mt-1">30 dias</div>
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>20 downloads/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
+                        </ul>
+                        <button onclick="abrirModalPagamento('mensal')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Comprar acesso mensal</button>
+                    </div>
+
+                    <div class="bg-card rounded-2xl p-6 flex flex-col">
+                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">VIP Batch</div>
+                        <div class="mt-3 text-4xl font-extrabold text-white">R$ 29,90</div>
+                        <div class="text-xs text-slate-500 mt-1">30 dias</div>
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>30 downloads/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
+                        </ul>
+                        <button onclick="abrirModalPagamento('vip')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso VIP Batch</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MEU ACESSO -->
+            <section id="areaAssinatura" class="hidden py-8">
+                <div class="bg-card rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Meu acesso</div>
+                        <div id="assinaturaPlano" class="text-base font-bold text-white">—</div>
+                        <div id="assinaturaStatus" class="text-sm text-slate-400 mt-1">—</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BATCH -->
+            <section id="secaoBatch" class="hidden py-8">
+                <div class="bg-card rounded-2xl p-6 border-amber-500/30">
+                    <div class="flex items-start gap-3 mb-5">
+                        <div class="w-10 h-10 rounded-xl bg-amber-950/40 border border-amber-700/40 flex items-center justify-center text-amber-400"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-extrabold text-white">VIP Batch — processe vários vídeos</h2>
+                            <p class="text-sm text-slate-400 mt-1">Adicione até 10 vídeos. Você pode dar um nome diferente para cada arquivo.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 10 vídeos</span>
+                        <span class="text-[10px] text-slate-600">VIP Batch</span>
+                    </div>
+
+                    <div id="batchItems" class="space-y-3"></div>
+
+                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-amber-500/60 hover:text-amber-400 font-bold text-xs transition-colors">
+                        <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
+                    </button>
+
+                    <button id="batchButton" onclick="processarLote()" class="w-full mt-3 h-12 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
+                    <div id="batchStatus" class="mt-4 text-sm"></div>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section class="py-12 sm:py-16 border-t section-line">
+                <div class="max-w-3xl mx-auto">
+                    <div class="text-center mb-8">
+                        <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Perguntas frequentes</h2>
+                    </div>
+
+                    <div class="space-y-3">
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O que o Minhoca de Jardim faz?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Baixa vídeos de plataformas compatíveis e prepara uma nova versão em MP4, com limpeza de metadados, para você levar ao seu editor e adaptar.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O arquivo é baixado e processado para gerar uma nova versão em MP4, com remoção de metadados e foco em compatibilidade para edição.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. Todos os planos são pagos uma única vez e ficam ativos pelo período contratado. Depois da expiração, basta fazer uma nova compra se quiser continuar usando o plano.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">E o cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. O cartão também é um pagamento único. O acesso fica ativo pelo período contratado e não existe cobrança automática.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O Minhoca garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. O Minhoca prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
+                        </details>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PAGAMENTO -->
+            <section class="py-10 sm:py-12">
+                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex items-center gap-4">
+                    <div class="w-11 h-11 shrink-0 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div>
+                        <h3 class="font-bold text-white">Pagamento protegido pelo Mercado Pago</h3>
+                        <p class="text-sm text-slate-400 mt-1">Seus dados de pagamento são processados em ambiente seguro.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- FOOTER -->
+        <footer class="border-t border-slate-800/70 mt-8">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row justify-between gap-3 text-sm">
+                <div>
+                    <div class="font-extrabold text-white">Minhoca de Jardim</div>
+                    <div class="text-slate-500 mt-1">Baixe. Prepare. Adapte. Publique.</div>
+                </div>
+                <div class="text-slate-600 sm:text-right">© 2026 Minhoca de Jardim</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- MODAL DE ACESSO -->
+    <div id="modalAcesso" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-40">
+        <div class="bg-card w-full max-w-md rounded-2xl p-6 relative shadow-2xl">
+            <button type="button" onclick="fecharAcesso()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            <div class="w-11 h-11 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400 mb-4"><i class="fa-solid fa-user"></i></div>
+            <h2 class="text-xl font-extrabold text-white">Acesso</h2>
+            <p class="text-sm text-slate-400 mt-1 mb-5">Informe o e-mail usado no Minhoca para carregar seu acesso.</p>
+            <div class="relative">
+                <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                <input id="userEmail" type="email" autocomplete="email" placeholder="Seu e-mail..." class="input-focus w-full h-12 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm">
+            </div>
+            <button onclick="ativarEmail(); fecharAcesso();" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Acessar</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE PAGAMENTO -->
+    <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
+        <div class="bg-card max-w-md w-full p-6 rounded-2xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-emerald-400"></i></div>
+            <h3 id="modalTitulo" class="text-xl font-bold text-white text-center mb-1">Escolha como pagar</h3>
+            <p id="modalDescricao" class="text-xs text-slate-400 text-center mb-5">Escolha Pix ou cartão. O pagamento é único e libera o período contratado após a confirmação.</p>
+
+            <div class="bg-[#060b14] border border-slate-800 rounded-xl p-4 mb-4">
+                <div class="flex justify-between items-center mb-2"><span class="text-xs text-slate-500">Plano</span><strong id="modalPlano" class="text-xs text-white">—</strong></div>
+                <div class="flex justify-between items-center"><span class="text-xs text-slate-500">Valor</span><strong id="modalValor" class="text-sm text-emerald-400">—</strong></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mb-4">
+                <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all"> <i class="fa-solid fa-qrcode mr-1"></i> PIX<span class="block text-[9px] font-medium text-slate-400 mt-0.5">Pagamento único</span></button>
+                <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('cartao')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO<span class="block text-[9px] font-medium text-slate-500 mt-0.5">Pagamento único</span></button>
+            </div>
+
+            <div id="conteudoPix">
+                <div class="bg-emerald-950/20 border border-emerald-800/30 rounded-xl p-4 mb-3">
+                    <div id="pixQrContainer" class="bg-white rounded-xl p-3 min-h-12 flex items-center justify-center mb-3"><span class="text-xs text-slate-500">Clique em gerar Pix.</span></div>
+                    <input id="pixCopiaCola" type="text" readonly class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 rounded-xl text-slate-300 text-center mb-2 focus:outline-none select-all">
+                    <button id="gerarPixButton" onclick="gerarPix()" class="w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs hover:brightness-110 transition-all">Gerar Pix</button>
+                    <button id="copiarPixButton" onclick="copiarPix()" disabled class="w-full mt-2 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-700 transition-all disabled:opacity-40">Copiar Pix Copia e Cola</button>
+                </div>
+                <div id="pixStatus" class="text-xs text-slate-400"></div>
+                <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">O Pix libera o período contratado após a confirmação. Não há cobrança automática.</p>
+            </div>
+
+            <div id="conteudoCartao" class="hidden">
+                <div class="bg-blue-950/20 border border-blue-900/30 rounded-xl p-4 mb-4 text-left">
+                    <div class="flex items-start gap-3"><i class="fa-solid fa-credit-card text-blue-400 mt-0.5"></i><div><strong class="text-xs text-white block">Pagamento único</strong><span class="text-[10px] text-slate-400 leading-relaxed">Você paga uma única vez e recebe o acesso pelo período contratado. Depois da expiração, basta comprar novamente se quiser continuar.</span></div></div>
+                </div>
+                <button id="checkoutButton" onclick="prepararCheckoutCartao()" class="w-full py-3.5 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs hover:brightness-110 transition-all shadow-lg">Pagar com cartão</button>
+                <div id="checkoutStatus" class="mt-4 text-xs text-slate-400"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+    const PLANOS = {
+        semanal: {
+            nome: "Semanal",
+            valor: "R$ 9,90",
+            descricao: "10 downloads por dia • acesso por 7 dias"
+        },
+        mensal: {
+            nome: "Mensal",
+            valor: "R$ 16,90",
+            descricao: "20 downloads por dia • acesso por 30 dias"
+        },
+        vip: {
+            nome: "VIP Batch",
+            valor: "R$ 29,90",
+            descricao: "30 downloads por dia + processamento em lote"
+        }
+    };
+
+    let planoSelecionadoGlobal = null;
+    let checkoutUrlAtual = null;
+    let monitoramentoAtivo = false;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const emailSalvo = localStorage.getItem("minhoca_user_email");
+
+        inicializarBatch();
+
+        if (emailSalvo) {
+            document.getElementById("userEmail").value = emailSalvo;
+            validarEmailNoServidor(emailSalvo, false);
+        }
+    });
+
+    function emailValido(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function setStatusConta(texto, tipo = "normal") {
+        const badge = document.getElementById("statusContaBadge");
+        const textoEl = document.getElementById("statusContaTexto");
+
+        textoEl.textContent = texto;
+
+        if (tipo === "vip") {
+            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-950/60 border border-amber-800/40 text-amber-400 text-xs font-semibold mb-4";
+        } else {
+            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 text-xs font-semibold mb-4";
+        }
+    }
+
+    function setStatusBox(message, type = "normal") {
+        const status = document.getElementById("status");
+
+        const classes = {
+            normal: "p-3 bg-gray-950/80 border border-gray-800 text-gray-300 rounded-xl animate-fade",
+            success: "p-4 bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 rounded-xl animate-fade",
+            warning: "p-4 bg-amber-950/40 border border-amber-800/60 text-amber-400 rounded-xl animate-fade",
+            error: "p-3 bg-red-950/40 border border-red-800/50 text-red-400 rounded-xl animate-fade"
+        };
+
+        status.className = "mt-4 text-center text-xs sm:text-sm";
+        status.innerHTML = `<div class="${classes[type]}">${message}</div>`;
+    }
+
+    async function ativarEmail() {
+        const email = document.getElementById("userEmail").value.trim();
+
+        if (!emailValido(email)) {
+            alert("Por favor, informe um e-mail válido.");
+            return;
+        }
+
+        localStorage.setItem("minhoca_user_email", email);
+        await validarEmailNoServidor(email, true);
+    }
+
+    async function validarEmailNoServidor(email, mostrarAlerta = false) {
+        if (!emailValido(email)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(
+                `/api/check-email?email=${encodeURIComponent(email)}`
+            );
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.detail || "Não foi possível consultar o e-mail.");
+            }
+
+            if (data.plan === "admin" || data.is_vip) {
+                const limite = `${data.downloads_today}/${data.daily_limit}`;
+
+                setStatusConta(
+                    `VIP ativo: ${email} • ${limite}`,
+                    "vip"
+                );
+
+                document.getElementById("secaoBatch").classList.remove("hidden");
+
+                if (mostrarAlerta) {
+                    alert("E-mail confirmado. Seu acesso está ativo.");
+                }
+            } else if (data.plan !== "free") {
+                setStatusConta(
+                    `${data.plan_name}: ${email} • ${data.downloads_today}/${data.daily_limit} ${data.quota_label || "hoje"}`
+                );
+
+                document.getElementById("secaoBatch").classList.add("hidden");
+
+                if (mostrarAlerta) {
+                    alert(`Plano ${data.plan_name} ativo.`);
+                }
+            } else {
+                setStatusConta(
+                    `Gratuito: ${email} • ${data.downloads_today}/${data.daily_limit} ${data.quota_label || "na semana"}`
+                );
+
+                document.getElementById("secaoBatch").classList.add("hidden");
+
+                if (mostrarAlerta) {
+                    alert("E-mail ativado no plano gratuito.");
+                }
+            }
+
+            await carregarAssinatura(email);
+            return data;
+        } catch (err) {
+            console.error(err);
+
+            if (mostrarAlerta) {
+                alert(err.message || "Erro ao consultar o servidor.");
+            }
+        }
+    }
+
+    async function carregarAssinatura(email) {
+        try {
+            const res = await fetch(
+                `/api/subscription?email=${encodeURIComponent(email)}`
+            );
+
+            const data = await res.json();
+            const area = document.getElementById("areaAssinatura");
+            const plano = document.getElementById("assinaturaPlano");
+            const status = document.getElementById("assinaturaStatus");
+            const secaoPlanos = document.getElementById("secaoPlanos");
+
+            if (!res.ok || !data.has_paid_plan) {
+                area.classList.add("hidden");
+                secaoPlanos.classList.remove("hidden");
+                return;
+            }
+
+            area.classList.remove("hidden");
+            secaoPlanos.classList.add("hidden");
+
+            const planoInfo = PLANOS[data.plan];
+            plano.textContent = planoInfo
+                ? `${planoInfo.nome} • ${planoInfo.valor}`
+                : data.plan;
+
+            status.textContent =
+                `Acesso ativo até ${formatarData(data.expires_at)}. Pagamento único, sem renovação automática.`;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function formatarData(value) {
+        if (!value) return "—";
+
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            return "—";
+        }
+
+        return date.toLocaleDateString("pt-BR");
+    }
+
+    async function abrirModalPagamento(plano) {
+        if (!PLANOS[plano]) return;
+
+        planoSelecionadoGlobal = plano;
+
+        let email = document.getElementById("userEmail").value.trim();
+
+        if (!emailValido(email)) {
+            email = prompt("Informe seu e-mail para vincular o pagamento:");
+
+            if (!email || !emailValido(email.trim())) {
+                return;
+            }
+
+            email = email.trim();
+            document.getElementById("userEmail").value = email;
+            localStorage.setItem("minhoca_user_email", email);
+        }
+
+        const info = PLANOS[plano];
+
+        document.getElementById("modalPlano").textContent = info.nome;
+        document.getElementById("modalValor").textContent = info.valor;
+        document.getElementById("modalDescricao").textContent = info.descricao;
+        document.getElementById("checkoutStatus").textContent = "";
+        document.getElementById("pixStatus").textContent = "";
+        document.getElementById("pixQrContainer").innerHTML =
+            '<span class="text-xs text-gray-500">Clique em gerar Pix.</span>';
+        document.getElementById("pixCopiaCola").value = "";
+        document.getElementById("copiarPixButton").disabled = true;
+        document.getElementById("gerarPixButton").disabled = false;
+        document.getElementById("gerarPixButton").textContent = "Gerar Pix";
+
+        trocarMetodoPagamento("pix");
+        document.getElementById("modalPagamento").classList.remove("hidden");
+    }
+
+    function trocarMetodoPagamento(tipo) {
+        const pixBtn = document.getElementById("metodoPixBtn");
+        const cartaoBtn = document.getElementById("metodoCartaoBtn");
+        const pix = document.getElementById("conteudoPix");
+        const cartao = document.getElementById("conteudoCartao");
+
+        if (tipo === "pix") {
+            pixBtn.className = "py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all";
+            cartaoBtn.className = "py-3 rounded-xl border border-gray-800 bg-gray-950/50 text-gray-400 text-xs font-extrabold transition-all";
+            pix.classList.remove("hidden");
+            cartao.classList.add("hidden");
+        } else {
+            cartaoBtn.className = "py-3 rounded-xl border border-blue-500 bg-blue-950/30 text-blue-400 text-xs font-extrabold transition-all";
+            pixBtn.className = "py-3 rounded-xl border border-gray-800 bg-gray-950/50 text-gray-400 text-xs font-extrabold transition-all";
+            cartao.classList.remove("hidden");
+            pix.classList.add("hidden");
+        }
+    }
+
+    async function gerarPix() {
+        const email = document.getElementById("userEmail").value.trim();
+        const button = document.getElementById("gerarPixButton");
+
+        if (!emailValido(email) || !planoSelecionadoGlobal) return;
+
+        button.disabled = true;
+        button.textContent = "Gerando Pix...";
+        document.getElementById("pixStatus").textContent = "Preparando cobrança...";
+
+        try {
+            const res = await fetch("/api/create-pix", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    plan_type: planoSelecionadoGlobal,
+                    email: email
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.detail || "Não foi possível gerar o Pix.");
+            }
+
+            if (data.qr_code_base64) {
+                document.getElementById("pixQrContainer").innerHTML =
+                    `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg">`;
+            } else {
+                document.getElementById("pixQrContainer").innerHTML =
+                    '<span class="text-xs text-gray-500">QR Code indisponível. Use o Pix Copia e Cola.</span>';
+            }
+
+            document.getElementById("pixCopiaCola").value = data.qr_code || "";
+            document.getElementById("copiarPixButton").disabled = !data.qr_code;
+            button.textContent = "Pix gerado";
+
+            document.getElementById("pixStatus").innerHTML =
+                '<span class="text-amber-400"><i class="fa-solid fa-clock mr-1"></i>Aguardando pagamento...</span>';
+
+            iniciarMonitoramentoPix(data.payment_id);
+        } catch (err) {
+            button.disabled = false;
+            button.textContent = "Gerar Pix";
+            document.getElementById("pixStatus").textContent =
+                err.message || "Erro ao gerar Pix.";
+        }
+    }
+
+    function iniciarMonitoramentoPix(paymentId) {
+        if (!paymentId) return;
+
+        const email = document.getElementById("userEmail").value.trim();
+        let tentativas = 0;
+        const maxTentativas = 60;
+
+        const timer = setInterval(async () => {
+            tentativas++;
+
+            try {
+                const res = await fetch(
+                    `/api/pix-status?payment_id=${encodeURIComponent(paymentId)}&email=${encodeURIComponent(email)}`
+                );
+                const data = await res.json();
+
+                if (res.ok && data.approved) {
+                    clearInterval(timer);
+                    document.getElementById("pixStatus").innerHTML =
+                        '<div class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Pagamento confirmado! Seu acesso foi liberado.</div>' +
+                        '<button type="button" onclick="fecharModalPagamento(); document.getElementById(\'url\').focus();" class="mt-3 w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">Começar a processar vídeos</button>';
+                    await validarEmailNoServidor(email, false);
+                    setTimeout(() => fecharModalPagamento(), 800);
+                    return;
+                }
+
+                if (res.ok && ["rejected", "cancelled", "refunded", "charged_back"].includes(data.status)) {
+                    clearInterval(timer);
+                    document.getElementById("pixStatus").innerHTML =
+                        `<span class="text-red-400">Pagamento Pix: ${escapeHtml(data.status)}.</span>`;
+                    return;
+                }
+            } catch (err) {
+                console.warn("Falha ao consultar Pix", err);
+            }
+
+            if (tentativas >= maxTentativas) {
+                clearInterval(timer);
+                document.getElementById("pixStatus").textContent =
+                    "Ainda não recebemos a confirmação. Se você já pagou, feche esta janela e ative seu e-mail novamente em alguns instantes.";
+            }
+        }, 5000);
+    }
+
+    async function prepararCheckoutCartao() {
+        const email = document.getElementById("userEmail").value.trim();
+        const button = document.getElementById("checkoutButton");
+
+        if (!emailValido(email) || !planoSelecionadoGlobal) return;
+
+        button.disabled = true;
+        button.textContent = "Preparando checkout...";
+        document.getElementById("checkoutStatus").textContent = "";
+
+        try {
+            const res = await fetch("/api/create-checkout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    plan_type: planoSelecionadoGlobal,
+                    email: email
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(
+                    data.detail || "Não foi possível preparar o pagamento."
+                );
+            }
+
+            if (data.status === "already_active") {
+                fecharModalPagamento();
+                await validarEmailNoServidor(email, false);
+                alert("Você já possui um plano ativo.");
+                return;
+            }
+
+            if (!data.checkout_url) {
+                throw new Error("Mercado Pago não retornou o checkout.");
+            }
+
+            window.open(data.checkout_url, "_blank", "noopener,noreferrer");
+            button.disabled = false;
+            button.textContent = "Abrir pagamento novamente";
+            document.getElementById("checkoutStatus").innerHTML =
+                '<span class="text-slate-400">Pagamento aberto. Depois da aprovação, o acesso será reconhecido automaticamente nesta página.</span>';
+            iniciarMonitoramento();
+        } catch (err) {
+            button.disabled = false;
+            button.textContent = "Pagar com cartão";
+            document.getElementById("checkoutStatus").textContent =
+                err.message || "Erro ao preparar o pagamento.";
+        }
+    }
+
+    function iniciarMonitoramento() {
+        if (monitoramentoAtivo) return;
+
+        monitoramentoAtivo = true;
+
+        let tentativas = 0;
+        const maxTentativas = 36;
+
+        const timer = setInterval(async () => {
+            tentativas++;
+            const email = document.getElementById("userEmail").value.trim();
+
+            if (emailValido(email)) {
+                const data = await validarEmailNoServidor(email, false);
+
+                if (data && data.plan && data.plan !== "free" && data.plan !== "admin") {
+                    clearInterval(timer);
+                    monitoramentoAtivo = false;
+                    document.getElementById("checkoutStatus").innerHTML =
+                        '<div class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Pagamento confirmado! Seu plano está ativo.</div>' +
+                        '<button type="button" onclick="fecharModalPagamento(); document.getElementById(\'url\').focus();" class="mt-3 w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">Começar a processar vídeos</button>';
+                    setTimeout(() => fecharModalPagamento(), 1200);
+                    return;
+                }
+            }
+
+            if (tentativas >= maxTentativas) {
+                clearInterval(timer);
+                monitoramentoAtivo = false;
+                document.getElementById("checkoutStatus").textContent =
+                    "Ainda aguardando a confirmação do pagamento. Se a compra já foi aprovada, o acesso aparecerá automaticamente assim que o Mercado Pago confirmar a transação.";
+            }
+        }, 5000);
+    }
+
+    function fecharModalPagamento() {
+        document.getElementById("modalPagamento").classList.add("hidden");
+    }
+
+    function copiarPix() {
+        const input = document.getElementById("pixCopiaCola");
+
+        if (!input.value) return;
+
+        input.select();
+        input.setSelectionRange(0, input.value.length);
+
+        navigator.clipboard?.writeText(input.value)
+            .then(() => {
+                document.getElementById("pixStatus").textContent =
+                    "Pix Copia e Cola copiado.";
+            })
+            .catch(() => {
+                document.execCommand("copy");
+                document.getElementById("pixStatus").textContent =
+                    "Pix Copia e Cola copiado.";
+            });
+    }
+
+    async function baixarVideo() {
+        const urlInput = document.getElementById("url").value.trim();
+        const userEmail = document.getElementById("userEmail").value.trim();
+        const button = document.getElementById("downloadButton");
+
+        if (!urlInput) {
+            setStatusBox("Insira uma URL para continuar.", "error");
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add("opacity-60", "cursor-not-allowed");
+
+        setStatusBox(
+            '<div class="flex items-center justify-center gap-3 text-emerald-400">' +
+            '<i class="fa-solid fa-spinner animate-spin text-base"></i>' +
+            '<span>Baixando e preparando seu vídeo...</span>' +
+            '</div>',
+            "normal"
+        );
+
+        try {
+            let endpoint =
+                `/api/download?video_url=${encodeURIComponent(urlInput)}`;
+
+            if (emailValido(userEmail)) {
+                endpoint += `&user_email=${encodeURIComponent(userEmail)}`;
+            }
+
+            const filename = document.getElementById("filename").value.trim();
+            if (filename) {
+                endpoint += `&filename=${encodeURIComponent(filename)}`;
+            }
+
+            const response = await fetch(endpoint, {
+                method: "POST"
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    setStatusBox(
+                        '<p class="font-bold mb-1">Limite diário atingido.</p>' +
+                        '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
+                        '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
+                        'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                        "warning"
+                    );
+                } else {
+                    setStatusBox(
+                        escapeHtml(data.detail || "Não foi possível processar o vídeo."),
+                        "error"
+                    );
+                }
+
+                return;
+            }
+
+            const link = document.createElement("a");
+            link.href = data.download_url;
+            link.download = data.filename || "video_minhoca.mp4";
+            link.target = "_blank";
+            link.rel = "noopener";
+
+            const wrapper = document.createElement("div");
+            wrapper.className =
+                "p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-col items-center gap-3 animate-fade";
+
+            const message = document.createElement("span");
+            message.className =
+                "text-emerald-400 font-bold flex items-center gap-2 text-xs sm:text-sm";
+            message.innerHTML =
+                '<i class="fa-solid fa-circle-check"></i> Arquivo preparado com sucesso.';
+
+            const downloadButton = document.createElement("button");
+            downloadButton.className =
+                "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
+            downloadButton.innerHTML =
+                '<i class="fa-solid fa-file-arrow-down"></i> Baixar arquivo MP4';
+
+            downloadButton.addEventListener("click", () => {
+                link.click();
+            });
+
+            wrapper.appendChild(message);
+            wrapper.appendChild(downloadButton);
+
+            if (typeof data.downloads_today === "number" && data.daily_limit != null) {
+                const periodo = data.quota_label || (data.plan === "free" ? "na semana" : "hoje");
+                const textoPlano = data.plan === "free"
+                    ? `Gratuito: ${data.downloads_today}/${data.daily_limit} ${periodo}`
+                    : `${data.plan_name || data.plan}: ${data.downloads_today}/${data.daily_limit} ${periodo}`;
+                setStatusConta(textoPlano, data.plan === "vip" ? "vip" : "normal");
+            }
+
+            const status = document.getElementById("status");
+            status.innerHTML = "";
+            status.appendChild(wrapper);
+
+            if (emailValido(userEmail)) {
+                await validarEmailNoServidor(userEmail, false);
+            }
+        } catch (err) {
+            setStatusBox(
+                "Erro ao se conectar ao servidor.",
+                "error"
+            );
+        } finally {
+            button.disabled = false;
+            button.classList.remove("opacity-60", "cursor-not-allowed");
+        }
+    }
+
+    function atualizarContagemLote() {
+        const items = document.querySelectorAll(".batch-item");
+        const count = items.length;
+        document.getElementById("batchCount").textContent = `${count} de 10 vídeos`;
+        const addButton = document.getElementById("batchAddButton");
+        addButton.disabled = count >= 10;
+        addButton.classList.toggle("opacity-40", count >= 10);
+        addButton.classList.toggle("cursor-not-allowed", count >= 10);
+        addButton.innerHTML = count >= 10
+            ? '<i class="fa-solid fa-check mr-1"></i> Limite de 10 vídeos atingido'
+            : '<i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo';
+    }
+
+    function criarCampoLote(index) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "batch-item bg-[#060b14] border border-slate-800 rounded-xl p-3";
+
+        const top = document.createElement("div");
+        top.className = "flex items-center justify-between gap-3 mb-2";
+
+        const label = document.createElement("div");
+        label.className = "batch-label text-[11px] font-extrabold uppercase tracking-wider text-slate-400";
+        label.textContent = `VÍDEO ${String(index).padStart(2, "0")}`;
+        top.appendChild(label);
+
+        if (index > 1) {
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "text-slate-600 hover:text-red-400 text-xs px-2 py-1";
+            remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            remove.title = "Remover vídeo";
+            remove.onclick = () => {
+                wrapper.remove();
+                renumerarCamposLote();
+            };
+            top.appendChild(remove);
+        }
+
+        wrapper.appendChild(top);
+
+        const url = document.createElement("input");
+        url.type = "url";
+        url.className = "batch-url w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 text-xs";
+        url.placeholder = "Cole o link do vídeo…";
+        url.autocomplete = "off";
+        wrapper.appendChild(url);
+
+        const name = document.createElement("input");
+        name.type = "text";
+        name.maxLength = 80;
+        name.className = "batch-name w-full h-10 mt-2 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 text-xs";
+        name.placeholder = "Nome do arquivo (opcional) — ex.: video_oferta";
+        name.autocomplete = "off";
+        wrapper.appendChild(name);
+
+        return wrapper;
+    }
+
+    function renumerarCamposLote() {
+        document.querySelectorAll(".batch-item").forEach((item, index) => {
+            const label = item.querySelector(".batch-label");
+            if (label) label.textContent = `VÍDEO ${String(index + 1).padStart(2, "0")}`;
+            const remove = item.querySelector("button[title=\"Remover vídeo\"]");
+            if (remove) remove.classList.toggle("hidden", index === 0);
+        });
+        atualizarContagemLote();
+    }
+
+    function adicionarCampoLote() {
+        const container = document.getElementById("batchItems");
+        const count = container.querySelectorAll(".batch-item").length;
+        if (count >= 10) return;
+        container.appendChild(criarCampoLote(count + 1));
+        atualizarContagemLote();
+        container.lastElementChild.querySelector(".batch-url").focus();
+    }
+
+    function inicializarBatch() {
+        const container = document.getElementById("batchItems");
+        if (!container || container.children.length) return;
+        container.appendChild(criarCampoLote(1));
+        atualizarContagemLote();
+    }
+
+    async function processarLote() {
+        const email = document.getElementById("userEmail").value.trim();
+        const items = Array.from(document.querySelectorAll(".batch-item"));
+        const button = document.getElementById("batchButton");
+        const status = document.getElementById("batchStatus");
+
+        if (!emailValido(email)) {
+            status.textContent = "Ative seu e-mail VIP antes de processar um lote.";
+            status.className = "mt-4 text-xs text-red-400";
+            return;
+        }
+
+        const entries = items.map(item => ({
+            url: item.querySelector(".batch-url").value.trim(),
+            name: item.querySelector(".batch-name").value.trim() || null
+        })).filter(item => item.url);
+
+        if (!entries.length) {
+            status.textContent = "Adicione pelo menos um link de vídeo.";
+            status.className = "mt-4 text-xs text-red-400";
+            return;
+        }
+
+        if (entries.length > 10) {
+            status.textContent = "O lote aceita no máximo 10 vídeos.";
+            status.className = "mt-4 text-xs text-red-400";
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add("opacity-60", "cursor-not-allowed");
+        button.innerHTML = '<span class="mr-1">🪱</span> Processando lote...';
+        status.innerHTML = '<div class="p-4 bg-amber-950/30 border border-amber-800/50 text-amber-400 rounded-xl">A Minhoca está preparando os vídeos um por um. Isso pode levar alguns minutos.</div>';
+
+        try {
+            const response = await fetch("/api/download-batch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    urls: entries.map(item => item.url),
+                    names: entries.map(item => item.name),
+                    user_email: email
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.detail || "Não foi possível processar o lote.");
+            }
+
+            status.innerHTML = "";
+
+            const header = document.createElement("div");
+            header.className = "p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-xl mb-3";
+
+            const summaryText = document.createElement("div");
+            summaryText.className = "text-emerald-400 font-bold text-sm";
+            summaryText.textContent = `${data.successful} de ${data.total} vídeos preparados.`;
+            header.appendChild(summaryText);
+
+            if (data.zip_url) {
+                const zipLink = document.createElement("a");
+                zipLink.href = data.zip_url;
+                zipLink.download = "minhoca_lote.zip";
+                zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
+                zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
+                header.appendChild(zipLink);
+            } else if (data.zip_error) {
+                const zipError = document.createElement("div");
+                zipError.className = "text-amber-400 text-xs mt-2";
+                zipError.textContent = `ZIP não gerado: ${data.zip_error}`;
+                header.appendChild(zipError);
+            }
+
+            status.appendChild(header);
+
+            const summary = document.createElement("div");
+            summary.className = "space-y-2";
+
+            data.results.forEach((item, index) => {
+                const row = document.createElement("div");
+                row.className = "p-3 rounded-xl border border-gray-800 bg-gray-950/60 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between";
+
+                const info = document.createElement("div");
+                info.className = "min-w-0";
+
+                const text = document.createElement("div");
+                text.className = "text-gray-300 break-all text-xs";
+                text.textContent = `${index + 1}. ${item.filename || item.url}`;
+                info.appendChild(text);
+
+                if (item.status === "success") {
+                    const source = document.createElement("div");
+                    source.className = "text-[10px] text-gray-600 break-all mt-1";
+                    source.textContent = item.url;
+                    info.appendChild(source);
+                }
+
+                row.appendChild(info);
+
+                if (item.status === "success") {
+                    const link = document.createElement("a");
+                    link.href = item.download_url;
+                    link.target = "_blank";
+                    link.rel = "noopener";
+                    link.download = item.filename || "video_minhoca.mp4";
+                    link.className = "text-emerald-400 font-bold whitespace-nowrap text-xs";
+                    link.textContent = "Baixar";
+                    row.appendChild(link);
+                } else {
+                    const error = document.createElement("span");
+                    error.className = "text-red-400 text-xs";
+                    error.textContent = "Erro";
+                    row.appendChild(error);
+                }
+
+                summary.appendChild(row);
+            });
+
+            status.appendChild(summary);
+        } catch (err) {
+            status.textContent = err.message || "Erro ao processar o lote.";
+            status.className = "mt-4 text-xs text-red-400";
+        } finally {
+            button.disabled = false;
+            button.classList.remove("opacity-60", "cursor-not-allowed");
+            button.innerHTML = '<i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote';
+            atualizarContagemLote();
+        }
+    }
+
+
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = String(value);
+        return div.innerHTML;
+    }
+
+    document.getElementById("url").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            baixarVideo();
+        }
+    });
+
+
+        function abrirAcesso() {
+            const modal = document.getElementById("modalAcesso");
+            if (!modal) return;
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+            const input = document.getElementById("userEmail");
+            if (input) setTimeout(() => input.focus(), 50);
+        }
+
+        function fecharAcesso() {
+            const modal = document.getElementById("modalAcesso");
+            if (!modal) return;
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+    </script>
+</body>
+</html>

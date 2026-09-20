@@ -1,0 +1,24 @@
+# Secrets e cookies pessoais: nunca no GitHub
+.env
+cookies.txt
+*.cookies
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Banco local e temporários de vídeo
+*.db
+*.sqlite3
+tmp/
+temp/
+
+# Editor / sistema
+.vscode/
+.DS_Store
+
+# Vari�veis de ambiente locais
+.env
