@@ -33,6 +33,12 @@ DEV_IP_HASH_SECRET = "dev-only-ip-hash-secret-never-use-in-production-0002"
 # Rotas que NÃO passam pela checagem de Origin (servidor-a-servidor, sem cookie): webhooks futuros.
 ORIGIN_CHECK_EXEMPT_PREFIXES = ("/api/webhooks/",)
 
+# ----------------------------------------------------------------------------- planos e gerações (Etapa 4)
+MAX_BATCH_SIZE = 10  # vídeos por lote (só o plano VIP usa lote)
+# Uma geração 'reserved' há mais tempo que isto deixa de contar na cota (rede de segurança contra
+# reservas órfãs de um processamento que caiu): 10 vídeos x 3 min de timeout + margem.
+GENERATION_RESERVATION_TTL_SECONDS = 35 * 60
+
 
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).
