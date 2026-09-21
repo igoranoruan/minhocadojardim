@@ -3,18 +3,24 @@
 Cada teste recebe um SQLite temporário criado pelas MIGRATIONS reais (alembic upgrade),
 não por create_all. Assim os testes validam o mesmo schema que vai para produção.
 """
+from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
 from alembic import command
 from alembic.config import Config
+from fastapi.testclient import TestClient
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 
+import config
 from database.models import Batch, Entitlement, Generation, Payment, User
-from database.session import create_db_engine
+from database.session import create_db_engine, get_session
 from database.types import utcnow
+from main import app
+from routes.deps import get_email_sender
+from helpers_auth import BASE_URL, FakeEmailSender
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -136,3 +142,52 @@ class Factory:
 @pytest.fixture()
 def factory(session) -> Factory:
     return Factory(session)
+
+
+# ============================================================================ Etapa 3: autenticação
+@pytest.fixture()
+def fake_sender() -> FakeEmailSender:
+    return FakeEmailSender()
+
+
+@pytest.fixture()
+def cfg():
+    """Configuração de desenvolvimento com os valores padrão aprovados."""
+    return replace(config.get_settings(), env="development", email_sender="console")
+
+
+@pytest.fixture()
+def maker(engine):
+    return sessionmaker(bind=engine, expire_on_commit=False)
+
+
+@pytest.fixture()
+def use_settings(monkeypatch):
+    """Troca a configuração global (lida no momento do uso pelo middleware, rotas e serviços)."""
+
+    def _apply(**overrides):
+        new = replace(config.get_settings(), **overrides)
+        monkeypatch.setattr(config, "settings", new)
+        return new
+
+    return _apply
+
+
+@pytest.fixture()
+def auth_client(maker, fake_sender):
+    """Cliente HTTP com banco de teste e sender falso. Já manda o Origin correto."""
+
+    def _session():
+        s = maker()
+        try:
+            yield s
+        finally:
+            s.close()
+
+    app.dependency_overrides[get_session] = _session
+    app.dependency_overrides[get_email_sender] = lambda: fake_sender
+    client = TestClient(app, base_url=BASE_URL)
+    client.headers.update({"Origin": BASE_URL})
+    yield client
+    app.dependency_overrides.pop(get_session, None)
+    app.dependency_overrides.pop(get_email_sender, None)

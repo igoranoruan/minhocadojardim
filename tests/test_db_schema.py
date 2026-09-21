@@ -8,7 +8,16 @@ from config import SQLITE_BUSY_TIMEOUT_MS
 from database.base import Base
 from database.models import Payment, User
 
-EXPECTED_TABLES = {"users", "payments", "entitlements", "generations", "batches", "payment_events"}
+EXPECTED_TABLES = {
+    "users",
+    "payments",
+    "entitlements",
+    "generations",
+    "batches",
+    "payment_events",
+    "login_codes",  # Etapa 3
+    "auth_sessions",  # Etapa 3
+}
 
 
 def _norm(sql: str) -> str:

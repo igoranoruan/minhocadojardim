@@ -3,7 +3,16 @@ from sqlalchemy import inspect, text
 
 from database.session import create_db_engine
 
-APP_TABLES = {"users", "payments", "entitlements", "generations", "batches", "payment_events"}
+APP_TABLES = {
+    "users",
+    "payments",
+    "entitlements",
+    "generations",
+    "batches",
+    "payment_events",
+    "login_codes",
+    "auth_sessions",
+}
 
 
 def _tables(db_url: str) -> set[str]:
@@ -23,14 +32,14 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
     eng = create_db_engine(db_url)
     try:
         with eng.connect() as conn:
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0001"
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0002"
     finally:
         eng.dispose()
 
 
-def test_alembic_downgrade_remove_as_tabelas(db_url, alembic_cfg):
+def test_alembic_downgrade_ate_a_base_remove_as_tabelas(db_url, alembic_cfg):
     command.upgrade(alembic_cfg, "head")
-    command.downgrade(alembic_cfg, "-1")
+    command.downgrade(alembic_cfg, "base")
     assert _tables(db_url) - {"alembic_version"} == set()
 
 

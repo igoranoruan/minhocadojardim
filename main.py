@@ -8,13 +8,16 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import APP_NAME, APP_VERSION, settings
 from database.session import dispose_engine
-from routes import health
+from routes import auth, health
+from services.auth import AuthError
 from utils.logging_setup import setup_logging
+from utils.origin import OriginProtectionMiddleware
 
 setup_logging(settings.log_level)
 logger = logging.getLogger("minhoca")
@@ -32,6 +35,8 @@ async def lifespan(app: FastAPI):
         settings.env,
         settings.public_base_url,
     )
+    if settings.using_dev_secrets:
+        logger.warning("[STARTUP] usando segredos de DESENVOLVIMENTO (AUTH_SECRET_KEY/IP_HASH_SECRET não definidos)")
     yield
     dispose_engine()
     logger.info("[SHUTDOWN] %s encerrado", APP_NAME)
@@ -47,8 +52,16 @@ app = FastAPI(
     openapi_url=None if settings.is_production else "/openapi.json",
 )
 
+# Proteção de Origin (CSRF) centralizada: vale para toda requisição que altera dados.
+app.add_middleware(OriginProtectionMiddleware)
+
+# Erros de autenticação e de corpo inválido nas rotas /api/auth: {"detail": "...", "code": "..."}.
+app.add_exception_handler(AuthError, auth.auth_error_handler)
+app.add_exception_handler(RequestValidationError, auth.validation_error_handler)
+
 # Rotas da API.
 app.include_router(health.router)
+app.include_router(auth.router)
 
 
 @app.get("/", include_in_schema=False)

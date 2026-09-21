@@ -307,12 +307,35 @@
             <button type="button" onclick="fecharAcesso()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             <div class="w-11 h-11 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400 mb-4"><i class="fa-solid fa-user"></i></div>
             <h2 class="text-xl font-extrabold text-white">Acesso</h2>
-            <p class="text-sm text-slate-400 mt-1 mb-5">Informe o e-mail usado no Minhoca para carregar seu acesso.</p>
-            <div class="relative">
-                <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                <input id="userEmail" type="email" autocomplete="email" placeholder="Seu e-mail..." class="input-focus w-full h-12 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm">
+
+            <!-- Passo 1: e-mail -->
+            <div id="acessoPassoEmail">
+                <p class="text-sm text-slate-400 mt-1 mb-5">Informe seu e-mail. Enviaremos um código para confirmar que é você.</p>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input id="userEmail" type="email" autocomplete="email" placeholder="Seu e-mail..." onkeydown="if (event.key === 'Enter') pedirCodigo()" class="input-focus w-full h-12 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm">
+                </div>
+                <button id="acessoEnviarBtn" type="button" onclick="pedirCodigo()" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Enviar código</button>
             </div>
-            <button onclick="ativarEmail(); fecharAcesso();" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Acessar</button>
+
+            <!-- Passo 2: código -->
+            <div id="acessoPassoCodigo" class="hidden">
+                <p class="text-sm text-slate-400 mt-1 mb-5">Digite o código de 6 dígitos enviado para <strong id="acessoEmailEnviado" class="text-slate-200"></strong>. Ele vale por 10 minutos.</p>
+                <input id="userCodigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" onkeydown="if (event.key === 'Enter') confirmarCodigo()" class="input-focus w-full h-12 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-center text-lg tracking-widest">
+                <button id="acessoConfirmarBtn" type="button" onclick="confirmarCodigo()" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Entrar</button>
+                <div class="mt-3 flex items-center justify-between text-xs">
+                    <button type="button" onclick="pedirCodigo()" class="text-slate-400 hover:text-white transition-colors">Reenviar código</button>
+                    <button type="button" onclick="voltarParaEmail()" class="text-slate-400 hover:text-white transition-colors">Trocar e-mail</button>
+                </div>
+            </div>
+
+            <!-- Passo 3: conectado -->
+            <div id="acessoPassoConectado" class="hidden">
+                <p class="text-sm text-slate-400 mt-1 mb-5">Você está conectado como <strong id="acessoEmailAtual" class="text-slate-200"></strong>.</p>
+                <button type="button" onclick="sair()" class="w-full h-12 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl text-sm transition-colors">Sair</button>
+            </div>
+
+            <div id="acessoMensagem" class="mt-3 text-xs text-center min-h-[1rem] text-slate-400" role="status"></div>
         </div>
     </div>
 
@@ -380,14 +403,8 @@
     let monitoramentoAtivo = false;
 
     document.addEventListener("DOMContentLoaded", () => {
-        const emailSalvo = localStorage.getItem("minhoca_user_email");
-
         inicializarBatch();
-
-        if (emailSalvo) {
-            document.getElementById("userEmail").value = emailSalvo;
-            validarEmailNoServidor(emailSalvo, false);
-        }
+        carregarSessao();
     });
 
     function emailValido(email) {
@@ -421,111 +438,162 @@
         status.innerHTML = `<div class="${classes[type]}">${message}</div>`;
     }
 
-    async function ativarEmail() {
+    // ---- Acesso: e-mail -> código -> sessão (cookie HttpOnly gerenciado pelo servidor) ----
+    let sessaoEmail = null;
+
+    async function chamarAuth(caminho, opcoes = {}) {
+        const res = await fetch(`/api/auth/${caminho}`, {
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            ...opcoes
+        });
+
+        let data = {};
+        try {
+            data = await res.json();
+        } catch (_) {
+            data = {};
+        }
+
+        return { res, data };
+    }
+
+    function mostrarMensagemAcesso(texto, tipo = "normal") {
+        const el = document.getElementById("acessoMensagem");
+        const cores = { erro: "text-red-400", sucesso: "text-emerald-400", normal: "text-slate-400" };
+
+        el.textContent = texto;
+        el.className = `mt-3 text-xs text-center min-h-[1rem] ${cores[tipo] || cores.normal}`;
+    }
+
+    function mostrarPassoAcesso(passo) {
+        for (const id of ["acessoPassoEmail", "acessoPassoCodigo", "acessoPassoConectado"]) {
+            document.getElementById(id).classList.toggle("hidden", id !== passo);
+        }
+    }
+
+    function aplicarSessao(email) {
+        sessaoEmail = email;
+        document.getElementById("userEmail").value = email;
+        document.getElementById("acessoEmailAtual").textContent = email;
+        setStatusConta(`Conectado: ${email}`);
+    }
+
+    function aplicarSemSessao() {
+        sessaoEmail = null;
+        setStatusConta("Pronto para processar");
+    }
+
+    async function carregarSessao() {
+        try {
+            const { res, data } = await chamarAuth("me");
+
+            if (res.ok && data.email) {
+                aplicarSessao(data.email);
+                return true;
+            }
+        } catch (err) {
+            console.error(err);
+        }
+
+        aplicarSemSessao();
+        return false;
+    }
+
+    // Compatibilidade: fluxos de pagamento e download ainda chamam esta função; serão religados nas etapas próprias.
+    async function validarEmailNoServidor() {
+        return carregarSessao();
+    }
+
+    async function pedirCodigo() {
         const email = document.getElementById("userEmail").value.trim();
 
         if (!emailValido(email)) {
-            alert("Por favor, informe um e-mail válido.");
+            mostrarMensagemAcesso("Informe um e-mail válido.", "erro");
             return;
         }
 
-        localStorage.setItem("minhoca_user_email", email);
-        await validarEmailNoServidor(email, true);
-    }
-
-    async function validarEmailNoServidor(email, mostrarAlerta = false) {
-        if (!emailValido(email)) {
-            return;
-        }
+        const botao = document.getElementById("acessoEnviarBtn");
+        botao.disabled = true;
 
         try {
-            const res = await fetch(
-                `/api/check-email?email=${encodeURIComponent(email)}`
-            );
-
-            const data = await res.json();
+            const { res, data } = await chamarAuth("request-code", {
+                method: "POST",
+                body: JSON.stringify({ email })
+            });
 
             if (!res.ok) {
-                throw new Error(data.detail || "Não foi possível consultar o e-mail.");
-            }
-
-            if (data.plan === "admin" || data.is_vip) {
-                const limite = `${data.downloads_today}/${data.daily_limit}`;
-
-                setStatusConta(
-                    `VIP ativo: ${email} • ${limite}`,
-                    "vip"
-                );
-
-                document.getElementById("secaoBatch").classList.remove("hidden");
-
-                if (mostrarAlerta) {
-                    alert("E-mail confirmado. Seu acesso está ativo.");
-                }
-            } else if (data.plan !== "free") {
-                setStatusConta(
-                    `${data.plan_name}: ${email} • ${data.downloads_today}/${data.daily_limit} ${data.quota_label || "hoje"}`
-                );
-
-                document.getElementById("secaoBatch").classList.add("hidden");
-
-                if (mostrarAlerta) {
-                    alert(`Plano ${data.plan_name} ativo.`);
-                }
-            } else {
-                setStatusConta(
-                    `Gratuito: ${email} • ${data.downloads_today}/${data.daily_limit} ${data.quota_label || "na semana"}`
-                );
-
-                document.getElementById("secaoBatch").classList.add("hidden");
-
-                if (mostrarAlerta) {
-                    alert("E-mail ativado no plano gratuito.");
-                }
-            }
-
-            await carregarAssinatura(email);
-            return data;
-        } catch (err) {
-            console.error(err);
-
-            if (mostrarAlerta) {
-                alert(err.message || "Erro ao consultar o servidor.");
-            }
-        }
-    }
-
-    async function carregarAssinatura(email) {
-        try {
-            const res = await fetch(
-                `/api/subscription?email=${encodeURIComponent(email)}`
-            );
-
-            const data = await res.json();
-            const area = document.getElementById("areaAssinatura");
-            const plano = document.getElementById("assinaturaPlano");
-            const status = document.getElementById("assinaturaStatus");
-            const secaoPlanos = document.getElementById("secaoPlanos");
-
-            if (!res.ok || !data.has_paid_plan) {
-                area.classList.add("hidden");
-                secaoPlanos.classList.remove("hidden");
+                mostrarMensagemAcesso(data.detail || "Não foi possível enviar o código agora.", "erro");
                 return;
             }
 
-            area.classList.remove("hidden");
-            secaoPlanos.classList.add("hidden");
+            document.getElementById("acessoEmailEnviado").textContent = email;
+            document.getElementById("userCodigo").value = "";
+            mostrarPassoAcesso("acessoPassoCodigo");
+            mostrarMensagemAcesso("Código enviado. Confira sua caixa de entrada.", "sucesso");
+            setTimeout(() => document.getElementById("userCodigo").focus(), 50);
+        } catch (err) {
+            console.error(err);
+            mostrarMensagemAcesso("Erro ao falar com o servidor. Tente novamente.", "erro");
+        } finally {
+            botao.disabled = false;
+        }
+    }
 
-            const planoInfo = PLANOS[data.plan];
-            plano.textContent = planoInfo
-                ? `${planoInfo.nome} • ${planoInfo.valor}`
-                : data.plan;
+    async function confirmarCodigo() {
+        const email = document.getElementById("userEmail").value.trim();
+        const code = document.getElementById("userCodigo").value.trim();
 
-            status.textContent =
-                `Acesso ativo até ${formatarData(data.expires_at)}. Pagamento único, sem renovação automática.`;
+        if (!/^[0-9]{6}$/.test(code)) {
+            mostrarMensagemAcesso("Digite os 6 dígitos do código.", "erro");
+            return;
+        }
+
+        const botao = document.getElementById("acessoConfirmarBtn");
+        botao.disabled = true;
+
+        try {
+            const { res, data } = await chamarAuth("verify-code", {
+                method: "POST",
+                body: JSON.stringify({ email, code })
+            });
+
+            if (!res.ok) {
+                mostrarMensagemAcesso(data.detail || "Código inválido ou expirado.", "erro");
+                return;
+            }
+
+            aplicarSessao(data.email);
+            document.getElementById("userCodigo").value = "";
+            mostrarPassoAcesso("acessoPassoConectado");
+            mostrarMensagemAcesso("Acesso confirmado.", "sucesso");
+        } catch (err) {
+            console.error(err);
+            mostrarMensagemAcesso("Erro ao falar com o servidor. Tente novamente.", "erro");
+        } finally {
+            botao.disabled = false;
+        }
+    }
+
+    function voltarParaEmail() {
+        document.getElementById("userCodigo").value = "";
+        mostrarPassoAcesso("acessoPassoEmail");
+        mostrarMensagemAcesso("");
+        setTimeout(() => document.getElementById("userEmail").focus(), 50);
+    }
+
+    async function sair() {
+        try {
+            await chamarAuth("logout", { method: "POST" });
         } catch (err) {
             console.error(err);
         }
+
+        aplicarSemSessao();
+        document.getElementById("userEmail").value = "";
+        document.getElementById("userCodigo").value = "";
+        mostrarPassoAcesso("acessoPassoEmail");
+        mostrarMensagemAcesso("Você saiu da conta.");
     }
 
     function formatarData(value) {
@@ -556,7 +624,6 @@
 
             email = email.trim();
             document.getElementById("userEmail").value = email;
-            localStorage.setItem("minhoca_user_email", email);
         }
 
         const info = PLANOS[plano];
@@ -1155,8 +1222,13 @@
             if (!modal) return;
             modal.classList.remove("hidden");
             modal.classList.add("flex");
-            const input = document.getElementById("userEmail");
-            if (input) setTimeout(() => input.focus(), 50);
+            if (sessaoEmail) {
+                mostrarPassoAcesso("acessoPassoConectado");
+            } else {
+                mostrarPassoAcesso("acessoPassoEmail");
+                const input = document.getElementById("userEmail");
+                if (input) setTimeout(() => input.focus(), 50);
+            }
         }
 
         function fecharAcesso() {
