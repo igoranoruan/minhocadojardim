@@ -15,8 +15,10 @@ transação. Duas requisições para a última geração: uma reserva, a outra r
 Idempotência: pelo request_id (UNIQUE(user_id, request_id) da tabela generations; lote: em
 batches). Repetir a mesma requisição devolve a MESMA reserva, sem consumir de novo.
 
-Lote: só plano com max_batch_size > 0 (VIP), de 1 a 10 vídeos, cada um consome 1 geração; a reserva
-é atômica (tudo ou nada). Nada aqui baixa, processa ou gera arquivo.
+Lote: qualquer plano pago com max_batch_size > 0 (Semanal, Mensal, VIP Batch; o Free não usa lote),
+de 1 vídeo até o teto do plano, cada um consumindo 1 geração da MESMA cota (não há quota separada
+para lote). A reserva é atômica (tudo ou nada): recusa o lote inteiro se faltar saldo, nunca reduz
+o tamanho pedido para caber. Nada aqui baixa, processa ou gera arquivo.
 """
 import logging
 from dataclasses import dataclass

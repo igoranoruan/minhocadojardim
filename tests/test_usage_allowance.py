@@ -29,7 +29,7 @@ def test_usuario_sem_entitlement_e_free_com_5_por_semana(factory, session):
 
 
 @pytest.mark.parametrize(
-    "plano, limite", [("weekly", 10), ("monthly", 20), ("vip_batch", 30)], ids=["semanal-10", "mensal-20", "vip-30"]
+    "plano, limite", [("weekly", 5), ("monthly", 10), ("vip_batch", 15)], ids=["semanal-5", "mensal-10", "vip-15"]
 )
 def test_planos_pagos_limite_por_dia(factory, session, plano, limite):
     usuario = factory.user()
@@ -39,11 +39,12 @@ def test_planos_pagos_limite_por_dia(factory, session, plano, limite):
     assert a.entitlement_id == acesso.id
 
 
-def test_so_o_vip_pode_usar_lote(factory, session):
-    for plano, pode in (("weekly", False), ("monthly", False), ("vip_batch", True)):
+def test_todos_os_planos_pagos_podem_usar_lote_so_o_free_nao(factory, session):
+    for plano, pode in (("weekly", True), ("monthly", True), ("vip_batch", True)):
         usuario = factory.user()
         give(factory, session, usuario, plano)
         assert get_allowance(session, usuario.id, now=NOW).can_batch is pode
+    assert get_allowance(session, factory.user().id, now=NOW).can_batch is False  # Free
 
 
 # ============================================================================ validade do entitlement
@@ -150,25 +151,25 @@ def test_free_semana_e_de_sao_paulo_nao_de_utc(factory, session):
 def test_pago_o_limite_diario_reinicia_a_meia_noite_de_sao_paulo(factory, session):
     usuario = factory.user()
     give(factory, session, usuario, "weekly")
-    consume(session, usuario, 10, now=NOW)
+    consume(session, usuario, 5, now=NOW)
     assert get_allowance(session, usuario.id, now=sp(2026, 9, 23, 23, 59, 59)).remaining == 0
-    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 0, 0, 0)).remaining == 10
+    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 0, 0, 0)).remaining == 5
 
 
 def test_pago_o_dia_e_o_de_sao_paulo_nao_o_de_utc(factory, session):
     usuario = factory.user()
     give(factory, session, usuario, "weekly")
-    consume(session, usuario, 10, now=sp(2026, 9, 23, 22, 0))  # 22:00 SP = 01:00 do dia seguinte em UTC
+    consume(session, usuario, 5, now=sp(2026, 9, 23, 22, 0))  # 22:00 SP = 01:00 do dia seguinte em UTC
     assert get_allowance(session, usuario.id, now=sp(2026, 9, 23, 23, 30)).remaining == 0
-    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 0, 10)).remaining == 10
+    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 0, 10)).remaining == 5
 
 
 def test_pago_dia_seguinte_dentro_da_validade_volta_a_ter_o_limite_cheio(factory, session):
     usuario = factory.user()
     give(factory, session, usuario, "monthly")
-    consume(session, usuario, 20, now=NOW)
+    consume(session, usuario, 10, now=NOW)
     assert get_allowance(session, usuario.id, now=NOW).remaining == 0
-    assert get_allowance(session, usuario.id, now=NOW + 1 * DIA).remaining == 20
+    assert get_allowance(session, usuario.id, now=NOW + 1 * DIA).remaining == 10
 
 
 # ============================================================================ isolamento Free x pago
@@ -177,9 +178,9 @@ def test_uso_pago_nao_gasta_o_saldo_free_da_semana_e_vice_versa(factory, session
     consume(session, usuario, 3, now=NOW - DIA / 24, prefix="free")  # 3 gerações Free (antes do plano)
     raw_entitlement(factory, usuario, plan_code="weekly", starts_at=NOW, expires_at=NOW + DIA / 24)
     pago = get_allowance(session, usuario.id, now=NOW)
-    assert (pago.plan.code, pago.used, pago.remaining) == ("weekly", 0, 10)  # o Free não reduz o saldo pago
-    consume(session, usuario, 4, now=NOW, prefix="pago")
-    assert get_allowance(session, usuario.id, now=NOW).remaining == 6
+    assert (pago.plan.code, pago.used, pago.remaining) == ("weekly", 0, 5)  # o Free não reduz o saldo pago
+    consume(session, usuario, 2, now=NOW, prefix="pago")
+    assert get_allowance(session, usuario.id, now=NOW).remaining == 3
     depois = get_allowance(session, usuario.id, now=NOW + DIA / 12)  # o plano pago já expirou
     assert (depois.plan.code, depois.used, depois.remaining) == ("free", 3, 2)  # e o uso pago não gastou o Free
 
@@ -190,13 +191,13 @@ def test_limite_diario_e_compartilhado_entre_acessos_empilhados_no_mesmo_dia(fac
     troca = sp(2026, 9, 23, 15, 0)
     raw_entitlement(factory, usuario, plan_code="weekly", starts_at=troca - 7 * DIA, expires_at=troca)
     raw_entitlement(factory, usuario, plan_code="monthly", starts_at=troca, expires_at=troca + 30 * DIA)
-    consume(session, usuario, 7, now=sp(2026, 9, 23, 14, 0), prefix="semanal")  # sob o SEMANAL (10/dia)
-    a = get_allowance(session, usuario.id, now=sp(2026, 9, 23, 16, 0))  # já sob o MENSAL (20/dia)
-    assert (a.plan.code, a.limit, a.used, a.remaining) == ("monthly", 20, 7, 13)  # 13, não 20 e não 10
-    consume(session, usuario, 13, now=sp(2026, 9, 23, 16, 0), prefix="mensal")
+    consume(session, usuario, 3, now=sp(2026, 9, 23, 14, 0), prefix="semanal")  # sob o SEMANAL (5/dia)
+    a = get_allowance(session, usuario.id, now=sp(2026, 9, 23, 16, 0))  # já sob o MENSAL (10/dia)
+    assert (a.plan.code, a.limit, a.used, a.remaining) == ("monthly", 10, 3, 7)  # 7, não 10 e não 5
+    consume(session, usuario, 7, now=sp(2026, 9, 23, 16, 0), prefix="mensal")
     with pytest.raises(QuotaExceededError):
         reserve_generation(session, user_id=usuario.id, request_id="a-mais", now=sp(2026, 9, 23, 16, 30))
-    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 8, 0)).remaining == 20  # dia seguinte
+    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 8, 0)).remaining == 10  # dia seguinte
 
 
 # ============================================================================ inconsistência: nunca decidir em silêncio

@@ -59,7 +59,7 @@ def test_varias_threads_com_saldo_parcial_reservam_exatamente_o_saldo(factory, s
 def test_plano_pago_diario_tambem_e_protegido(factory, session, maker):
     usuario = factory.user()
     give(factory, session, usuario, "weekly")
-    consume(session, usuario, 9, now=NOW)  # 9 de 10
+    consume(session, usuario, 4, now=NOW)  # 4 de 5
     ok, erros = _separar(_reservar_em_paralelo(maker, usuario, 4))
     assert (len(ok), len(erros)) == (1, 3)
     assert get_allowance(session, usuario.id, now=NOW).remaining == 0
@@ -68,14 +68,14 @@ def test_plano_pago_diario_tambem_e_protegido(factory, session, maker):
 def test_dois_lotes_simultaneos_so_cabem_quantos_o_saldo_permitir(factory, session, maker):
     usuario = factory.user()
     give(factory, session, usuario, "vip_batch")
-    consume(session, usuario, 10, now=NOW)  # saldo = 20
+    consume(session, usuario, 5, now=NOW)  # saldo = 10 (VIP: 15/dia)
     resultados = run_parallel(
-        maker, 3, lambda s, i: reserve_batch(s, user_id=usuario.id, request_id=f"lote-{i}", size=8, now=NOW)
+        maker, 3, lambda s, i: reserve_batch(s, user_id=usuario.id, request_id=f"lote-{i}", size=4, now=NOW)
     )
     ok, erros = _separar(resultados)
-    assert (len(ok), len(erros)) == (2, 1)  # 8 + 8 = 16 <= 20; o terceiro (24) não cabe e é recusado INTEIRO
-    assert _total(session, Batch) == 2 and _total(session, Generation) == 10 + 16
-    assert get_allowance(session, usuario.id, now=NOW).remaining == 4
+    assert (len(ok), len(erros)) == (2, 1)  # 4 + 4 = 8 <= 10; o terceiro (12) não cabe e é recusado INTEIRO
+    assert _total(session, Batch) == 2 and _total(session, Generation) == 5 + 8
+    assert get_allowance(session, usuario.id, now=NOW).remaining == 2
 
 
 def test_mesmo_request_id_em_paralelo_cria_uma_unica_geracao(factory, session, maker):

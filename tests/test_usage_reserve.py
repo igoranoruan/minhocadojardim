@@ -53,7 +53,7 @@ def test_reserva_paga_registra_o_plano_e_o_entitlement(factory, session):
     assert reserva.plan_code == "weekly"
     (linha,) = _linhas(session)
     assert (linha.plan_code, linha.entitlement_id) == ("weekly", acesso.id)
-    assert get_allowance(session, usuario.id, now=NOW).remaining == 9
+    assert get_allowance(session, usuario.id, now=NOW).remaining == 4
 
 
 def test_o_limite_nao_pode_ser_ultrapassado_free(factory, session):
@@ -67,7 +67,7 @@ def test_o_limite_nao_pode_ser_ultrapassado_free(factory, session):
     assert len(_linhas(session)) == 5  # a recusada não deixou nada no ledger
 
 
-@pytest.mark.parametrize("plano, limite", [("weekly", 10), ("monthly", 20), ("vip_batch", 30)])
+@pytest.mark.parametrize("plano, limite", [("weekly", 5), ("monthly", 10), ("vip_batch", 15)])
 def test_o_limite_nao_pode_ser_ultrapassado_pagos(factory, session, plano, limite):
     usuario = factory.user()
     give(factory, session, usuario, plano)

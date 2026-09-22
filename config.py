@@ -34,9 +34,10 @@ DEV_IP_HASH_SECRET = "dev-only-ip-hash-secret-never-use-in-production-0002"
 ORIGIN_CHECK_EXEMPT_PREFIXES = ("/api/webhooks/",)
 
 # ----------------------------------------------------------------------------- planos e gerações (Etapa 4)
-MAX_BATCH_SIZE = 10  # vídeos por lote (só o plano VIP usa lote)
+# O limite de vídeos por lote é definido por plano (Plan.max_batch_size em services/plans.py),
+# não aqui: cada plano pago tem seu próprio teto (Etapa 4.1).
 # Uma geração 'reserved' há mais tempo que isto deixa de contar na cota (rede de segurança contra
-# reservas órfãs de um processamento que caiu): 10 vídeos x 3 min de timeout + margem.
+# reservas órfãs de um processamento que caiu): 15 vídeos (maior lote hoje) x 3 min de timeout + margem.
 GENERATION_RESERVATION_TTL_SECONDS = 35 * 60
 
 
