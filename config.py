@@ -40,6 +40,26 @@ ORIGIN_CHECK_EXEMPT_PREFIXES = ("/api/webhooks/",)
 # reservas órfãs de um processamento que caiu): 15 vídeos (maior lote hoje) x 3 min de timeout + margem.
 GENERATION_RESERVATION_TTL_SECONDS = 35 * 60
 
+# ----------------------------------------------------------------------------- download (Etapa 5)
+# 100 MB é o tamanho MAXIMO DO ARQUIVO EM DISCO. O download é feito em streaming (chunk a chunk) e
+# abortado assim que ultrapassar este valor; o video nunca e carregado inteiro em memoria.
+MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024
+# Tamanho de cada pedaco lido do socket por vez (streaming). Nao e o limite do video, e o "balde".
+DOWNLOAD_CHUNK_SIZE_BYTES = 1024 * 1024
+# yt-dlp as vezes sabe a duracao ANTES de baixar (permite recusar cedo). Quando nao sabe, o campo
+# fica None: a validacao DEFINITIVA de duracao e da Etapa 6, quando FFmpeg/ffprobe entrar no projeto.
+MAX_VIDEO_DURATION_SECONDS = 5 * 60
+DOWNLOAD_TIMEOUT_SECONDS = 180
+DOWNLOAD_CONNECT_TIMEOUT_SECONDS = 15
+# Diretorio de trabalho dos downloads (fora de static/, ignorado pelo Git -- ver .gitignore: tmp/).
+DOWNLOAD_TEMP_DIR = "./tmp/downloads"
+# Salvaguarda contra redirecionamento infinito/abusivo nas checagens que a NOSSA camada resolve.
+MAX_REDIRECTS = 5
+# URL do PO Token Provider (BGUTIL), se o companion estiver rodando no ambiente. Vazio = o
+# yt-dlp tenta o YouTube só com o player client mweb, sem PO Token (funciona para parte dos
+# vídeos; especificação do produto: PO Token NAO garante todos os vídeos).
+BGUTIL_POT_PROVIDER_BASE_URL = ""
+
 
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).
@@ -86,6 +106,7 @@ class Settings:
     login_code_max_per_email_per_hour: int
     login_code_max_per_ip_per_hour: int
     session_ttl_days: int
+    bgutil_pot_provider_base_url: str
 
     @property
     def is_production(self) -> bool:
@@ -140,6 +161,7 @@ def load_settings() -> Settings:
         login_code_max_per_email_per_hour=_int_env("AUTH_CODE_MAX_PER_EMAIL_PER_HOUR", default=5, minimum=1),
         login_code_max_per_ip_per_hour=_int_env("AUTH_CODE_MAX_PER_IP_PER_HOUR", default=20, minimum=1),
         session_ttl_days=_int_env("AUTH_SESSION_TTL_DAYS", default=30, minimum=1),
+        bgutil_pot_provider_base_url=os.getenv("BGUTIL_POT_PROVIDER_BASE_URL", BGUTIL_POT_PROVIDER_BASE_URL).strip(),
     )
 
 
