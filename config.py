@@ -60,6 +60,18 @@ MAX_REDIRECTS = 5
 # vídeos; especificação do produto: PO Token NAO garante todos os vídeos).
 BGUTIL_POT_PROVIDER_BASE_URL = ""
 
+# ----------------------------------------------------------------------------- processamento (Etapa 6)
+# Reaproveita MAX_VIDEO_SIZE_BYTES (100 MB) e MAX_VIDEO_DURATION_SECONDS (5 min) definidas acima:
+# são os MESMOS limites, agora validados de verdade no arquivo de entrada e no de saída via
+# ffprobe (a Etapa 5 só media o que a plataforma informava, nem sempre confiável).
+# "ffmpeg"/"ffprobe": nome de executável, resolvido em PATH via shutil.which() (processor/ffmpeg.py
+# e processor/probe.py). Para apontar um binário específico, passe um caminho absoluto aqui —
+# processor NUNCA assume um caminho fixo de Linux ou Windows.
+FFMPEG_PATH = "ffmpeg"
+FFPROBE_PATH = "ffprobe"
+PROCESSING_TIMEOUT_SECONDS = 180
+# Diretório de trabalho do processamento (fora de static/, ignorado pelo Git -- tmp/ no .gitignore).
+PROCESSING_TEMP_DIR = "./tmp/processing"
 
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).
@@ -107,6 +119,8 @@ class Settings:
     login_code_max_per_ip_per_hour: int
     session_ttl_days: int
     bgutil_pot_provider_base_url: str
+    ffmpeg_path: str
+    ffprobe_path: str
 
     @property
     def is_production(self) -> bool:
@@ -162,6 +176,8 @@ def load_settings() -> Settings:
         login_code_max_per_ip_per_hour=_int_env("AUTH_CODE_MAX_PER_IP_PER_HOUR", default=20, minimum=1),
         session_ttl_days=_int_env("AUTH_SESSION_TTL_DAYS", default=30, minimum=1),
         bgutil_pot_provider_base_url=os.getenv("BGUTIL_POT_PROVIDER_BASE_URL", BGUTIL_POT_PROVIDER_BASE_URL).strip(),
+        ffmpeg_path=os.getenv("FFMPEG_PATH", FFMPEG_PATH).strip() or FFMPEG_PATH,
+        ffprobe_path=os.getenv("FFPROBE_PATH", FFPROBE_PATH).strip() or FFPROBE_PATH,
     )
 
 
