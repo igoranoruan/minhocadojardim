@@ -43,11 +43,23 @@ def test_processor_nao_importa_download():
         assert "download" not in _root_modules(arquivo), arquivo.name
 
 
+
+# Consumidores legítimos de processor/ fora da própria pasta (Etapa 7 — orquestração da geração):
+# o orquestrador em si, a rota que o expõe, e o composition root (main.py), que precisa da CLASSE
+# de erro para registrar app.add_exception_handler (mesmo padrão já usado para AuthError desde a
+# Etapa 3). Qualquer outro arquivo do projeto continua proibido de importar processor/.
+PROCESSOR_ALLOWED_CONSUMERS = {"main.py", "routes/generations.py", "services/generation_flow.py"}
+
+
 def test_nada_no_projeto_ainda_importa_processor():
-    """Nenhuma rota/serviço existente foi ligada a processor/ nesta etapa (fora do escopo)."""
+    """Só os consumidores legítimos (PROCESSOR_ALLOWED_CONSUMERS) podem importar processor/;
+    todo o resto do projeto continua proibido — isolamento de camada, não uma lista permissiva."""
     skip_dirs = {"tests", "migrations", "processor", "download", ".venv", "venv", "__pycache__", "data", "static"}
     for arquivo in ROOT.rglob("*.py"):
         if set(arquivo.relative_to(ROOT).parts) & skip_dirs:
+            continue
+        caminho_relativo = arquivo.relative_to(ROOT).as_posix()
+        if caminho_relativo in PROCESSOR_ALLOWED_CONSUMERS:
             continue
         assert "processor" not in _root_modules(arquivo), arquivo
 

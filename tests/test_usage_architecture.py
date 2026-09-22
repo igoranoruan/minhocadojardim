@@ -86,9 +86,22 @@ def test_database_nao_importa_services():
             assert not any(d.startswith("services") for d in deps), modulo
 
 
+
+# Consumidores legítimos de services.usage/services.entitlements fora de services/ (Etapa 7 —
+# orquestração da geração): a rota que expõe a geração individual, e o composition root
+# (main.py), que precisa das CLASSES de erro (QuotaExceededError, EntitlementInconsistencyError)
+# para registrar app.add_exception_handler — mesmo padrão já usado para AuthError desde a Etapa 3.
+# Nenhum dos dois CHAMA reserve_generation/complete_generation/fail_generation diretamente; quem
+# faz isso é services/generation_flow.py (ver tests/test_generation_flow_architecture.py). Toda
+# outra rota (routes.auth, routes.health, routes.deps) continua proibida.
+USAGE_ALLOWED_CONSUMERS = {"main", "routes.generations"}
+
+
 def test_nenhuma_regra_de_cota_em_rotas_main_ou_frontend():
     graph = _graph()
     for modulo in [m for m in graph if m.startswith("routes") or m == "main"]:
+        if modulo in USAGE_ALLOWED_CONSUMERS:
+            continue
         proibidos = {d for d in graph[modulo] if d in {f"services.{n}" for n in BUSINESS}}
         assert not proibidos, f"{modulo} não pode importar regra de cota: {proibidos}"
     html = (ROOT / "static" / "index.html").read_text(encoding="utf-8")

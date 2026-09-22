@@ -14,8 +14,13 @@ from fastapi.staticfiles import StaticFiles
 
 from config import APP_NAME, APP_VERSION, settings
 from database.session import dispose_engine
-from routes import auth, health
+from download.errors import DownloadError
+from processor.errors import ProcessorError
+from routes import auth, generations, health
 from services.auth import AuthError
+from services.entitlements import EntitlementInconsistencyError
+from services.generation_flow import GenerationPersistenceError
+from services.usage import QuotaExceededError, UsageError
 from utils.logging_setup import setup_logging
 from utils.origin import OriginProtectionMiddleware
 
@@ -59,9 +64,19 @@ app.add_middleware(OriginProtectionMiddleware)
 app.add_exception_handler(AuthError, auth.auth_error_handler)
 app.add_exception_handler(RequestValidationError, auth.validation_error_handler)
 
+# Erros da orquestração de geração (Etapa 7): tradução das camadas de download/processamento/uso
+# para HTTP, sem alterar nenhuma das classes de erro originais (Etapas 3-6).
+app.add_exception_handler(DownloadError, generations.download_error_handler)
+app.add_exception_handler(ProcessorError, generations.processor_error_handler)
+app.add_exception_handler(QuotaExceededError, generations.quota_exceeded_handler)
+app.add_exception_handler(UsageError, generations.usage_error_handler)
+app.add_exception_handler(EntitlementInconsistencyError, generations.entitlement_inconsistency_handler)
+app.add_exception_handler(GenerationPersistenceError, generations.generation_persistence_error_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(generations.router)
 
 
 @app.get("/", include_in_schema=False)

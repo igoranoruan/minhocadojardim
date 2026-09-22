@@ -39,11 +39,23 @@ def test_download_nao_importa_services_database_routes_ou_main():
         assert not importados & FORBIDDEN_FOR_DOWNLOAD, (arquivo.name, importados)
 
 
+
+# Consumidores legítimos de download/ fora da própria pasta (Etapa 7 — orquestração da geração):
+# o orquestrador em si, a rota que o expõe, e o composition root (main.py), que precisa da CLASSE
+# de erro para registrar app.add_exception_handler (mesmo padrão já usado para AuthError desde a
+# Etapa 3). Qualquer outro arquivo do projeto continua proibido de importar download/.
+DOWNLOAD_ALLOWED_CONSUMERS = {"main.py", "routes/generations.py", "services/generation_flow.py"}
+
+
 def test_resto_do_sistema_nao_importa_download():
-    """Etapa 6 é quem vai importar download/; nada existente hoje deve importar."""
+    """Só os consumidores legítimos (DOWNLOAD_ALLOWED_CONSUMERS) podem importar download/; todo
+    o resto do projeto continua proibido — isolamento de camada, não uma lista permissiva."""
     skip_dirs = {"tests", "migrations", "download", ".venv", "venv", "__pycache__", "data", "static"}
     for arquivo in ROOT.rglob("*.py"):
         if set(arquivo.relative_to(ROOT).parts) & skip_dirs:
+            continue
+        caminho_relativo = arquivo.relative_to(ROOT).as_posix()
+        if caminho_relativo in DOWNLOAD_ALLOWED_CONSUMERS:
             continue
         assert "download" not in _root_modules(arquivo), arquivo
 
