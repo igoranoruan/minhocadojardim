@@ -18,10 +18,21 @@ def test_hero_aprovado():
 def test_planos_conforme_especificacao():
     html = _html()
     assert "R$ 9,90" in html and "R$ 16,90" in html and "R$ 29,90" in html
-    assert "10 downloads/dia" in html   # Semanal
-    assert "20 downloads/dia" in html   # Mensal
-    assert "30 downloads/dia" in html   # VIP Batch
+    assert "5 gerações/dia" in html    # Semanal
+    assert "10 gerações/dia" in html   # Mensal
+    assert "15 gerações/dia" in html   # VIP Batch
     assert "ilimitado" not in html.lower()  # nenhum plano é ilimitado
+
+    # Os valores antigos (pré-Etapa 4.1) não podem ter sobrado em nenhum lugar da página.
+    assert "10 downloads/dia" not in html
+    assert "20 downloads/dia" not in html
+    assert "30 downloads/dia" not in html
+
+    # Lote: desde a Etapa 4.1, os três planos PAGOS (Semanal, Mensal, VIP Batch) oferecem lote —
+    # não é mais exclusividade do VIP. O Free não tem card nesta seção (é o acesso padrão, sem
+    # compra), então a garantia verificável aqui é: "Downloads em lote" aparece exatamente uma vez
+    # por plano pago, nenhuma a mais — o que também comprova que o Free não ganhou a menção.
+    assert html.count("Downloads em lote") == 3
 
 
 def test_sem_promessa_de_burlar_plataformas():
