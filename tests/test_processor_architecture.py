@@ -122,7 +122,7 @@ def test_output_sha256_e_o_unico_hash_do_resultado():
 
 def test_nenhuma_migration_nova_foi_criada():
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py"]
+    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py"]
 
 
 def test_processor_nao_usa_datetime_now_diretamente():

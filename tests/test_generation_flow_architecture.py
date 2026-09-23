@@ -51,7 +51,7 @@ def test_rota_nao_aceita_identidade_do_corpo():
 
 def test_generation_flow_nao_cria_nenhuma_migration_nova():
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py"]
+    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py"]
 
 
 def test_erros_respondem_no_formato_padrao_detail_code():

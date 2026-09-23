@@ -124,7 +124,7 @@ def test_requirements_ganhou_so_yt_dlp():
 
 def test_nenhuma_migration_nova_foi_criada():
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py"]
+    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py"]
 
 
 def test_download_nao_usa_datetime_now_diretamente():

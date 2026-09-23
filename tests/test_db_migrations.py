@@ -32,7 +32,7 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
     eng = create_db_engine(db_url)
     try:
         with eng.connect() as conn:
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0002"
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0003"
     finally:
         eng.dispose()
 

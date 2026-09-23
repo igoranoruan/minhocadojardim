@@ -134,7 +134,7 @@ def test_sem_redis_celery_fila_ou_servico_externo():
 
 def test_a_etapa_4_nao_criou_tabelas_nem_migration():
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py"]
+    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py"]
     assert set(Base.metadata.tables) == {
         "users", "payments", "entitlements", "generations", "batches", "payment_events", "login_codes", "auth_sessions",
     }

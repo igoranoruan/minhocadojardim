@@ -38,8 +38,11 @@ def test_0002_upgrade_cria_as_tabelas_de_autenticacao(db_url, alembic_cfg):
 
 
 def test_0002_downgrade_remove_so_as_tabelas_da_etapa_3(db_url, alembic_cfg):
-    command.upgrade(alembic_cfg, "head")
-    command.downgrade(alembic_cfg, "-1")
+    # Mira a revisão 0002 explicitamente (não "head"/"-1"): com migrations mais novas acima dela
+    # (ex.: 0003, que não mexe em login_codes/auth_sessions), "head - 1" já não seria o mesmo que
+    # "antes da 0002" — o que este teste especificamente quer verificar.
+    command.upgrade(alembic_cfg, "0002")
+    command.downgrade(alembic_cfg, "0001")
     assert _tabelas(db_url) == ETAPA2_TABLES  # a Etapa 2 continua intacta
 
     eng = _abrir(db_url)
@@ -63,9 +66,11 @@ def test_0002_alembic_check_sem_diferencas(db_url, alembic_cfg):
 
 
 def test_0002_downgrade_e_upgrade_de_novo(db_url, alembic_cfg):
-    command.upgrade(alembic_cfg, "head")
-    command.downgrade(alembic_cfg, "-1")
-    command.upgrade(alembic_cfg, "head")
+    # Mesmo motivo do teste acima: mira 0002/0001 explicitamente, para continuar exercitando de
+    # verdade a ida e volta da 0002, mesmo com migrations mais novas (0003) acima dela.
+    command.upgrade(alembic_cfg, "0002")
+    command.downgrade(alembic_cfg, "0001")
+    command.upgrade(alembic_cfg, "0002")
     assert AUTH_TABLES <= _tabelas(db_url)
 
 
