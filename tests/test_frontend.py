@@ -43,3 +43,43 @@ def test_sem_promessa_de_burlar_plataformas():
 
 def test_assets_em_static_sao_servidos():
     assert client.get("/static/index.html").status_code == 200
+
+
+def test_geracao_usa_a_arquitetura_nova_nao_a_antiga():
+    html = _html()
+    # o fluxo antigo (/api/download?video_url=...) não pode mais existir
+    assert '"/api/download"' not in html
+    assert "/api/download?video_url=" not in html
+    assert "video_url=" not in html
+    # /api/download-batch (lote) é uma rota DIFERENTE, fora do escopo desta etapa -- continua existindo
+    assert "/api/download-batch" in html
+    # a geração individual precisa usar a rota nova
+    assert '"/api/generations"' in html
+
+
+def test_geracao_nao_envia_user_email():
+    """user_email só pode aparecer no fluxo de LOTE (fora do escopo desta etapa) -- nunca mais na
+    geração individual, que usa exclusivamente a sessão autenticada."""
+    html = _html()
+    inicio = html.index('fetch("/api/generations"')
+    fim = html.index("async function baixarVideo", inicio) if "async function baixarVideo" in html[inicio:] else len(html)
+    bloco_geracao_individual = html[inicio:inicio + 1500]
+    assert "user_email" not in bloco_geracao_individual
+    assert "userEmail" not in bloco_geracao_individual
+
+
+def test_download_usa_generation_id_no_endpoint_novo():
+    html = _html()
+    assert "data.generation_id" in html
+    assert "/api/generations/${data.generation_id}/download" in html
+    assert "data.download_url" not in html  # o backend nunca devolveu isso; não pode ser lido
+
+
+def test_campo_de_nome_de_arquivo_foi_removido():
+    """O campo único de nome da geração individual (id="filename") saiu da interface. O campo de
+    nome POR VÍDEO do lote (fora do escopo desta etapa, texto parecido mas de outro elemento)
+    continua existindo — por isso a checagem é pelo id específico, não pelo texto do placeholder."""
+    html = _html()
+    assert 'id="filename"' not in html
+    assert "Se deixar vazio, usamos um nome automático." not in html
+    assert 'placeholder="Nome do arquivo (opcional)"' not in html
