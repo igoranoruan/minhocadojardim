@@ -41,6 +41,23 @@ def test_opcoes_de_seguranca_nas_opcoes_construidas(tmp_path):
     assert options["noplaylist"] is True
 
 
+def test_extra_opts_se_mescla_nas_opcoes_ex_impersonate(tmp_path):
+    """Mecanismo genérico (já usado pelo player_client do YouTube): qualquer chave em
+    extra_opts chega às opções finais do yt-dlp -- inclusive "impersonate"."""
+    downloader = YtDlpDownloader(_spec(extra_opts={"impersonate": "chrome"}))
+    options = downloader._build_options(tmp_path / "stub")
+    assert options["impersonate"] == "chrome"
+    # nada além do que foi pedido em extra_opts é afetado
+    assert options["allowed_extractors"] == ["TikTok"]
+    assert options["cookiefile"] is None
+
+
+def test_sem_extra_opts_nao_ha_impersonate_nas_opcoes(tmp_path):
+    downloader = YtDlpDownloader(_spec())  # sem extra_opts
+    options = downloader._build_options(tmp_path / "stub")
+    assert "impersonate" not in options
+
+
 def test_outtmpl_usa_o_stub_informado_sem_depender_de_metadados(tmp_path):
     stub = tmp_path / "abc123"
     downloader = YtDlpDownloader(_spec())

@@ -37,7 +37,23 @@ from download.ytdlp_downloader import YtDlpDownloader, YtDlpSpec
 logger = logging.getLogger("minhoca")
 
 _SPECS: dict[Platform, YtDlpSpec] = {
-    Platform.TIKTOK: YtDlpSpec(Platform.TIKTOK, allowed_extractors=("TikTok",)),
+    Platform.TIKTOK: YtDlpSpec(
+        Platform.TIKTOK,
+        allowed_extractors=("TikTok",),
+        extra_opts={
+            # TikTok exige um "desafio" (challenge) resolvido com fingerprint de navegador real
+            # antes de servir a página do vídeo; sem isso, o yt-dlp falha com "Unexpected response
+            # from webpage request" (ver _solve_challenge_and_set_cookies no extractor do TikTok).
+            # "impersonate": "chrome" é o mesmo mecanismo do `--impersonate chrome` da CLI —
+            # requer o pacote curl_cffi instalado (requirements.txt), que o yt-dlp usa
+            # internamente como um Request Handler adicional (urllib/websockets continuam os
+            # handlers padrão para as demais requisições; curl_cffi só entra quando um extractor
+            # pede impersonation, como o TikTok passa a pedir aqui). Não temos cookies pessoais
+            # envolvidos nisto — é só o fingerprint de TLS/HTTP do navegador sendo imitado, a
+            # mesma requisição que qualquer visitante anônimo faria.
+            "impersonate": "chrome",
+        },
+    ),
     Platform.INSTAGRAM: YtDlpSpec(Platform.INSTAGRAM, allowed_extractors=("Instagram",)),
     Platform.PINTEREST: YtDlpSpec(Platform.PINTEREST, allowed_extractors=("Pinterest",)),
     Platform.YOUTUBE: YtDlpSpec(

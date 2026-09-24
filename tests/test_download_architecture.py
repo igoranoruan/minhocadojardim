@@ -112,14 +112,22 @@ def test_allowed_extractors_nunca_referencia_o_extractor_generico_no_codigo_font
     assert '"generic"' not in fonte and "'generic'" not in fonte
 
 
-def test_requirements_ganhou_so_yt_dlp():
+def test_requirements_ganhou_so_yt_dlp_e_curl_cffi():
+    """yt-dlp (Etapa 5) e curl-cffi (correção de impersonation do TikTok) são as duas únicas
+    dependências novas desta camada -- nunca requests/httpx."""
     linhas = [
         linha.strip() for linha in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
         if linha.strip() and not linha.strip().startswith("#")
     ]
     pacotes = {linha.split(">=")[0].split("==")[0].split("[")[0].lower() for linha in linhas}
     assert "yt-dlp" in pacotes
+    assert "curl-cffi" in pacotes
     assert not pacotes & {"requests", "httpx"}
+
+
+def test_curl_cffi_esta_fixado_na_versao_validada():
+    fonte = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+    assert "curl-cffi==0.16.3" in fonte
 
 
 def test_nenhuma_migration_nova_foi_criada():

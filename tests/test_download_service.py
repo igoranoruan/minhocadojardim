@@ -214,6 +214,35 @@ def test_pin_it_redirecionando_para_ip_privado_continua_bloqueado(registry, monk
     assert registry[Platform.PINTEREST].calls == []
 
 
+# ------------------------------------------------------------------ impersonation do TikTok (curl_cffi)
+def test_tiktok_esta_configurado_com_impersonate_chrome():
+    import download.service as service_module
+    spec = service_module._SPECS[Platform.TIKTOK]
+    assert spec.extra_opts.get("impersonate") == "chrome"
+
+
+def test_impersonate_nao_e_aplicado_indevidamente_as_outras_plataformas():
+    import download.service as service_module
+    for plataforma in (Platform.INSTAGRAM, Platform.PINTEREST, Platform.YOUTUBE):
+        spec = service_module._SPECS[plataforma]
+        assert "impersonate" not in spec.extra_opts, plataforma
+
+
+def test_tiktok_allowed_extractors_continua_intacto_com_impersonate():
+    """A restrição de segurança (allowed_extractors) não foi afetada pela config de impersonation."""
+    import download.service as service_module
+    spec = service_module._SPECS[Platform.TIKTOK]
+    assert spec.allowed_extractors == ("TikTok",)
+    assert "generic" not in [e.lower() for e in spec.allowed_extractors]
+
+
+def test_youtube_player_client_mweb_continua_intacto():
+    """Confirma que mexer no TikTok não afetou a configuração já existente do YouTube."""
+    import download.service as service_module
+    spec = service_module._SPECS[Platform.YOUTUBE]
+    assert spec.extra_opts["extractor_args"]["youtube"]["player_client"] == ["mweb"]
+
+
 # ------------------------------------------------------------------ timeout
 def test_timeout_interrompe_a_espera_do_chamador(registry, monkeypatch):
     _sem_ssrf(monkeypatch)
