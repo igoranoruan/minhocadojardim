@@ -20,7 +20,7 @@ from routes import auth, generations, health
 from services.auth import AuthError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
-from services.usage import QuotaExceededError, UsageError
+from services.usage import GenerationDownloadNotFoundError, QuotaExceededError, UsageError
 from utils.logging_setup import setup_logging
 from utils.origin import OriginProtectionMiddleware
 
@@ -72,6 +72,7 @@ app.add_exception_handler(QuotaExceededError, generations.quota_exceeded_handler
 app.add_exception_handler(UsageError, generations.usage_error_handler)
 app.add_exception_handler(EntitlementInconsistencyError, generations.entitlement_inconsistency_handler)
 app.add_exception_handler(GenerationPersistenceError, generations.generation_persistence_error_handler)
+app.add_exception_handler(GenerationDownloadNotFoundError, generations.generation_download_not_found_handler)
 
 # Rotas da API.
 app.include_router(health.router)

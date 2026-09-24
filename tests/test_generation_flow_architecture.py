@@ -72,6 +72,31 @@ def test_generation_flow_usa_result_storage_so_para_save_e_delete():
         assert proibido not in fonte
 
 
+def test_rota_de_download_e_fina_toda_regra_fica_no_usage():
+    tree = ast.parse(ROUTE_FILE.read_text(encoding="utf-8"))
+    funcao = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "download_generation")
+    assert len(funcao.body) <= 5, "routes/generations.py:download_generation deixou de ser fina"
+
+
+def test_rota_de_download_nao_aceita_storage_key_da_url_ou_query():
+    """storage_key só pode vir de dentro da Generation já ownership-checada -- nunca de um
+    parâmetro da rota."""
+    tree = ast.parse(ROUTE_FILE.read_text(encoding="utf-8"))
+    funcao = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "download_generation")
+    nomes_parametros = {a.arg for a in funcao.args.args}
+    assert "storage_key" not in nomes_parametros
+    assert nomes_parametros == {"generation_id", "user", "db"}
+
+
+def test_busca_da_geracao_para_download_nao_e_duplicada_na_rota():
+    """A lógica de ownership/status/expiração mora só em services.usage.get_downloadable_generation
+    -- a rota não pode reimplementar nenhuma dessas checagens por conta própria."""
+    fonte_rota = ROUTE_FILE.read_text(encoding="utf-8")
+    assert "get_downloadable_generation(" in fonte_rota
+    assert "output_expires_at" not in fonte_rota  # a rota nunca compara isso sozinha
+    assert ".status ==" not in fonte_rota and ".status !=" not in fonte_rota
+
+
 def test_nenhuma_alteracao_de_regra_de_planos():
     """Etapa 7 não pode mexer no catálogo de planos nem nas regras de uso da Etapa 4.1."""
     for arquivo in ("services/plans.py", "services/usage.py"):

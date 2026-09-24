@@ -1,8 +1,9 @@
 """Storage temporário do MP4 final (Etapa 8B.2): guarda o resultado já processado até que uma
 etapa futura (8B.3) o entregue ao usuário, ou uma etapa futura (8B.4) o expire por TTL.
 
-Interface mínima de propósito (save/exists/delete): nada de load()/open()/stream()/resolve_path()
-aqui — isso só seria necessário para servir o download (8B.3), fora do escopo desta etapa.
+Interface mínima de propósito: save/exists/delete (Etapa 8B.2) mais resolve_path (Etapa 8B.3, só
+para a rota de download ler o arquivo já validado). Nada de load()/open()/stream() aqui — quem lê
+os bytes é o FileResponse do FastAPI, direto do Path devolvido por resolve_path().
 
 Chave (`output_storage_key`): um uuid4().hex NOVO, gerado aqui — nunca reaproveita o nome do
 stub que o processor/ usou internamente, para manter o storage desacoplado de um detalhe de
@@ -57,6 +58,16 @@ def save(source_path: Path, *, size_bytes: int) -> str:
     source_path.rename(destination)  # rename: sem copiar bytes, sem pico de RAM
     logger.info("[RESULT_STORAGE] salvo key=%s bytes=%s", key, size_bytes)
     return key
+
+
+def resolve_path(storage_key: str) -> Path:
+    """Etapa 8B.3: única forma pública de obter o Path físico de um resultado salvo — usada só
+    pela rota de download, DEPOIS de já ter confirmado (services.usage.get_downloadable_generation
+    + exists()) que a geração é do usuário certo, está completed, não expirou e o arquivo existe.
+    Reaproveita a MESMA validação de _path_for(): uma storage_key fora do formato uuid4().hex
+    nunca chega a virar caminho — levanta ValueError, nunca devolve um caminho fora de
+    RESULT_STORAGE_DIR nem aceita um caminho absoluto ou vindo de fora."""
+    return _path_for(storage_key)
 
 
 def exists(storage_key: str) -> bool:

@@ -78,6 +78,33 @@ def test_diretorio_de_storage_e_criado_automaticamente(tmp_path):
         rs.RESULT_STORAGE_DIR = str(tmp_path / "results")
 
 
+# ============================================================================ resolve_path() (Etapa 8B.3)
+def test_resolve_path_devolve_o_caminho_certo_com_o_conteudo_certo(tmp_path):
+    origem = _arquivo(tmp_path, conteudo=b"conteudo exato")
+    chave = result_storage.save(origem, size_bytes=1)
+    caminho = result_storage.resolve_path(chave)
+    assert isinstance(caminho, Path)
+    assert caminho.read_bytes() == b"conteudo exato"
+
+
+def test_resolve_path_fica_sempre_dentro_de_result_storage_dir(tmp_path):
+    origem = _arquivo(tmp_path)
+    chave = result_storage.save(origem, size_bytes=1)
+    caminho = result_storage.resolve_path(chave)
+    assert Path(result_storage.RESULT_STORAGE_DIR).resolve() in caminho.resolve().parents
+
+
+def test_resolve_path_rejeita_chave_com_formato_invalido(tmp_path):
+    for chave_ruim in ("../../etc/passwd", "/etc/passwd", "curta", "", "A" * 32):
+        with pytest.raises(ValueError):
+            result_storage.resolve_path(chave_ruim)
+
+
+def test_resolve_path_nunca_aceita_caminho_absoluto_como_chave(tmp_path):
+    with pytest.raises(ValueError):
+        result_storage.resolve_path(str(tmp_path / "arquivo-qualquer.mp4"))
+
+
 # ============================================================================ exists()
 def test_exists_true_para_chave_existente(tmp_path):
     origem = _arquivo(tmp_path)
@@ -154,10 +181,10 @@ def test_result_storage_nao_importa_banco_rotas_processor_download_ou_fastapi():
 
 
 def test_result_storage_interface_e_minima():
-    """Só save/exists/delete nesta etapa -- nada de load/open/stream/resolve_path (isso é 8B.3+)."""
+    """save/exists/delete (Etapa 8B.2) + resolve_path (Etapa 8B.3) -- nada de load/open/stream."""
     tree = ast.parse(RESULT_STORAGE_FILE.read_text(encoding="utf-8"))
     funcoes_publicas = {n.name for n in tree.body if isinstance(n, ast.FunctionDef) and not n.name.startswith("_")}
-    assert funcoes_publicas == {"save", "exists", "delete"}
+    assert funcoes_publicas == {"save", "exists", "delete", "resolve_path"}
 
 
 def test_result_storage_nunca_usa_shell_ou_os_system():

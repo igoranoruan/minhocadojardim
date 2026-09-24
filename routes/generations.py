@@ -11,7 +11,7 @@ import logging
 import re
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -20,9 +20,15 @@ from database.session import get_session
 from download.errors import DownloadError
 from processor.errors import ProcessorError
 from routes.deps import get_current_user
+from services import result_storage
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError, generate_from_url
-from services.usage import QuotaExceededError, UsageError
+from services.usage import (
+    GenerationDownloadNotFoundError,
+    QuotaExceededError,
+    UsageError,
+    get_downloadable_generation,
+)
 
 logger = logging.getLogger("minhoca")
 
@@ -86,6 +92,14 @@ async def generation_persistence_error_handler(request, exc: GenerationPersisten
     return _error_response(500, exc, detail="Não foi possível concluir o registro desta geração.")
 
 
+async def generation_download_not_found_handler(request, exc: GenerationDownloadNotFoundError) -> JSONResponse:
+    """404 genérico e único para TODO motivo de download indisponível (Etapa 8B.3): geração
+    inexistente, de outro usuário, ainda reserved/failed, sem storage_key, expirada, ou o arquivo
+    físico ausente — deliberadamente a MESMA resposta para todos, para nunca dar a quem pergunta
+    uma forma de distinguir "não existe" de "não é seu" de "expirou"."""
+    return _error_response(404, exc, detail="Resultado não encontrado.")
+
+
 @router.post("/generations")
 def create_generation(
     body: CreateGenerationBody,
@@ -102,5 +116,26 @@ def create_generation(
             "duration_seconds": outcome.duration_seconds,
             "output_sha256": outcome.output_sha256,
         },
+        headers=NO_STORE,
+    )
+
+
+@router.get("/generations/{generation_id}/download")
+def download_generation(
+    generation_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> FileResponse:
+    """Etapa 8B.3. `storage_key` NUNCA vem da URL/query string — é lido internamente da geração,
+    já com ownership/status/expiração verificados por services.usage.get_downloadable_generation
+    (única fonte dessa checagem, não duplicada aqui)."""
+    generation = get_downloadable_generation(db, generation_id, user.id)
+    if not result_storage.exists(generation.output_storage_key):
+        raise GenerationDownloadNotFoundError()
+    caminho = result_storage.resolve_path(generation.output_storage_key)
+    return FileResponse(
+        caminho,
+        media_type="video/mp4",
+        filename=f"minhoca-{generation_id}.mp4",
         headers=NO_STORE,
     )

@@ -76,6 +76,15 @@ class GenerationStateError(UsageError):
     """Transição inválida (só reserved -> completed | failed) ou geração inexistente."""
 
 
+class GenerationDownloadNotFoundError(Exception):
+    """Etapa 8B.3: o resultado desta geração não está disponível para download — por QUALQUER
+    motivo (inexistente, de outro usuário, ainda reserved/failed, sem storage_key, expirada, ou
+    o arquivo físico sumiu). Deliberadamente NÃO é uma UsageError (não é uma regra de cota) — tem
+    handler HTTP próprio (404 genérico, routes/generations.py), para nunca cair no handler 400 de
+    UsageError. A mensagem é sempre genérica de propósito: nunca revela qual das condições falhou,
+    para não permitir enumerar gerações de outros usuários por tentativa e erro."""
+
+
 # ------------------------------------------------------------------------------ resultados
 @dataclass(frozen=True)
 class Allowance:
@@ -426,6 +435,36 @@ def fail_generation(
     except Exception:
         db.rollback()
         raise
+
+
+def get_downloadable_generation(
+    db: Session, generation_id: int, user_id: int, now: datetime | None = None
+) -> Generation:
+    """Etapa 8B.3: a ÚNICA fonte de verdade para "esta geração pode ser baixada por este usuário
+    agora?" — usada exclusivamente pela rota de download (routes/generations.py), para não
+    duplicar esta checagem em nenhum outro lugar. Levanta GenerationDownloadNotFoundError (a
+    MESMA exceção, com a MESMA mensagem genérica) para qualquer uma destas condições:
+    - a geração não existe;
+    - pertence a outro usuário (nunca um erro diferente do "não existe" — não é permitido
+      diferenciar os dois casos, para não virar um jeito de descobrir gerações de terceiros);
+    - o status não é "completed" (ainda reserved, ou failed);
+    - output_storage_key é None (nunca teve um resultado persistido, ou é uma geração antiga de
+      antes da Etapa 8B.1/8B.2);
+    - output_expires_at é None, ou já passou (now >= output_expires_at).
+    NÃO confere se o arquivo físico ainda existe — isso é responsabilidade de quem chama (a rota),
+    via services.result_storage.exists(), depois de ler a chave desta geração."""
+    now = resolve_now(now)
+    generation = db.get(Generation, generation_id)
+    if (
+        generation is None
+        or generation.user_id != user_id
+        or generation.status != "completed"
+        or generation.output_storage_key is None
+        or generation.output_expires_at is None
+        or now >= generation.output_expires_at
+    ):
+        raise GenerationDownloadNotFoundError()
+    return generation
 
 
 def fail_stale_reservations(db: Session, now: datetime | None = None) -> int:
