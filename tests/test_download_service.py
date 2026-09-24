@@ -22,6 +22,7 @@ from download.errors import (
 from download.platform import Platform
 from download.result import DownloadResult
 from download.service import download_video
+from download.url_safety import ValidatedUrl
 
 
 class FakeDownloader(PlatformDownloader):
@@ -160,6 +161,57 @@ def test_excecao_inesperada_vira_downloadfailederror_generico(registry, monkeypa
     with pytest.raises(DownloadFailedError) as capturado:
         download_video("https://www.tiktok.com/@a/video/1")
     assert "segredo123" not in capturado.value.user_message
+
+
+# ------------------------------------------------------------------ pin.it (Pinterest): resolução do link curto
+def _validated(url: str) -> ValidatedUrl:
+    return ValidatedUrl(url=url, scheme="https", host=url.split("/")[2], port=443, resolved_ips=("93.184.216.34",))
+
+
+def test_pin_it_chama_resolve_redirect_chain_e_envia_a_url_longa_ao_downloader(registry, monkeypatch):
+    _sem_ssrf(monkeypatch)
+    url_longa = "https://www.pinterest.com/pin/123456789/"
+    with patch("download.service.resolve_redirect_chain", return_value=_validated(url_longa)) as mock_resolve:
+        resultado = download_video("https://pin.it/5h9Mozm6x")
+
+    mock_resolve.assert_called_once_with("https://pin.it/5h9Mozm6x")
+    assert resultado.platform is Platform.PINTEREST
+    assert registry[Platform.PINTEREST].calls == [url_longa]  # o downloader recebeu a URL LONGA, não a curta
+
+
+def test_pinterest_com_direto_nao_chama_resolve_redirect_chain(registry, monkeypatch):
+    _sem_ssrf(monkeypatch)
+    with patch("download.service.resolve_redirect_chain") as mock_resolve:
+        download_video("https://pinterest.com/pin/123456789/")
+    mock_resolve.assert_not_called()
+    assert registry[Platform.PINTEREST].calls == ["https://pinterest.com/pin/123456789/"]
+
+
+def test_outras_plataformas_nao_chamam_resolve_redirect_chain(registry, monkeypatch):
+    """A resolução de link curto é exclusiva do pin.it -- TikTok/Instagram/YouTube não usam."""
+    _sem_ssrf(monkeypatch)
+    for url in ("https://www.tiktok.com/@a/video/1", "https://instagram.com/reel/abc/", "https://youtu.be/abc123"):
+        with patch("download.service.resolve_redirect_chain") as mock_resolve:
+            download_video(url)
+        mock_resolve.assert_not_called()
+
+
+def test_allowed_extractors_do_pinterest_continua_sem_generic():
+    import download.service as service_module
+    spec = service_module._SPECS[Platform.PINTEREST]
+    assert spec.allowed_extractors == ("Pinterest",)
+    assert "generic" not in [e.lower() for e in spec.allowed_extractors]
+
+
+def test_pin_it_redirecionando_para_ip_privado_continua_bloqueado(registry, monkeypatch):
+    """A resolução de pin.it usa resolve_redirect_chain, que já é SSRF-safe (Etapa 5) -- este
+    teste confirma que o bloqueio propaga corretamente pelo caminho novo, sem o downloader
+    chegar a ser chamado."""
+    _sem_ssrf(monkeypatch)
+    with patch("download.service.resolve_redirect_chain", side_effect=SsrfBlockedError("host resolve para IP privado")):
+        with pytest.raises(SsrfBlockedError):
+            download_video("https://pin.it/malicioso")
+    assert registry[Platform.PINTEREST].calls == []
 
 
 # ------------------------------------------------------------------ timeout
