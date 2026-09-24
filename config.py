@@ -73,6 +73,18 @@ PROCESSING_TIMEOUT_SECONDS = 180
 # Diretório de trabalho do processamento (fora de static/, ignorado pelo Git -- tmp/ no .gitignore).
 PROCESSING_TEMP_DIR = "./tmp/processing"
 
+# ----------------------------------------------------------------------------- storage do resultado (Etapa 8B.2)
+# Diretório onde o MP4 final fica temporariamente disponível para download (ainda não implementado
+# — isso é 8B.3). Precisa ficar no MESMO volume/filesystem que PROCESSING_TEMP_DIR: result_storage
+# usa Path.rename() para mover o arquivo (sem copiar bytes), e rename só é atômico dentro do mesmo
+# filesystem — os dois já vivem sob ./tmp/, então essa condição já é satisfeita.
+RESULT_STORAGE_DIR = "./tmp/results"
+# TTL do RESULTADO disponível para download — DELIBERADAMENTE separado de
+# GENERATION_RESERVATION_TTL_SECONDS (que é sobre reservas "reserved" órfãs, um conceito
+# diferente). A limpeza por TTL em si ainda não existe (isso é Etapa 8B.4); por enquanto só a
+# constante e o cálculo de output_expires_at (finished_at + este TTL) existem.
+RESULT_TTL_SECONDS = 30 * 60
+
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).
 

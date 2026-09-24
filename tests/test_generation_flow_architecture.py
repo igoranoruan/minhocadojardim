@@ -60,6 +60,18 @@ def test_erros_respondem_no_formato_padrao_detail_code():
     assert "Cache-Control" in fonte and "no-store" in fonte
 
 
+def test_generation_flow_usa_result_storage_so_para_save_e_delete():
+    """Etapa 8B.2: o único uso de result_storage em generation_flow é save() (persistir o
+    resultado) e delete() (limpeza do órfão se complete_generation falhar) -- nada de
+    endpoint/streaming/entrega, que são etapas futuras (8B.3+)."""
+    fonte = SERVICE_FILE.read_text(encoding="utf-8")
+    assert "from services import result_storage" in fonte
+    assert "result_storage.save(" in fonte
+    assert "result_storage.delete(" in fonte
+    for proibido in ("FileResponse", "StreamingResponse", "result_storage.load", "result_storage.open", "resolve_path"):
+        assert proibido not in fonte
+
+
 def test_nenhuma_alteracao_de_regra_de_planos():
     """Etapa 7 não pode mexer no catálogo de planos nem nas regras de uso da Etapa 4.1."""
     for arquivo in ("services/plans.py", "services/usage.py"):

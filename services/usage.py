@@ -372,15 +372,32 @@ def complete_generation(
     *,
     output_sha256: str | None = None,
     duration_ms: int | None = None,
+    output_size_bytes: int | None = None,
+    output_expires_at: datetime | None = None,
+    output_storage_key: str | None = None,
     now: datetime | None = None,
 ) -> None:
-    """reserved -> completed (continua contando). Não precisa do lock: nunca aumenta o consumo."""
+    """reserved -> completed (continua contando). Não precisa do lock: nunca aumenta o consumo.
+
+    output_size_bytes/output_expires_at/output_storage_key (Etapa 8B.1/8B.2) descrevem o
+    resultado disponível para download, quando existir — todos opcionais/None por padrão, sem
+    nenhuma mudança na regra de cota/reserva. Quem calcula `output_expires_at` (finished_at + TTL)
+    é o chamador (services/generation_flow.py), a partir do MESMO `now` passado aqui, para os dois
+    valores baterem exatamente."""
     now = resolve_now(now)
     try:
         result = db.execute(
             update(Generation)
             .where(Generation.id == generation_id, Generation.status == "reserved")
-            .values(status="completed", finished_at=_utc(now), output_sha256=output_sha256, duration_ms=duration_ms)
+            .values(
+                status="completed",
+                finished_at=_utc(now),
+                output_sha256=output_sha256,
+                duration_ms=duration_ms,
+                output_size_bytes=output_size_bytes,
+                output_expires_at=output_expires_at,
+                output_storage_key=output_storage_key,
+            )
         )
         if result.rowcount != 1:
             raise GenerationStateError(f"A geração {generation_id} não está reservada (ou não existe).")

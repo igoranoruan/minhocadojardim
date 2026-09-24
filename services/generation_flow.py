@@ -1,27 +1,40 @@
-"""Orquestração da geração individual: URL -> reserva -> download -> processamento -> conclusão.
+"""Orquestração da geração individual: URL -> reserva -> download -> processamento -> storage ->
+conclusão.
 
-Fluxo obrigatório (autorização da Etapa 7):
+Fluxo obrigatório (autorização da Etapa 7, estendido pela Etapa 8B.2):
 
     validar URL -> detectar plataforma -> reservar 1 geração -> download -> processamento
-    -> complete_generation -> limpeza dos temporários -> devolver GenerationOutcome
+    -> result_storage.save() -> complete_generation -> limpeza dos temporários
+    -> devolver GenerationOutcome
 
 Este módulo NÃO importa routes/, NÃO conhece HTTP e NÃO cria nenhum contador de uso próprio —
 usa exclusivamente services.usage.reserve_generation/complete_generation/fail_generation, que já
-são a única fonte de consumo (Etapa 4). Reaproveita download.service.download_video (Etapa 5) e
-processor.service.process_video (Etapa 6) sem alterar nenhum dos dois.
+são a única fonte de consumo (Etapa 4). Reaproveita download.service.download_video (Etapa 5),
+processor.service.process_video (Etapa 6) e services.result_storage.save (Etapa 8B.2) sem alterar
+nenhum dos três além do já autorizado em complete_generation (Etapa 8B.2).
 
 Este módulo não traduz nada para HTTP: deixa propagar as exceções já existentes das camadas
 reaproveitadas (DownloadError, ProcessorError, UsageError, EntitlementError) e define só
 GenerationPersistenceError, para o caso novo desta etapa (falha ao GRAVAR o resultado, depois do
-download/processamento já terem terminado). A tradução para HTTP é feita em routes/generations.py.
+download/processamento/storage já terem terminado). A tradução para HTTP é feita em
+routes/generations.py.
+
+Regra de falha do storage (Etapa 8B.2): se result_storage.save() falhar, é tratado exatamente
+como uma falha de download/processamento (fail_generation, cota liberada). Se o save() tiver
+sucesso mas complete_generation() falhar DEPOIS, a regra de "nunca chamar fail_generation() nesse
+caso" (Etapa 7) é preservada sem alteração — o arquivo já salvo vira órfão do banco, e é removido
+com uma limpeza best-effort (result_storage.delete), sem mascarar o GenerationPersistenceError
+original.
 """
 import logging
 import uuid
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 
 from sqlalchemy.orm import Session
 
+from config import RESULT_TTL_SECONDS
 from database.models import User
 from download.errors import DownloadError
 from download.platform import Platform, detect_platform
@@ -29,7 +42,9 @@ from download.service import download_video
 from download.url_safety import validate_url
 from processor.errors import ProcessorError
 from processor.service import process_video
+from services import result_storage
 from services.usage import complete_generation, fail_generation, reserve_generation
+from utils.time_sp import resolve_now
 
 logger = logging.getLogger("minhoca")
 
@@ -127,6 +142,7 @@ def generate_from_url(db: Session, *, user: User, url: str) -> GenerationOutcome
 
     download_path: Path | None = None
     output_path: Path | None = None
+    storage_key: str | None = None
     try:
         try:
             download_result = download_video(validated.url)
@@ -134,6 +150,13 @@ def generate_from_url(db: Session, *, user: User, url: str) -> GenerationOutcome
 
             processing_result = process_video(download_result.temp_path)
             output_path = processing_result.output_path
+
+            # result_storage.save() fica no MESMO try de download/processamento de propósito: uma
+            # falha aqui (ex.: disco cheio) deve ser tratada exatamente como uma falha de
+            # download/processamento — fail_generation, cota liberada — sem precisar de um except
+            # dedicado. Depois do save(), output_path já não existe mais (foi renomeado para o
+            # storage); _cleanup_quietly no finally continua seguro (só apaga se o path existir).
+            storage_key = result_storage.save(output_path, size_bytes=processing_result.size_bytes)
         except (DownloadError, ProcessorError) as exc:
             _mark_failed(db, generation_id, exc)
             raise
@@ -147,21 +170,40 @@ def generate_from_url(db: Session, *, user: User, url: str) -> GenerationOutcome
             _mark_failed(db, generation_id, exc)
             raise
 
+        # Um único `now`, usado tanto em finished_at (dentro de complete_generation) quanto no
+        # cálculo de output_expires_at — para os dois baterem exatamente (finished_at + TTL), sem
+        # depender de duas leituras de relógio separadas.
+        now = resolve_now()
+        output_expires_at = now + timedelta(seconds=RESULT_TTL_SECONDS)
         try:
             complete_generation(
                 db, generation_id,
                 output_sha256=processing_result.output_sha256,
                 duration_ms=round(processing_result.duration_seconds * 1000),
+                output_size_bytes=processing_result.size_bytes,
+                output_expires_at=output_expires_at,
+                output_storage_key=storage_key,
+                now=now,
             )
         except Exception as persistence_exc:
-            # O vídeo FOI processado com sucesso: isto não é uma falha de download/processamento,
-            # é uma falha de gravação. Não chamamos fail_generation aqui (marcar como "failed"
-            # seria uma afirmação falsa sobre um processamento que deu certo); a rede de segurança
-            # já existente (fail_stale_reservations, Etapa 4) cobre uma reserva presa por isso.
+            # O vídeo FOI processado (e salvo) com sucesso: isto não é uma falha de
+            # download/processamento, é uma falha de gravação. Não chamamos fail_generation aqui
+            # (marcar como "failed" seria uma afirmação falsa sobre um processamento que deu
+            # certo); a rede de segurança já existente (fail_stale_reservations, Etapa 4) cobre
+            # uma reserva presa por isso. O arquivo já salvo no storage, porém, ficaria órfão (sem
+            # nenhuma linha do banco apontando para ele, já que a gravação falhou) — removido aqui
+            # como limpeza best-effort, sem NUNCA mascarar o erro original de persistência.
             logger.error(
                 "[GENERATION] complete_generation falhou para %s: %s",
                 generation_id, persistence_exc.__class__.__name__, exc_info=True,
             )
+            try:
+                result_storage.delete(storage_key)
+            except Exception:
+                logger.warning(
+                    "[GENERATION] falha ao limpar arquivo órfão do storage (geração %s)",
+                    generation_id, exc_info=True,
+                )
             raise GenerationPersistenceError(generation_id, "complete", persistence_exc) from persistence_exc
     finally:
         _cleanup_quietly(download_path, output_path)

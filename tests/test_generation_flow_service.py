@@ -5,13 +5,24 @@ from unittest.mock import patch
 
 import pytest
 
+from datetime import timedelta
+
 from database.models import Generation
 from download.errors import DownloadFailedError, InvalidUrlError, UnsupportedPlatformError
 from download.platform import Platform
 from helpers_generation_flow import fake_download_result, fake_processing_result
 from processor.errors import FfmpegFailedError
+from services import result_storage
 from services.generation_flow import GenerationPersistenceError, generate_from_url
 from services.usage import QuotaExceededError, complete_generation, get_allowance, reserve_generation
+
+
+@pytest.fixture(autouse=True)
+def diretorio_de_storage(tmp_path, monkeypatch):
+    """Isola o storage do resultado num diretório próprio de cada teste (mesmo padrão já usado
+    para download/processamento) — evita que os testes deixem arquivos reais espalhados pelo
+    projeto, e permite inspecionar o conteúdo do storage nos testes novos desta etapa."""
+    monkeypatch.setattr("services.result_storage.RESULT_STORAGE_DIR", str(tmp_path / "results"))
 
 
 def _files(tmp_path, nome_download="baixado.mp4", nome_saida="saida.mp4"):
@@ -188,3 +199,100 @@ def test_duas_geracoes_de_usuarios_diferentes_nao_se_misturam(factory, session, 
     assert linha_a.output_sha256 == "1" * 64 and linha_b.output_sha256 == "2" * 64
     assert get_allowance(session, usuario_a.id).used == 1
     assert get_allowance(session, usuario_b.id).used == 1  # o consumo de A não afetou B
+
+
+# ============================================================================ storage do resultado (Etapa 8B.2)
+def test_sucesso_persiste_os_tres_campos_de_resultado(factory, session, tmp_path):
+    usuario = factory.user()
+    download_path, output_path = _files(tmp_path)
+
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path, size=4321)):
+        resultado = generate_from_url(session, user=usuario, url="https://www.tiktok.com/@a/video/1")
+
+    session.expire_all()
+    linha = session.get(Generation, resultado.generation_id)
+    assert linha.output_size_bytes == 4321
+    assert linha.output_storage_key is not None and len(linha.output_storage_key) == 32
+    assert linha.output_expires_at is not None
+    assert result_storage.exists(linha.output_storage_key)  # o arquivo realmente está no storage
+
+
+def test_output_expires_at_e_exatamente_finished_at_mais_30_minutos(factory, session, tmp_path):
+    usuario = factory.user()
+    download_path, output_path = _files(tmp_path)
+
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
+        generate_from_url(session, user=usuario, url="https://www.tiktok.com/@a/video/1")
+
+    session.expire_all()
+    (linha,) = session.query(Generation).filter_by(user_id=usuario.id).all()
+    assert linha.finished_at is not None
+    assert linha.output_expires_at == linha.finished_at + timedelta(minutes=30)
+
+
+def test_arquivo_processado_e_movido_para_o_storage_nao_copiado(factory, session, tmp_path):
+    usuario = factory.user()
+    download_path, output_path = _files(tmp_path)
+    conteudo_original = output_path.read_bytes()
+
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
+        resultado = generate_from_url(session, user=usuario, url="https://www.tiktok.com/@a/video/1")
+
+    assert not output_path.exists()  # não sobrou cópia no caminho antigo do processor
+    session.expire_all()
+    linha = session.get(Generation, resultado.generation_id)
+    caminho_no_storage = Path(result_storage.RESULT_STORAGE_DIR) / f"{linha.output_storage_key}.mp4"
+    assert caminho_no_storage.read_bytes() == conteudo_original  # o conteúdo é o mesmo (só moveu)
+
+
+def test_save_falhando_chama_fail_generation_e_nao_persiste_resultado(factory, session, tmp_path):
+    usuario = factory.user()
+    antes = get_allowance(session, usuario.id).remaining
+    download_path, output_path = _files(tmp_path)
+
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)), \
+         patch("services.generation_flow.result_storage.save", side_effect=OSError("disco cheio")):
+        with pytest.raises(OSError):
+            generate_from_url(session, user=usuario, url="https://www.tiktok.com/@a/video/1")
+
+    session.expire_all()
+    (linha,) = session.query(Generation).filter_by(user_id=usuario.id).all()
+    assert linha.status == "failed" and linha.error_code == "OSError"
+    assert linha.output_storage_key is None and linha.output_size_bytes is None
+    assert get_allowance(session, usuario.id).remaining == antes  # cota liberada
+
+
+def test_complete_generation_falhando_nao_chama_fail_generation_e_remove_o_orfao(factory, session, tmp_path):
+    usuario = factory.user()
+    download_path, output_path = _files(tmp_path)
+
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)), \
+         patch("services.generation_flow.complete_generation", side_effect=RuntimeError("banco fora do ar")):
+        with pytest.raises(GenerationPersistenceError) as erro:
+            generate_from_url(session, user=usuario, url="https://www.tiktok.com/@a/video/1")
+
+    assert erro.value.phase == "complete"
+    session.expire_all()
+    (linha,) = session.query(Generation).filter_by(user_id=usuario.id).all()
+    assert linha.status == "reserved"  # a regra da Etapa 7 continua: NUNCA vira failed aqui
+    # o arquivo foi movido para o storage antes do complete_generation falhar, mas como a falha
+    # de persistência não deixou nenhuma chave gravada no banco, a única forma de confirmar a
+    # limpeza é inspecionar o diretório do storage diretamente: precisa estar vazio.
+    restantes = list(Path(result_storage.RESULT_STORAGE_DIR).glob("*.mp4"))
+    assert restantes == []
+
+
+def test_cleanup_do_arquivo_temporario_de_download_continua_funcionando(factory, session, tmp_path):
+    """Confirma que a integração com o storage não quebrou a limpeza já existente do arquivo de
+    DOWNLOAD (que nunca vai para o storage — só o resultado processado vai)."""
+    usuario = factory.user()
+    download_path, output_path = _files(tmp_path)
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
+        generate_from_url(session, user=usuario, url="https://www.tiktok.com/@a/video/1")
+    assert not download_path.exists()
