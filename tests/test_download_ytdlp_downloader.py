@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import yt_dlp
+from yt_dlp.networking.impersonate import ImpersonateTarget
 
 from download.errors import DownloadFailedError, DownloadTimeoutError, VideoTooLargeError
 from download.platform import Platform
@@ -43,13 +44,25 @@ def test_opcoes_de_seguranca_nas_opcoes_construidas(tmp_path):
 
 def test_extra_opts_se_mescla_nas_opcoes_ex_impersonate(tmp_path):
     """Mecanismo genérico (já usado pelo player_client do YouTube): qualquer chave em
-    extra_opts chega às opções finais do yt-dlp -- inclusive "impersonate"."""
+    extra_opts chega às opções finais do yt-dlp -- inclusive "impersonate". A string declarada
+    em extra_opts (legível, fácil de configurar) chega NORMALIZADA em ImpersonateTarget -- a API
+    Python do yt-dlp (diferente da CLI) não converte sozinha, e exige o objeto já pronto."""
     downloader = YtDlpDownloader(_spec(extra_opts={"impersonate": "chrome"}))
     options = downloader._build_options(tmp_path / "stub")
-    assert options["impersonate"] == "chrome"
+    assert isinstance(options["impersonate"], ImpersonateTarget)
+    assert options["impersonate"] == ImpersonateTarget.from_str("chrome")
     # nada além do que foi pedido em extra_opts é afetado
     assert options["allowed_extractors"] == ["TikTok"]
     assert options["cookiefile"] is None
+
+
+def test_impersonate_target_ja_pronto_passa_direto_sem_reconverter(tmp_path):
+    """Se extra_opts já trouxer um ImpersonateTarget pronto (não uma string), a normalização não
+    tenta converter de novo -- passa o mesmo objeto adiante."""
+    alvo = ImpersonateTarget.from_str("safari")
+    downloader = YtDlpDownloader(_spec(extra_opts={"impersonate": alvo}))
+    options = downloader._build_options(tmp_path / "stub")
+    assert options["impersonate"] is alvo
 
 
 def test_sem_extra_opts_nao_ha_impersonate_nas_opcoes(tmp_path):

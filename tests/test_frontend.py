@@ -69,10 +69,16 @@ def test_geracao_nao_envia_user_email():
 
 
 def test_download_usa_generation_id_no_endpoint_novo():
+    """Desde a barra de progresso real (SSE), o generation_id vem do evento `complete` do stream
+    (dados.generation_id, dentro de exibirSucessoDaGeracao), não mais de um `await
+    response.json()` direto sobre a resposta -- mas o endpoint de download continua o mesmo,
+    montado a partir do generation_id."""
     html = _html()
-    assert "data.generation_id" in html
-    assert "/api/generations/${data.generation_id}/download" in html
-    assert "data.download_url" not in html  # o backend nunca devolveu isso; não pode ser lido
+    assert "dados.generation_id" in html
+    assert "/api/generations/${dados.generation_id}/download" in html
+    assert "dados.download_url" not in html  # o backend nunca devolveu isso; não pode ser lido
+    assert "data.download_url" not in html
+    assert "data.generation_id" not in html  # contrato antigo (pré-SSE): não pode ter sobrado
 
 
 def test_campo_de_nome_de_arquivo_foi_removido():
@@ -83,3 +89,25 @@ def test_campo_de_nome_de_arquivo_foi_removido():
     assert 'id="filename"' not in html
     assert "Se deixar vazio, usamos um nome automático." not in html
     assert 'placeholder="Nome do arquivo (opcional)"' not in html
+
+
+def test_barra_de_progresso_nao_recria_o_dom_a_cada_evento():
+    """A correção de UX: o bloco de progresso (texto + barra) tem que ser criado com ids fixos e
+    reaproveitado -- exibirProgressoReal/exibirProgressoIndeterminado só devem tocar
+    innerHTML/setStatusBox quando o bloco ainda NÃO existe; do contrário, só textContent/
+    style.width. Isso é o que evita o "piscar" (animate-fade reiniciando a cada tick de progresso).
+    """
+    html = _html()
+    # ids estáveis, usados tanto para criar quanto para localizar o bloco já existente
+    assert 'id="progressoTexto"' in html
+    assert 'id="progressoBarra"' in html
+    assert 'id="progressoIndeterminadoTexto"' in html
+
+    # as duas funções precisam checar a existência do bloco ANTES de decidir recriar
+    assert 'getElementById("progressoTexto")' in html
+    assert 'getElementById("progressoBarra")' in html
+    assert 'getElementById("progressoIndeterminadoTexto")' in html
+
+    # quando o bloco já existe, a atualização é só textContent/style.width -- nunca innerHTML
+    assert ".textContent = `${mensagem" in html or ".textContent = mensagem" in html
+    assert "barraExistente.style.width" in html

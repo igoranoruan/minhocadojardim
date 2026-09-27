@@ -35,6 +35,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import yt_dlp
+from yt_dlp.networking.impersonate import ImpersonateTarget
 
 from config import DOWNLOAD_CONNECT_TIMEOUT_SECONDS, MAX_VIDEO_SIZE_BYTES, get_settings
 from download.base import PlatformDownloader, RawDownload
@@ -107,7 +108,20 @@ class YtDlpDownloader(PlatformDownloader):
             **self.spec.extra_opts,
         }
         self._apply_youtube_pot_provider(options)
+        self._normalize_impersonate_target(options)
         return options
+
+    def _normalize_impersonate_target(self, options: dict) -> None:
+        """A CLI do yt-dlp converte a string de --impersonate para ImpersonateTarget antes de
+        montar o YoutubeDL; a API Python (yt_dlp.YoutubeDL(options)) NÃO faz essa conversão
+        sozinha — exige o objeto já pronto (senão: AssertionError em
+        yt_dlp/networking/impersonate.py, isinstance(target, ImpersonateTarget)). Como
+        extra_opts é genérico (qualquer plataforma pode declarar "impersonate", não só TikTok),
+        essa normalização fica aqui, não em cada YtDlpSpec — string vira ImpersonateTarget; um
+        ImpersonateTarget já pronto (ou ausência da chave) passa direto, sem alteração."""
+        target = options.get("impersonate")
+        if isinstance(target, str):
+            options["impersonate"] = ImpersonateTarget.from_str(target)
 
     def _apply_youtube_pot_provider(self, options: dict) -> None:
         """Liga o PO Token Provider (BGUTIL) só quando configurado (config.py) e só para YouTube.

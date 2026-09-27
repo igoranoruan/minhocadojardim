@@ -216,16 +216,39 @@ def test_pin_it_redirecionando_para_ip_privado_continua_bloqueado(registry, monk
 
 # ------------------------------------------------------------------ impersonation do TikTok (curl_cffi)
 def test_tiktok_esta_configurado_com_impersonate_chrome():
+    """O SPEC declara a string "chrome" -- legível, fácil de configurar/testar. A normalização
+    para o tipo que o yt-dlp realmente exige acontece depois, em _build_options()
+    (ver test_tiktok_impersonate_e_entregue_como_impersonatetarget_ao_ydl_opts abaixo)."""
     import download.service as service_module
     spec = service_module._SPECS[Platform.TIKTOK]
     assert spec.extra_opts.get("impersonate") == "chrome"
 
 
-def test_impersonate_nao_e_aplicado_indevidamente_as_outras_plataformas():
-    import download.service as service_module
+def test_tiktok_impersonate_e_entregue_como_impersonatetarget_ao_ydl_opts(tmp_path):
+    """A API Python do yt_dlp.YoutubeDL(options) NÃO converte a string "chrome" sozinha (só a
+    CLI faz essa conversão) -- exige um ImpersonateTarget já pronto, senão AssertionError dentro
+    do próprio yt-dlp. Este teste confirma, com o YtDlpDownloader e o YtDlpSpec REAIS de produção
+    (não um dublê), que options["impersonate"] chega como o tipo certo."""
+    from yt_dlp.networking.impersonate import ImpersonateTarget
+
+    from download.ytdlp_downloader import YtDlpDownloader
+
+    downloader = YtDlpDownloader(service_module._SPECS[Platform.TIKTOK])
+    options = downloader._build_options(tmp_path / "stub")
+    assert isinstance(options["impersonate"], ImpersonateTarget)
+    assert not isinstance(options["impersonate"], str)
+    assert options["impersonate"] == ImpersonateTarget.from_str("chrome")
+
+
+def test_impersonate_nao_e_aplicado_indevidamente_as_outras_plataformas(tmp_path):
+    from download.ytdlp_downloader import YtDlpDownloader
+
     for plataforma in (Platform.INSTAGRAM, Platform.PINTEREST, Platform.YOUTUBE):
         spec = service_module._SPECS[plataforma]
         assert "impersonate" not in spec.extra_opts, plataforma
+        # também confere as opções FINAIS construídas, não só a declaração crua do spec
+        options = YtDlpDownloader(spec)._build_options(tmp_path / "stub")
+        assert "impersonate" not in options, plataforma
 
 
 def test_tiktok_allowed_extractors_continua_intacto_com_impersonate():

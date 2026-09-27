@@ -878,14 +878,7 @@
 
         button.disabled = true;
         button.classList.add("opacity-60", "cursor-not-allowed");
-
-        setStatusBox(
-            '<div class="flex items-center justify-center gap-3 text-emerald-400">' +
-            '<i class="fa-solid fa-spinner animate-spin text-base"></i>' +
-            '<span>Baixando e preparando seu vídeo...</span>' +
-            '</div>',
-            "normal"
-        );
+        exibirProgressoIndeterminado("Conectando...");
 
         try {
             const response = await fetch("/api/generations", {
@@ -895,61 +888,21 @@
                 body: JSON.stringify({ url: urlInput })
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
+                // Só acontece ANTES do stream começar (sem sessão, ou corpo inválido) --
+                // depois que o stream abre, todo erro chega como evento "error" (ver abaixo).
+                let data = {};
+                try { data = await response.json(); } catch (err) { /* corpo pode não ser JSON */ }
                 if (response.status === 401) {
                     setStatusBox("Faça login para continuar.", "error");
                     abrirAcesso();
-                } else if (response.status === 429) {
-                    setStatusBox(
-                        '<p class="font-bold mb-1">Limite diário atingido.</p>' +
-                        '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
-                        '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
-                        'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
-                        "warning"
-                    );
                 } else {
-                    setStatusBox(
-                        escapeHtml(data.detail || "Não foi possível processar o vídeo."),
-                        "error"
-                    );
+                    setStatusBox(escapeHtml(data.detail || "Não foi possível processar o vídeo."), "error");
                 }
-
                 return;
             }
 
-            const link = document.createElement("a");
-            link.href = `/api/generations/${data.generation_id}/download`;
-            link.target = "_blank";
-            link.rel = "noopener";
-
-            const wrapper = document.createElement("div");
-            wrapper.className =
-                "p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-col items-center gap-3 animate-fade";
-
-            const message = document.createElement("span");
-            message.className =
-                "text-emerald-400 font-bold flex items-center gap-2 text-xs sm:text-sm";
-            message.innerHTML =
-                '<i class="fa-solid fa-circle-check"></i> Arquivo preparado com sucesso.';
-
-            const downloadButton = document.createElement("button");
-            downloadButton.className =
-                "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
-            downloadButton.innerHTML =
-                '<i class="fa-solid fa-file-arrow-down"></i> Baixar arquivo MP4';
-
-            downloadButton.addEventListener("click", () => {
-                link.click();
-            });
-
-            wrapper.appendChild(message);
-            wrapper.appendChild(downloadButton);
-
-            const status = document.getElementById("status");
-            status.innerHTML = "";
-            status.appendChild(wrapper);
+            await lerStreamDeGeracao(response);
         } catch (err) {
             setStatusBox(
                 "Erro ao se conectar ao servidor.",
@@ -959,6 +912,150 @@
             button.disabled = false;
             button.classList.remove("opacity-60", "cursor-not-allowed");
         }
+    }
+
+    async function lerStreamDeGeracao(response) {
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            let indiceFim;
+            while ((indiceFim = buffer.indexOf("\n\n")) !== -1) {
+                const bloco = buffer.slice(0, indiceFim);
+                buffer = buffer.slice(indiceFim + 2);
+                processarEventoSSE(bloco);
+            }
+        }
+    }
+
+    function processarEventoSSE(bloco) {
+        let tipo = "message";
+        let dadosTexto = "";
+        for (const linha of bloco.split("\n")) {
+            if (linha.startsWith("event: ")) tipo = linha.slice(7);
+            else if (linha.startsWith("data: ")) dadosTexto += linha.slice(6);
+        }
+        if (!dadosTexto) return;
+        let dados;
+        try {
+            dados = JSON.parse(dadosTexto);
+        } catch (err) {
+            return;
+        }
+
+        if (tipo === "status") {
+            exibirProgressoIndeterminado(dados.message);
+        } else if (tipo === "progress") {
+            exibirProgressoReal(dados.percent, dados.message);
+        } else if (tipo === "complete") {
+            exibirSucessoDaGeracao(dados);
+        } else if (tipo === "error") {
+            exibirErroDaGeracao(dados);
+        }
+    }
+
+    function exibirProgressoIndeterminado(mensagem) {
+        // Se o bloco indeterminado já está no DOM (ex.: vários eventos "download"/percent=null
+        // seguidos), só atualiza o texto -- nunca recria a div, para não reiniciar o
+        // animate-fade (era a causa do "piscar" a cada evento).
+        const textoExistente = document.getElementById("progressoIndeterminadoTexto");
+        if (textoExistente) {
+            textoExistente.textContent = mensagem || "Processando...";
+            return;
+        }
+        setStatusBox(
+            '<div class="flex items-center justify-center gap-3 text-emerald-400">' +
+            '<i class="fa-solid fa-spinner animate-spin text-base"></i>' +
+            `<span id="progressoIndeterminadoTexto">${escapeHtml(mensagem || "Processando...")}</span>` +
+            '</div>',
+            "normal"
+        );
+    }
+
+    function exibirProgressoReal(percent, mensagem) {
+        // percent pode vir null (duração do vídeo de entrada não conhecida) -- nunca inventamos
+        // um número; nesse caso o estado é o mesmo indeterminado do download.
+        if (percent === null || percent === undefined) {
+            exibirProgressoIndeterminado(mensagem);
+            return;
+        }
+        const percentArredondado = Math.round(percent);
+
+        // O container, o texto e a barra são criados UMA ÚNICA VEZ (ver o "else" abaixo). Nos
+        // eventos seguintes desta mesma fase, só o texto e a largura da barra são atualizados
+        // diretamente -- nunca recriando a div (era isso que reiniciava o animate-fade a cada
+        // evento de progresso e causava o "piscar").
+        const textoExistente = document.getElementById("progressoTexto");
+        const barraExistente = document.getElementById("progressoBarra");
+        if (textoExistente && barraExistente) {
+            textoExistente.textContent = `${mensagem || "Processando..."} (${percentArredondado}%)`;
+            barraExistente.style.width = `${percentArredondado}%`;
+            return;
+        }
+
+        setStatusBox(
+            '<div class="flex flex-col items-center gap-2 text-emerald-400">' +
+            `<span id="progressoTexto" class="text-xs sm:text-sm">${escapeHtml(mensagem || "Processando...")} (${percentArredondado}%)</span>` +
+            '<div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">' +
+            `<div id="progressoBarra" class="h-full bg-gradient-cyber transition-all" style="width: ${percentArredondado}%"></div>` +
+            '</div>' +
+            '</div>',
+            "normal"
+        );
+    }
+
+    function exibirSucessoDaGeracao(dados) {
+        const link = document.createElement("a");
+        link.href = `/api/generations/${dados.generation_id}/download`;
+        link.target = "_blank";
+        link.rel = "noopener";
+
+        const wrapper = document.createElement("div");
+        wrapper.className =
+            "p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-col items-center gap-3 animate-fade";
+
+        const message = document.createElement("span");
+        message.className =
+            "text-emerald-400 font-bold flex items-center gap-2 text-xs sm:text-sm";
+        message.innerHTML =
+            '<i class="fa-solid fa-circle-check"></i> Arquivo preparado com sucesso.';
+
+        const downloadButton = document.createElement("button");
+        downloadButton.className =
+            "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
+        downloadButton.innerHTML =
+            '<i class="fa-solid fa-file-arrow-down"></i> Baixar arquivo MP4';
+
+        downloadButton.addEventListener("click", () => {
+            link.click();
+        });
+
+        wrapper.appendChild(message);
+        wrapper.appendChild(downloadButton);
+
+        const status = document.getElementById("status");
+        status.innerHTML = "";
+        status.appendChild(wrapper);
+    }
+
+    function exibirErroDaGeracao(dados) {
+        if (dados.code === "quota_exceeded") {
+            setStatusBox(
+                '<p class="font-bold mb-1">Limite diário atingido.</p>' +
+                '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
+                '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
+                'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                "warning"
+            );
+            return;
+        }
+        // Nunca stderr cru: dados.detail já vem sempre com a mensagem amigável do backend.
+        setStatusBox(escapeHtml(dados.detail || "Não foi possível processar o vídeo."), "error");
     }
 
     function atualizarContagemLote() {

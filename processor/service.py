@@ -13,6 +13,7 @@ uso desta camada (fora do escopo desta etapa: sem fila, sem lock global aqui).
 import hashlib
 import logging
 
+from collections.abc import Callable
 from pathlib import Path
 
 from processor.errors import ProcessorError
@@ -34,17 +35,26 @@ def _sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
-def process_video(input_path: Path) -> ProcessingResult:
+def process_video(
+    input_path: Path, *, on_progress: Callable[[float | None], None] | None = None,
+) -> ProcessingResult:
     """Processa `input_path` (arquivo já baixado, ex.: DownloadResult.temp_path da Etapa 5) e
     devolve um MP4 validado. Levanta ProcessorError (ou subclasse) em qualquer falha; nesse caso,
     todo arquivo temporário de SAÍDA já criado é removido antes de propagar o erro. O arquivo de
-    ENTRADA nunca é apagado por esta camada — quem o criou (Etapa 5) decide sobre ele."""
+    ENTRADA nunca é apagado por esta camada — quem o criou (Etapa 5) decide sobre ele.
+
+    `on_progress` (opcional, barra de progresso real): repassado direto a run_ffmpeg, junto com
+    `input_probe.duration_seconds` -- a duração REAL do vídeo de entrada, que este módulo já
+    calculava antes desta etapa (validate_input já chama o probe), só não era reaproveitada."""
     input_probe = validate_input(input_path)  # InvalidInputFileError/InputTooLargeError/... propagam
     stub = new_temp_stub()
     output_path = stub.with_suffix(".mp4")
 
     try:
-        run_ffmpeg(input_path=input_path, output_path=output_path, has_audio=input_probe.has_audio)
+        run_ffmpeg(
+            input_path=input_path, output_path=output_path, has_audio=input_probe.has_audio,
+            duration_seconds=input_probe.duration_seconds, on_progress=on_progress,
+        )
         output_probe = validate_output(output_path)
         output_size = output_path.stat().st_size
         output_sha256 = _sha256_of(output_path)  # só DEPOIS da validação final (nunca antes)

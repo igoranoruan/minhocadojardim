@@ -88,7 +88,7 @@ def test_entrada_longa_demais_nao_chama_ffmpeg(tmp_path, monkeypatch):
 def test_ffmpeg_produz_saida_invalida_e_e_limpa(tmp_path):
     entrada = make_video_no_audio(tmp_path / "in.mp4", duration=1.0)
 
-    def fake_run_ffmpeg(*, input_path, output_path, has_audio):
+    def fake_run_ffmpeg(*, input_path, output_path, has_audio, duration_seconds=None, on_progress=None):
         output_path.write_bytes(b"nao e um mp4 de verdade")  # simula saída corrompida
 
     with patch("processor.service.run_ffmpeg", side_effect=fake_run_ffmpeg):
@@ -102,7 +102,7 @@ def test_ffmpeg_produz_saida_invalida_e_e_limpa(tmp_path):
 def test_timeout_do_ffmpeg_propaga_e_limpa(tmp_path):
     entrada = make_video_no_audio(tmp_path / "in.mp4", duration=1.0)
 
-    def fake_run_ffmpeg(*, input_path, output_path, has_audio):
+    def fake_run_ffmpeg(*, input_path, output_path, has_audio, duration_seconds=None, on_progress=None):
         raise ProcessingTimeoutError("simulado")
 
     with patch("processor.service.run_ffmpeg", side_effect=fake_run_ffmpeg):
@@ -116,7 +116,7 @@ def test_timeout_do_ffmpeg_propaga_e_limpa(tmp_path):
 def test_excecao_inesperada_vira_processorerror_generico_e_limpa(tmp_path):
     entrada = make_video_no_audio(tmp_path / "in.mp4", duration=1.0)
 
-    def explode(*, input_path, output_path, has_audio):
+    def explode(*, input_path, output_path, has_audio, duration_seconds=None, on_progress=None):
         raise RuntimeError("bug interno com detalhe sensível=segredo123")
 
     with patch("processor.service.run_ffmpeg", side_effect=explode):
@@ -133,7 +133,7 @@ def test_sha256_so_e_calculado_apos_a_validacao_da_saida(tmp_path):
     inteiro para hash (a validação vem antes, na ordem do código)."""
     entrada = make_video_no_audio(tmp_path / "in.mp4", duration=1.0)
 
-    def fake_run_ffmpeg(*, input_path, output_path, has_audio):
+    def fake_run_ffmpeg(*, input_path, output_path, has_audio, duration_seconds=None, on_progress=None):
         output_path.touch()  # arquivo vazio -> InvalidOutputFileError
 
     with patch("processor.service.run_ffmpeg", side_effect=fake_run_ffmpeg):

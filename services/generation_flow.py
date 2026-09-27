@@ -28,6 +28,7 @@ original.
 """
 import logging
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -115,7 +116,10 @@ def _mark_failed(db: Session, generation_id: int, original_exc: BaseException) -
         raise GenerationPersistenceError(generation_id, "fail", persistence_exc) from original_exc
 
 
-def generate_from_url(db: Session, *, user: User, url: str) -> GenerationOutcome:
+def generate_from_url(
+    db: Session, *, user: User, url: str,
+    on_progress: Callable[[str, float | None], None] | None = None,
+) -> GenerationOutcome:
     """Executa o fluxo completo de UMA geração individual para `user`.
 
     Levanta, sem capturar (a tradução para HTTP é da rota):
@@ -128,7 +132,14 @@ def generate_from_url(db: Session, *, user: User, url: str) -> GenerationOutcome
     - ProcessorError/subclasses: falha no processamento, depois da reserva — a geração já foi
       marcada FAILED antes de relançar.
     - GenerationPersistenceError: falha ao gravar o resultado (sucesso OU falha) no banco.
-    """
+
+    `on_progress(stage, percent)` (opcional, barra de progresso real): chamado com
+    `stage="download"` uma vez, `percent=None` sempre (o yt-dlp roda com `noprogress=True` nesta
+    etapa — de propósito, ver a auditoria; nunca um percentual inventado para o download), e com
+    `stage="processing"` repetidamente durante o FFmpeg, com o percentual REAL vindo de
+    processor/ffmpeg.py (ou `None` se a duração do vídeo de entrada não for conhecida). Não afeta
+    em nada a quota, o status da geração, a limpeza dos temporários nem o tratamento de exceções
+    já existentes — é só um canal de leitura a mais, opcional."""
     validated = validate_url(url)
     platform: Platform = detect_platform(validated.url)
 
@@ -145,10 +156,18 @@ def generate_from_url(db: Session, *, user: User, url: str) -> GenerationOutcome
     storage_key: str | None = None
     try:
         try:
+            if on_progress is not None:
+                # Sem percentual real disponível nesta fase (yt-dlp com noprogress=True) — a UI
+                # deve tratar isto como estado indeterminado, nunca um número fingido.
+                on_progress("download", None)
             download_result = download_video(validated.url)
             download_path = download_result.temp_path
 
-            processing_result = process_video(download_result.temp_path)
+            def _on_processing_progress(percent: float | None) -> None:
+                if on_progress is not None:
+                    on_progress("processing", percent)
+
+            processing_result = process_video(download_result.temp_path, on_progress=_on_processing_progress)
             output_path = processing_result.output_path
 
             # result_storage.save() fica no MESMO try de download/processamento de propósito: uma
