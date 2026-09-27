@@ -60,11 +60,23 @@ _SPECS: dict[Platform, YtDlpSpec] = {
         Platform.YOUTUBE,
         allowed_extractors=("Youtube",),
         extra_opts={
-            # mweb + PO Token Provider (BGUTIL), quando o companion estiver disponível no
-            # ambiente. PO Token NÃO garante todos os vídeos (especificação do produto): sem o
-            # companion, alguns vídeos simplesmente falham com DownloadFailedError diagnosticável
-            # no log, em vez de tentar dezenas de fallbacks (regra "sem fallback em cascata").
-            "extractor_args": {"youtube": {"player_client": ["mweb"]}},
+            # format PRÓPRIO do YouTube (sobrescreve o "mp4/best[ext=mp4]/best" compartilhado só
+            # para esta plataforma — diagnóstico do erro real em Shorts, 26/09): muitos vídeos/
+            # Shorts só expõem streams DASH separados (vídeo-only + áudio-only), sem NENHUM format
+            # já muxado. "best"/"best[ext=mp4]" (sem "*") só casam com format único que já tenha
+            # vídeo E áudio juntos -- por isso os três fallbacks antigos se esgotavam sem candidato
+            # ("Requested format is not available"). "bestvideo+bestaudio" pede ao yt-dlp para
+            # casar o melhor vídeo-only com o melhor áudio-only e fazer o merge (via ffmpeg, que o
+            # yt-dlp já localiza sozinho no PATH); "/best" continua como fallback para quando já
+            # existir um format único combinado. merge_output_format="mp4" (compartilhado, abaixo)
+            # já garante que o resultado do merge sai como .mp4.
+            "format": "bestvideo+bestaudio/best",
+            # NÃO forçar player_client (diagnóstico real em Windows, 26/09): "mweb" (e "web") só
+            # devolviam formatos de storyboard (sb0/mhtml) para este vídeo -- nenhum vídeo/áudio de
+            # verdade. Sem player_client forçado, o yt-dlp negocia os clients padrão sozinho e
+            # recebeu os formatos reais (140/299/303/399/etc.), confirmado por teste isolado
+            # (yt-dlp -F e download real bem-sucedido). Não reintroduzir "mweb"/BGUTIL aqui sem um
+            # novo diagnóstico -- isso é responsabilidade de uma etapa própria, não desta correção.
         },
     ),
 }

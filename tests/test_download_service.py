@@ -259,11 +259,66 @@ def test_tiktok_allowed_extractors_continua_intacto_com_impersonate():
     assert "generic" not in [e.lower() for e in spec.allowed_extractors]
 
 
-def test_youtube_player_client_mweb_continua_intacto():
-    """Confirma que mexer no TikTok não afetou a configuração já existente do YouTube."""
+def test_youtube_nao_forca_mais_player_client():
+    """Diagnóstico real em Windows (26/09): "mweb" (e "web") só devolviam formatos de storyboard
+    (sb0/mhtml) para o Short testado -- nenhum vídeo/áudio de verdade. Sem player_client forçado,
+    o yt-dlp negocia os clients padrão sozinho e recebeu os formatos reais (confirmado por teste
+    isolado com download real). A spec do YouTube não deve mais declarar "extractor_args"."""
     import download.service as service_module
     spec = service_module._SPECS[Platform.YOUTUBE]
-    assert spec.extra_opts["extractor_args"]["youtube"]["player_client"] == ["mweb"]
+    assert "extractor_args" not in spec.extra_opts
+    assert "player_client" not in str(spec.extra_opts)  # nenhum vestígio, nem aninhado
+
+
+# ------------------------------------------------------------------ format do YouTube (diagnóstico 26/09: Shorts sem format muxado)
+def test_youtube_usa_bestvideo_mais_bestaudio_como_format():
+    """O format compartilhado ("mp4/best[ext=mp4]/best") só casa com um format ÚNICO já
+    combinado (vídeo+áudio no mesmo stream) -- por isso falhava quando o YouTube (via mweb)
+    só oferecia streams DASH separados. O YouTube agora sobrescreve "format" no seu próprio
+    extra_opts, pedindo explicitamente o merge de vídeo-only + áudio-only."""
+    from download.ytdlp_downloader import YtDlpDownloader
+
+    spec = service_module._SPECS[Platform.YOUTUBE]
+    assert spec.extra_opts.get("format") == "bestvideo+bestaudio/best"
+
+    # também confere as opções FINAIS construídas, não só a declaração crua do spec
+    options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
+    assert options["format"] == "bestvideo+bestaudio/best"
+    # o merge continua saindo como .mp4 (opção compartilhada, não tocada por esta mudança)
+    assert options["merge_output_format"] == "mp4"
+
+
+def test_outras_plataformas_continuam_com_o_format_compartilhado():
+    """TikTok, Instagram e Pinterest não declaram "format" próprio -- devem continuar herdando
+    o valor compartilhado de ytdlp_downloader.py, sem nenhuma influência da mudança do YouTube."""
+    from download.ytdlp_downloader import YtDlpDownloader
+
+    for plataforma in (Platform.TIKTOK, Platform.INSTAGRAM, Platform.PINTEREST):
+        spec = service_module._SPECS[plataforma]
+        assert "format" not in spec.extra_opts, plataforma
+        options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
+        assert options["format"] == "mp4/best[ext=mp4]/best", plataforma
+
+
+def test_youtube_allowed_extractors_continua_intacto_e_extra_opts_tem_so_format():
+    """Confirma que, depois da remoção do player_client forçado, a spec do YouTube ficou só com
+    "format" -- allowed_extractors (segurança contra o extractor genérico) continua intacto, e
+    não sobrou nenhum resquício de extractor_args/mweb."""
+    spec = service_module._SPECS[Platform.YOUTUBE]
+    assert spec.allowed_extractors == ("Youtube",)
+    assert set(spec.extra_opts.keys()) == {"format"}
+
+
+def test_configuracao_do_youtube_nao_vazou_para_outras_plataformas():
+    """TikTok/Instagram/Pinterest não devem ter ganhado "format" nem qualquer resquício de
+    "extractor_args"/"player_client" por causa das mudanças feitas na spec do YouTube."""
+    from download.ytdlp_downloader import YtDlpDownloader
+
+    for plataforma in (Platform.TIKTOK, Platform.INSTAGRAM, Platform.PINTEREST):
+        spec = service_module._SPECS[plataforma]
+        assert "extractor_args" not in spec.extra_opts, plataforma
+        options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
+        assert "extractor_args" not in options, plataforma
 
 
 # ------------------------------------------------------------------ timeout
