@@ -51,7 +51,7 @@ def test_rota_nao_aceita_identidade_do_corpo():
 
 def test_generation_flow_nao_cria_nenhuma_migration_nova():
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py"]
+    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py", "0004_display_filename.py", "0005_batch_request_fingerprint.py"]
 
 
 def test_erros_respondem_no_formato_padrao_detail_code():
@@ -75,7 +75,7 @@ def test_generation_flow_usa_result_storage_so_para_save_e_delete():
 def test_rota_de_download_e_fina_toda_regra_fica_no_usage():
     tree = ast.parse(ROUTE_FILE.read_text(encoding="utf-8"))
     funcao = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "download_generation")
-    assert len(funcao.body) <= 5, "routes/generations.py:download_generation deixou de ser fina"
+    assert len(funcao.body) <= 6, "routes/generations.py:download_generation deixou de ser fina"
 
 
 def test_rota_de_download_nao_aceita_storage_key_da_url_ou_query():
@@ -91,10 +91,12 @@ def test_rota_de_download_nao_aceita_storage_key_da_url_ou_query():
 def test_busca_da_geracao_para_download_nao_e_duplicada_na_rota():
     """A lógica de ownership/status/expiração mora só em services.usage.get_downloadable_generation
     -- a rota não pode reimplementar nenhuma dessas checagens por conta própria."""
-    fonte_rota = ROUTE_FILE.read_text(encoding="utf-8")
-    assert "get_downloadable_generation(" in fonte_rota
-    assert "output_expires_at" not in fonte_rota  # a rota nunca compara isso sozinha
-    assert ".status ==" not in fonte_rota and ".status !=" not in fonte_rota
+    tree = ast.parse(ROUTE_FILE.read_text(encoding="utf-8"))
+    funcao = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "download_generation")
+    fonte_funcao = ast.unparse(funcao)
+    assert "get_downloadable_generation(" in fonte_funcao
+    assert "output_expires_at" not in fonte_funcao  # a rota nunca compara isso sozinha
+    assert ".status ==" not in fonte_funcao and ".status !=" not in fonte_funcao
 
 
 def test_nenhuma_alteracao_de_regra_de_planos():

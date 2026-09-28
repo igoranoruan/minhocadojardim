@@ -10,7 +10,9 @@ from database.types import UTCDateTime, utcnow
 class Batch(Base):
     """Lote de vídeos. Sem coluna de status: o estado do lote é derivado das generations.
 
-    O máximo de 10 itens e a exclusividade do VIP são regras do serviço (config.py e
+    O teto de vídeos por lote (max_batch_size) varia por plano e NÃO é exclusivo do VIP —
+    hoje Semanal, Mensal e VIP Batch podem usar lote, cada um com seu próprio teto; só o Free
+    não usa lote. Esses valores são regra de serviço (services/plans.py, fonte única do
     catálogo de planos), não do banco.
     """
 
@@ -28,4 +30,10 @@ class Batch(Base):
     )
     request_id: Mapped[str] = mapped_column(String(64), nullable=False)
     item_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Fingerprint determinístico (SHA-256) do conteúdo do lote -- URLs, filenames e ORDEM (Etapa
+    # 9.3, correção de idempotência real). NULLABLE só por compatibilidade com lotes criados antes
+    # desta coluna existir (ver a migration 0005); todo lote novo sempre grava um valor. Usado
+    # apenas para detectar "mesmo request_id, conteúdo diferente" em reserve_batch/_batch_replay
+    # -- nunca em nenhum filtro/consulta (sem índice).
+    request_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utcnow)

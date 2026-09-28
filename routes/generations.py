@@ -28,13 +28,18 @@ import json
 import logging
 import queue
 import re
+import shutil
+import tempfile
 import threading
+import zipfile
 from collections.abc import Iterator
+from pathlib import Path
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, sessionmaker
+from starlette.background import BackgroundTask
 
 from database.models import User
 from database.session import get_session
@@ -42,13 +47,22 @@ from download.errors import DownloadError
 from processor.errors import ProcessorError
 from routes.deps import get_current_user
 from services import result_storage
+from services.batch_filenames import InvalidFilenameError, sanitize_batch_filenames
+from services.batch_fingerprint import compute_batch_fingerprint
 from services.entitlements import EntitlementInconsistencyError
-from services.generation_flow import GenerationPersistenceError, generate_from_url
+from services.generation_flow import GenerationPersistenceError, generate_from_url, run_batch
 from services.usage import (
+    BatchNotAllowedError,
+    BatchNotFoundError,
+    BatchQuotaExceededError,
+    BatchRequestConflictError,
     GenerationDownloadNotFoundError,
+    InvalidBatchSizeError,
     QuotaExceededError,
     UsageError,
+    get_downloadable_batch_generations,
     get_downloadable_generation,
+    reserve_batch,
 )
 
 logger = logging.getLogger("minhoca")
@@ -61,6 +75,21 @@ _CAMEL_CASE_RE = re.compile(r"(?<!^)(?=[A-Z])")
 
 class CreateGenerationBody(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
+
+
+class BatchItemBody(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
+    # Opcional (Etapa 9.3) -- sanitizado (services.batch_filenames) e persistido em
+    # Generation.display_filename; usado no download individual e no ZIP (ver create_batch).
+    filename: str | None = Field(default=None, max_length=200)
+
+
+class CreateBatchBody(BaseModel):
+    request_id: str = Field(min_length=1, max_length=64)
+    # Só estrutura (lista, pelo menos 1 item) -- o teto de QUANTIDADE por plano (max_batch_size)
+    # é regra de negócio e continua exclusivamente em reserve_batch/services.plans; não duplicado
+    # aqui (correção da Etapa 9.3: um teto arbitrário no Pydantic já existiu e foi removido).
+    items: list[BatchItemBody] = Field(min_length=1)
 
 
 def _code_for(exc: BaseException) -> str:
@@ -121,14 +150,31 @@ async def generation_download_not_found_handler(request, exc: GenerationDownload
     return _error_response(404, exc, detail="Resultado não encontrado.")
 
 
+async def batch_not_found_handler(request, exc: BatchNotFoundError) -> JSONResponse:
+    """404 genérico e único para o ZIP de lote (Etapa 9.3) -- mesma filosofia do 404 genérico da
+    geração avulsa: lote inexistente, de outro usuário, ou sem nenhum item concluído disponível
+    para download recebem exatamente a mesma resposta."""
+    return _error_response(404, exc, detail="Lote não encontrado.")
+
+
 def _error_payload_for(exc: BaseException) -> dict:
     """Mesma tradução de erro que os handlers acima já faziam via HTTP status — aqui devolvida
     como o corpo do evento `error` (SSE), já que o status HTTP não pode mais mudar depois que o
     stream começou. `code`/`detail` continuam idênticos ao que cada tipo de erro já produzia."""
     if isinstance(exc, (DownloadError, ProcessorError)):
         detail = exc.user_message
+    elif isinstance(exc, InvalidFilenameError):
+        detail = "Nome de arquivo inválido."
     elif isinstance(exc, QuotaExceededError):
         detail = "Você atingiu o limite de gerações do seu plano."
+    elif isinstance(exc, BatchQuotaExceededError):
+        detail = "Você atingiu o limite de operações de lote do seu plano nesta semana."
+    elif isinstance(exc, BatchNotAllowedError):
+        detail = "Seu plano não permite processamento em lote."
+    elif isinstance(exc, InvalidBatchSizeError):
+        detail = "Quantidade de itens inválida para este lote."
+    elif isinstance(exc, BatchRequestConflictError):
+        detail = "Esta requisição de lote já foi usada com um tamanho diferente."
     elif isinstance(exc, EntitlementInconsistencyError):
         logger.error("[GENERATION] inconsistência de entitlements: %s", exc)
         detail = "Não foi possível verificar seu acesso agora."
@@ -229,6 +275,211 @@ def create_generation(
     )
 
 
+def _run_batch_in_background(
+    engine_bind, items: list[dict], request_id: str, user_id: int,
+    event_queue: "queue.Queue[tuple[str, dict] | None]",
+) -> None:
+    """Mesmo padrão de _run_generation_in_background (Session própria da thread, a partir da
+    MESMA engine que a rota recebeu via Depends(get_session) -- ver o comentário daquela função,
+    que vale idêntico aqui). `items` é uma lista de dicts {"url": ..., "filename": ...} NA ORDEM
+    em que o cliente enviou -- essa ordem é o único vínculo entre cada item e a posição (1-based)
+    que reserve_batch atribui às Generations reservadas; a URL em si não é persistida em lugar
+    nenhum (só o filename passou a ser, via display_filenames -- ver services/batch_filenames.py
+    e Generation.display_filename, migration 0004)."""
+    session = sessionmaker(bind=engine_bind, expire_on_commit=False)()
+    try:
+        # 1) validação ESTRUTURAL do filename (não toca banco/cota) -- sempre antes de qualquer
+        # reserva, para nunca gastar cota por causa de um filename inválido. Já sanitizado (com
+        # .mp4 garantido) -- é o valor gravado em Generation.display_filename daqui pra frente.
+        sanitizados = sanitize_batch_filenames([item["filename"] for item in items])
+
+        # Fingerprint do CONTEÚDO (Etapa 9.3, correção de idempotência): urls (como enviadas) +
+        # filenames JÁ sanitizados, na ordem submetida -- mesma função usada aqui e dentro de
+        # reserve_batch/_batch_replay para comparar contra uma repetição do mesmo request_id.
+        fingerprint = compute_batch_fingerprint(
+            [(item["url"], nome) for item, nome in zip(items, sanitizados)]
+        )
+
+        reservation = reserve_batch(
+            session, user_id=user_id, request_id=request_id, size=len(items),
+            content_fingerprint=fingerprint, display_filenames=sanitizados,
+        )
+        event_queue.put((
+            "batch_reserved",
+            {"batch_id": reservation.batch_id, "item_count": reservation.item_count, "created": reservation.created},
+        ))
+
+        pares = list(zip(reservation.generation_ids, (item["url"] for item in items), strict=True))
+
+        def on_item_progress(position: int, generation_id: int, stage: str, percent: float | None) -> None:
+            mensagem = "Baixando..." if stage == "download" else "Processando e limpando..."
+            tipo_evento = "item_progress" if stage == "processing" else "item_status"
+            event_queue.put((tipo_evento, {
+                "position": position, "generation_id": generation_id,
+                "stage": stage, "percent": percent, "message": mensagem,
+            }))
+
+        resultados = run_batch(session, items=pares, on_item_progress=on_item_progress)
+
+        concluidos = falhados = 0
+        for resultado in resultados:
+            nome = sanitizados[resultado.position - 1]
+            if resultado.ok:
+                concluidos += 1
+                payload = {
+                    "position": resultado.position,
+                    "generation_id": resultado.generation_id,
+                    "status": "completed",
+                    "platform": resultado.outcome.platform,
+                    "size_bytes": resultado.outcome.size_bytes,
+                    "duration_seconds": resultado.outcome.duration_seconds,
+                    "output_sha256": resultado.outcome.output_sha256,
+                    "filename": nome,
+                }
+            else:
+                falhados += 1
+                payload = {
+                    "position": resultado.position,
+                    "generation_id": resultado.generation_id,
+                    "status": "failed",
+                    "error_code": resultado.error_code,
+                    "filename": nome,
+                }
+            event_queue.put(("item_complete", payload))
+            event_queue.put((
+                "batch_progress",
+                {"completed": concluidos, "failed": falhados, "total": len(resultados)},
+            ))
+
+        event_queue.put((
+            "complete",
+            {
+                "batch_id": reservation.batch_id,
+                "item_count": reservation.item_count,
+                "completed": concluidos,
+                "failed": falhados,
+            },
+        ))
+    except Exception as exc:
+        event_queue.put(("error", _error_payload_for(exc)))
+    finally:
+        session.close()
+        event_queue.put(None)
+
+
+def _stream_batch(engine_bind, items: list[dict], request_id: str, user_id: int) -> Iterator[str]:
+    event_queue: "queue.Queue[tuple[str, dict] | None]" = queue.Queue()
+    thread = threading.Thread(
+        target=_run_batch_in_background,
+        args=(engine_bind, items, request_id, user_id, event_queue),
+        daemon=True,
+    )
+    thread.start()
+    while True:
+        item = event_queue.get()
+        if item is None:
+            break
+        event_type, data = item
+        yield _sse_event(event_type, data)
+
+
+@router.post("/download-batch")
+def create_batch(
+    body: CreateBatchBody,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> StreamingResponse:
+    """Rota fina, mesmo desenho de POST /api/generations: só resolve o usuário autenticado (401
+    normal, antes de qualquer stream) e devolve o stream SSE. TODA a regra de negócio (validação
+    de filename, reserva de quota -- vídeos E operações de lote, Etapa 9.2 -- e a orquestração de
+    cada item, reaproveitando GenerationFlow) mora em _run_batch_in_background/services.usage
+    .reserve_batch/services.generation_flow.run_batch; nada disso é duplicado aqui.
+
+    Eventos SSE (além de `error`, terminal, mesmo formato {"detail", "code"} de sempre):
+    - `batch_reserved`  -- a reserva foi aceita (quota de vídeos + de operações, atômicas, Etapa 9.2)
+    - `item_status`/`item_progress` -- progresso de UM item (mesmo `stage`/`percent` da geração avulsa)
+    - `item_complete`   -- UM item terminou (completed ou failed) -- nunca cancela os demais
+    - `batch_progress`  -- agregado (completed/failed/total) depois de CADA item_complete
+    - `complete`        -- terminal, com o resumo final do lote inteiro
+    """
+    items = [{"url": item.url, "filename": item.filename} for item in body.items]
+    return StreamingResponse(
+        _stream_batch(db.get_bind(), items, body.request_id, user.id),
+        media_type="text/event-stream",
+        headers=NO_STORE,
+    )
+
+
+def _unique_zip_name(nome: str, usados: set[str]) -> str:
+    """Devolve `nome` se ainda não foi usado nesta chamada de ZIP; senão gera um nome único
+    inserindo um contador ANTES da extensão (`video.mp4` -> `video-2.mp4` -> `video-3.mp4`, ...),
+    preservando a extensão. `usados` é mutado (registra o nome devolvido) -- chamar uma vez por
+    entrada, na ordem em que são escritas no ZIP."""
+    if nome not in usados:
+        usados.add(nome)
+        return nome
+    raiz, ponto, extensao = nome.rpartition(".")
+    base, sufixo = (raiz, f".{extensao}") if ponto else (nome, "")
+    contador = 2
+    while True:
+        candidato = f"{base}-{contador}{sufixo}"
+        if candidato not in usados:
+            usados.add(candidato)
+            return candidato
+        contador += 1
+
+
+@router.get("/batches/{batch_id}/download")
+def download_batch(
+    batch_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> FileResponse:
+    """ZIP com os resultados dos itens CONCLUÍDOS do lote (Etapa 9.3). Itens com erro são
+    simplesmente OMITIDOS (nunca incluídos como entrada vazia/corrompida). 404 genérico se o lote
+    não existe, não é deste usuário, ou não tem nenhum item concluído e ainda disponível (ex.:
+    todos falharam, ou todos expiraram).
+
+    Correção arquitetural (pós-Etapa 9.3): a rota NÃO decide mais sozinha quais itens são
+    elegíveis -- ownership do lote, status, storage_key, expiração e existência física do arquivo
+    são inteiramente responsabilidade de services.usage.get_downloadable_batch_generations (a
+    MESMA filosofia que get_downloadable_generation já aplica para a geração avulsa). A rota só
+    recebe a lista já elegível (ou a BatchNotFoundError, 404 genérico) e monta o ZIP.
+
+    Nome de cada entrada (Etapa 9.3, correção de filename): `generation.display_filename` quando
+    presente (sanitizado na criação do lote, já com `.mp4` garantido -- ver
+    services/batch_filenames.py), senão o padrão fixo já existente (`minhoca-{generation_id}.mp4`).
+    Nomes duplicados são PERMITIDOS na criação do lote (services.batch_filenames não deduplica --
+    contrato existente, preservado por esta correção); é aqui, na montagem do ZIP, que a
+    deduplicação acontece de fato: `_unique_zip_name` (abaixo) garante que duas entradas com o
+    MESMO nome nunca se sobrescrevam, gerando um nome único (`video.mp4` -> `video-2.mp4`)."""
+    disponiveis = get_downloadable_batch_generations(db, batch_id, user.id)
+
+    tmp_dir = Path(tempfile.mkdtemp(prefix="minhoca-batch-zip-"))
+    zip_path = tmp_dir / f"minhoca-lote-{batch_id}.zip"
+    nomes_usados: set[str] = set()
+    try:
+        with zipfile.ZipFile(zip_path, mode="w") as zip_file:
+            for generation in disponiveis:
+                origem = result_storage.resolve_path(generation.output_storage_key)
+                # Fonte sempre um arquivo já validado por result_storage (mesma validação de
+                # chave/caminho de _KEY_RE, nunca um caminho vindo do usuário); o NOME da entrada é
+                # que pode vir do usuário (display_filename, já sanitizado) -- nunca usado como
+                # caminho, só como arcname de um arquivo plano (sem "/", garantido na sanitização).
+                nome_base = generation.display_filename or f"minhoca-{generation.id}.mp4"
+                zip_file.write(origem, arcname=_unique_zip_name(nome_base, nomes_usados))
+    except Exception:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise
+    return FileResponse(
+        zip_path,
+        media_type="application/zip",
+        filename=f"minhoca-lote-{batch_id}.zip",
+        headers=NO_STORE,
+        background=BackgroundTask(shutil.rmtree, tmp_dir, ignore_errors=True),
+    )
+
+
 @router.get("/generations/{generation_id}/download")
 def download_generation(
     generation_id: int,
@@ -237,14 +488,21 @@ def download_generation(
 ) -> FileResponse:
     """Etapa 8B.3. `storage_key` NUNCA vem da URL/query string — é lido internamente da geração,
     já com ownership/status/expiração verificados por services.usage.get_downloadable_generation
-    (única fonte dessa checagem, não duplicada aqui)."""
+    (única fonte dessa checagem, não duplicada aqui). Serve tanto geração avulsa quanto item de
+    lote -- nenhuma rota separada para lote (Etapa 9.3).
+
+    Nome do arquivo (Etapa 9.3, correção de filename): `generation.display_filename` quando
+    presente (sanitizado na criação do lote, já com `.mp4` garantido), senão o padrão fixo de
+    sempre (`minhoca-{generation_id}.mp4`) -- geração avulsa nunca tem display_filename, então o
+    comportamento dela é IDÊNTICO ao de antes desta correção."""
     generation = get_downloadable_generation(db, generation_id, user.id)
     if not result_storage.exists(generation.output_storage_key):
         raise GenerationDownloadNotFoundError()
     caminho = result_storage.resolve_path(generation.output_storage_key)
+    nome_arquivo = generation.display_filename or f"minhoca-{generation_id}.mp4"
     return FileResponse(
         caminho,
         media_type="video/mp4",
-        filename=f"minhoca-{generation_id}.mp4",
+        filename=nome_arquivo,
         headers=NO_STORE,
     )

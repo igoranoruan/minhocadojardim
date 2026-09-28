@@ -36,7 +36,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from config import RESULT_TTL_SECONDS
-from database.models import User
+from database.models import Generation, User
 from download.errors import DownloadError
 from download.platform import Platform, detect_platform
 from download.service import download_video
@@ -135,11 +135,16 @@ def generate_from_url(
 
     `on_progress(stage, percent)` (opcional, barra de progresso real): chamado com
     `stage="download"` uma vez, `percent=None` sempre (o yt-dlp roda com `noprogress=True` nesta
-    etapa — de propósito, ver a auditoria; nunca um percentual inventado para o download), e com
+    etapa – de propósito, ver a auditoria; nunca um percentual inventado para o download), e com
     `stage="processing"` repetidamente durante o FFmpeg, com o percentual REAL vindo de
     processor/ffmpeg.py (ou `None` se a duração do vídeo de entrada não for conhecida). Não afeta
     em nada a quota, o status da geração, a limpeza dos temporários nem o tratamento de exceções
-    já existentes — é só um canal de leitura a mais, opcional."""
+    já existentes — é só um canal de leitura a mais, opcional.
+
+    A partir da Etapa 9.3, o corpo desta função (depois da reserva) é o mesmo `_execute_reserved`
+    reaproveitado pela orquestração de lote (`run_batch`, abaixo) — ver o comentário daquela
+    função. Nenhum comportamento desta função mudou: a extração só move código, não altera ordem,
+    exceções nem efeitos colaterais."""
     validated = validate_url(url)
     platform: Platform = detect_platform(validated.url)
 
@@ -149,7 +154,29 @@ def generate_from_url(
     reservation = reserve_generation(
         db, user_id=user.id, request_id=uuid.uuid4().hex, platform=platform.value,
     )
-    generation_id = reservation.generation_id
+    outcome = _execute_reserved(db, generation_id=reservation.generation_id, url=validated.url, on_progress=on_progress)
+    logger.info(
+        "[GENERATION] concluída id=%s user_id=%s plataforma=%s bytes=%s",
+        outcome.generation_id, user.id, outcome.platform, outcome.size_bytes,
+    )
+    return outcome
+
+
+def _execute_reserved(
+    db: Session, *, generation_id: int, url: str,
+    on_progress: Callable[[str, float | None], None] | None = None,
+) -> GenerationOutcome:
+    """Núcleo reutilizável (Etapa 9.3): download -> processamento -> storage -> complete/fail,
+    para uma Generation JÁ RESERVADA (`generation_id`). Não reserva nada, não conhece usuário nem
+    plano -- quem chama já reservou antes (generate_from_url, acima, para a geração avulsa; ou
+    reserve_batch + run_batch, mais abaixo, para um item de lote). Extraído de generate_from_url
+    SEM NENHUMA mudança de comportamento: mesma ordem, mesmas exceções, mesma limpeza.
+
+    Chamar validate_url/detect_platform de novo aqui (já feitos uma vez por quem reservou, no caso
+    da geração avulsa) é intencional e inofensivo -- o mesmo padrão que download_video já tem
+    internamente (também revalida a URL); nenhuma chamada de rede acontece nesta validação."""
+    validated = validate_url(url)
+    platform: Platform = detect_platform(validated.url)
 
     download_path: Path | None = None
     output_path: Path | None = None
@@ -227,10 +254,8 @@ def generate_from_url(
     finally:
         _cleanup_quietly(download_path, output_path)
 
-    logger.info(
-        "[GENERATION] concluída id=%s user_id=%s plataforma=%s bytes=%s",
-        generation_id, user.id, platform.value, processing_result.size_bytes,
-    )
+    # O log de conclusão (com user_id) fica em generate_from_url, que é quem conhece o usuário; a
+    # orquestração de lote (run_batch) faz o seu próprio log por item, abaixo.
     return GenerationOutcome(
         generation_id=generation_id,
         status="completed",
@@ -239,3 +264,85 @@ def generate_from_url(
         duration_seconds=processing_result.duration_seconds,
         output_sha256=processing_result.output_sha256,
     )
+
+
+# ------------------------------------------------------------------------------ orquestração de lote (Etapa 9.3)
+@dataclass(frozen=True)
+class BatchItemOutcome:
+    """Resultado de UM item de lote depois de run_batch. `outcome` é None quando `ok` é False;
+    `error_code` é None quando `ok` é True. `position` é 1-based, na mesma ordem da lista `items`
+    passada para run_batch (que por sua vez deve ser a mesma ordem de `BatchReservation.generation_ids`,
+    ver routes/generations.py)."""
+
+    position: int
+    generation_id: int
+    ok: bool
+    outcome: GenerationOutcome | None
+    error_code: str | None
+
+
+def run_batch(
+    db: Session,
+    *,
+    items: list[tuple[int, str]],
+    on_item_progress: Callable[[int, int, str, float | None], None] | None = None,
+) -> list[BatchItemOutcome]:
+    """Processa, SEQUENCIALMENTE (download/FFmpeg são pesados; nenhum paralelismo aqui, mesma
+    postura de download/processor), cada item `(generation_id, url)` de um lote JÁ RESERVADO por
+    services.usage.reserve_batch — não reserva nada, não cria nenhuma Generation.
+
+    Reaproveita `_execute_reserved` (o MESMO núcleo da geração avulsa) para cada item: não duplica
+    download, processamento, storage nem a lógica de marcar falha/sucesso.
+
+    Isolamento de falhas (regra explícita da Etapa 9.3): uma falha de ITEM (DownloadError,
+    ProcessorError, ou qualquer exceção inesperada) NUNCA interrompe os demais itens -- é
+    capturada aqui (a própria `_execute_reserved` já marcou a Generation como failed e liberou a
+    cota de VÍDEO só daquele item) e a orquestração segue para o próximo. A cota de OPERAÇÃO de
+    lote (Etapa 9.2) não é tocada por nada nesta função -- já foi consumida atomicamente por
+    reserve_batch, antes de run_batch ser chamada, e nunca é devolvida por uma falha de item.
+
+    Exceção: GenerationPersistenceError (falha ao GRAVAR no banco, depois do vídeo já processado)
+    é uma falha de INFRAESTRUTURA, não do vídeo -- é propagada (relançada), abortando o restante do
+    lote, em vez de ser tratada como "só este item falhou" (não adianta continuar processando mais
+    itens se o banco está recusando gravações).
+
+    Reexecução idempotente (o mesmo request_id de lote é reenviado): para um item cuja Generation
+    JÁ NÃO está mais "reserved" (completed ou failed de uma tentativa anterior -- ex.: o processo
+    caiu no meio do lote e foi reenviado), run_batch NÃO reprocessa (não baixa/gera de novo) --
+    apenas relata o estado já gravado, exatamente como reserve_generation já faz para o request_id
+    repetido da geração avulsa (nunca reexecuta um efeito colateral que já aconteceu)."""
+    resultados: list[BatchItemOutcome] = []
+    total = len(items)
+    for position, (generation_id, url) in enumerate(items, start=1):
+        generation = db.get(Generation, generation_id)
+        if generation is not None and generation.status != "reserved":
+            if generation.status == "completed":
+                outcome = GenerationOutcome(
+                    generation_id=generation.id,
+                    status="completed",
+                    platform=generation.platform or "",
+                    size_bytes=generation.output_size_bytes or 0,
+                    duration_seconds=(generation.duration_ms or 0) / 1000,
+                    output_sha256=generation.output_sha256 or "",
+                )
+                resultados.append(BatchItemOutcome(position, generation_id, True, outcome, None))
+            else:  # "failed"
+                resultados.append(BatchItemOutcome(position, generation_id, False, None, generation.error_code))
+            continue
+
+        def _progress(stage: str, percent: float | None, _position=position, _gid=generation_id) -> None:
+            if on_item_progress is not None:
+                on_item_progress(_position, _gid, stage, percent)
+
+        try:
+            outcome = _execute_reserved(db, generation_id=generation_id, url=url, on_progress=_progress)
+            resultados.append(BatchItemOutcome(position, generation_id, True, outcome, None))
+        except GenerationPersistenceError:
+            raise
+        except Exception as exc:
+            logger.error(
+                "[GENERATION] item %s/%s do lote (geração %s) falhou: %s",
+                position, total, generation_id, exc.__class__.__name__, exc_info=True,
+            )
+            resultados.append(BatchItemOutcome(position, generation_id, False, None, _error_code_for(exc)))
+    return resultados
