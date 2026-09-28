@@ -160,7 +160,7 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('semanal')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso semanal</button>
+                        <button onclick="abrirModalPagamento('weekly')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso semanal</button>
                     </div>
 
                     <div class="bg-card rounded-2xl p-6 flex flex-col border-emerald-500/70 ring-1 ring-emerald-500/50 relative">
@@ -174,7 +174,7 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('mensal')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Comprar acesso mensal</button>
+                        <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Comprar acesso mensal</button>
                     </div>
 
                     <div class="bg-card rounded-2xl p-6 flex flex-col">
@@ -186,7 +186,7 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('vip')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso VIP Batch</button>
+                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso VIP Batch</button>
                     </div>
                 </div>
             </section>
@@ -343,60 +343,48 @@
 
             <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-4">
                 <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all"> <i class="fa-solid fa-qrcode mr-1"></i> PIX<span class="block text-[9px] font-medium text-slate-400 mt-0.5">Pagamento único</span></button>
-                <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('cartao')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO<span class="block text-[9px] font-medium text-slate-500 mt-0.5">Pagamento único</span></button>
+                <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO<span class="block text-[9px] font-medium text-slate-500 mt-0.5">Pagamento único</span></button>
             </div>
 
-            <div id="conteudoPix">
-                <div class="bg-emerald-950/20 border border-emerald-800/30 rounded-xl p-4 mb-3">
-                    <div id="pixQrContainer" class="bg-white rounded-xl p-3 min-h-12 flex items-center justify-center mb-3"><span class="text-xs text-slate-500">Clique em gerar Pix.</span></div>
-                    <input id="pixCopiaCola" type="text" readonly class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 rounded-xl text-slate-300 text-center mb-2 focus:outline-none select-all">
-                    <button id="gerarPixButton" onclick="gerarPix()" class="w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs hover:brightness-110 transition-all">Gerar Pix</button>
-                    <button id="copiarPixButton" onclick="copiarPix()" disabled class="w-full mt-2 py-2.5 bg-slate-800 text-slate-300 font-bold rounded-xl text-xs hover:bg-slate-700 transition-all disabled:opacity-40">Copiar Pix Copia e Cola</button>
-                </div>
-                <div id="pixStatus" class="text-xs text-slate-400"></div>
-                <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">O Pix libera o período contratado após a confirmação. Não há cobrança automática.</p>
-            </div>
-
-            <div id="conteudoCartao" class="hidden">
-                <div class="bg-blue-950/20 border border-blue-900/30 rounded-xl p-4 mb-4 text-left">
-                    <div class="flex items-start gap-3"><i class="fa-solid fa-credit-card text-blue-400 mt-0.5"></i><div><strong class="text-xs text-white block">Pagamento único</strong><span class="text-[10px] text-slate-400 leading-relaxed">Você paga uma única vez e recebe o acesso pelo período contratado. Depois da expiração, basta comprar novamente se quiser continuar.</span></div></div>
-                </div>
-                <button id="checkoutButton" onclick="prepararCheckoutCartao()" class="w-full py-3.5 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs hover:brightness-110 transition-all shadow-lg">Pagar com cartão</button>
-                <div id="checkoutStatus" class="mt-4 text-xs text-slate-400"></div>
-            </div>
-
-            <!-- Pagamento ainda não está disponível nesta versão: nenhum botão aqui chama a API. -->
-            <div id="pagamentoIndisponivel" class="hidden bg-amber-950/20 border border-amber-800/40 rounded-xl p-4 text-center">
-                <i class="fa-solid fa-clock text-amber-400 mb-2 text-lg"></i>
-                <p class="text-sm font-bold text-white">Pagamentos em implementação</p>
-                <p class="text-xs text-slate-400 mt-1 leading-relaxed">Ainda não é possível comprar este plano por aqui. Assim que o pagamento estiver disponível nesta versão, você poderá concluir a compra direto nesta tela.</p>
-            </div>
+            <!-- O Payment Brick (MercadoPago.js) é montado aqui dentro -- um único container reutilizado
+                 para Pix e cartão: trocar de método desmonta o Brick atual e monta de novo, restrito ao
+                 novo método (ver criarPaymentEMontarBrick). O HTML do Pix (QR/copia-e-cola) e do
+                 formulário de cartão são desenhados pelo próprio Brick -- não recriamos essa UI aqui. -->
+            <div id="paymentBrickContainer" class="min-h-[4rem]"></div>
+            <div id="pagamentoStatus" class="mt-3 text-xs text-slate-400"></div>
+            <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
         </div>
     </div>
 
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
 
+    // Nome/descrição são só rótulos de exibição -- nunca o preço, que SEMPRE vem da resposta do
+    // backend (POST /api/payments -> amount_cents), nunca calculado ou fixado aqui (Etapa 10.2,
+    // item 13: "o valor exibido no frontend deve ser derivado da resposta do backend").
     const PLANOS = {
-        semanal: {
+        weekly: {
             nome: "Semanal",
-            valor: "R$ 9,90",
             descricao: "5 gerações por dia + lote • acesso por 7 dias"
         },
-        mensal: {
+        monthly: {
             nome: "Mensal",
-            valor: "R$ 16,90",
             descricao: "10 gerações por dia + lote • acesso por 30 dias"
         },
-        vip: {
+        vip_batch: {
             nome: "VIP Batch",
-            valor: "R$ 29,90",
             descricao: "15 gerações por dia + lote • acesso por 30 dias"
         }
     };
 
+    // Estado do checkout Mercado Pago (Etapa 10.2) -- nada disto substitui o Payment do backend,
+    // que continua sendo a única fonte de verdade sobre preço/status.
     let planoSelecionadoGlobal = null;
-    let checkoutUrlAtual = null;
-    let monitoramentoAtivo = false;
+    let paymentAtual = null;       // { payment_id, amount_cents, plan_code, method, status } -- devolvido por POST /api/payments
+    let metodoAtual = null;        // "pix" | "credit_card" -- o método atualmente selecionado no switch
+    let mpInstancia = null;        // instância de MercadoPago(publicKey) -- criada uma única vez
+    let mpPublicKeyCarregada = null;
+    let brickAtual = null;         // controller devolvido por mp.bricks().create(...) -- para poder unmount()
 
     document.addEventListener("DOMContentLoaded", () => {
         inicializarBatch();
@@ -604,10 +592,51 @@
         return date.toLocaleDateString("pt-BR");
     }
 
+    // ---- Checkout Mercado Pago: Payment Brick (Etapa 10.2) ----
+    // Fluxo: abrirModalPagamento(plano) -> escolhe método (pix por padrão) -> criarPaymentEMontarBrick
+    // -> POST /api/payments (cria o Payment interno, Payment.method já fixado) -> monta o Payment
+    // Brick restrito a esse método -> onSubmit -> POST /api/payments/{id}/submit -> cobra de verdade.
+    // Nunca calculamos preço aqui: o valor exibido (#modalValor) vem sempre de amount_cents da
+    // resposta de POST /api/payments.
+
+    function formatarReais(amountCents) {
+        return (amountCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    function mostrarStatusPagamento(texto, tipo = "normal") {
+        const el = document.getElementById("pagamentoStatus");
+        const cores = { erro: "text-red-400", sucesso: "text-emerald-400", normal: "text-slate-400" };
+        el.textContent = texto;
+        el.className = `mt-3 text-xs ${cores[tipo] || cores.normal}`;
+    }
+
+    async function obterPublicKey() {
+        if (mpPublicKeyCarregada) return mpPublicKeyCarregada;
+
+        const res = await fetch("/api/payments/public-key", { credentials: "same-origin" });
+        const data = await res.json();
+
+        if (!res.ok || !data.public_key) {
+            throw new Error("Não foi possível carregar o checkout do Mercado Pago.");
+        }
+
+        mpPublicKeyCarregada = data.public_key;
+        return mpPublicKeyCarregada;
+    }
+
+    async function obterInstanciaMp() {
+        if (mpInstancia) return mpInstancia;
+
+        const publicKey = await obterPublicKey();
+        mpInstancia = new MercadoPago(publicKey, { locale: "pt-BR" });
+        return mpInstancia;
+    }
+
     async function abrirModalPagamento(plano) {
         if (!PLANOS[plano]) return;
 
         planoSelecionadoGlobal = plano;
+        paymentAtual = null;
 
         let email = document.getElementById("userEmail").value.trim();
 
@@ -625,246 +654,156 @@
         const info = PLANOS[plano];
 
         document.getElementById("modalPlano").textContent = info.nome;
-        document.getElementById("modalValor").textContent = info.valor;
         document.getElementById("modalDescricao").textContent = info.descricao;
+        document.getElementById("modalValor").textContent = "—"; // atualizado assim que o backend responder
 
-        // Pagamento ainda não está disponível nesta versão: mostramos só os dados do plano e um
-        // aviso honesto, sem abrir o fluxo de Pix/cartão (que chamaria endpoints inexistentes).
-        document.getElementById("metodoPagamentoSwitch").classList.add("hidden");
-        document.getElementById("conteudoPix").classList.add("hidden");
-        document.getElementById("conteudoCartao").classList.add("hidden");
-        document.getElementById("pagamentoIndisponivel").classList.remove("hidden");
-
+        document.getElementById("metodoPagamentoSwitch").classList.remove("hidden");
         document.getElementById("modalPagamento").classList.remove("hidden");
+
+        await trocarMetodoPagamento("pix");
     }
 
-    function trocarMetodoPagamento(tipo) {
+    async function trocarMetodoPagamento(tipo) {
         const pixBtn = document.getElementById("metodoPixBtn");
         const cartaoBtn = document.getElementById("metodoCartaoBtn");
-        const pix = document.getElementById("conteudoPix");
-        const cartao = document.getElementById("conteudoCartao");
 
         if (tipo === "pix") {
             pixBtn.className = "py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all";
             cartaoBtn.className = "py-3 rounded-xl border border-gray-800 bg-gray-950/50 text-gray-400 text-xs font-extrabold transition-all";
-            pix.classList.remove("hidden");
-            cartao.classList.add("hidden");
         } else {
             cartaoBtn.className = "py-3 rounded-xl border border-blue-500 bg-blue-950/30 text-blue-400 text-xs font-extrabold transition-all";
             pixBtn.className = "py-3 rounded-xl border border-gray-800 bg-gray-950/50 text-gray-400 text-xs font-extrabold transition-all";
-            cartao.classList.remove("hidden");
-            pix.classList.add("hidden");
         }
+
+        await criarPaymentEMontarBrick(tipo);
     }
 
-    async function gerarPix() {
-        const email = document.getElementById("userEmail").value.trim();
-        const button = document.getElementById("gerarPixButton");
+    async function criarPaymentEMontarBrick(metodo) {
+        if (!planoSelecionadoGlobal) return;
 
-        if (!emailValido(email) || !planoSelecionadoGlobal) return;
+        metodoAtual = metodo;
+        mostrarStatusPagamento("Preparando pagamento...");
 
-        button.disabled = true;
-        button.textContent = "Gerando Pix...";
-        document.getElementById("pixStatus").textContent = "Preparando cobrança...";
+        if (brickAtual) {
+            try { brickAtual.unmount(); } catch (err) { console.warn(err); }
+            brickAtual = null;
+        }
+        document.getElementById("paymentBrickContainer").innerHTML = "";
 
         try {
-            const res = await fetch("/api/create-pix", {
+            const res = await fetch("/api/payments", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    plan_type: planoSelecionadoGlobal,
-                    email: email
-                })
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan_code: planoSelecionadoGlobal, method: metodo })
             });
-
-            const data = await res.json();
+            let data = {};
+            try { data = await res.json(); } catch (_) { data = {}; }
 
             if (!res.ok) {
-                throw new Error(data.detail || "Não foi possível gerar o Pix.");
-            }
-
-            if (data.qr_code_base64) {
-                document.getElementById("pixQrContainer").innerHTML =
-                    `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg">`;
-            } else {
-                document.getElementById("pixQrContainer").innerHTML =
-                    '<span class="text-xs text-gray-500">QR Code indisponível. Use o Pix Copia e Cola.</span>';
-            }
-
-            document.getElementById("pixCopiaCola").value = data.qr_code || "";
-            document.getElementById("copiarPixButton").disabled = !data.qr_code;
-            button.textContent = "Pix gerado";
-
-            document.getElementById("pixStatus").innerHTML =
-                '<span class="text-amber-400"><i class="fa-solid fa-clock mr-1"></i>Aguardando pagamento...</span>';
-
-            iniciarMonitoramentoPix(data.payment_id);
-        } catch (err) {
-            button.disabled = false;
-            button.textContent = "Gerar Pix";
-            document.getElementById("pixStatus").textContent =
-                err.message || "Erro ao gerar Pix.";
-        }
-    }
-
-    function iniciarMonitoramentoPix(paymentId) {
-        if (!paymentId) return;
-
-        const email = document.getElementById("userEmail").value.trim();
-        let tentativas = 0;
-        const maxTentativas = 60;
-
-        const timer = setInterval(async () => {
-            tentativas++;
-
-            try {
-                const res = await fetch(
-                    `/api/pix-status?payment_id=${encodeURIComponent(paymentId)}&email=${encodeURIComponent(email)}`
-                );
-                const data = await res.json();
-
-                if (res.ok && data.approved) {
-                    clearInterval(timer);
-                    document.getElementById("pixStatus").innerHTML =
-                        '<div class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Pagamento confirmado! Seu acesso foi liberado.</div>' +
-                        '<button type="button" onclick="fecharModalPagamento(); document.getElementById(\'url\').focus();" class="mt-3 w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">Começar a processar vídeos</button>';
-                    await validarEmailNoServidor(email, false);
-                    setTimeout(() => fecharModalPagamento(), 800);
-                    return;
-                }
-
-                if (res.ok && ["rejected", "cancelled", "refunded", "charged_back"].includes(data.status)) {
-                    clearInterval(timer);
-                    document.getElementById("pixStatus").innerHTML =
-                        `<span class="text-red-400">Pagamento Pix: ${escapeHtml(data.status)}.</span>`;
-                    return;
-                }
-            } catch (err) {
-                console.warn("Falha ao consultar Pix", err);
-            }
-
-            if (tentativas >= maxTentativas) {
-                clearInterval(timer);
-                document.getElementById("pixStatus").textContent =
-                    "Ainda não recebemos a confirmação. Se você já pagou, feche esta janela e ative seu e-mail novamente em alguns instantes.";
-            }
-        }, 5000);
-    }
-
-    async function prepararCheckoutCartao() {
-        const email = document.getElementById("userEmail").value.trim();
-        const button = document.getElementById("checkoutButton");
-
-        if (!emailValido(email) || !planoSelecionadoGlobal) return;
-
-        button.disabled = true;
-        button.textContent = "Preparando checkout...";
-        document.getElementById("checkoutStatus").textContent = "";
-
-        try {
-            const res = await fetch("/api/create-checkout", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    plan_type: planoSelecionadoGlobal,
-                    email: email
-                })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(
-                    data.detail || "Não foi possível preparar o pagamento."
-                );
-            }
-
-            if (data.status === "already_active") {
-                fecharModalPagamento();
-                await validarEmailNoServidor(email, false);
-                alert("Você já possui um plano ativo.");
+                mostrarStatusPagamento(data.detail || "Não foi possível iniciar o pagamento.", "erro");
                 return;
             }
 
-            if (!data.checkout_url) {
-                throw new Error("Mercado Pago não retornou o checkout.");
-            }
+            paymentAtual = data;
+            document.getElementById("modalValor").textContent = formatarReais(data.amount_cents);
+            mostrarStatusPagamento("");
 
-            window.open(data.checkout_url, "_blank", "noopener,noreferrer");
-            button.disabled = false;
-            button.textContent = "Abrir pagamento novamente";
-            document.getElementById("checkoutStatus").innerHTML =
-                '<span class="text-slate-400">Pagamento aberto. Depois da aprovação, o acesso será reconhecido automaticamente nesta página.</span>';
-            iniciarMonitoramento();
+            await montarPaymentBrick(metodo, data.amount_cents);
         } catch (err) {
-            button.disabled = false;
-            button.textContent = "Pagar com cartão";
-            document.getElementById("checkoutStatus").textContent =
-                err.message || "Erro ao preparar o pagamento.";
+            console.error(err);
+            mostrarStatusPagamento("Erro ao falar com o servidor. Tente novamente.", "erro");
         }
     }
 
-    function iniciarMonitoramento() {
-        if (monitoramentoAtivo) return;
+    async function montarPaymentBrick(metodo, amountCents) {
+        const mp = await obterInstanciaMp();
 
-        monitoramentoAtivo = true;
+        const paymentMethods = metodo === "pix"
+            ? { bankTransfer: "all", creditCard: "excluded", debitCard: "excluded", ticket: "excluded" }
+            : { creditCard: "all", bankTransfer: "excluded", debitCard: "excluded", ticket: "excluded" };
 
-        let tentativas = 0;
-        const maxTentativas = 36;
+        brickAtual = await mp.bricks().create("payment", "paymentBrickContainer", {
+            initialization: {
+                amount: amountCents / 100,
+                payer: { email: document.getElementById("userEmail").value.trim() }
+            },
+            customization: {
+                paymentMethods,
+                visual: { style: { theme: "dark" } }
+            },
+            callbacks: {
+                onReady: () => {},
+                onError: (error) => {
+                    console.error(error);
+                    mostrarStatusPagamento("Não foi possível carregar o formulário de pagamento.", "erro");
+                },
+                onSubmit: ({ formData }) => submeterPagamento(formData)
+            }
+        });
+    }
 
-        const timer = setInterval(async () => {
-            tentativas++;
-            const email = document.getElementById("userEmail").value.trim();
+    async function submeterPagamento(formData) {
+        if (!paymentAtual) {
+            return Promise.reject(new Error("Pagamento não iniciado."));
+        }
 
-            if (emailValido(email)) {
-                const data = await validarEmailNoServidor(email, false);
+        mostrarStatusPagamento("Processando pagamento...");
 
-                if (data && data.plan && data.plan !== "free" && data.plan !== "admin") {
-                    clearInterval(timer);
-                    monitoramentoAtivo = false;
-                    document.getElementById("checkoutStatus").innerHTML =
-                        '<div class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Pagamento confirmado! Seu plano está ativo.</div>' +
-                        '<button type="button" onclick="fecharModalPagamento(); document.getElementById(\'url\').focus();" class="mt-3 w-full py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs">Começar a processar vídeos</button>';
-                    setTimeout(() => fecharModalPagamento(), 1200);
-                    return;
+        const corpo = {
+            method: metodoAtual,
+            payment_method_id: formData.payment_method_id,
+            payer: formData.payer,
+            token: formData.token || null,
+            installments: formData.installments || null,
+            issuer_id: formData.issuer_id || null
+        };
+
+        try {
+            const res = await fetch(`/api/payments/${paymentAtual.payment_id}/submit`, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(corpo)
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                mostrarStatusPagamento(data.detail || "Pagamento recusado.", "erro");
+                return Promise.reject(new Error(data.detail || "Pagamento recusado."));
+            }
+
+            if (data.status === "approved") {
+                mostrarStatusPagamento("Pagamento aprovado! Confirmando seu acesso...", "sucesso");
+                await validarEmailNoServidor();
+                setTimeout(() => fecharModalPagamento(), 1500);
+            } else if (data.status === "pending") {
+                if (metodoAtual === "pix" && data.qr_code_base64) {
+                    document.getElementById("paymentBrickContainer").innerHTML =
+                        `<div class="bg-white rounded-xl p-3 flex items-center justify-center mb-3"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg"></div>` +
+                        `<input type="text" readonly value="${data.qr_code || ""}" class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 rounded-xl text-slate-300 text-center focus:outline-none select-all">`;
                 }
+                mostrarStatusPagamento("Aguardando confirmação do pagamento...", "normal");
+            } else {
+                mostrarStatusPagamento(`Pagamento ${data.status}.`, "erro");
             }
 
-            if (tentativas >= maxTentativas) {
-                clearInterval(timer);
-                monitoramentoAtivo = false;
-                document.getElementById("checkoutStatus").textContent =
-                    "Ainda aguardando a confirmação do pagamento. Se a compra já foi aprovada, o acesso aparecerá automaticamente assim que o Mercado Pago confirmar a transação.";
-            }
-        }, 5000);
+            return data;
+        } catch (err) {
+            console.error(err);
+            mostrarStatusPagamento("Erro ao falar com o servidor. Tente novamente.", "erro");
+            return Promise.reject(err);
+        }
     }
 
     function fecharModalPagamento() {
         document.getElementById("modalPagamento").classList.add("hidden");
-    }
-
-    function copiarPix() {
-        const input = document.getElementById("pixCopiaCola");
-
-        if (!input.value) return;
-
-        input.select();
-        input.setSelectionRange(0, input.value.length);
-
-        navigator.clipboard?.writeText(input.value)
-            .then(() => {
-                document.getElementById("pixStatus").textContent =
-                    "Pix Copia e Cola copiado.";
-            })
-            .catch(() => {
-                document.execCommand("copy");
-                document.getElementById("pixStatus").textContent =
-                    "Pix Copia e Cola copiado.";
-            });
+        if (brickAtual) {
+            try { brickAtual.unmount(); } catch (err) { console.warn(err); }
+            brickAtual = null;
+        }
+        document.getElementById("paymentBrickContainer").innerHTML = "";
+        paymentAtual = null;
     }
 
     async function baixarVideo() {

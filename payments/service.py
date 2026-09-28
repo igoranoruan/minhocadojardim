@@ -1,13 +1,14 @@
-"""Fundação interna do sistema de pagamentos (Etapa 10.1): cria o Payment "pending" que
-antecederá qualquer integração com o Mercado Pago. Esta etapa deliberadamente NÃO fala com
-nenhum gateway externo -- nem cria checkout, nem PIX, nem cartão, nem processa webhook, nem
-concede entitlement. É só a fundação: dado um usuário já autenticado, um plano válido e um
-método de pagamento válido, garante que existe um Payment "pending" correspondente, com o preço
-vindo SEMPRE do catálogo (services.plans), nunca do chamador.
+"""Fundação interna do sistema de pagamentos (Etapa 10.1) + resolução de ownership para o
+checkout (Etapa 10.2). create_payment cria o Payment "pending" que antecede qualquer integração
+com o Mercado Pago -- não fala com nenhum gateway externo, não processa webhook, não concede
+entitlement. get_owned_pending_payment (10.2) é a ÚNICA forma pela qual a rota de submit
+(routes/payments.py) resolve QUAL Payment a rota está manipulando -- nunca um SELECT solto por
+id na rota.
 
-A integração com o Mercado Pago (Etapa 10.2+) é uma camada que vem DEPOIS desta, nunca dentro
-dela -- o mesmo desenho que download/service.py já usa para o yt-dlp: quem chama create_payment
-não precisa saber (e hoje não pode saber, porque não existe) que um gateway existe.
+A integração com o Mercado Pago (payments/gateway.py, payments/client.py, Etapa 10.2) é uma
+camada que vem DEPOIS deste arquivo, nunca dentro dele -- o mesmo desenho que download/service.py
+já usa para o yt-dlp: quem chama create_payment/get_owned_pending_payment não precisa saber (e
+este arquivo não sabe) que um gateway existe.
 """
 import logging
 from datetime import datetime
@@ -17,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from database.models import Payment
 from database.models.payment import PAYMENT_METHODS
-from payments.errors import InvalidPaymentMethodError, PlanNotPurchasableError
+from payments.errors import InvalidPaymentMethodError, PaymentNotFoundError, PlanNotPurchasableError
 from payments.reference import generate_external_reference
 from services.locks import lock_user_row
 from services.plans import get_plan
@@ -98,4 +99,26 @@ def create_payment(
         "[PAYMENT] criado id=%s user_id=%s plano=%s method=%s amount_cents=%s",
         payment.id, user_id, plan.code, method, payment.amount_cents,
     )
+    return payment
+
+
+def get_owned_pending_payment(db: Session, payment_id: int, user_id: int) -> Payment:
+    """Etapa 10.2: o Payment que a rota de submit (routes/payments.py) vai cobrar -- resolvido
+    SEMPRE pelos três critérios ao mesmo tempo (id + user_id + status="pending"), nunca por um
+    SELECT solto pelo id seguido de uma comparação de dono separada (mesma filosofia de
+    services.usage.get_owned_batch/get_downloadable_generation).
+
+    Levanta PaymentNotFoundError (404 genérico e único) quando o Payment não existe, quando é de
+    outro usuário, OU quando já não está mais "pending" (foi cobrado, recusado, ou cancelado) --
+    as três situações são deliberadamente indistinguíveis para quem chama a rota, exatamente como
+    BatchNotFoundError já faz para lotes."""
+    payment = db.execute(
+        select(Payment).where(
+            Payment.id == payment_id,
+            Payment.user_id == user_id,
+            Payment.status == "pending",
+        )
+    ).scalar_one_or_none()
+    if payment is None:
+        raise PaymentNotFoundError(f"Payment {payment_id} não encontrado, não é seu, ou não está mais pendente.")
     return payment

@@ -133,6 +133,14 @@ class Settings:
     bgutil_pot_provider_base_url: str
     ffmpeg_path: str
     ffprobe_path: str
+    # Mercado Pago (Etapa 10.2). Nenhuma validação de prefixo (ex.: "TEST-") é feita aqui de
+    # propósito -- não é responsabilidade deste projeto adivinhar o formato de uma credencial de
+    # terceiro, e uma mudança de formato do lado do Mercado Pago não deveria quebrar o load_settings.
+    # mp_access_token nunca aparece no repr (backend-only, nunca vai ao frontend -- só
+    # payments/client.py o lê). mp_public_key É PARA aparecer no frontend (routes/payments.py a
+    # serve via GET /api/payments/public-key) -- por isso fica de fora do field(repr=False).
+    mp_access_token: str = field(repr=False)
+    mp_public_key: str
 
     @property
     def is_production(self) -> bool:
@@ -190,6 +198,11 @@ def load_settings() -> Settings:
         bgutil_pot_provider_base_url=os.getenv("BGUTIL_POT_PROVIDER_BASE_URL", BGUTIL_POT_PROVIDER_BASE_URL).strip(),
         ffmpeg_path=os.getenv("FFMPEG_PATH", FFMPEG_PATH).strip() or FFMPEG_PATH,
         ffprobe_path=os.getenv("FFPROBE_PATH", FFPROBE_PATH).strip() or FFPROBE_PATH,
+        # Etapa 10.2: sem valor padrão de desenvolvimento (ao contrário de AUTH_SECRET_KEY) --
+        # uma chamada real ao Mercado Pago sem token configurado falha na hora da chamada
+        # (payments/client.py), nunca no startup; nenhuma validação de formato é feita aqui.
+        mp_access_token=os.getenv("MP_ACCESS_TOKEN", "").strip(),
+        mp_public_key=os.getenv("MP_PUBLIC_KEY", "").strip(),
     )
 
 

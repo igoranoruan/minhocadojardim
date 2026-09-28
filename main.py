@@ -16,7 +16,15 @@ from config import APP_NAME, APP_VERSION, settings
 from database.session import dispose_engine
 from download.errors import DownloadError
 from processor.errors import ProcessorError
-from routes import auth, generations, health
+from payments.errors import (
+    InvalidPaymentMethodError,
+    PaymentGatewayError,
+    PaymentMethodMismatchError,
+    PaymentNotFoundError,
+    PlanNotPurchasableError,
+    UnknownPlanError,
+)
+from routes import auth, generations, health, payments
 from services.auth import AuthError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
@@ -75,10 +83,20 @@ app.add_exception_handler(GenerationPersistenceError, generations.generation_per
 app.add_exception_handler(GenerationDownloadNotFoundError, generations.generation_download_not_found_handler)
 app.add_exception_handler(BatchNotFoundError, generations.batch_not_found_handler)
 
+# Erros da fundação de pagamentos (Etapa 10.1) + checkout (Etapa 10.2): tradução para HTTP,
+# sem nenhuma regra de negócio aqui -- ver payments/errors.py e routes/payments.py.
+app.add_exception_handler(UnknownPlanError, payments.unknown_plan_handler)
+app.add_exception_handler(PlanNotPurchasableError, payments.plan_not_purchasable_handler)
+app.add_exception_handler(InvalidPaymentMethodError, payments.invalid_payment_method_handler)
+app.add_exception_handler(PaymentNotFoundError, payments.payment_not_found_handler)
+app.add_exception_handler(PaymentMethodMismatchError, payments.payment_method_mismatch_handler)
+app.add_exception_handler(PaymentGatewayError, payments.payment_gateway_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(generations.router)
+app.include_router(payments.router)
 
 
 @app.get("/", include_in_schema=False)
