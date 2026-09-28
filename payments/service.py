@@ -122,3 +122,31 @@ def get_owned_pending_payment(db: Session, payment_id: int, user_id: int) -> Pay
     if payment is None:
         raise PaymentNotFoundError(f"Payment {payment_id} não encontrado, não é seu, ou não está mais pendente.")
     return payment
+
+
+def find_payment_for_webhook(
+    db: Session, *, mp_payment_id: str, external_reference: str | None
+) -> Payment | None:
+    """Localiza o Payment interno para uma notificação de webhook JÁ AUTENTICADA (Etapa 10.3) --
+    NUNCA por user_id nem por status (diferente de get_owned_pending_payment): o webhook não tem
+    usuário autenticado, e o Payment já pode ter saído de "pending" há muito tempo (ex.: uma
+    segunda notificação de um pagamento já aprovado, ou uma notificação de reembolso).
+
+    Ordem de busca (nunca invertida -- Etapa 10.3, seção "LOCALIZAÇÃO DO PAYMENT"): primeiro por
+    mp_payment_id (a MESMA cobrança já confirmada antes por outra notificação ou pela resposta
+    síncrona da 10.2); só se não achar, por external_reference (primeira confirmação autoritativa
+    deste Payment, que ainda não tinha mp_payment_id gravado -- ex.: a chamada síncrona da 10.2
+    falhou por PaymentGatewayError e o Payment ficou "pending" sem mp_payment_id).
+
+    Devolve None (nunca levanta) quando nenhum dos dois encontra nada -- payments/gateway.py trata
+    isso como Payment "orphan" (Etapa 10.3): nenhum Payment é criado a partir de um webhook."""
+    payment = db.execute(
+        select(Payment).where(Payment.mp_payment_id == mp_payment_id)
+    ).scalar_one_or_none()
+    if payment is not None:
+        return payment
+    if not external_reference:
+        return None
+    return db.execute(
+        select(Payment).where(Payment.external_reference == external_reference)
+    ).scalar_one_or_none()

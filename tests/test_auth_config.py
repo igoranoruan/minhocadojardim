@@ -58,6 +58,9 @@ def test_producao_valida_usa_cookie_host_secure_e_nao_tem_sender_padrao(monkeypa
     monkeypatch.setenv("ENV", "production")
     monkeypatch.setenv("AUTH_SECRET_KEY", SEGREDO_A)
     monkeypatch.setenv("IP_HASH_SECRET", SEGREDO_B)
+    # MP_WEBHOOK_SECRET também é obrigatório em produção (Etapa 10.3) -- valor fictício só para
+    # este teste poder validar o restante da configuração de produção sem tropeçar nessa exigência.
+    monkeypatch.setenv("MP_WEBHOOK_SECRET", "segredo-fake-de-teste-para-producao")
     s = load_settings()
     assert s.is_production and s.session_cookie_secure
     assert s.session_cookie_name == "__Host-minhoca_session"

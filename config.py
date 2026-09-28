@@ -141,6 +141,13 @@ class Settings:
     # serve via GET /api/payments/public-key) -- por isso fica de fora do field(repr=False).
     mp_access_token: str = field(repr=False)
     mp_public_key: str
+    # Webhook (Etapa 10.3). Backend-only, nunca exposto em rota nenhuma (diferente de
+    # mp_public_key, que é intencionalmente pública) -- só payments/webhook_signature.py o lê, via
+    # config.get_settings() (chamado por routes/webhooks.py). Obrigatório em produção: diferente
+    # de mp_access_token/mp_public_key (que a 10.2 deixou opcionais por escolha mínima), um secret
+    # vazio aqui significa "todo webhook recusado por padrão" (ver payments/webhook_signature.py)
+    # -- silenciosamente nunca funcionar em produção é pior que falhar alto no startup.
+    mp_webhook_secret: str = field(repr=False)
 
     @property
     def is_production(self) -> bool:
@@ -174,9 +181,17 @@ def _load_secrets(is_production: bool) -> tuple[str, str]:
     return auth_secret or DEV_AUTH_SECRET_KEY, ip_secret or DEV_IP_HASH_SECRET
 
 
+def _load_webhook_secret(is_production: bool) -> str:
+    secret = os.getenv("MP_WEBHOOK_SECRET", "").strip()
+    if is_production and not secret:
+        raise RuntimeError("MP_WEBHOOK_SECRET é obrigatório em produção.")
+    return secret
+
+
 def load_settings() -> Settings:
     env = os.getenv("ENV", "development").strip().lower()
     auth_secret, ip_secret = _load_secrets(is_production=(env == "production"))
+    mp_webhook_secret = _load_webhook_secret(is_production=(env == "production"))
     return Settings(
         env=env,
         log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper(),
@@ -203,6 +218,7 @@ def load_settings() -> Settings:
         # (payments/client.py), nunca no startup; nenhuma validação de formato é feita aqui.
         mp_access_token=os.getenv("MP_ACCESS_TOKEN", "").strip(),
         mp_public_key=os.getenv("MP_PUBLIC_KEY", "").strip(),
+        mp_webhook_secret=mp_webhook_secret,
     )
 
 

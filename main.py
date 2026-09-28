@@ -18,13 +18,14 @@ from download.errors import DownloadError
 from processor.errors import ProcessorError
 from payments.errors import (
     InvalidPaymentMethodError,
+    InvalidWebhookSignatureError,
     PaymentGatewayError,
     PaymentMethodMismatchError,
     PaymentNotFoundError,
     PlanNotPurchasableError,
     UnknownPlanError,
 )
-from routes import auth, generations, health, payments
+from routes import auth, generations, health, payments, webhooks
 from services.auth import AuthError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
@@ -92,11 +93,17 @@ app.add_exception_handler(PaymentNotFoundError, payments.payment_not_found_handl
 app.add_exception_handler(PaymentMethodMismatchError, payments.payment_method_mismatch_handler)
 app.add_exception_handler(PaymentGatewayError, payments.payment_gateway_handler)
 
+# Webhook do Mercado Pago (Etapa 10.3): handler de defesa só -- o caminho normal já trata
+# InvalidWebhookSignatureError localmente dentro de routes/webhooks.py (para nunca criar
+# PaymentEvent nesse caso); ver o docstring de routes/webhooks.py.
+app.add_exception_handler(InvalidWebhookSignatureError, webhooks.invalid_signature_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(generations.router)
 app.include_router(payments.router)
+app.include_router(webhooks.router)
 
 
 @app.get("/", include_in_schema=False)

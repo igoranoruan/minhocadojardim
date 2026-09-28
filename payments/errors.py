@@ -41,7 +41,17 @@ class PaymentMethodMismatchError(PaymentError):
 class PaymentGatewayError(PaymentError):
     """Falha ao FALAR com o Mercado Pago (erro de rede, resposta HTTP fora do esperado, exceção
     do SDK) -- nunca uma recusa de pagamento em si (approved/pending/rejected são respostas
-    válidas do gateway, não erros; ver payments/gateway.py). Levantada só por payments/client.py."""
+    válidas do gateway, não erros; ver payments/gateway.py). Levantada por payments/client.py, seja
+    na criação da cobrança (Etapa 10.2) ou na consulta autoritativa do webhook (Etapa 10.3)."""
+
+
+class InvalidWebhookSignatureError(PaymentError):
+    """Assinatura do webhook (x-signature) ausente, incompleta ou inválida -- levantada só por
+    payments/webhook_signature.py, ANTES de qualquer leitura/escrita relacionada a
+    Payment/Entitlement/PaymentEvent (Etapa 10.3). routes/webhooks.py traduz para HTTP 401 e
+    NUNCA cria PaymentEvent para este erro -- criar uma linha de auditoria para toda tentativa de
+    assinatura inválida (endpoint público, sem autenticação de usuário) seria write amplification
+    desnecessária; o registro de aplicação (log) já é suficiente para essa investigação."""
 
 
 __all__ = [
@@ -52,4 +62,5 @@ __all__ = [
     "PaymentNotFoundError",
     "PaymentMethodMismatchError",
     "PaymentGatewayError",
+    "InvalidWebhookSignatureError",
 ]
