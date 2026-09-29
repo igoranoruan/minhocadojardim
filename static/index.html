@@ -57,6 +57,7 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
                 </div>
+                <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 -mt-4 mb-4"></div>
 
                 <p class="text-emerald-400 text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-4">
                     FERRAMENTA PARA REUTILIZAÇÃO DE CONTEÚDO
@@ -461,11 +462,75 @@
         document.getElementById("userEmail").value = email;
         document.getElementById("acessoEmailAtual").textContent = email;
         setStatusConta(`Conectado: ${email}`);
+        carregarStatusConta();
     }
 
     function aplicarSemSessao() {
         sessaoEmail = null;
         setStatusConta("Pronto para processar");
+        limparStatusContaValidade();
+    }
+
+    // ---- Status real da conta (UX-2): GET /api/me/status -- só apresenta o que o backend já
+    // decidiu (plano, uso, restante, período, validade). Nenhum cálculo de limite/uso/restante/
+    // validade é feito aqui -- o backend (services/usage.py + services/entitlements.py, via
+    // services/user_status.py) é a única fonte de verdade. Reaproveita statusContaBadge/
+    // statusContaTexto/setStatusConta já existentes -- não cria nenhum badge ou estado paralelo.
+    function limparStatusContaValidade() {
+        const validadeEl = document.getElementById("statusContaValidade");
+        if (!validadeEl) return;
+        validadeEl.textContent = "";
+        validadeEl.classList.add("hidden");
+    }
+
+    function textoPeriodo(period) {
+        if (period === "week") return "esta semana";
+        if (period === "day") return "hoje";
+        return ""; // período desconhecido: não inventa uma regra nova, só omite a palavra.
+    }
+
+    function atualizarStatusContaVisual(data) {
+        const plano = data && data.plan;
+
+        // Payload ausente/vazio/incompleto: NUNCA declarar um plano que o backend não confirmou
+        // (não existe "Free" padrão aqui) -- mantém o status já exibido (estado neutro).
+        if (!plano || typeof plano.name !== "string" || !plano.name) {
+            return;
+        }
+
+        const uso = data.usage;
+        let texto = plano.name;
+        if (uso && typeof uso.remaining === "number") {
+            const periodo = textoPeriodo(uso.period);
+            texto += ` · ${uso.remaining} restantes${periodo ? " " + periodo : ""}`;
+        }
+        setStatusConta(texto);
+
+        const validadeEl = document.getElementById("statusContaValidade");
+        if (validadeEl) {
+            if (data.entitlement && data.entitlement.expires_at) {
+                validadeEl.textContent = `Acesso até ${formatarData(data.entitlement.expires_at)}`;
+                validadeEl.classList.remove("hidden");
+            } else {
+                limparStatusContaValidade();
+            }
+        }
+    }
+
+    async function carregarStatusConta() {
+        try {
+            const res = await fetch("/api/me/status", { credentials: "same-origin" });
+
+            if (!res.ok) {
+                console.error("Falha ao carregar status da conta:", res.status);
+                return;
+            }
+
+            const data = await res.json();
+            atualizarStatusContaVisual(data);
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     async function carregarSessao() {
