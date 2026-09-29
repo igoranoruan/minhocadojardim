@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minhoca de Jardim — Reutilize o conteúdo que já funcionou</title>
-    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <title>KLANGO.MP4</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +20,7 @@
         body { background: #050810; color: #f8fafc; }
         .bg-card { background: #0b1220; border: 1px solid #1b2738; }
         .bg-card-soft { background: #09101c; border: 1px solid #172235; }
-        .hero-glow { box-shadow: 0 24px 80px rgba(16, 185, 129, 0.08); }
+        .hero-glow { box-shadow: 0 24px 80px rgba(25, 211, 174, 0.10); }
         .glow-hover { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
         .glow-hover:hover { box-shadow: 0 18px 50px rgba(16, 185, 129, 0.10); }
         .bg-gradient-cyber { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
@@ -40,9 +42,8 @@
         <!-- HEADER -->
         <header class="w-full border-b border-slate-800/70 bg-[#050810]/95">
             <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
-                <a href="#topo" class="flex items-center gap-3 min-w-0">
-                    <img src="/static/favicon.png" alt="" class="w-9 h-9 object-contain brightness-0 invert" aria-hidden="true">
-                    <span class="font-extrabold tracking-tight text-white text-base sm:text-lg whitespace-nowrap">MINHOCA DE JARDIM</span>
+                <a href="#topo" class="flex items-center min-w-0">
+                    <span class="font-extrabold tracking-tight text-white text-lg sm:text-xl whitespace-nowrap">KLANGO</span><span class="font-extrabold tracking-tight text-[#87939D] text-lg sm:text-xl whitespace-nowrap">.MP4</span>
                 </a>
                 <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2 py-1">
                     Acesso
@@ -59,7 +60,7 @@
                 </div>
                 <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 -mt-4 mb-4"></div>
 
-                <p class="text-emerald-400 text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-4">
+                <p class="text-[#19D3AE] text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-4">
                     FERRAMENTA PARA REUTILIZAÇÃO DE CONTEÚDO
                 </p>
 
@@ -67,21 +68,21 @@
                     Reutilize o conteúdo que já funcionou.
                 </h1>
 
-                <p class="mt-5 text-slate-400 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+                <p class="mt-5 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto [text-wrap:balance]">
                     Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
                 </p>
 
                 <div class="max-w-3xl mx-auto mt-9">
-                    <div class="bg-card p-2 rounded-2xl hero-glow">
+                    <div class="bg-card p-2.5 rounded-2xl hero-glow">
                         <div class="flex flex-col sm:flex-row gap-2">
                             <div class="relative flex-1">
                                 <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"></i>
                                 <input id="url" type="url" autocomplete="off"
                                     placeholder="Cole o link do vídeo…"
-                                    class="input-focus w-full h-14 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all">
+                                    class="input-focus w-full h-14 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all focus:border-[#19D3AE]/70">
                             </div>
                             <button id="downloadButton" onclick="baixarVideo()"
-                                class="h-14 px-6 sm:px-8 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] flex items-center justify-center gap-2 text-sm whitespace-nowrap">
+                                class="h-14 px-7 sm:px-9 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] flex items-center justify-center gap-2 text-sm whitespace-nowrap shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
                                 <i class="fa-solid fa-download"></i>
                                 Processar e baixar
                             </button>
@@ -91,9 +92,9 @@
                     </div>
 
                     <div class="flex flex-wrap justify-center gap-3 mt-5 text-xs text-slate-400">
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Limpeza de metadados</span>
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Nova versão em MP4</span>
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-400"></i> Sem anúncios</span>
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Limpeza de metadados</span>
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Nova versão em MP4</span>
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Sem anúncios</span>
                     </div>
                 </div>
             </section>
@@ -121,7 +122,7 @@
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">02</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Limpa e prepara</h3>
                         </div>
-                        <p class="text-sm text-slate-400 leading-relaxed">A Minhoca processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
+                        <p class="text-sm text-slate-400 leading-relaxed">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
@@ -281,12 +282,16 @@
 
         <!-- FOOTER -->
         <footer class="border-t border-slate-800/70 mt-8">
-            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row justify-between gap-3 text-sm">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row justify-between gap-4 text-sm">
                 <div>
-                    <div class="font-extrabold text-white">Minhoca de Jardim</div>
+                    <div class="font-extrabold text-white">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1">Baixe. Prepare. Adapte. Publique.</div>
+                    <div class="flex items-center gap-4 mt-3">
+                        <a href="https://www.instagram.com/klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no Instagram" class="text-slate-500 hover:text-[#19D3AE] transition-colors"><i class="fa-brands fa-instagram text-base"></i></a>
+                        <a href="https://www.tiktok.com/@klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no TikTok" class="text-slate-500 hover:text-[#19D3AE] transition-colors"><i class="fa-brands fa-tiktok text-base"></i></a>
+                    </div>
                 </div>
-                <div class="text-slate-600 sm:text-right">© 2026 Minhoca de Jardim</div>
+                <div class="text-slate-600 sm:text-right">© 2026 KLANGO.MP4</div>
             </div>
         </footer>
     </div>
