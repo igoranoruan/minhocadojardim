@@ -61,10 +61,13 @@ def test_producao_valida_usa_cookie_host_secure_e_nao_tem_sender_padrao(monkeypa
     # MP_WEBHOOK_SECRET também é obrigatório em produção (Etapa 10.3) -- valor fictício só para
     # este teste poder validar o restante da configuração de produção sem tropeçar nessa exigência.
     monkeypatch.setenv("MP_WEBHOOK_SECRET", "segredo-fake-de-teste-para-producao")
+    # BREVO_API_KEY/EMAIL_FROM também são obrigatórios em produção (Etapa 11) -- mesma razão acima.
+    monkeypatch.setenv("BREVO_API_KEY", "chave-fake-de-teste-para-producao")
+    monkeypatch.setenv("EMAIL_FROM", "contato@minhoca.example")
     s = load_settings()
     assert s.is_production and s.session_cookie_secure
     assert s.session_cookie_name == "__Host-minhoca_session"
-    assert s.email_sender == ""  # o provedor de produção ainda não foi escolhido
+    assert s.email_sender == ""  # este teste não define EMAIL_SENDER -- fica vazio por padrão em produção
     assert not s.using_dev_secrets
 
 

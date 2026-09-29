@@ -2,10 +2,13 @@
 
 - ConsoleEmailSender: só para desenvolvimento (mostra o e-mail no log). É RECUSADO em produção,
   porque o e-mail contém o código de login e código nunca pode ser registrado em produção.
-- HttpEmailSender: base abstrata para o provedor de produção, que fala HTTPS. O provedor
-  (Resend, Brevo, etc.) ainda NÃO foi escolhido: quando for, basta uma subclasse que implemente
-  build_request(). Nada aqui depende de um provedor específico, e não usamos SMTP.
-- Nenhuma dependência nova: a chamada HTTPS usa só a biblioteca padrão.
+- HttpEmailSender: base abstrata para provedores que falam HTTPS. Uma subclasse só implementa
+  build_request(); toda a mecânica de POST/JSON/timeout/tratamento de erro já mora aqui.
+- BrevoEmailSender: o provedor de produção escolhido (Etapa 11), via API transacional oficial do
+  Brevo (https://api.brevo.com/v3/smtp/email). api_key e remetente vêm de Settings
+  (brevo_api_key/email_from) -- nunca hardcoded, nunca lidos de os.getenv() diretamente aqui.
+- Nenhuma dependência nova: a chamada HTTPS usa só a biblioteca padrão (urllib), não usamos SMTP
+  nem o SDK oficial do Brevo.
 """
 import json
 import logging
@@ -94,10 +97,39 @@ class HttpEmailSender(EmailSender, ABC):
             raise EmailSendError(f"O provedor de e-mail respondeu HTTP {status}.")
 
 
+class BrevoEmailSender(HttpEmailSender):
+    """Provedor de produção via API transacional oficial do Brevo (POST JSON, sem SDK).
+
+    api_key e sender_email vêm de Settings (cfg.brevo_api_key/cfg.email_from), passados pelo
+    construtor -- esta classe nunca lê variável de ambiente diretamente. A base HttpEmailSender já
+    garante que nem a api_key nem o corpo da requisição aparecem em EmailSendError/logs de falha
+    (só o código HTTP ou a classe da exceção de rede)."""
+
+    _URL = "https://api.brevo.com/v3/smtp/email"
+
+    def __init__(self, *, api_key: str, sender_email: str) -> None:
+        self._api_key = api_key
+        self._sender_email = sender_email
+
+    def build_request(self, message: EmailMessage) -> HttpEmailRequest:
+        return HttpEmailRequest(
+            url=self._URL,
+            headers={"api-key": self._api_key},
+            body={
+                "sender": {"email": self._sender_email},
+                "to": [{"email": message.to}],
+                "subject": message.subject,
+                "textContent": message.text,
+            },
+        )
+
+
 def build_email_sender(cfg: Settings) -> EmailSender:
     """Escolhe o sender do ambiente. Levanta EmailConfigurationError se não houver um válido."""
     if cfg.email_sender == "console":
         if cfg.is_production:
             raise EmailConfigurationError("O ConsoleEmailSender não pode ser usado em produção.")
         return ConsoleEmailSender()
+    if cfg.email_sender == "brevo":
+        return BrevoEmailSender(api_key=cfg.brevo_api_key, sender_email=cfg.email_from)
     raise EmailConfigurationError("Nenhum provedor de e-mail de produção está configurado.")

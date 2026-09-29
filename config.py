@@ -124,6 +124,13 @@ class Settings:
     auth_secret_key: str = field(repr=False)
     ip_hash_secret: str = field(repr=False)
     email_sender: str
+    # Provedor de e-mail de produção (Etapa 11 -- Brevo, único provedor concreto hoje). Só
+    # BrevoEmailSender os lê (services/mailer.py, via build_email_sender), nunca os.getenv()
+    # diretamente. brevo_api_key não aparece no repr (é um secret); email_from é o remetente que
+    # o destinatário vê no e-mail -- não é sensível, mas fica de fora dos defaults de
+    # desenvolvimento (igual mp_access_token) porque não existe um valor de dev razoável para isso.
+    brevo_api_key: str = field(repr=False)
+    email_from: str
     login_code_ttl_seconds: int
     login_code_max_attempts: int
     login_code_min_interval_seconds: int
@@ -188,10 +195,25 @@ def _load_webhook_secret(is_production: bool) -> str:
     return secret
 
 
+def _load_email_provider_secrets(is_production: bool) -> tuple[str, str]:
+    """BREVO_API_KEY/EMAIL_FROM -- mesmo padrão de MP_WEBHOOK_SECRET: obrigatórios em produção
+    (silenciosamente nunca enviar e-mail em produção é pior que falhar alto no startup). Em
+    desenvolvimento (ConsoleEmailSender) não fazem falta, então ficam vazios se ausentes."""
+    api_key = os.getenv("BREVO_API_KEY", "").strip()
+    email_from = os.getenv("EMAIL_FROM", "").strip()
+    if is_production:
+        if not api_key:
+            raise RuntimeError("BREVO_API_KEY é obrigatório em produção.")
+        if not email_from:
+            raise RuntimeError("EMAIL_FROM é obrigatório em produção.")
+    return api_key, email_from
+
+
 def load_settings() -> Settings:
     env = os.getenv("ENV", "development").strip().lower()
     auth_secret, ip_secret = _load_secrets(is_production=(env == "production"))
     mp_webhook_secret = _load_webhook_secret(is_production=(env == "production"))
+    brevo_api_key, email_from = _load_email_provider_secrets(is_production=(env == "production"))
     return Settings(
         env=env,
         log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper(),
@@ -204,6 +226,8 @@ def load_settings() -> Settings:
         ip_hash_secret=ip_secret,
         # "console" só é aceito fora de produção. Em produção fica vazio até o provedor ser escolhido.
         email_sender=os.getenv("EMAIL_SENDER", "" if env == "production" else "console").strip().lower(),
+        brevo_api_key=brevo_api_key,
+        email_from=email_from,
         login_code_ttl_seconds=_int_env("AUTH_CODE_TTL_SECONDS", default=600, minimum=1),
         login_code_max_attempts=_int_env("AUTH_CODE_MAX_ATTEMPTS", default=5, minimum=1),
         login_code_min_interval_seconds=_int_env("AUTH_CODE_MIN_INTERVAL_SECONDS", default=60, minimum=0),
