@@ -7,7 +7,7 @@ Nenhum secret fica neste arquivo: tudo vem de variáveis de ambiente.
 import os
 from dataclasses import dataclass, field
 
-APP_NAME = "Minhoca de Jardim"
+APP_NAME = "KLANGO.MP4"
 APP_VERSION = "2.0.0-etapa1"
 
 # Todo controle de semana/dia (limites Free, Semanal etc.) usa este fuso.

@@ -10,7 +10,7 @@ def test_health_ok():
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == "ok"
-    assert body["app"] == "Minhoca de Jardim"
+    assert body["app"] == "KLANGO.MP4"
 
 
 def test_health_usa_fuso_de_sao_paulo():
