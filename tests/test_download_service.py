@@ -271,33 +271,197 @@ def test_youtube_nao_forca_mais_player_client():
 
 
 # ------------------------------------------------------------------ format do YouTube (diagnóstico 26/09: Shorts sem format muxado)
+_FORMAT_YOUTUBE_ESPERADO = (
+    "bestvideo[vcodec^=avc]+bestaudio[acodec^=mp4a]"
+    "/best[vcodec^=avc][acodec^=mp4a]"
+    "/bestvideo+bestaudio/best"
+)
+
+
 def test_youtube_usa_bestvideo_mais_bestaudio_como_format():
     """O format compartilhado ("mp4/best[ext=mp4]/best") só casa com um format ÚNICO já
     combinado (vídeo+áudio no mesmo stream) -- por isso falhava quando o YouTube (via mweb)
     só oferecia streams DASH separados. O YouTube agora sobrescreve "format" no seu próprio
-    extra_opts, pedindo explicitamente o merge de vídeo-only + áudio-only."""
+    extra_opts, pedindo explicitamente o merge de vídeo-only + áudio-only.
+
+    Otimização de performance (caminho rápido / stream copy, 30/09 -- aprovação do CÉREBRO): o
+    format passou a tentar PRIMEIRO H.264 (vcodec^=avc) + AAC/M4A (acodec^=mp4a) -- os únicos
+    codecs que processor/service.py aceita para `-c:v copy`/`-c:a copy` -- caindo para o
+    "bestvideo+bestaudio/best" de sempre (IDÊNTICO ao comportamento anterior) só quando essa
+    combinação não existir. Isso não é "validado" só por este teste passar: exige confirmação
+    com download real (yt-dlp contra YouTube de verdade) antes de considerar a mudança fechada."""
     from download.ytdlp_downloader import YtDlpDownloader
 
     spec = service_module._SPECS[Platform.YOUTUBE]
-    assert spec.extra_opts.get("format") == "bestvideo+bestaudio/best"
+    assert spec.extra_opts.get("format") == _FORMAT_YOUTUBE_ESPERADO
 
     # também confere as opções FINAIS construídas, não só a declaração crua do spec
     options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
-    assert options["format"] == "bestvideo+bestaudio/best"
+    assert options["format"] == _FORMAT_YOUTUBE_ESPERADO
     # o merge continua saindo como .mp4 (opção compartilhada, não tocada por esta mudança)
     assert options["merge_output_format"] == "mp4"
 
 
-def test_outras_plataformas_continuam_com_o_format_compartilhado():
-    """TikTok, Instagram e Pinterest não declaram "format" próprio -- devem continuar herdando
-    o valor compartilhado de ytdlp_downloader.py, sem nenhuma influência da mudança do YouTube."""
+def test_youtube_prefere_h264_aac_mas_mantem_fallback_sem_filtro_por_ultimo():
+    """O NOVO filtro (H.264+AAC) vem só como PRIMEIRA opção da cadeia "/" -- o último ELO
+    continua sendo, literalmente, "bestvideo+bestaudio/best" -- o mesmo format usado (sozinho,
+    sem nenhum filtro de codec) antes desta mudança. Isso garante que um vídeo sem NENHUM stream
+    H.264+AAC disponível baixa exatamente como baixava antes (nunca fica pior, nunca deixa de
+    baixar por causa do filtro novo).
+
+    CORREÇÃO (aprovação do CÉREBRO, pós-teste): `formato.split("/")` está ERRADO para isolar os
+    elos da cadeia -- "/" é ao mesmo tempo o separador ENTRE elos e um caractere que aparece
+    DENTRO do próprio fallback "bestvideo+bestaudio/best" (ele tem um "/" no meio). Um split()
+    ingênuo quebra esse elo final em dois pedaços ("bestvideo+bestaudio" e "best"), fazendo
+    `alternativas[-1]` virar só "best" -- nunca bate com a string completa do fallback, e o teste
+    falhava por um bug NELE MESMO, não por nenhum problema no seletor de format real. A forma
+    robusta é checar o SUFIXO literal da string inteira (`str.endswith`), que não tem esse
+    problema de ambiguidade do separador."""
+    spec = service_module._SPECS[Platform.YOUTUBE]
+    formato = spec.extra_opts["format"]
+    assert formato.endswith("/bestvideo+bestaudio/best")  # fallback final, literal, sem filtro
+    primeiro_elo = formato.split("/", 1)[0]  # só o PRIMEIRO "/" -- isola o 1º elo sem quebrar o fallback
+    assert "vcodec^=avc" in primeiro_elo and "acodec^=mp4a" in primeiro_elo
+
+
+def test_instagram_continua_com_o_format_compartilhado():
+    """Instagram não declara "format" próprio -- deve continuar herdando o valor compartilhado de
+    ytdlp_downloader.py, sem nenhuma influência das mudanças do YouTube, TikTok ou Pinterest
+    (auditado nesta rodada, 30/09, com URL real -- instagram.com/reel/DbbnF6APswb/ -- e
+    PRESERVADO sem alteração de format: já produz H.264+AAC compatível com `copy`)."""
     from download.ytdlp_downloader import YtDlpDownloader
 
-    for plataforma in (Platform.TIKTOK, Platform.INSTAGRAM, Platform.PINTEREST):
-        spec = service_module._SPECS[plataforma]
-        assert "format" not in spec.extra_opts, plataforma
-        options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
-        assert options["format"] == "mp4/best[ext=mp4]/best", plataforma
+    spec = service_module._SPECS[Platform.INSTAGRAM]
+    assert "format" not in spec.extra_opts
+    options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
+    assert options["format"] == "mp4/best[ext=mp4]/best"
+
+
+# ------------------------------------------------------------------ format do TikTok (correção real, 30/09 -- causa raiz: yt-dlp reporta o H.264 do TikTok como "h264", nunca "avc1")
+_FORMAT_TIKTOK_ESPERADO = (
+    "best[vcodec^=h264][acodec^=mp4a]"
+    "/best[vcodec^=avc][acodec^=mp4a]"
+    "/best[vcodec^=h264]"
+    "/best[vcodec^=avc]"
+    "/mp4/best[ext=mp4]/best"
+)
+
+
+def test_tiktok_prefere_h264_mas_mantem_fallback_identico_ao_anterior_por_ultimo():
+    """CAUSA RAIZ CONFIRMADA (aprovação do CÉREBRO, 30/09 -- URL real testada:
+    tiktok.com/@cazetv/video/7659614093048909064): a primeira tentativa desta otimização usava
+    "vcodec^=avc" (nomenclatura do YouTube), mas o yt-dlp -F real do TikTok reporta o H.264
+    literalmente como "h264" ("h264_540p... h264 aac") -- o filtro nunca casava com nenhum format
+    do TikTok, e o fallback sem filtro escolhia o "best" entre TODOS os formats, incluindo um
+    "bytevc1_1080p..." reportado como vcodec="h265"/HEVC -- resultando no arquivo real baixado
+    ser 1080x1918 HEVC+AAC, nunca elegível para `-c:v copy`, e forçando transcode completo
+    (~178-233s).
+
+    O filtro agora usa "h264" (a nomenclatura REAL que o TikTok reporta) primeiro, com "avc"
+    mantido como alternativa defensiva (nomenclatura do YouTube, sem custo quando "h264" já casa
+    primeiro). O ÚLTIMO elo do fallback continua sendo, literalmente, o format ANTIGO e inteiro
+    ("mp4/best[ext=mp4]/best"), preservado por completo: nenhum vídeo sem format H.264 disponível
+    baixa diferente do que já baixava, e nenhuma resolução/qualidade é reduzida propositalmente
+    ("best" sem filtro de altura escolhe o MELHOR H.264 disponível, nunca um pior)."""
+    from download.ytdlp_downloader import YtDlpDownloader
+
+    spec = service_module._SPECS[Platform.TIKTOK]
+    assert spec.extra_opts.get("format") == _FORMAT_TIKTOK_ESPERADO
+
+    options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
+    assert options["format"] == _FORMAT_TIKTOK_ESPERADO
+    # o fallback ANTIGO ("mp4/best[ext=mp4]/best") continua, literal e por inteiro, como sufixo
+    assert options["format"].endswith("/mp4/best[ext=mp4]/best")
+    primeiro_elo = options["format"].split("/", 1)[0]
+    # a nomenclatura REAL do TikTok ("h264") vem PRIMEIRO -- é o que corrige a causa raiz
+    assert primeiro_elo == "best[vcodec^=h264][acodec^=mp4a]"
+
+
+def test_tiktok_nao_volta_a_escolher_hevc_quando_h264_esta_disponivel():
+    """Proteção de regressão direta contra a causa raiz: nenhum elo do seletor do TikTok, exceto
+    o ÚLTIMO fallback sem filtro (idêntico ao comportamento anterior a esta correção), pode casar
+    com um format HEVC/bytevc1 -- os quatro primeiros elos filtram explicitamente por
+    vcodec^=h264 ou vcodec^=avc, nunca deixando um HEVC "vencer" enquanto H.264 estiver disponível."""
+    spec = service_module._SPECS[Platform.TIKTOK]
+    elos = spec.extra_opts["format"].split("/")
+    # os 2 primeiros elos (antes do "mp4/best[ext=mp4]/best" final, que tem seu próprio "/") filtram H.264
+    elos_com_filtro_de_codec = [e for e in elos if "vcodec" in e]
+    assert len(elos_com_filtro_de_codec) == 4
+    for elo in elos_com_filtro_de_codec:
+        assert "vcodec^=h264" in elo or "vcodec^=avc" in elo
+
+
+def test_tiktok_continua_com_impersonate_chrome_junto_do_novo_format():
+    """O novo "format" é ADITIVO -- não pode ter removido/alterado o "impersonate": "chrome" já
+    existente (necessário para resolver o desafio/challenge do TikTok antes de qualquer download)."""
+    spec = service_module._SPECS[Platform.TIKTOK]
+    assert spec.extra_opts.get("impersonate") == "chrome"
+    assert set(spec.extra_opts.keys()) == {"impersonate", "format"}
+
+
+# ------------------------------------------------------------------ format do Pinterest (correção real, 30/09 -- causa raiz: format vídeo-only escolhido sem áudio)
+_FORMAT_PINTEREST_ESPERADO = (
+    "bestvideo[vcodec^=avc]+bestaudio"
+    "/bestvideo[vcodec^=h264]+bestaudio"
+    "/bestvideo+bestaudio"
+    "/best"
+)
+
+
+def test_pinterest_busca_video_mais_audio_e_prefere_h264():
+    """CAUSA RAIZ CONFIRMADA (aprovação do CÉREBRO, 30/09 -- URL real testada: pin.it/6i84tmn2E):
+    o Pinterest serve vídeo e áudio em formats HLS SEPARADOS (yt-dlp -F real:
+    "V_HLSV3_MOBILE-703" 720x1280 avc1 vídeo-only + "V_HLSV3_MOBILE-audio1-1" áudio-only) -- o
+    format compartilhado antigo ("mp4/best[ext=mp4]/best") não pede nenhum merge, então
+    "best[ext=mp4]" casava com o vídeo-only sozinho (seu container reportado já é mp4) e NUNCA
+    considerava se havia áudio -- resultado real confirmado: MP4 H.264 720x1280 13.56s SEM
+    NENHUMA faixa de áudio.
+
+    O novo format usa "bestvideo+bestaudio" -- que EXIGE um stream de vídeo E um de áudio,
+    nunca aceita implicitamente um vídeo-only como se fosse completo -- preferindo primeiro o
+    melhor vídeo em H.264/AVC (nomenclatura "avc1", confirmada pela evidência real desta
+    plataforma), com "h264" como alternativa defensiva."""
+    from download.ytdlp_downloader import YtDlpDownloader
+
+    spec = service_module._SPECS[Platform.PINTEREST]
+    assert spec.extra_opts.get("format") == _FORMAT_PINTEREST_ESPERADO
+
+    options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
+    assert options["format"] == _FORMAT_PINTEREST_ESPERADO
+    assert options["merge_output_format"] == "mp4"
+    primeiro_elo = options["format"].split("/", 1)[0]
+    assert primeiro_elo == "bestvideo[vcodec^=avc]+bestaudio"
+
+
+def test_pinterest_nao_pode_mais_entregar_video_sem_audio():
+    """Proteção de regressão direta contra a causa raiz: NENHUM elo do seletor do Pinterest pode
+    resolver para um format vídeo-only sozinho (sem "+bestaudio"), exceto o ÚLTIMO recurso
+    absoluto ("best", só para o caso raro de não existir nenhum par vídeo+áudio separável) --
+    isso é o que impede a repetição do bug real (vídeo H.264 720x1280 baixado SEM áudio)."""
+    spec = service_module._SPECS[Platform.PINTEREST]
+    elos = spec.extra_opts["format"].split("/")
+    # todo elo que menciona "bestvideo" tem que vir acompanhado de "+bestaudio" no MESMO elo
+    for elo in elos:
+        if "bestvideo" in elo:
+            assert "+bestaudio" in elo, elo
+    assert elos[-1] == "best"  # último recurso, sem filtro -- nunca o primeiro nem o único
+
+
+def test_pinterest_selector_nao_hardcoda_ids_especificos_do_pin_de_teste():
+    """O selector deve ser GENÉRICO -- nunca os format_id literais de um pin específico
+    (aprovação do CÉREBRO: "NÃO hardcodar os IDs V_HLSV3_MOBILE-703 ou
+    V_HLSV3_MOBILE-audio1-1 -- esses IDs são específicos desse pin")."""
+    spec = service_module._SPECS[Platform.PINTEREST]
+    formato = spec.extra_opts["format"]
+    assert "V_HLSV3_MOBILE" not in formato
+    assert "703" not in formato and "audio1-1" not in formato
+
+
+def test_pinterest_continua_sem_impersonate_e_sem_extractor_args():
+    """O novo "format" é o ÚNICO extra_opt do Pinterest -- não ganhou nenhum outro campo (o
+    Pinterest nunca precisou de impersonate, diferente do TikTok)."""
+    spec = service_module._SPECS[Platform.PINTEREST]
+    assert set(spec.extra_opts.keys()) == {"format"}
 
 
 def test_youtube_allowed_extractors_continua_intacto_e_extra_opts_tem_so_format():
@@ -319,6 +483,36 @@ def test_configuracao_do_youtube_nao_vazou_para_outras_plataformas():
         assert "extractor_args" not in spec.extra_opts, plataforma
         options = YtDlpDownloader(spec)._build_options(Path("/tmp/stub"))
         assert "extractor_args" not in options, plataforma
+
+
+# ------------------------------------------------------------------ regressão: YouTube congelado (homologado, 30/09 -- gerações 47/48/53, modo=copy, HTTP 200)
+def test_regressao_youtube_continua_congelado_apos_correcao_de_tiktok_e_pinterest():
+    """YouTube foi homologado e CONGELADO (aprovação do CÉREBRO, 30/09 -- gerações 47/48/53
+    reais, modo=copy, concluídas e baixadas com HTTP 200). Esta rodada corrigiu TikTok e
+    Pinterest -- este teste prova que a spec do YouTube continua BIT A BIT idêntica à validada, e
+    que NENHUM dos dois novos formats (TikTok ou Pinterest) vazou para ela (specs são entradas
+    independentes do mesmo dict, mas um erro de cópia/referência acidental já causou bugs assim
+    em outros projetos)."""
+    spec_youtube = service_module._SPECS[Platform.YOUTUBE]
+    assert spec_youtube.extra_opts == {"format": _FORMAT_YOUTUBE_ESPERADO}
+    assert spec_youtube.allowed_extractors == ("Youtube",)
+    # o format do YouTube nunca pode ter ganhado nenhum dos padrões de fallback do TikTok/Pinterest
+    assert "mp4/best[ext=mp4]/best" not in spec_youtube.extra_opts["format"]
+    assert "vcodec^=h264" not in spec_youtube.extra_opts["format"]  # nomenclatura do TikTok, não do YouTube
+    # o elo do YouTube sempre filtra o ÁUDIO também (acodec^=mp4a) -- diferente do elo equivalente
+    # do Pinterest ("bestvideo[vcodec^=avc]+bestaudio", sem filtro de acodec)
+    assert "bestvideo[vcodec^=avc]+bestaudio[acodec^=mp4a]" in spec_youtube.extra_opts["format"]
+
+
+def test_regressao_processor_continua_identico_apos_correcao_de_tiktok_e_pinterest():
+    """A decisão de 3 vias do processor (copy / copy_video_transcode_audio / transcode) é
+    GENÉRICA e não foi tocada nesta rodada -- confirma que as constantes de codec seguro
+    continuam exatamente as mesmas que já produziam `modo=copy` para o YouTube (gerações
+    47/48/53)."""
+    from processor.service import _COPY_SAFE_AUDIO_CODECS, _COPY_SAFE_VIDEO_CODECS
+
+    assert _COPY_SAFE_VIDEO_CODECS == frozenset({"h264"})
+    assert _COPY_SAFE_AUDIO_CODECS == frozenset({"aac"})
 
 
 # ------------------------------------------------------------------ timeout

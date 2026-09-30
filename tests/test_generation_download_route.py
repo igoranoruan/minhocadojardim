@@ -1,5 +1,13 @@
 """GET /api/generations/{generation_id}/download: contrato HTTP, ownership, expiração e
-segurança (Etapa 8B.3)."""
+segurança (Etapa 8B.3).
+
+Correção da quota Free (aprovação do CÉREBRO): desde que get_generation_user passou a usar a
+identidade Free do DISPOSITIVO para sessão sem plano pago, esta rota precisa considerar TAMBÉM a
+conta autenticada como possível dona de uma geração (routes/deps.py::get_optional_authenticated_user
++ services/usage.py::get_downloadable_generation, parâmetro `authenticated_user_id`) -- senão uma
+geração antiga de uma conta sem plano pago deixaria de ser baixável por ela mesma. O cookie Free em
+si, sozinho, continua incapaz de baixar uma geração de outra conta e continua incapaz de conceder
+acesso pago (ver os testes na seção "conta sem plano pago / cookie Free" abaixo)."""
 from datetime import timedelta
 from pathlib import Path
 
@@ -213,3 +221,35 @@ def test_resposta_de_erro_segue_o_formato_padrao(auth_client, factory, session):
     resposta = auth_client.get(_url(999999))
     assert set(resposta.json()) == {"detail", "code"}
     assert resposta.headers["cache-control"] == "no-store"
+
+
+# ============================================================================ conta sem plano pago / cookie Free
+def test_conta_autenticada_sem_plano_pago_ainda_baixa_geracao_da_propria_conta(auth_client, factory, session):
+    """Correção da quota Free (aprovação do CÉREBRO): a identidade EFETIVA de uma sessão sem plano
+    pago passou a ser a do dispositivo -- mas uma geração que pertence à própria CONTA autenticada
+    (ex.: de antes desta correção, ou de quando o plano ainda era pago) continua baixável por ela."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)  # SEM plano pago
+    chave = _salvar_resultado_real()
+    geracao = factory.generation(
+        user=usuario, status="completed",
+        output_storage_key=chave, output_expires_at=utcnow() + timedelta(minutes=10),
+    )
+    resposta = auth_client.get(_url(geracao.id))
+    assert resposta.status_code == 200
+    assert resposta.content == b"bytes do mp4 processado"
+
+
+def test_cookie_free_sozinho_nao_baixa_geracao_de_conta_paga_alheia(auth_client, factory, session):
+    """O cookie Free nunca pode virar sessão nem conceder acesso pago: um visitante SEM sessão
+    (só a identidade Free do dispositivo, criada automaticamente) nunca baixa a geração de uma
+    conta paga alheia, mesmo conhecendo o id."""
+    dono_pago = factory.user()
+    chave = _salvar_resultado_real()
+    geracao = factory.generation(
+        user=dono_pago, status="completed",
+        output_storage_key=chave, output_expires_at=utcnow() + timedelta(minutes=10),
+    )
+    resposta = auth_client.get(_url(geracao.id))  # SEM login -- só a identidade Free automática
+    assert resposta.status_code == 404
+    assert resposta.headers["set-cookie"].startswith("minhoca_anon=")

@@ -23,7 +23,6 @@ from config import SESSION_LAST_USED_UPDATE_INTERVAL_SECONDS, Settings, get_sett
 from database.models import AuthSession, LoginCode, User
 from database.models.user import normalize_email
 from database.types import utcnow
-from services.anon_identity import promote_anonymous_user
 from services.mailer import EmailMessage, EmailSender
 from utils.security import (
     constant_time_equals,
@@ -244,14 +243,13 @@ def verify_login_code(
     email: str,
     code: str,
     cfg: Settings | None = None,
-    anon_user_id: int | None = None,
 ) -> LoginResult:
-    """`anon_user_id` (Free anônimo -- aprovação do CÉREBRO): quando a chamada vem de um
-    navegador com uma identidade anônima ativa (routes/auth.py resolve isto ANTES de chamar --
-    nunca informado pelo cliente), o usuário é resolvido por `promote_anonymous_user` em vez de
-    `_get_or_create_verified_user` (ver services/anon_identity.py para a política de promoção/
-    "sem merge automático"). `None` (comportamento padrão, sem identidade anônima) preserva
-    exatamente o comportamento anterior a esta etapa."""
+    """Login sempre cria/reaproveita a conta autenticada por `_get_or_create_verified_user`, sem
+    olhar para nenhuma identidade anônima do navegador (correção de segurança, aprovação do
+    CÉREBRO -- ver o docstring de services/anon_identity.py para o porquê: a identidade Free do
+    dispositivo e a conta autenticada precisam permanecer SEMPRE separadas; ver
+    routes/deps.py::get_generation_user para como a cota Free continua a mesma através de
+    login/logout no mesmo navegador sem precisar de nenhuma promoção aqui)."""
     cfg = cfg or get_settings()
     email = normalize_email(email) if isinstance(email, str) else ""
     if not is_valid_email_format(email):
@@ -309,10 +307,7 @@ def verify_login_code(
             if closed.rowcount != 1:  # outra verificação já usou este código
                 db.rollback()
                 raise InvalidCodeError()
-            if anon_user_id is None:
-                user = _get_or_create_verified_user(db, email, now)
-            else:
-                user = promote_anonymous_user(db, anon_user_id=anon_user_id, email=email, now=now)
+            user = _get_or_create_verified_user(db, email, now)
             token, expires_at = _create_session(db, user, now, cfg)
             db.commit()
             logger.info("[AUTH] login confirmado para %s", mask_email(email))

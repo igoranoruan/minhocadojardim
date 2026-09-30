@@ -1,6 +1,9 @@
 """Monta e executa o comando FFmpeg da V1: MP4 H.264 (libx264, preset veryfast, CRF 23) + AAC
 (quando há áudio), metadados e capítulos removidos, faststart, sem legendas/streams de dados na
-saída.
+saída. Duas variantes adicionais de performance (ver build_copy_args/
+build_copy_video_transcode_audio_args): remux total (`-c:v copy -c:a copy`) e o caminho
+intermediário (`-c:v copy -c:a aac`, quando só o áudio de entrada não é compatível) -- quem decide
+QUANDO usar cada uma é processor/service.py.
 
 Segurança: nunca ativar o parâmetro de shell do subprocess, nunca usar os.system, nunca montar o
 comando como string — sempre uma lista fixa de argumentos passada ao subprocess. Os dois únicos
@@ -70,6 +73,85 @@ def build_args(*, executable: str, input_path: Path, output_path: Path, has_audi
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-crf", "23",
+    ]
+    if has_audio:
+        args += ["-c:a", "aac"]
+    args += [
+        "-movflags", "+faststart",
+        "-progress", "pipe:1",
+        "-f", "mp4",
+        str(output_path),
+    ]
+    return args
+
+
+def build_copy_args(*, executable: str, input_path: Path, output_path: Path, has_audio: bool) -> list[str]:
+    """Variante de `build_args` para o caminho rápido (stream copy/remux -- otimização de
+    performance): só é usada quando processor/service.py já confirmou, via probe, que o vídeo de
+    entrada está em H.264 (e o áudio, se houver, em AAC) -- exatamente os MESMOS codecs que
+    `build_args` produziria de qualquer forma transcodificando. Copiar os streams em vez de
+    reencodá-los não perde nada perceptível (mesma resolução/FPS/qualidade/áudio/duração) e evita
+    o trabalho de CPU do encoder, daí ser muito mais rápido.
+
+    Preserva tudo que `build_args` já garante: mapeia só o stream de vídeo (e áudio, se houver)
+    desejado, remove metadados/capítulos, produz um MP4 com faststart -- a ÚNICA diferença é
+    `-c:v copy` / `-c:a copy` no lugar de `-c:v libx264 ... -c:a aac`."""
+    args = [
+        executable,
+        "-hide_banner",
+        "-loglevel", "error",
+        "-nostats",
+        "-y",
+        "-i", str(input_path),
+        "-map", "0:v:0",
+    ]
+    if has_audio:
+        args += ["-map", "0:a:0"]
+    args += [
+        "-map_metadata", "-1",
+        "-map_chapters", "-1",
+        "-c:v", "copy",
+    ]
+    if has_audio:
+        args += ["-c:a", "copy"]
+    args += [
+        "-movflags", "+faststart",
+        "-progress", "pipe:1",
+        "-f", "mp4",
+        str(output_path),
+    ]
+    return args
+
+
+def build_copy_video_transcode_audio_args(
+    *, executable: str, input_path: Path, output_path: Path, has_audio: bool,
+) -> list[str]:
+    """Terceira variante (otimização de performance, 30/09 -- aprovação do CÉREBRO): caminho
+    intermediário entre `build_copy_args` (remux total) e `build_args` (transcode total), para
+    quando o VÍDEO de entrada já está em H.264 (copiável) mas o ÁUDIO não está em AAC (ex.: Opus,
+    comum em streams do YouTube mesmo depois da preferência por H.264 no seletor de format --
+    nem todo vídeo tem uma trilha de áudio AAC/M4A disponível). Copia o vídeo (`-c:v copy`, sem
+    reencodar) e reencoda só o áudio (`-c:a aac`, idêntico ao encoder/parâmetros que
+    `build_args` já usa) -- muito mais barato que reencodar vídeo inteiro em libx264, que é o
+    trabalho de CPU caro que este caminho evita.
+
+    Quem decide QUANDO usar esta variante é processor/service.py (só depois de confirmar, via
+    probe, que o vídeo é H.264 mas o áudio não é AAC) -- esta função só monta o comando pedido."""
+    args = [
+        executable,
+        "-hide_banner",
+        "-loglevel", "error",
+        "-nostats",
+        "-y",
+        "-i", str(input_path),
+        "-map", "0:v:0",
+    ]
+    if has_audio:
+        args += ["-map", "0:a:0"]
+    args += [
+        "-map_metadata", "-1",
+        "-map_chapters", "-1",
+        "-c:v", "copy",
     ]
     if has_audio:
         args += ["-c:a", "aac"]
@@ -181,6 +263,7 @@ def run_ffmpeg(
     has_audio: bool,
     duration_seconds: float | None = None,
     on_progress: Callable[[float | None], None] | None = None,
+    mode: str = "transcode",
 ) -> None:
     """Executa o FFmpeg com timeout real (inalterado: PROCESSING_TIMEOUT_SECONDS). Levanta
     FfmpegUnavailableError, FfmpegFailedError ou ProcessingTimeoutError -- MESMAS exceções de
@@ -191,10 +274,25 @@ def run_ffmpeg(
     antes desta função ser chamada) e `on_progress` são OPCIONAIS -- omitidos, o comportamento é
     idêntico ao de antes desta etapa, só que agora sempre com -progress/-nostats no comando (o
     FFmpeg emite os ticks de qualquer forma; se não há on_progress, simplesmente ninguém os lê
-    além da thread que os descarta ao montar cada tick)."""
+    além da thread que os descarta ao montar cada tick).
+
+    `mode` (novo, otimização de performance -- default "transcode", comportamento IDÊNTICO ao de
+    antes desta etapa quando omitido): "transcode" monta o comando de sempre (build_args,
+    libx264/AAC); "copy" monta o comando do caminho rápido (build_copy_args, stream copy/remux);
+    "copy_video_transcode_audio" (novo, 30/09) monta o comando do caminho intermediário
+    (build_copy_video_transcode_audio_args -- vídeo copiado, só áudio reencodado). Quem decide
+    QUANDO usar cada um é processor/service.py (só depois de confirmar, via probe, quais codecs de
+    entrada já são compatíveis) -- esta função só monta e executa o comando pedido, nunca decide
+    sozinha qual caminho usar."""
     settings = get_settings()
     executable = resolve_executable(settings.ffmpeg_path, what="FFmpeg", error_cls=FfmpegUnavailableError)
-    args = build_args(executable=executable, input_path=input_path, output_path=output_path, has_audio=has_audio)
+    if mode == "copy":
+        builder = build_copy_args
+    elif mode == "copy_video_transcode_audio":
+        builder = build_copy_video_transcode_audio_args
+    else:
+        builder = build_args
+    args = builder(executable=executable, input_path=input_path, output_path=output_path, has_audio=has_audio)
 
     try:
         process = subprocess.Popen(  # noqa: S603 - lista fixa de argumentos, nunca shell

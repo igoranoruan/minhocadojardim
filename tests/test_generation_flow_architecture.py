@@ -112,12 +112,17 @@ def test_rota_de_download_e_fina_toda_regra_fica_no_usage():
 
 def test_rota_de_download_nao_aceita_storage_key_da_url_ou_query():
     """storage_key só pode vir de dentro da Generation já ownership-checada -- nunca de um
-    parâmetro da rota."""
+    parâmetro da rota. `authenticated` entrou na correção da quota Free (aprovação do CÉREBRO):
+    ownership de uma geração antiga de uma CONTA autenticada continua valendo mesmo quando a
+    identidade efetiva (`user`) é a do dispositivo -- ver
+    routes/deps.py::get_optional_authenticated_user e
+    services/usage.py::get_downloadable_generation. Continua vindo só de uma sessão real (nunca do
+    corpo/URL/query)."""
     tree = ast.parse(ROUTE_FILE.read_text(encoding="utf-8"))
     funcao = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "download_generation")
     nomes_parametros = {a.arg for a in funcao.args.args}
     assert "storage_key" not in nomes_parametros
-    assert nomes_parametros == {"generation_id", "user", "db"}
+    assert nomes_parametros == {"generation_id", "user", "authenticated", "db"}
 
 
 def test_busca_da_geracao_para_download_nao_e_duplicada_na_rota():

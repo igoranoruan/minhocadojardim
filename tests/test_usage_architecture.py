@@ -92,9 +92,15 @@ def test_database_nao_importa_services():
 # (main.py), que precisa das CLASSES de erro (QuotaExceededError, EntitlementInconsistencyError)
 # para registrar app.add_exception_handler — mesmo padrão já usado para AuthError desde a Etapa 3.
 # Nenhum dos dois CHAMA reserve_generation/complete_generation/fail_generation diretamente; quem
-# faz isso é services/generation_flow.py (ver tests/test_generation_flow_architecture.py). Toda
-# outra rota (routes.auth, routes.health, routes.deps) continua proibida.
-USAGE_ALLOWED_CONSUMERS = {"main", "routes.generations"}
+# faz isso é services/generation_flow.py (ver tests/test_generation_flow_architecture.py).
+#
+# routes.deps entrou nesta lista na correção do loophole "Free reseta no logout" (aprovação do
+# CÉREBRO): get_generation_user precisa saber se a sessão autenticada tem um entitlement pago
+# vigente para decidir entre usar essa sessão ou cair para a identidade Free do dispositivo — só
+# LÊ get_current_entitlement (nunca reserve_generation/complete_generation/fail_generation, que
+# continuam exclusivos de services/generation_flow.py). Toda outra rota (routes.auth, routes.health)
+# continua proibida.
+USAGE_ALLOWED_CONSUMERS = {"main", "routes.generations", "routes.deps"}
 
 
 def test_nenhuma_regra_de_cota_em_rotas_main_ou_frontend():

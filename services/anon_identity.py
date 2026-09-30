@@ -1,16 +1,30 @@
 """Identidade anônima (Free sem login -- aprovação do CÉREBRO, Free anônimo).
 
 Cria/reaproveita um `User` "placeholder" (e-mail sintético @device.invalid, nunca verificado) para
-um visitante sem sessão, e promove esse mesmo `user_id` para a conta real quando ele faz login com
-um e-mail que ainda não existe. Nenhuma outra parte do projeto (services/usage.py,
-services/entitlements.py, services/locks.py, download por Generation.user_id) precisa saber que um
-usuário é "anônimo" -- para elas, é um user_id como outro qualquer (ver
+um visitante sem sessão -- essa é a identidade Free DO DISPOSITIVO. Nenhuma outra parte do projeto
+(services/usage.py, services/entitlements.py, services/locks.py, download por Generation.user_id)
+precisa saber que um usuário é "anônimo" -- para elas, é um user_id como outro qualquer (ver
 database/models/anonymous_identity.py para a motivação completa).
 
-Este módulo é o ÚNICO que cria um User com e-mail sintético, o único que lê/escreve em
-`anonymous_identities`, e o único que decide a política de "sem merge automático" (aprovada pelo
-CÉREBRO): se o e-mail do login já pertence a outro usuário, a conta anônima NUNCA é fundida --
-fica intacta e órfã, e o login segue normalmente na conta já existente.
+Correção de segurança (aprovação do CÉREBRO, "Free reseta no logout"): esta identidade NUNCA vira
+uma conta autenticada, e uma conta autenticada NUNCA vira esta identidade -- são sempre duas linhas
+separadas em `users`, para sempre. Antes desta correção, `promote_anonymous_user` mutava o e-mail
+do `User` anônimo para o e-mail confirmado no login (o MESMO user_id passava a ser "a conta"). Isso
+deixou de ser seguro quando routes/deps.py::get_generation_user passou a escolher a identidade
+efetiva por sessão+entitlement (não mais "sessão sempre vence"): uma identidade anônima que já
+tivesse virado conta autenticada, se reaproveitada aqui, faria uma requisição SEM sessão operar
+como se fosse essa conta -- exatamente o "cookie Free substituindo a sessão autenticada" que o
+CÉREBRO proibiu explicitamente. Também quebrava a continuidade de cota: a identidade Free do
+dispositivo deixava de existir depois do primeiro login. Por isso login sempre cria/reaproveita uma
+conta autenticada SEPARADA (services/auth.py::_get_or_create_verified_user) e este módulo nunca lê
+o e-mail informado no login.
+
+Dado histórico: uma linha de `anonymous_identities` cujo `user_id` já foi promovido por uma versão
+anterior (e-mail real, verificado) pode existir no banco. `resolve_anon_identity` nunca devolve um
+`User` desses como identidade Free -- ver o comentário no corpo da função.
+
+Este módulo é o ÚNICO que cria um User com e-mail sintético e o único que lê/escreve em
+`anonymous_identities`.
 """
 import logging
 import secrets
@@ -69,6 +83,17 @@ def resolve_anon_identity(
         ).first()
         if found is not None:
             identity, user = found
+            if not is_anonymous_placeholder_email(user.email):
+                # Dado histórico de uma versão anterior deste módulo, que promovia (mutava) o
+                # usuário-dispositivo para a conta autenticada no login: esta linha não é mais uma
+                # identidade Free válida -- devolvê-la aqui equivaleria a autenticar uma requisição
+                # SEM sessão como se fosse essa conta real, só por causa do cookie Free. Tratamos
+                # como se o cookie não batesse com nada: cai para criar um usuário-dispositivo novo
+                # abaixo. A linha antiga fica órfã e intacta (nenhuma migração/purge automático
+                # nesta rodada -- risco documentado no relatório de execução).
+                found = None
+        if found is not None:
+            identity, user = found
             if (
                 identity.last_seen_at is None
                 or (now - identity.last_seen_at).total_seconds() >= ANON_LAST_SEEN_UPDATE_INTERVAL_SECONDS
@@ -103,51 +128,3 @@ def resolve_anon_identity(
             if attempt == 2:
                 raise
     raise RuntimeError("inalcançável")  # deixa explícito para quem lê; o loop acima sempre retorna ou relança
-
-
-def find_anon_user_id_by_token(db: Session, device_token: str | None) -> int | None:
-    """Só leitura -- usado por routes/auth.py::verify_code para saber se HÁ uma identidade
-    anônima associada ao cookie, sem criar nada (criar uma identidade nova não faz sentido no
-    meio de um login) e sem atualizar last_seen_at (não é uma visita de geração)."""
-    if not device_token:
-        return None
-    return db.execute(
-        select(AnonymousIdentity.user_id).where(
-            AnonymousIdentity.device_token_hash == hash_anon_device_token(device_token)
-        )
-    ).scalar_one_or_none()
-
-
-def promote_anonymous_user(db: Session, *, anon_user_id: int | None, email: str, now: datetime) -> User:
-    """Chamado por services/auth.py::verify_login_code QUANDO o código foi confirmado com um
-    cookie de identidade anônima presente. Duas situações (política aprovada pelo CÉREBRO):
-
-    - E-mail novo (nenhum `User` com este e-mail ainda) -> promove o MESMO `user_id` anônimo: ele
-      vira a conta definitiva (email real, email_verified_at=now). O histórico de gerações
-      (Generation.user_id) é preservado automaticamente -- nenhuma linha é migrada, porque o
-      user_id não muda.
-    - E-mail já pertence a outro `User` -> NÃO funde. Login segue normalmente na conta já
-      existente; a conta anônima (e seu consumo de Free) fica intacta e órfã -- nunca é apagada
-      nem alterada, nunca corrompendo o ownership de nenhuma das duas contas.
-    """
-    existing = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
-    if existing is not None:
-        if existing.email_verified_at is None:
-            existing.email_verified_at = now
-        return existing
-
-    anon_user = db.get(User, anon_user_id) if anon_user_id is not None else None
-    if anon_user is None or not is_anonymous_placeholder_email(anon_user.email):
-        # Defensivo, não deveria acontecer em uso normal: anon_user_id só chega aqui já resolvido
-        # pelo próprio backend (routes/auth.py via find_anon_user_id_by_token), nunca informado
-        # pelo cliente. Se ainda assim vier inválido, comportamento seguro é criar a conta normal.
-        user = User(email=email, email_verified_at=now)
-        db.add(user)
-        db.flush()
-        return user
-
-    anon_user.email = email
-    anon_user.email_verified_at = now
-    db.flush()
-    logger.info("[ANON] usuário-dispositivo %s promovido a conta autenticada", anon_user.id)
-    return anon_user

@@ -52,10 +52,97 @@ _SPECS: dict[Platform, YtDlpSpec] = {
             # envolvidos nisto — é só o fingerprint de TLS/HTTP do navegador sendo imitado, a
             # mesma requisição que qualquer visitante anônimo faria.
             "impersonate": "chrome",
+            # format PRÓPRIO do TikTok (otimização de performance, 30/09 -- aprovação do
+            # CÉREBRO): diferente do YouTube, o TikTok normalmente já entrega formats MUXADOS
+            # (vídeo+áudio no mesmo arquivo, nunca streams DASH separados) -- por isso NÃO
+            # precisamos de "bestvideo+bestaudio" aqui, só de preferir, entre os formats muxados
+            # já existentes, o que já vem em H.264 (e, se possível, AAC/M4A) -- os únicos codecs
+            # que processor/service.py aceita para `-c:v copy`/`-c:a copy`.
+            #
+            # CAUSA RAIZ CONFIRMADA (aprovação do CÉREBRO, 30/09 -- URL real testada:
+            # tiktok.com/@cazetv/video/7659614093048909064): a primeira tentativa desta otimização
+            # usava "vcodec^=avc" (nomenclatura do YouTube), mas o extractor do TikTok reporta o
+            # codec H.264 literalmente como "h264" (yt-dlp -F real: "h264_540p... h264 aac",
+            # nunca "avc1...") -- o filtro "vcodec^=avc" NUNCA casava com nenhum format do TikTok,
+            # e o fallback sem filtro escolhia o "best" entre TODOS os formats disponíveis
+            # (incluindo "bytevc1_1080p..." reportado como vcodec="h265"/HEVC) -- resultando no
+            # arquivo real baixado ser 1080x1918 HEVC+AAC, nunca elegível para `-c:v copy`, e
+            # forçando transcode completo (~178-233s).
+            #
+            # CORREÇÃO: filtrar por "h264" (a nomenclatura REAL que o TikTok reporta), com "avc"
+            # mantido como alternativa defensiva logo em seguida (mesma nomenclatura do YouTube --
+            # cobre uma eventual mudança futura de nomenclatura do extractor do TikTok, sem custo
+            # nenhum quando "h264" já casa primeiro, que é o caso hoje). "best[vcodec^=h264]
+            # [acodec^=mp4a]" -- primeiro tenta o melhor format muxado já H.264+AAC. "best
+            # [vcodec^=avc][acodec^=mp4a]" -- mesma coisa, nomenclatura alternativa. "best
+            # [vcodec^=h264]"/"best[vcodec^=avc]" -- aceitam H.264 com qualquer áudio (processor
+            # usa copy_video_transcode_audio se o áudio não for AAC). Em TODOS os quatro, "best"
+            # (sem filtro de altura/resolução) escolhe o MELHOR format que casar o filtro de codec
+            # -- no vídeo de teste real, isso é o format "play" 1080x1918 H.264+AAC, NUNCA um
+            # H.264 de qualidade inferior só para caber no filtro (não reduz resolução
+            # propositalmente). "mp4/best[ext=mp4]/best" -- ÚLTIMO fallback, EXATAMENTE IDÊNTICO
+            # ao format usado antes desta otimização: nenhum vídeo sem NENHUM format H.264
+            # disponível baixa diferente do que já baixava.
+            "format": (
+                "best[vcodec^=h264][acodec^=mp4a]"
+                "/best[vcodec^=avc][acodec^=mp4a]"
+                "/best[vcodec^=h264]"
+                "/best[vcodec^=avc]"
+                "/mp4/best[ext=mp4]/best"
+            ),
         },
     ),
+    # Instagram: AUDITADO nesta rodada (30/09, junto com TikTok/Pinterest) e PRESERVADO sem
+    # nenhuma mudança de format -- evidência real (URL real testada:
+    # instagram.com/reel/DbbnF6APswb/, aprovação do CÉREBRO) confirmou que o downloader atual já
+    # produz H.264+AAC 720x1280, plenamente compatível com o caminho `copy`. O format compartilhado
+    # ("mp4/best[ext=mp4]/best") já é adequado aqui, mesmo o Instagram também oferecendo formats
+    # DASH -- diferente do TikTok (nomenclatura de codec incompatível com o filtro) e do Pinterest
+    # (formato escolhido sem áudio), o Instagram não apresentou nenhum dos dois problemas na
+    # evidência real. Nenhuma mudança "para melhorar o que já funciona" -- só altera o que está
+    # comprovadamente quebrado.
     Platform.INSTAGRAM: YtDlpSpec(Platform.INSTAGRAM, allowed_extractors=("Instagram",)),
-    Platform.PINTEREST: YtDlpSpec(Platform.PINTEREST, allowed_extractors=("Pinterest",)),
+    Platform.PINTEREST: YtDlpSpec(
+        Platform.PINTEREST,
+        allowed_extractors=("Pinterest",),
+        extra_opts={
+            # format PRÓPRIO do Pinterest (otimização de performance, 30/09 -- aprovação do
+            # CÉREBRO). CAUSA RAIZ CONFIRMADA (URL real testada: pin.it/6i84tmn2E): o Pinterest
+            # serve HLS com vídeo e áudio em formats SEPARADOS (yt-dlp -F real:
+            # "V_HLSV3_MOBILE-703" 720x1280 avc1 vídeo-only + "V_HLSV3_MOBILE-audio1-1" áudio-only)
+            # -- nunca um format já muxado com os dois juntos. O format compartilhado
+            # ("mp4/best[ext=mp4]/best") não pede nenhum merge (diferente do YouTube/TikTok, que
+            # usam "bestvideo+bestaudio" ou já recebem formats muxados) -- "best[ext=mp4]" casava
+            # com o MELHOR format vídeo-only cujo container reportado já é mp4 (comum em segmentos
+            # HLS), SEM NUNCA considerar se existia áudio -- resultado real confirmado: MP4
+            # H.264 720x1280 13.56s, mas SEM NENHUMA faixa de áudio (o processor então usava
+            # `copy` -- rápido, ~1.99s -- mas produzindo um vídeo MUDO, um bug de correção, não
+            # só de performance).
+            #
+            # CORREÇÃO (genérica, SEM hardcodar os IDs "V_HLSV3_MOBILE-703"/"V_HLSV3_MOBILE-
+            # audio1-1" -- específicos deste pin, nunca reaproveitáveis por outro): usar
+            # "bestvideo+bestaudio", que EXIGE que o yt-dlp resolva e faça o merge de um stream de
+            # vídeo COM um stream de áudio -- nunca aceita implicitamente um format vídeo-only
+            # como se fosse completo (diferente do "best[ext=mp4]" antigo). "bestvideo[vcodec^=avc]
+            # +bestaudio" -- primeiro tenta o melhor vídeo-only em H.264/AVC (nomenclatura "avc1"
+            # confirmada pela evidência real desta plataforma) com o melhor áudio-only disponível
+            # (merge do yt-dlp já produz H.264 -- processor usa `copy` se o áudio vier AAC, ou
+            # `copy_video_transcode_audio` se não vier). "bestvideo[vcodec^=h264]+bestaudio" --
+            # nomenclatura alternativa defensiva (mesmo raciocínio do TikTok, sem custo quando
+            # "avc" já casa primeiro). "bestvideo+bestaudio" (sem filtro de codec) -- fallback para
+            # quando não houver NENHUM vídeo H.264/AVC disponível -- ainda assim SEMPRE com áudio,
+            # nunca repete o bug de origem. "/best" -- ÚLTIMO recurso absoluto, só para o caso raro
+            # de não existir nenhum par vídeo+áudio separável (um format já completo sozinho).
+            # merge_output_format="mp4" (compartilhado, já existente) garante que o resultado do
+            # merge sai como .mp4 em qualquer um dos casos acima.
+            "format": (
+                "bestvideo[vcodec^=avc]+bestaudio"
+                "/bestvideo[vcodec^=h264]+bestaudio"
+                "/bestvideo+bestaudio"
+                "/best"
+            ),
+        },
+    ),
     Platform.YOUTUBE: YtDlpSpec(
         Platform.YOUTUBE,
         allowed_extractors=("Youtube",),
@@ -67,10 +154,28 @@ _SPECS: dict[Platform, YtDlpSpec] = {
             # vídeo E áudio juntos -- por isso os três fallbacks antigos se esgotavam sem candidato
             # ("Requested format is not available"). "bestvideo+bestaudio" pede ao yt-dlp para
             # casar o melhor vídeo-only com o melhor áudio-only e fazer o merge (via ffmpeg, que o
-            # yt-dlp já localiza sozinho no PATH); "/best" continua como fallback para quando já
-            # existir um format único combinado. merge_output_format="mp4" (compartilhado, abaixo)
-            # já garante que o resultado do merge sai como .mp4.
-            "format": "bestvideo+bestaudio/best",
+            # yt-dlp já localiza sozinho no PATH).
+            #
+            # Otimização de performance (caminho rápido / stream copy, 30/09 -- aprovação do
+            # CÉREBRO): ANTES dos fallbacks sem filtro, tentamos casar vcodec=avc (H.264) com
+            # acodec=mp4a (AAC/M4A) -- exatamente os únicos codecs que processor/service.py aceita
+            # para o caminho `-c:v copy` (ver _COPY_SAFE_VIDEO_CODECS/_COPY_SAFE_AUDIO_CODECS).
+            # Quando o YouTube oferece essa combinação (muito comum: itags 137/136/135/... vídeo +
+            # 140 áudio), o merge do yt-dlp já sai H.264+AAC e o processor nem precisa reencodar
+            # vídeo. "^=avc"/"^=mp4a" casam tanto "avc1" quanto "avc1.640028" (idem mp4a.40.2) --
+            # prefixo, não igualdade exata, porque o yt-dlp reporta o codec com o perfil/nível
+            # junto. NÃO restringimos altura/resolução aqui: se o YouTube não tiver H.264 na MESMA
+            # qualidade que o VP9/AV1 equivalente, isso é decidido pelo próprio critério de
+            # ordenação padrão do yt-dlp dentro do filtro (ainda escolhe o "melhor" H.264
+            # disponível, nunca um H.264 pior só para caber no filtro). "bestvideo+bestaudio/best"
+            # continua como ÚLTIMO fallback, IDÊNTICO ao comportamento anterior a esta mudança --
+            # nenhum vídeo deixa de baixar por causa deste filtro nem fica pior do que já ficava:
+            # na ausência de H.264+AAC, o yt-dlp cai exatamente no que já fazia antes.
+            "format": (
+                "bestvideo[vcodec^=avc]+bestaudio[acodec^=mp4a]"
+                "/best[vcodec^=avc][acodec^=mp4a]"
+                "/bestvideo+bestaudio/best"
+            ),
             # NÃO forçar player_client (diagnóstico real em Windows, 26/09): "mweb" (e "web") só
             # devolviam formatos de storyboard (sb0/mhtml) para este vídeo -- nenhum vídeo/áudio de
             # verdade. Sem player_client forçado, o yt-dlp negocia os clients padrão sozinho e

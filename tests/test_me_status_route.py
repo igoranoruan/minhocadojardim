@@ -13,7 +13,8 @@ services/usage.py, que usam um NOW fixo por aceitarem o parâmetro diretamente.
 """
 from datetime import timedelta
 
-from helpers_generation_flow import login_directly
+from database.models import User
+from helpers_generation_flow import anon_user_id_from_cookie, login_directly
 from utils.time_sp import now_sp, sp_day, sp_week_start
 
 URL = "/api/me/status"
@@ -27,6 +28,18 @@ def _generation(factory, usuario, plano, *, status="completed"):
         period_day=sp_day(now_sp()),
         period_week=sp_week_start(now_sp()),
     )
+
+
+def _identidade_free_do_dispositivo(auth_client, session) -> User:
+    """Correção da quota Free (aprovação do CÉREBRO): sem entitlement pago -- logado ou não -- a
+    identidade EFETIVA usada por get_generation_user é a do dispositivo (cookie `minhoca_anon`),
+    não mais o user_id da própria sessão. Quem for pré-carregar uso/gerações para um cenário Free
+    precisa primeiro estabelecer essa identidade (a primeira chamada sem cookie já cria) e usar o
+    User real por trás dela -- nunca `usuario` diretamente."""
+    primeira = auth_client.get(URL)
+    token = primeira.headers["set-cookie"].split(";")[0].split("=", 1)[1]
+    anon_id = anon_user_id_from_cookie(session, token)
+    return session.get(User, anon_id)
 
 
 def _entitlement(factory, usuario, plano, *, starts_at, expires_at, status="granted", **overrides):
@@ -66,9 +79,10 @@ def test_sem_sessao_devolve_status_do_visitante_anonimo(auth_client):
 
 # ============================================================================ Free
 def test_free_sem_entitlement(auth_client, factory, session):
-    usuario = _login(auth_client, session, factory)
-    _generation(factory, usuario, "free")
-    _generation(factory, usuario, "free")
+    _login(auth_client, session, factory)  # sem plano pago -- a cota conta na identidade do dispositivo
+    identidade = _identidade_free_do_dispositivo(auth_client, session)
+    _generation(factory, identidade, "free")
+    _generation(factory, identidade, "free")
 
     resposta = auth_client.get(URL)
 
@@ -147,7 +161,9 @@ def test_entitlement_expirado_volta_ao_free(auth_client, factory, session):
     _entitlement(
         factory, usuario, "monthly", starts_at=agora - timedelta(days=40), expires_at=agora - timedelta(days=10)
     )
-    _generation(factory, usuario, "free")
+    # Entitlement expirado = sem plano pago vigente -- a cota conta na identidade do dispositivo
+    identidade = _identidade_free_do_dispositivo(auth_client, session)
+    _generation(factory, identidade, "free")
 
     resposta = auth_client.get(URL)
 

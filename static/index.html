@@ -1204,6 +1204,12 @@
     }
 
     function exibirSucessoDaGeracao(dados) {
+        // UX-3: a geração terminou -- atualiza o status da conta (badge "Free · X restantes")
+        // sem precisar de F5. Reaproveita exatamente carregarStatusConta()/GET /api/me/status já
+        // existentes (a mesma fonte usada no carregamento da página) -- nenhum cálculo de cota
+        // novo aqui, nenhum polling, nenhum timer.
+        carregarStatusConta();
+
         const link = document.createElement("a");
         link.href = `/api/generations/${dados.generation_id}/download`;
         link.target = "_blank";
@@ -1240,7 +1246,7 @@
     function exibirErroDaGeracao(dados) {
         if (dados.code === "quota_exceeded") {
             setStatusBox(
-                '<p class="font-bold mb-1">Limite diário atingido.</p>' +
+                '<p class="font-bold mb-1">Limite de gerações atingido.</p>' +
                 '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
                 '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
                 'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',

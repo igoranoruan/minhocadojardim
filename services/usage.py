@@ -601,26 +601,39 @@ def fail_generation(
 
 
 def get_downloadable_generation(
-    db: Session, generation_id: int, user_id: int, now: datetime | None = None
+    db: Session, generation_id: int, user_id: int, *,
+    authenticated_user_id: int | None = None, now: datetime | None = None,
 ) -> Generation:
     """Etapa 8B.3: a ÚNICA fonte de verdade para "esta geração pode ser baixada por este usuário
     agora?" — usada exclusivamente pela rota de download (routes/generations.py), para não
     duplicar esta checagem em nenhum outro lugar. Levanta GenerationDownloadNotFoundError (a
     MESMA exceção, com a MESMA mensagem genérica) para qualquer uma destas condições:
     - a geração não existe;
-    - pertence a outro usuário (nunca um erro diferente do "não existe" — não é permitido
-      diferenciar os dois casos, para não virar um jeito de descobrir gerações de terceiros);
+    - não pertence nem a `user_id` nem a `authenticated_user_id` (nunca um erro diferente do "não
+      existe" — não é permitido diferenciar os casos, para não virar um jeito de descobrir
+      gerações de terceiros);
     - o status não é "completed" (ainda reserved, ou failed);
     - output_storage_key é None (nunca teve um resultado persistido, ou é uma geração antiga de
       antes da Etapa 8B.1/8B.2);
     - output_expires_at é None, ou já passou (now >= output_expires_at).
     NÃO confere se o arquivo físico ainda existe — isso é responsabilidade de quem chama (a rota),
-    via services.result_storage.exists(), depois de ler a chave desta geração."""
+    via services.result_storage.exists(), depois de ler a chave desta geração.
+
+    `authenticated_user_id` (opcional -- correção da quota Free, aprovação do CÉREBRO): desde que
+    a identidade EFETIVA de uma sessão SEM plano pago (`user_id`, vindo de
+    routes/deps.py::get_generation_user) passou a ser a do dispositivo, uma geração antiga
+    pertencente à própria CONTA autenticada (criada antes desta correção, ou enquanto o plano
+    ainda era pago) precisa continuar baixável por ela. `None` (padrão) preserva exatamente o
+    comportamento anterior -- só `user_id` é considerado dono. O cookie Free em si, sozinho,
+    continua incapaz de baixar uma geração de uma conta alheia, e continua incapaz de conceder
+    acesso pago -- `authenticated_user_id` só entra na decisão quando HÁ mesmo uma sessão válida
+    (nunca inventado a partir do cookie anônimo)."""
     now = resolve_now(now)
     generation = db.get(Generation, generation_id)
+    donos_validos = {user_id, authenticated_user_id}
     if (
         generation is None
-        or generation.user_id != user_id
+        or generation.user_id not in donos_validos
         or generation.status != "completed"
         or generation.output_storage_key is None
         or generation.output_expires_at is None

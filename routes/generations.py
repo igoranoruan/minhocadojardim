@@ -50,7 +50,7 @@ from database.models import User
 from database.session import get_session
 from download.errors import DownloadError
 from processor.errors import ProcessorError
-from routes.deps import get_current_user, get_generation_user
+from routes.deps import get_current_user, get_generation_user, get_optional_authenticated_user
 from services import result_storage
 from services.batch_filenames import InvalidFilenameError, sanitize_batch_filenames
 from services.batch_fingerprint import compute_batch_fingerprint
@@ -490,6 +490,7 @@ def download_batch(
 def download_generation(
     generation_id: int,
     user: User = Depends(get_generation_user),
+    authenticated: User | None = Depends(get_optional_authenticated_user),
     db: Session = Depends(get_session),
 ) -> FileResponse:
     """Etapa 8B.3. `storage_key` NUNCA vem da URL/query string — é lido internamente da geração,
@@ -500,11 +501,21 @@ def download_generation(
     (mesma checagem de sempre, nenhuma duplicação de lógica). Serve tanto geração avulsa quanto
     item de lote -- nenhuma rota separada para lote (Etapa 9.3).
 
+    `authenticated` (correção da quota Free, aprovação do CÉREBRO): a identidade EFETIVA de
+    get_generation_user (`user`) é a do dispositivo quando a sessão não tem plano pago -- mas uma
+    geração antiga pertencente à própria CONTA autenticada precisa continuar baixável por ela
+    mesmo assim. `get_optional_authenticated_user` nunca cria nem resolve identidade anônima, só
+    diz se HÁ uma sessão de verdade -- o cookie Free em si continua incapaz de baixar uma geração
+    de outra conta (ver services.usage.get_downloadable_generation, parâmetro
+    `authenticated_user_id`).
+
     Nome do arquivo (Etapa 9.3, correção de filename): `generation.display_filename` quando
     presente (sanitizado na criação do lote, já com `.mp4` garantido), senão o padrão fixo de
     sempre (`minhoca-{generation_id}.mp4`) -- geração avulsa nunca tem display_filename, então o
     comportamento dela é IDÊNTICO ao de antes desta correção."""
-    generation = get_downloadable_generation(db, generation_id, user.id)
+    generation = get_downloadable_generation(
+        db, generation_id, user.id, authenticated_user_id=authenticated.id if authenticated else None,
+    )
     if not result_storage.exists(generation.output_storage_key):
         raise GenerationDownloadNotFoundError()
     caminho = result_storage.resolve_path(generation.output_storage_key)

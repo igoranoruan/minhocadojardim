@@ -19,9 +19,24 @@ from unittest.mock import patch
 from database.models import Generation
 from download.errors import DownloadFailedError, InvalidUrlError, UnsupportedPlatformError
 from download.platform import Platform
-from helpers_generation_flow import fake_download_result, fake_processing_result, login_directly
+from helpers_generation_flow import anon_user_id_from_cookie, fake_download_result, fake_processing_result, login_directly
 from processor.errors import FfmpegFailedError
 from services.usage import QuotaExceededError, get_allowance, reserve_generation
+
+
+def _entitlement_semanal(factory, usuario):
+    """Dá a `usuario` um plano pago vigente -- necessário sempre que um teste precisa que a
+    IDENTIDADE EFETIVA da sessão seja a própria conta autenticada (correção da quota Free,
+    aprovação do CÉREBRO: sem entitlement pago, get_generation_user usa a identidade Free do
+    DISPOSITIVO, não mais o user_id da sessão -- ver tests/test_anon_identity.py, mesmo padrão)."""
+    from utils.time_sp import now_sp
+
+    now = now_sp()
+    payment = factory.payment(usuario, plan_code="weekly", status="approved")
+    return factory.entitlement(
+        payment, plan_code="weekly", duration_days=7, starts_at=now,
+        expires_at=now.replace(year=now.year + 1),
+    )
 
 
 def _files(tmp_path):
@@ -121,9 +136,13 @@ def test_sucesso_sequencia_status_progress_complete(auth_client, factory, sessio
 
 # ============================================================================ ownership
 def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, tmp_path):
+    """Prova que user_id/email/account_id no corpo nunca controlam ownership. Precisa de um plano
+    PAGO vigente para `dono` -- sem ele, a identidade efetiva seria a Free do dispositivo (nova
+    regra), não a sessão, e o teste deixaria de exercitar o caminho que ele quer provar."""
     dono = factory.user()
     outro = factory.user()
     login_directly(auth_client, session, dono)
+    _entitlement_semanal(factory, dono)
     download_path, output_path = _files(tmp_path)
 
     with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
@@ -141,9 +160,13 @@ def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, tm
 
 
 def test_um_usuario_nao_consome_cota_de_outro(auth_client, factory, session, tmp_path):
+    """Precisa de um plano PAGO vigente para `usuario_a` -- sem ele, a cota consumida seria a da
+    identidade Free do dispositivo (nova regra), não a da conta `usuario_a` em si, e o teste
+    deixaria de provar isolamento entre CONTAS."""
     usuario_a = factory.user()
     usuario_b = factory.user()
     login_directly(auth_client, session, usuario_a)
+    _entitlement_semanal(factory, usuario_a)
     download_path, output_path = _files(tmp_path)
 
     with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
@@ -175,15 +198,28 @@ def test_plataforma_nao_suportada_vira_evento_error(auth_client, factory, sessio
 
 
 def test_cota_esgotada_vira_evento_error(auth_client, factory, session):
+    """Correção da quota Free (aprovação do CÉREBRO): sem plano pago, a identidade EFETIVA usada
+    pela rota é a Free do DISPOSITIVO (cookie `minhoca_anon`), não o user_id da sessão -- a cota
+    precisa ser pré-carregada nela, nunca num user_id autenticado separado que a rota não vai usar.
+    reserve_generation (chamado por services/generation_flow.py ANTES de qualquer download_video)
+    já basta para provar `quota_exceeded` sem depender de nenhuma plataforma real: nenhum mock de
+    downloader é necessário -- a 6ª tentativa nunca chega a tentar baixar nada."""
     usuario = factory.user()
-    login_directly(auth_client, session, usuario)
+    login_directly(auth_client, session, usuario)  # logado, mas SEM plano pago
+
+    # a primeira chamada sem cookie de dispositivo já cria/estabelece essa identidade -- usa
+    # /api/me/status (idempotente, não consome cota) só para descobrir o user_id real por trás dela.
+    primeira = auth_client.get("/api/me/status")
+    identidade_free_id = anon_user_id_from_cookie(session, primeira.headers["set-cookie"].split(";")[0].split("=", 1)[1])
     for i in range(5):
-        reserve_generation(session, user_id=usuario.id, request_id=f"pre-{i}")
+        reserve_generation(session, user_id=identidade_free_id, request_id=f"pre-{i}")
 
     resposta = auth_client.post("/api/generations", json={"url": "https://www.tiktok.com/@a/video/1"})
     eventos = _eventos(resposta)
     assert eventos[-1][0] == "error"
     assert eventos[-1][1]["code"] == "quota_exceeded"
+    # a conta autenticada `usuario` em si nunca foi tocada -- a cota esgotada é a do dispositivo
+    assert get_allowance(session, usuario.id).used == 0
 
 
 def test_download_falha_vira_evento_error_e_nao_vaza_detalhe_tecnico(auth_client, factory, session):

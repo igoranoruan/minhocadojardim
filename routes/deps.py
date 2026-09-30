@@ -9,6 +9,7 @@ from database.models import User
 from database.session import get_session
 from services.anon_identity import resolve_anon_identity
 from services.auth import UnauthenticatedError, authenticate_session
+from services.entitlements import get_current_entitlement
 from services.mailer import (
     EmailConfigurationError,
     EmailSender,
@@ -53,10 +54,19 @@ def get_generation_user(
     db: Session = Depends(get_session),
     cfg: Settings = Depends(get_settings),
 ) -> User:
-    """Usuário para fins de GERAÇÃO/COTA: sessão autenticada OU identidade anônima (Free sem
-    login -- aprovação do CÉREBRO, "Free anônimo"). Sessão autenticada SEMPRE vence -- só resolve
-    identidade anônima quando não há sessão válida. NUNCA lança 401: sempre devolve um User
-    utilizável, criando um usuário-dispositivo na primeira visita, se preciso.
+    """Usuário para fins de GERAÇÃO/COTA: sessão autenticada COM plano pago vigente, OU a
+    identidade Free do dispositivo (Free sem login -- aprovação do CÉREBRO, "Free anônimo").
+    NUNCA lança 401: sempre devolve um User utilizável, criando um usuário-dispositivo na primeira
+    visita, se preciso.
+
+    Correção do loophole "Free reseta no logout" (aprovação do CÉREBRO): sessão autenticada só
+    vence quando o usuário tem um `entitlement` pago vigente (get_current_entitlement). Sessão
+    autenticada SEM plano pago cai para a MESMA identidade Free do dispositivo usada por um
+    visitante sem login -- é assim que a cota Free sobrevive a login/logout/troca de e-mail no
+    mesmo navegador: a conta autenticada e a identidade Free do dispositivo são SEMPRE duas linhas
+    separadas em `users` (nunca uma vira a outra -- ver services/anon_identity.py), e a escolha de
+    qual delas usar é só esta função, refeita a cada requisição a partir do estado real (sessão +
+    entitlement), nunca guardada/lembrada em outro lugar.
 
     Diferente de get_current_user (que continua significando só "sessão autenticada", inalterada,
     e usada em pagamentos/lote/`/api/auth/me`): esta dependência só deve ser usada nas rotas
@@ -70,10 +80,30 @@ def get_generation_user(
     mesmo `request.state` depois que a resposta já foi construída -- funciona para qualquer tipo
     de Response, streaming incluído (ver o teste HTTP real em tests/test_anon_identity.py)."""
     session_user = authenticate_session(db, request.cookies.get(cfg.session_cookie_name))
-    if session_user is not None:
+    if session_user is not None and get_current_entitlement(db, session_user.id) is not None:
         return session_user
 
     result = resolve_anon_identity(db, device_token=request.cookies.get(cfg.anon_cookie_name))
     if result.created and result.token:
         request.state.anon_cookie_token = result.token
     return result.user
+
+
+def get_optional_authenticated_user(
+    request: Request,
+    db: Session = Depends(get_session),
+    cfg: Settings = Depends(get_settings),
+) -> User | None:
+    """Sessão autenticada, se houver -- ou None. NUNCA lança 401, NUNCA resolve/cria identidade
+    anônima (ao contrário de get_generation_user): só verifica se HÁ uma sessão de verdade.
+
+    Correção de ownership no download (aprovação do CÉREBRO): desde que get_generation_user passou
+    a usar a identidade Free do dispositivo para sessão SEM plano pago, uma geração antiga
+    pertencente à própria conta autenticada (criada antes desta correção, ou enquanto o plano
+    ainda era pago) deixaria de ser reconhecida como "do usuário" -- o dono de fato
+    (`generation.user_id`) é a conta autenticada, não o dispositivo. Esta dependência existe só
+    para a rota de download poder considerar TAMBÉM a conta autenticada como possível dona, além da
+    identidade efetiva de get_generation_user (ver services/usage.py::get_downloadable_generation,
+    parâmetro `authenticated_user_id`) -- nunca o contrário: o cookie Free sozinho continua
+    incapaz de baixar uma geração de uma conta alheia, e continua incapaz de conceder acesso pago."""
+    return authenticate_session(db, request.cookies.get(cfg.session_cookie_name))

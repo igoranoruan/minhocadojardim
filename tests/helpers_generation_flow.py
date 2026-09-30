@@ -3,12 +3,15 @@ import secrets
 from datetime import timedelta
 from pathlib import Path
 
-from database.models import AuthSession, User
+from sqlalchemy import select
+
+from database.models import AnonymousIdentity, AuthSession, User
 from database.types import utcnow
 from download.platform import Platform
 from download.result import DownloadResult
 from processor.result import ProcessingResult
 from services.auth import hash_session_token
+from utils.security import hash_anon_device_token
 
 
 def login_directly(client, session, user: User, *, cookie_name: str = "minhoca_session") -> None:
@@ -29,6 +32,19 @@ def login_directly(client, session, user: User, *, cookie_name: str = "minhoca_s
     )
     session.commit()
     client.cookies.set(cookie_name, token)
+
+
+def anon_user_id_from_cookie(session, cookie_value: str) -> int:
+    """user_id real por trás de um cookie `minhoca_anon` (correção da quota Free, aprovação do
+    CÉREBRO: um usuário SEM entitlement pago -- logado ou não -- usa a identidade Free do
+    DISPOSITIVO, não o user_id da própria sessão; quem precisar pré-carregar cota/gerações para um
+    cenário assim precisa descobrir esse user_id real primeiro, em vez de usar o da sessão
+    diretamente). Mesmo padrão já usado em tests/test_anon_identity.py::_anon_user_id."""
+    return session.execute(
+        select(AnonymousIdentity.user_id).where(
+            AnonymousIdentity.device_token_hash == hash_anon_device_token(cookie_value)
+        )
+    ).scalar_one()
 
 
 def fake_download_result(temp_path: Path, *, platform: Platform = Platform.TIKTOK, size=999, duration=10.0) -> DownloadResult:

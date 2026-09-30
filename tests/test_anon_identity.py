@@ -1,7 +1,10 @@
-"""Free anônimo (aprovação do CÉREBRO): identidade por cookie, cota, ownership e promoção
-anônimo -> autenticado. Não redecide nada que services/usage.py já testa (cota/rollback/
-idempotência genéricos) -- só o que é NOVO nesta etapa: como o `user_id` é resolvido sem sessão,
-como o cookie chega na resposta (inclusive em StreamingResponse), e a transição para login.
+"""Free anônimo (aprovação do CÉREBRO): identidade por cookie, cota, ownership, e continuidade da
+cota Free através de login/logout/troca de e-mail no mesmo navegador (correção do loophole "Free
+reseta no logout"). Não redecide nada que services/usage.py já testa (cota/rollback/idempotência
+genéricos) -- só o que é NOVO aqui: como o `user_id` efetivo é resolvido (sessão+entitlement OU
+identidade do dispositivo), como o cookie chega na resposta (inclusive em StreamingResponse), e
+que login NUNCA promove/muta a identidade Free do dispositivo em conta autenticada (nem o
+contrário) -- são sempre duas linhas separadas em `users`.
 """
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -213,10 +216,15 @@ def test_geracao_de_outro_dispositivo_e_recusada(auth_client, session, tmp_path,
     assert resposta.status_code == 404  # mesmo 404 genérico de sempre -- nunca revela que existe
 
 
-# ============================================================================ promoção anônimo -> autenticado
-def test_promocao_anonimo_para_email_novo_preserva_o_mesmo_user_id_e_o_historico(auth_client, fake_sender, session):
-    """auth_client já sobrescreve get_email_sender com a fixture `fake_sender` (ver conftest.py)
-    -- basta usá-la para ler o código, mesmo padrão de tests/test_auth_routes.py."""
+# ============================================================================ login preserva a identidade Free do dispositivo (nunca promove/muta)
+def test_login_com_email_novo_nao_promove_a_identidade_free_e_preserva_a_mesma_cota(
+    auth_client, fake_sender, session
+):
+    """Correção do loophole "Free reseta no logout" (aprovação do CÉREBRO): login NUNCA muta o
+    usuário-dispositivo em uma conta autenticada -- são sempre duas linhas separadas (ver
+    services/anon_identity.py). auth_client já sobrescreve get_email_sender com a fixture
+    `fake_sender` (ver conftest.py) -- basta usá-la para ler o código, mesmo padrão de
+    tests/test_auth_routes.py."""
     anon_resposta = auth_client.get("/api/me/status")
     anon_token = anon_resposta.headers["set-cookie"].split(";")[0].split("=", 1)[1]
     anon_user_id = _anon_user_id(session, anon_token)
@@ -224,20 +232,95 @@ def test_promocao_anonimo_para_email_novo_preserva_o_mesmo_user_id_e_o_historico
     session.add_all([_completed_free_generation(anon_usuario, n) for n in range(2)])
     session.commit()
 
-    email = "visitante-promovido@example.com"
+    email = "visitante-novo@example.com"
     assert auth_client.post("/api/auth/request-code", json={"email": email}).status_code == 200
     codigo = fake_sender.last_code(email)
     verificacao = auth_client.post("/api/auth/verify-code", json={"email": email, "code": codigo})
     assert verificacao.status_code == 200
     assert verificacao.json() == {"email": email}
 
-    promovido = session.get(User, anon_user_id)
-    session.refresh(promovido)
-    assert promovido.email == email  # MESMO id, e-mail real -- não foi criado um id novo
-    assert promovido.email_verified_at is not None
+    # login criou uma conta autenticada SEPARADA -- não reaproveitou/mutou o id anônimo
+    autenticado = session.execute(select(User).where(User.email == email)).scalar_one()
+    assert autenticado.id != anon_user_id
+    assert autenticado.email_verified_at is not None
 
-    status_logado = auth_client.get("/api/me/status")  # agora com sessão de verdade
-    assert status_logado.json()["usage"]["used"] == 2  # histórico do anônimo preservado
+    # a identidade Free do dispositivo continua intacta, com o e-mail sintético de sempre
+    anon_intacto = session.get(User, anon_user_id)
+    session.refresh(anon_intacto)
+    assert anon_intacto.id == anon_user_id
+    assert anon_intacto.email.endswith("@device.invalid")
+
+    # autenticado, mas SEM plano pago -- a cota continua vindo da mesma identidade Free do
+    # dispositivo (não zerou, não criou uma cota nova para a conta recém-logada)
+    status_logado = auth_client.get("/api/me/status")
+    assert status_logado.json()["usage"]["used"] == 2
+
+
+def test_login_sem_plano_pago_usa_a_mesma_identidade_free_do_dispositivo(auth_client, fake_sender, session):
+    anon_resposta = auth_client.get("/api/me/status")
+    anon_token = anon_resposta.headers["set-cookie"].split(";")[0].split("=", 1)[1]
+    anon_user_id = _anon_user_id(session, anon_token)
+    anon_usuario = session.get(User, anon_user_id)
+    session.add_all([_completed_free_generation(anon_usuario, n) for n in range(3)])
+    session.commit()
+
+    email = "sem-plano-pago@example.com"
+    assert auth_client.post("/api/auth/request-code", json={"email": email}).status_code == 200
+    codigo = fake_sender.last_code(email)
+    assert auth_client.post("/api/auth/verify-code", json={"email": email, "code": codigo}).status_code == 200
+    assert auth_client.get("/api/auth/me").status_code == 200  # sessão de verdade, aberta
+
+    status = auth_client.get("/api/me/status")
+    assert status.json()["plan"]["code"] == "free"
+    assert status.json()["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "week"}
+
+
+def test_logout_retorna_para_a_mesma_identidade_free_do_dispositivo(auth_client, fake_sender, session):
+    anon_resposta = auth_client.get("/api/me/status")
+    anon_token = anon_resposta.headers["set-cookie"].split(";")[0].split("=", 1)[1]
+    anon_user_id = _anon_user_id(session, anon_token)
+    anon_usuario = session.get(User, anon_user_id)
+    session.add_all([_completed_free_generation(anon_usuario, n) for n in range(2)])
+    session.commit()
+
+    email = "logout-mesma-cota@example.com"
+    auth_client.post("/api/auth/request-code", json={"email": email})
+    codigo = fake_sender.last_code(email)
+    auth_client.post("/api/auth/verify-code", json={"email": email, "code": codigo})
+
+    assert auth_client.post("/api/auth/logout").status_code == 200
+    assert auth_client.get("/api/auth/me").status_code == 401
+
+    status = auth_client.get("/api/me/status")  # sem sessão de novo -- mesmo navegador/dispositivo
+    assert status.json()["usage"] == {"used": 2, "limit": 5, "remaining": 3, "period": "week"}
+    # nenhuma identidade nova foi criada: o cookie Free continua o mesmo de antes do login
+    assert auth_client.cookies.get("minhoca_anon") == anon_token
+
+
+def test_logout_de_conta_paga_retorna_para_a_identidade_free_do_dispositivo_sem_acesso_pago(
+    auth_client, factory, session
+):
+    """Etapa crítica do loophole: mesmo tendo tido um plano PAGO durante a sessão, o logout nunca
+    deixa a conta autenticada "vazar" para as próximas requisições sem sessão -- e a identidade
+    Free do dispositivo (que já existia antes do login) nunca ganha acesso pago."""
+    from helpers_generation_flow import login_directly
+
+    anon_resposta = auth_client.get("/api/me/status")
+    anon_token = anon_resposta.headers["set-cookie"].split(";")[0].split("=", 1)[1]
+
+    pago = factory.user()
+    _entitlement_semanal(factory, pago)
+    login_directly(auth_client, session, pago)
+
+    status_pago = auth_client.get("/api/me/status")
+    assert status_pago.json()["plan"]["code"] == "weekly"
+
+    assert auth_client.post("/api/auth/logout").status_code == 200
+    status_pos_logout = auth_client.get("/api/me/status")
+    assert status_pos_logout.json()["plan"]["code"] == "free"
+    # a mesma identidade Free do dispositivo de antes do login pago -- nunca uma nova, e o cookie
+    # Free nunca refletiu/concedeu o acesso pago da sessão que acabou de encerrar
+    assert auth_client.cookies.get("minhoca_anon") == anon_token
 
 
 def test_login_com_email_ja_existente_nao_funde_e_nao_corrompe_ownership(auth_client, fake_sender, factory, session):

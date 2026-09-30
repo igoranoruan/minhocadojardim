@@ -4,9 +4,21 @@ from pathlib import Path
 
 import pytest
 
-from helpers_processor import make_video_no_audio, make_video_with_audio, make_video_with_metadata
+from helpers_processor import (
+    make_video_h264_com_audio_opus,
+    make_video_no_audio,
+    make_video_with_audio,
+    make_video_with_metadata,
+)
 from processor.errors import FfmpegFailedError, FfmpegUnavailableError, ProcessingTimeoutError
-from processor.ffmpeg import _percent_from_tick, _seconds_from_tick, build_args, run_ffmpeg
+from processor.ffmpeg import (
+    _percent_from_tick,
+    _seconds_from_tick,
+    build_args,
+    build_copy_args,
+    build_copy_video_transcode_audio_args,
+    run_ffmpeg,
+)
 from processor.probe import probe
 
 
@@ -46,6 +58,114 @@ def test_caminhos_de_entrada_e_saida_sao_apenas_valores_nunca_flags():
     args = build_args(executable="ffmpeg", input_path=entrada, output_path=saida, has_audio=False)
     # o caminho aparece como VALOR logo após -i, nunca interpretado como uma flag nova
     assert args[args.index("-i") + 1] == str(entrada)
+
+
+# ------------------------------------------------------------------ caminho rápido (stream copy) -- otimização de performance
+def test_build_copy_args_com_audio_usa_stream_copy_sem_reencodar():
+    args = build_copy_args(
+        executable="ffmpeg", input_path=Path("/tmp/in.mp4"), output_path=Path("/tmp/out.mp4"), has_audio=True
+    )
+    assert args[0] == "ffmpeg"
+    assert "-map" in args and args[args.index("-map") + 1] == "0:v:0"
+    assert "0:a:0" in args  # áudio mapeado, igual ao build_args
+    assert "-c:v" in args and args[args.index("-c:v") + 1] == "copy"
+    assert "-c:a" in args and args[args.index("-c:a") + 1] == "copy"
+    # NENHUM parâmetro de reencode (preset/crf) -- não fazem sentido com stream copy
+    assert "-preset" not in args and "-crf" not in args and "libx264" not in args and "aac" not in args
+    # metadata/capítulos/faststart continuam removidos/ativos, igual ao build_args
+    assert "-map_metadata" in args and args[args.index("-map_metadata") + 1] == "-1"
+    assert "-map_chapters" in args and args[args.index("-map_chapters") + 1] == "-1"
+    assert "-movflags" in args and args[args.index("-movflags") + 1] == "+faststart"
+    assert "-f" in args and args[args.index("-f") + 1] == "mp4"  # saída continua MP4
+
+
+def test_build_copy_args_sem_audio_nao_mapeia_nem_copia_audio():
+    args = build_copy_args(
+        executable="ffmpeg", input_path=Path("/tmp/in.mp4"), output_path=Path("/tmp/out.mp4"), has_audio=False
+    )
+    assert "0:a:0" not in args
+    assert "-c:a" not in args
+    assert "-c:v" in args and args[args.index("-c:v") + 1] == "copy"
+
+
+# ------------------------------------------------------------------ caminho intermediário (copy de vídeo + transcode só de áudio) -- otimização de performance, 30/09
+def test_build_copy_video_transcode_audio_args_copia_video_e_reencoda_audio():
+    args = build_copy_video_transcode_audio_args(
+        executable="ffmpeg", input_path=Path("/tmp/in.mp4"), output_path=Path("/tmp/out.mp4"), has_audio=True
+    )
+    assert args[0] == "ffmpeg"
+    assert "-map" in args and args[args.index("-map") + 1] == "0:v:0"
+    assert "0:a:0" in args  # áudio mapeado, igual aos outros dois builders
+    assert "-c:v" in args and args[args.index("-c:v") + 1] == "copy"  # vídeo COPIADO
+    assert "-c:a" in args and args[args.index("-c:a") + 1] == "aac"  # áudio REENCODADO
+    # nenhum parâmetro de reencode de VÍDEO (preset/crf/libx264) -- só o vídeo é copiado
+    assert "-preset" not in args and "-crf" not in args and "libx264" not in args
+    assert "-map_metadata" in args and args[args.index("-map_metadata") + 1] == "-1"
+    assert "-map_chapters" in args and args[args.index("-map_chapters") + 1] == "-1"
+    assert "-movflags" in args and args[args.index("-movflags") + 1] == "+faststart"
+    assert "-f" in args and args[args.index("-f") + 1] == "mp4"
+
+
+def test_build_copy_video_transcode_audio_args_sem_audio_nao_mapeia_nem_codifica_audio():
+    args = build_copy_video_transcode_audio_args(
+        executable="ffmpeg", input_path=Path("/tmp/in.mp4"), output_path=Path("/tmp/out.mp4"), has_audio=False
+    )
+    assert "0:a:0" not in args
+    assert "-c:a" not in args
+    assert "-c:v" in args and args[args.index("-c:v") + 1] == "copy"
+
+
+def test_run_ffmpeg_mode_copy_video_transcode_audio_copia_video_e_reencoda_audio_de_verdade(tmp_path):
+    """Prova real (FFmpeg de verdade): partindo de um vídeo H.264 com áudio Opus, o modo
+    "copy_video_transcode_audio" produz uma saída MP4 com o MESMO vídeo H.264 (copiado, sem
+    reencodar) e áudio convertido para AAC -- otimização de performance, 30/09, aprovação do
+    CÉREBRO (caminho intermediário entre "copy" total e "transcode" total)."""
+    entrada = make_video_h264_com_audio_opus(tmp_path / "in.mp4", duration=1.0)
+    entrada_probe = probe(entrada)
+    assert entrada_probe.video_codec == "h264" and entrada_probe.audio_codec == "opus"
+    saida = tmp_path / "out.mp4"
+    run_ffmpeg(input_path=entrada, output_path=saida, has_audio=True, mode="copy_video_transcode_audio")
+    assert saida.exists() and saida.stat().st_size > 0
+    resultado = probe(saida)
+    assert resultado.video_codec == "h264" and resultado.audio_codec == "aac"
+    assert resultado.has_video and resultado.has_audio
+    assert round(resultado.duration_seconds or 0, 1) == round(entrada_probe.duration_seconds or 0, 1)
+
+
+def test_run_ffmpeg_sem_mode_continua_sendo_transcode_por_padrao():
+    """Comportamento IDÊNTICO ao de antes desta etapa quando `mode` é omitido -- proteção de
+    regressão para todo chamador existente de run_ffmpeg que não conhece `mode`."""
+    args_omitido = build_args(executable="ffmpeg", input_path=Path("/tmp/in.mp4"), output_path=Path("/tmp/out.mp4"), has_audio=True)
+    assert "-c:v" in args_omitido and args_omitido[args_omitido.index("-c:v") + 1] == "libx264"
+
+
+def test_run_ffmpeg_mode_copy_produz_mp4_h264_aac_sem_reencodar(tmp_path):
+    """Prova real (FFmpeg de verdade): partindo de um vídeo JÁ h264/aac, o modo "copy" produz uma
+    saída MP4 válida, com os MESMOS codecs, resolução, FPS e duração -- sem passar pelo encoder."""
+    entrada = make_video_with_audio(tmp_path / "in.mp4", duration=1.0)
+    entrada_probe = probe(entrada)
+    saida = tmp_path / "out.mp4"
+    run_ffmpeg(input_path=entrada, output_path=saida, has_audio=True, mode="copy")
+    assert saida.exists() and saida.stat().st_size > 0
+    resultado = probe(saida)
+    assert resultado.video_codec == "h264" and resultado.audio_codec == "aac"
+    assert resultado.has_video and resultado.has_audio  # os dois streams desejados preservados
+    assert round(resultado.duration_seconds or 0, 1) == round(entrada_probe.duration_seconds or 0, 1)
+
+
+def test_run_ffmpeg_mode_copy_remove_metadata_conhecida(tmp_path):
+    entrada = make_video_with_metadata(
+        tmp_path / "in.mp4", duration=1.0, tags={"title": "segredo", "comment": "nao vazar"},
+    )
+    saida = tmp_path / "out.mp4"
+    run_ffmpeg(input_path=entrada, output_path=saida, has_audio=True, mode="copy")
+    import subprocess as _subprocess
+
+    bruto = _subprocess.run(
+        ["ffprobe", "-v", "error", "-show_entries", "format_tags", "-of", "default=nw=1", str(saida)],
+        capture_output=True, text=True,
+    ).stdout.lower()
+    assert "segredo" not in bruto and "nao vazar" not in bruto
 
 
 def test_processor_ffmpeg_nunca_usa_shell_ou_os_system():
