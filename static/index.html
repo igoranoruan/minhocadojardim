@@ -10,12 +10,12 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        * { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        * { font-family: 'Sora', system-ui, sans-serif; }
         html { scroll-behavior: smooth; }
         body { background: #050810; color: #f8fafc; }
         .bg-card { background: #0b1220; border: 1px solid #1b2738; }
@@ -100,7 +100,7 @@
             </section>
 
             <!-- PROCESSO -->
-            <section class="py-12 sm:py-16 border-t section-line">
+            <section id="comoFunciona" class="py-12 sm:py-16 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Do link ao seu editor, sem complicação.</h2>
@@ -151,14 +151,14 @@
                     <p class="text-sm text-slate-400 mt-3">Comece simples e escolha o plano conforme o volume de conteúdo que você processa.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 items-stretch">
                     <div class="bg-card rounded-2xl p-6 flex flex-col">
                         <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
                         <div class="text-xs text-slate-500 mt-1">7 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>5 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote <span class="text-slate-500">(até 5 vídeos, 3/semana)</span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
@@ -172,23 +172,25 @@
                         <div class="text-xs text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>10 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote <span class="text-slate-500">(até 5 vídeos, 5/semana)</span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
                         <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Comprar acesso mensal</button>
                     </div>
 
-                    <div class="bg-card rounded-2xl p-6 flex flex-col">
-                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">VIP Batch</div>
+                    <div class="bg-card rounded-2xl p-6 flex flex-col border-amber-500/40 ring-1 ring-amber-500/30 relative">
+                        <span class="absolute -top-3 right-5 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full">Maior lote disponível</span>
+                        <div class="text-xs text-amber-400 font-bold uppercase tracking-wider">VIP Batch</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 29,90</div>
                         <div class="text-xs text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>15 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>15 gerações/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Downloads em lote <span class="text-slate-500">(até 15 vídeos, sem limite semanal de operações)</span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Limpeza de metadados</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso VIP Batch</button>
+                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm transition-colors">Comprar acesso VIP Batch</button>
                     </div>
                 </div>
             </section>
@@ -208,16 +210,16 @@
             <section id="secaoBatch" class="hidden py-8">
                 <div class="bg-card rounded-2xl p-6 border-amber-500/30">
                     <div class="flex items-start gap-3 mb-5">
-                        <div class="w-10 h-10 rounded-xl bg-amber-950/40 border border-amber-700/40 flex items-center justify-center text-amber-400"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-amber-950/40 border border-amber-700/40 flex items-center justify-center text-amber-400"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="min-w-0">
-                            <h2 class="text-base font-extrabold text-white">VIP Batch — processe vários vídeos</h2>
-                            <p class="text-sm text-slate-400 mt-1">Adicione até 10 vídeos. Você pode dar um nome diferente para cada arquivo.</p>
+                            <h2 class="text-base font-extrabold text-white">Processamento em lote</h2>
+                            <p id="batchLimiteTexto" class="text-sm text-slate-400 mt-1">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-between gap-3 mb-3">
-                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 10 vídeos</span>
-                        <span class="text-[10px] text-slate-600">VIP Batch</span>
+                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeos</span>
+                        <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-amber-500/80">—</span>
                     </div>
 
                     <div id="batchItems" class="space-y-3"></div>
@@ -232,7 +234,7 @@
             </section>
 
             <!-- FAQ -->
-            <section class="py-12 sm:py-16 border-t section-line">
+            <section id="faq" class="py-12 sm:py-16 border-t section-line">
                 <div class="max-w-3xl mx-auto">
                     <div class="text-center mb-8">
                         <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
@@ -253,16 +255,36 @@
                             <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O arquivo é baixado e processado para gerar uma nova versão em MP4, com remoção de metadados e foco em compatibilidade para edição.</div>
                         </details>
                         <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. Todos os planos são pagos uma única vez e ficam ativos pelo período contratado. Depois da expiração, basta fazer uma nova compra se quiser continuar usando o plano.</div>
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O que acontece com o vídeo depois de pronto?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O link de download fica disponível por um tempo limitado depois do processamento. Depois desse período, o link deixa de funcionar e você precisa gerar o vídeo novamente para baixá-lo.</div>
                         </details>
                         <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">E o cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. O cartão também é um pagamento único. O acesso fica ativo pelo período contratado e não existe cobrança automática.</div>
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento é único ou tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão. Não existe cobrança automática nem renovação — o acesso fica ativo pelo período contratado e, se quiser continuar depois, basta fazer uma nova compra.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O plano expira?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sim. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano). Depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com PIX?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sim. O PIX é processado pelo Mercado Pago e o acesso é liberado assim que o pagamento é confirmado.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sim. O cartão também é um pagamento único, processado pelo Mercado Pago — sem cobrança automática.</div>
                         </details>
                         <details class="faq-item bg-card rounded-xl group">
                             <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento em lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Nos planos pagos, você pode enviar vários vídeos de uma vez e dar um nome diferente para cada arquivo. A quantidade por operação e por semana varia conforme o plano contratado.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-xl group">
+                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o acesso?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sem senha. Você informa seu e-mail, recebe um código de 6 dígitos e usa esse código para entrar.</div>
                         </details>
                     </div>
                 </div>
@@ -282,16 +304,35 @@
 
         <!-- FOOTER -->
         <footer class="border-t border-slate-800/70 mt-8">
-            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8 flex flex-col sm:flex-row justify-between gap-4 text-sm">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
                 <div>
-                    <div class="font-extrabold text-white">KLANGO.MP4</div>
-                    <div class="text-slate-500 mt-1">Baixe. Prepare. Adapte. Publique.</div>
-                    <div class="flex items-center gap-4 mt-3">
-                        <a href="https://www.instagram.com/klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no Instagram" class="text-slate-500 hover:text-[#19D3AE] transition-colors"><i class="fa-brands fa-instagram text-base"></i></a>
-                        <a href="https://www.tiktok.com/@klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no TikTok" class="text-slate-500 hover:text-[#19D3AE] transition-colors"><i class="fa-brands fa-tiktok text-base"></i></a>
+                    <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
+                    <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
+                    <div class="flex items-center gap-2.5 mt-4">
+                        <a href="https://www.instagram.com/klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no Instagram" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-instagram text-sm"></i></a>
+                        <a href="https://www.tiktok.com/@klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no TikTok" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-tiktok text-sm"></i></a>
                     </div>
                 </div>
-                <div class="text-slate-600 sm:text-right">© 2026 KLANGO.MP4</div>
+
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Produto</div>
+                    <nav class="flex flex-col gap-2 text-slate-400">
+                        <a href="#comoFunciona" class="hover:text-white transition-colors w-fit">Como funciona</a>
+                        <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
+                        <a href="#faq" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
+                    </nav>
+                </div>
+
+                <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Legal</div>
+                    <!-- Sem links de Política de Privacidade/Termos de Uso ainda -- nenhum documento real
+                         existe para linkar (ver auditoria); este aviso só estrutura o espaço visual sem
+                         apontar para uma página que não existe. -->
+                    <p class="text-slate-600 text-xs leading-relaxed">Política de Privacidade e Termos de Uso em breve.</p>
+                </div>
+            </div>
+            <div class="border-t border-slate-800/70">
+                <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 text-xs text-slate-600 text-center sm:text-left">© 2026 KLANGO.MP4</div>
             </div>
         </footer>
     </div>
@@ -339,7 +380,7 @@
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
         <div class="bg-card max-w-md w-full p-6 rounded-2xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-emerald-400"></i></div>
+            <div class="w-11 h-11 mx-auto rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-emerald-400"></i></div>
             <h3 id="modalTitulo" class="text-xl font-bold text-white text-center mb-1">Escolha como pagar</h3>
             <p id="modalDescricao" class="text-xs text-slate-400 text-center mb-5">Escolha Pix ou cartão. O pagamento é único e libera o período contratado após a confirmação.</p>
 
@@ -372,17 +413,27 @@
     const PLANOS = {
         weekly: {
             nome: "Semanal",
-            descricao: "5 gerações por dia + lote • acesso por 7 dias"
+            descricao: "5 gerações/dia • lote de até 5 (3/semana) • acesso por 7 dias"
         },
         monthly: {
             nome: "Mensal",
-            descricao: "10 gerações por dia + lote • acesso por 30 dias"
+            descricao: "10 gerações/dia • lote de até 5 (5/semana) • acesso por 30 dias"
         },
         vip_batch: {
             nome: "VIP Batch",
-            descricao: "15 gerações por dia + lote • acesso por 30 dias"
+            descricao: "15 gerações/dia • lote de até 15 (sem limite semanal) • acesso por 30 dias"
         }
     };
+
+    // Teto de vídeos por OPERAÇÃO de lote, por plano -- SÓ para a experiência do formulário
+    // (quantos campos mostrar, quando desabilitar "Adicionar vídeo", mensagem de erro amigável
+    // antes de chamar o servidor). Espelha services/plans.py::Plan.max_batch_size (Free=0 --
+    // sem lote --, Semanal=5, Mensal=5, VIP Batch=15); NÃO é a regra de negócio em si, que
+    // continua exclusivamente em services/usage.py::reserve_batch no backend -- uma tentativa
+    // de enviar mais itens do que o real é sempre recusada lá, mesmo que este número aqui
+    // estivesse desatualizado.
+    const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15 };
+    let limiteLoteAtual = 0; // 0 = lote indisponível (sem sessão, Free, ou status ainda não carregado)
 
     // Estado do checkout Mercado Pago (Etapa 10.2) -- nada disto substitui o Payment do backend,
     // que continua sendo a única fonte de verdade sobre preço/status.
@@ -475,6 +526,7 @@
         sessaoEmail = null;
         setStatusConta("Pronto para processar");
         limparStatusContaValidade();
+        esconderBatch();
     }
 
     // ---- Status real da conta (UX-2): GET /api/me/status -- só apresenta o que o backend já
@@ -527,6 +579,33 @@
                 limparStatusContaValidade();
             }
         }
+
+        atualizarVisibilidadeBatch(plano);
+    }
+
+    // Mostra/esconde a seção de lote conforme o plano REAL confirmado por /api/me/status --
+    // nunca antes disso (limiteLoteAtual começa em 0 -- lote escondido por padrão, mesmo estado
+    // inicial de sempre). LIMITE_LOTE_POR_PLANO é só de exibição (ver comentário acima da const).
+    function atualizarVisibilidadeBatch(plano) {
+        limiteLoteAtual = LIMITE_LOTE_POR_PLANO[plano.code] ?? 0;
+        const secao = document.getElementById("secaoBatch");
+        if (secao) secao.classList.toggle("hidden", limiteLoteAtual <= 0);
+
+        const tag = document.getElementById("batchPlanoTag");
+        if (tag) tag.textContent = plano.name || "—";
+
+        const limiteTexto = document.getElementById("batchLimiteTexto");
+        if (limiteTexto && limiteLoteAtual > 0) {
+            limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
+        }
+
+        if (limiteLoteAtual > 0) atualizarContagemLote();
+    }
+
+    function esconderBatch() {
+        limiteLoteAtual = 0;
+        const secao = document.getElementById("secaoBatch");
+        if (secao) secao.classList.add("hidden");
     }
 
     async function carregarStatusConta() {
@@ -739,7 +818,10 @@
 
         document.getElementById("modalPlano").textContent = info.nome;
         document.getElementById("modalDescricao").textContent = info.descricao;
-        document.getElementById("modalValor").textContent = "—"; // atualizado assim que o backend responder
+        // "Calculando valor..." -- nunca um valor fixo/estimado aqui; o número real só aparece
+        // depois que o backend responde com amount_cents (ver criarPaymentEMontarBrick).
+        document.getElementById("modalValor").textContent = "Calculando valor...";
+        document.getElementById("modalValor").classList.add("animate-pulse");
 
         document.getElementById("metodoPagamentoSwitch").classList.remove("hidden");
         document.getElementById("modalPagamento").classList.remove("hidden");
@@ -785,6 +867,9 @@
             try { data = await res.json(); } catch (_) { data = {}; }
 
             if (!res.ok) {
+                const modalValorErroEl = document.getElementById("modalValor");
+                modalValorErroEl.textContent = "—";
+                modalValorErroEl.classList.remove("animate-pulse");
                 if (res.status === 401) {
                     mostrarStatusPagamento(mensagemSessaoExpiradaCheckout(), "erro");
                 } else {
@@ -794,7 +879,9 @@
             }
 
             paymentAtual = data;
-            document.getElementById("modalValor").textContent = formatarReais(data.amount_cents);
+            const modalValorEl = document.getElementById("modalValor");
+            modalValorEl.textContent = formatarReais(data.amount_cents);
+            modalValorEl.classList.remove("animate-pulse");
             mostrarStatusPagamento("");
 
             await montarPaymentBrick(metodo, data.amount_cents);
@@ -1092,13 +1179,14 @@
     function atualizarContagemLote() {
         const items = document.querySelectorAll(".batch-item");
         const count = items.length;
-        document.getElementById("batchCount").textContent = `${count} de 10 vídeos`;
+        const max = limiteLoteAtual || 1;
+        document.getElementById("batchCount").textContent = `${count} de ${max} vídeos`;
         const addButton = document.getElementById("batchAddButton");
-        addButton.disabled = count >= 10;
-        addButton.classList.toggle("opacity-40", count >= 10);
-        addButton.classList.toggle("cursor-not-allowed", count >= 10);
-        addButton.innerHTML = count >= 10
-            ? '<i class="fa-solid fa-check mr-1"></i> Limite de 10 vídeos atingido'
+        addButton.disabled = count >= max;
+        addButton.classList.toggle("opacity-40", count >= max);
+        addButton.classList.toggle("cursor-not-allowed", count >= max);
+        addButton.innerHTML = count >= max
+            ? '<i class="fa-solid fa-check mr-1"></i> Limite de vídeos por lote atingido'
             : '<i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo';
     }
 
@@ -1160,7 +1248,7 @@
     function adicionarCampoLote() {
         const container = document.getElementById("batchItems");
         const count = container.querySelectorAll(".batch-item").length;
-        if (count >= 10) return;
+        if (count >= (limiteLoteAtual || 1)) return;
         container.appendChild(criarCampoLote(count + 1));
         atualizarContagemLote();
         container.lastElementChild.querySelector(".batch-url").focus();
@@ -1173,21 +1261,25 @@
         atualizarContagemLote();
     }
 
+    // Gera um identificador único por ENVIO de lote -- exigido por POST /api/download-batch
+    // (CreateBatchBody.request_id), usado pelo backend (services.usage.reserve_batch) para
+    // idempotência: reenviar o MESMO request_id nunca gasta cota duas vezes. Cada clique em
+    // "Processar e preparar lote" deve gerar um novo -- nunca reaproveitado entre envios.
+    function gerarRequestIdLote() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+            return window.crypto.randomUUID();
+        }
+        return `lote-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+
     async function processarLote() {
-        const email = document.getElementById("userEmail").value.trim();
         const items = Array.from(document.querySelectorAll(".batch-item"));
         const button = document.getElementById("batchButton");
         const status = document.getElementById("batchStatus");
 
-        if (!emailValido(email)) {
-            status.textContent = "Ative seu e-mail VIP antes de processar um lote.";
-            status.className = "mt-4 text-xs text-red-400";
-            return;
-        }
-
         const entries = items.map(item => ({
             url: item.querySelector(".batch-url").value.trim(),
-            name: item.querySelector(".batch-name").value.trim() || null
+            filename: item.querySelector(".batch-name").value.trim() || null
         })).filter(item => item.url);
 
         if (!entries.length) {
@@ -1196,107 +1288,194 @@
             return;
         }
 
-        if (entries.length > 10) {
-            status.textContent = "O lote aceita no máximo 10 vídeos.";
+        const max = limiteLoteAtual || 1;
+        if (entries.length > max) {
+            status.textContent = `Este plano aceita no máximo ${max} vídeos por operação de lote.`;
             status.className = "mt-4 text-xs text-red-400";
             return;
         }
 
         button.disabled = true;
         button.classList.add("opacity-60", "cursor-not-allowed");
-        button.innerHTML = '<span class="mr-1">🪱</span> Processando lote...';
-        status.innerHTML = '<div class="p-4 bg-amber-950/30 border border-amber-800/50 text-amber-400 rounded-xl">O KLANGO.MP4 está preparando os vídeos um por um. Isso pode levar alguns minutos.</div>';
+        button.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> Processando lote...';
+        status.className = "mt-4 text-sm";
+        status.innerHTML = "";
+
+        // Aviso geral (topo) + uma linha por vídeo, na MESMA ordem enviada (linhas indexadas por
+        // `position`, 1-based -- o mesmo campo que os eventos SSE do backend usam para dizer a
+        // qual item cada atualização pertence). `rodape` recebe o resumo final ou uma mensagem
+        // de erro; nada aqui é inventado -- cada texto só aparece depois do evento correspondente.
+        const aviso = document.createElement("div");
+        aviso.className = "p-4 bg-amber-950/30 border border-amber-800/50 text-amber-400 rounded-xl mb-3";
+        aviso.textContent = "O KLANGO.MP4 está preparando os vídeos um por um. Isso pode levar alguns minutos.";
+        status.appendChild(aviso);
+
+        const lista = document.createElement("div");
+        lista.className = "space-y-2";
+        const linhas = new Map();
+        entries.forEach((entry, index) => {
+            const position = index + 1;
+            const row = document.createElement("div");
+            row.className = "p-3 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between";
+
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+
+            const nomeExibido = document.createElement("div");
+            nomeExibido.className = "text-slate-300 break-all text-xs font-semibold";
+            nomeExibido.textContent = `${position}. ${entry.filename || entry.url}`;
+            info.appendChild(nomeExibido);
+
+            const statusTexto = document.createElement("div");
+            statusTexto.className = "text-[11px] text-slate-500 mt-1";
+            statusTexto.textContent = "Na fila...";
+            info.appendChild(statusTexto);
+
+            row.appendChild(info);
+
+            const acao = document.createElement("div");
+            acao.className = "shrink-0";
+            row.appendChild(acao);
+
+            lista.appendChild(row);
+            linhas.set(position, { statusTexto, acao });
+        });
+        status.appendChild(lista);
+
+        const rodape = document.createElement("div");
+        rodape.className = "mt-3";
+        status.appendChild(rodape);
+
+        let batchIdAtual = null;
+
+        function atualizarLinha(position, texto, tipo) {
+            const linha = linhas.get(position);
+            if (!linha) return;
+            linha.statusTexto.textContent = texto;
+            linha.statusTexto.className = "text-[11px] mt-1 " +
+                (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-emerald-400" : "text-slate-500");
+        }
+
+        function processarEventoSSELote(bloco) {
+            let tipo = "message";
+            let dadosTexto = "";
+            for (const linha of bloco.split("\n")) {
+                if (linha.startsWith("event: ")) tipo = linha.slice(7);
+                else if (linha.startsWith("data: ")) dadosTexto += linha.slice(6);
+            }
+            if (!dadosTexto) return;
+            let dados;
+            try { dados = JSON.parse(dadosTexto); } catch (err) { return; }
+
+            if (tipo === "batch_reserved") {
+                batchIdAtual = dados.batch_id;
+            } else if (tipo === "item_status" || tipo === "item_progress") {
+                const mensagem = typeof dados.percent === "number"
+                    ? `${dados.message} (${Math.round(dados.percent)}%)`
+                    : (dados.message || "Processando...");
+                atualizarLinha(dados.position, mensagem, "normal");
+            } else if (tipo === "item_complete") {
+                if (dados.status === "completed") {
+                    atualizarLinha(dados.position, "Pronto.", "sucesso");
+                    const linha = linhas.get(dados.position);
+                    if (linha) {
+                        const link = document.createElement("a");
+                        link.href = `/api/generations/${dados.generation_id}/download`;
+                        link.target = "_blank";
+                        link.rel = "noopener";
+                        link.download = dados.filename || "video_minhoca.mp4";
+                        link.className = "text-emerald-400 font-bold whitespace-nowrap text-xs";
+                        link.innerHTML = '<i class="fa-solid fa-file-arrow-down mr-1"></i>Baixar';
+                        linha.acao.innerHTML = "";
+                        linha.acao.appendChild(link);
+                    }
+                } else {
+                    atualizarLinha(dados.position, "Não foi possível preparar este vídeo.", "erro");
+                }
+            } else if (tipo === "batch_progress") {
+                aviso.textContent = `${dados.completed + dados.failed} de ${dados.total} vídeos processados (${dados.completed} prontos, ${dados.failed} com erro).`;
+            } else if (tipo === "complete") {
+                aviso.remove();
+                rodape.innerHTML = "";
+                const resumo = document.createElement("div");
+                resumo.className = "p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-xl";
+                const resumoTexto = document.createElement("div");
+                resumoTexto.className = "text-emerald-400 font-bold text-sm";
+                resumoTexto.textContent = `${dados.completed} de ${dados.item_count} vídeos preparados.`;
+                resumo.appendChild(resumoTexto);
+                if (dados.completed > 0 && batchIdAtual) {
+                    const zipLink = document.createElement("a");
+                    zipLink.href = `/api/batches/${batchIdAtual}/download`;
+                    zipLink.download = "minhoca_lote.zip";
+                    zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
+                    zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
+                    resumo.appendChild(zipLink);
+                }
+                rodape.appendChild(resumo);
+            } else if (tipo === "error") {
+                aviso.remove();
+                rodape.innerHTML = "";
+                const erro = document.createElement("div");
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                erro.textContent = dados.detail || "Não foi possível processar o lote.";
+                rodape.appendChild(erro);
+            }
+        }
+
+        async function lerStreamDeLote(response) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                let indiceFim;
+                while ((indiceFim = buffer.indexOf("\n\n")) !== -1) {
+                    const bloco = buffer.slice(0, indiceFim);
+                    buffer = buffer.slice(indiceFim + 2);
+                    processarEventoSSELote(bloco);
+                }
+            }
+        }
 
         try {
             const response = await fetch("/api/download-batch", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    urls: entries.map(item => item.url),
-                    names: entries.map(item => item.name),
-                    user_email: email
+                    request_id: gerarRequestIdLote(),
+                    items: entries.map(item => ({ url: item.url, filename: item.filename }))
                 })
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.detail || "Não foi possível processar o lote.");
-            }
-
-            status.innerHTML = "";
-
-            const header = document.createElement("div");
-            header.className = "p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-xl mb-3";
-
-            const summaryText = document.createElement("div");
-            summaryText.className = "text-emerald-400 font-bold text-sm";
-            summaryText.textContent = `${data.successful} de ${data.total} vídeos preparados.`;
-            header.appendChild(summaryText);
-
-            if (data.zip_url) {
-                const zipLink = document.createElement("a");
-                zipLink.href = data.zip_url;
-                zipLink.download = "minhoca_lote.zip";
-                zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
-                zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
-                header.appendChild(zipLink);
-            } else if (data.zip_error) {
-                const zipError = document.createElement("div");
-                zipError.className = "text-amber-400 text-xs mt-2";
-                zipError.textContent = `ZIP não gerado: ${data.zip_error}`;
-                header.appendChild(zipError);
-            }
-
-            status.appendChild(header);
-
-            const summary = document.createElement("div");
-            summary.className = "space-y-2";
-
-            data.results.forEach((item, index) => {
-                const row = document.createElement("div");
-                row.className = "p-3 rounded-xl border border-gray-800 bg-gray-950/60 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between";
-
-                const info = document.createElement("div");
-                info.className = "min-w-0";
-
-                const text = document.createElement("div");
-                text.className = "text-gray-300 break-all text-xs";
-                text.textContent = `${index + 1}. ${item.filename || item.url}`;
-                info.appendChild(text);
-
-                if (item.status === "success") {
-                    const source = document.createElement("div");
-                    source.className = "text-[10px] text-gray-600 break-all mt-1";
-                    source.textContent = item.url;
-                    info.appendChild(source);
-                }
-
-                row.appendChild(info);
-
-                if (item.status === "success") {
-                    const link = document.createElement("a");
-                    link.href = item.download_url;
-                    link.target = "_blank";
-                    link.rel = "noopener";
-                    link.download = item.filename || "video_minhoca.mp4";
-                    link.className = "text-emerald-400 font-bold whitespace-nowrap text-xs";
-                    link.textContent = "Baixar";
-                    row.appendChild(link);
+                // Só acontece ANTES do stream começar (sem sessão, corpo inválido) -- depois que
+                // o stream abre, todo erro chega como evento "error" (mesmo padrão de
+                // baixarVideo()/lerStreamDeGeracao() para a geração avulsa).
+                let data = {};
+                try { data = await response.json(); } catch (err) { /* corpo pode não ser JSON */ }
+                aviso.remove();
+                const erro = document.createElement("div");
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                if (response.status === 401) {
+                    erro.textContent = mensagemSessaoExpiradaCheckout();
+                    abrirAcesso();
                 } else {
-                    const error = document.createElement("span");
-                    error.className = "text-red-400 text-xs";
-                    error.textContent = "Erro";
-                    row.appendChild(error);
+                    erro.textContent = data.detail || "Não foi possível processar o lote.";
                 }
+                rodape.appendChild(erro);
+                return;
+            }
 
-                summary.appendChild(row);
-            });
-
-            status.appendChild(summary);
+            await lerStreamDeLote(response);
         } catch (err) {
-            status.textContent = err.message || "Erro ao processar o lote.";
-            status.className = "mt-4 text-xs text-red-400";
+            aviso.remove();
+            const erro = document.createElement("div");
+            erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+            erro.textContent = "Erro ao se conectar ao servidor.";
+            rodape.appendChild(erro);
         } finally {
             button.disabled = false;
             button.classList.remove("opacity-60", "cursor-not-allowed");

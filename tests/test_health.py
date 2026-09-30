@@ -22,7 +22,7 @@ def test_health_usa_fuso_de_sao_paulo():
 def test_frontend_na_raiz():
     r = client.get("/")
     assert r.status_code == 200
-    assert "Minhoca" in r.text
+    assert "KLANGO.MP4" in r.text
 
 
 def test_health_nao_e_engolido_pelo_frontend():
