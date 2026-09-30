@@ -30,6 +30,7 @@ from services.auth import AuthError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
 from services.usage import BatchNotFoundError, GenerationDownloadNotFoundError, QuotaExceededError, UsageError
+from utils.anon_cookie import AnonymousCookieMiddleware
 from utils.logging_setup import setup_logging
 from utils.origin import OriginProtectionMiddleware
 
@@ -68,6 +69,10 @@ app = FastAPI(
 
 # Proteção de Origin (CSRF) centralizada: vale para toda requisição que altera dados.
 app.add_middleware(OriginProtectionMiddleware)
+
+# Grava o cookie de identidade anônima (Free sem login) na resposta -- funciona para qualquer
+# tipo de Response, incluindo o StreamingResponse das rotas de geração (ver utils/anon_cookie.py).
+app.add_middleware(AnonymousCookieMiddleware)
 
 # Erros de autenticação e de corpo inválido nas rotas /api/auth: {"detail": "...", "code": "..."}.
 app.add_exception_handler(AuthError, auth.auth_error_handler)

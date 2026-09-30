@@ -1,4 +1,5 @@
 """Importar este pacote registra todos os modelos no metadata (usado pelo Alembic)."""
+from database.models.anonymous_identity import AnonymousIdentity
 from database.models.auth_session import AuthSession
 from database.models.batch import Batch
 from database.models.entitlement import Entitlement
@@ -9,6 +10,7 @@ from database.models.payment_event import PaymentEvent
 from database.models.user import User
 
 __all__ = [
+    "AnonymousIdentity",
     "AuthSession",
     "Batch",
     "Entitlement",

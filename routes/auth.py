@@ -19,6 +19,7 @@ from config import Settings, get_settings
 from database.models import User
 from database.session import get_session
 from routes.deps import client_ip, get_current_user, get_email_sender
+from services.anon_identity import find_anon_user_id_by_token
 from services.auth import AuthError, request_login_code, revoke_session, verify_login_code
 from services.mailer import EmailSender
 
@@ -85,10 +86,18 @@ def request_code(
 @router.post("/verify-code")
 def verify_code(
     body: VerifyCodeBody,
+    request: Request,
     db: Session = Depends(get_session),
     cfg: Settings = Depends(get_settings),
 ) -> JSONResponse:
-    result = verify_login_code(db, email=body.email, code=body.code, cfg=cfg)
+    """Free anônimo (aprovação do CÉREBRO): se o navegador já tem um cookie de identidade
+    anônima, resolve o `user_id` associado ANTES de verificar o código (só leitura -- nunca cria
+    uma identidade nova aqui) e passa para verify_login_code, que decide promover essa MESMA
+    conta (e-mail novo) ou logar normalmente na conta existente (e-mail já cadastrado -- sem
+    merge automático, política aprovada). O cookie anônimo não é limpo/alterado por esta rota:
+    fica inofensivo depois do login (get_generation_user sempre prioriza a sessão autenticada)."""
+    anon_user_id = find_anon_user_id_by_token(db, request.cookies.get(cfg.anon_cookie_name))
+    result = verify_login_code(db, email=body.email, code=body.code, cfg=cfg, anon_user_id=anon_user_id)
     response = JSONResponse({"email": result.user.email}, headers=NO_STORE)
     response.set_cookie(
         key=cfg.session_cookie_name,

@@ -16,10 +16,11 @@ tests/test_usage_architecture.py::test_nenhuma_regra_de_cota_em_rotas_main_ou_fr
 proíbe qualquer rota fora de uma lista nomeada de importar os módulos de regra de cota
 diretamente).
 
-Autenticação: routes/deps.py::get_current_user (mesmo mecanismo de routes/payments.py e
-routes/generations.py) -- sessão ausente/inválida levanta UnauthenticatedError, já traduzida para
-401 pelo exception handler global registrado em main.py (app.add_exception_handler(AuthError,
-auth.auth_error_handler)); nada precisa ser tratado aqui para isso.
+Autenticação: routes/deps.py::get_generation_user (Free anônimo -- aprovação do CÉREBRO): sessão
+autenticada OU identidade anônima por cookie, nunca 401 -- o visitante precisa ver "usados X/5"
+mesmo sem login (é isso que permite ao frontend encaminhá-lo para Planos na 6ª tentativa, sem
+jamais abrir o modal de login). routes/payments.py continua em get_current_user (login continua
+obrigatório para pagar), sem nenhuma mudança.
 
 Fora do contrato de propósito (UX-1): preço, batch, e-mail, ids internos, dias restantes -- ver o
 relatório da microauditoria/autorização desta etapa.
@@ -32,7 +33,7 @@ from sqlalchemy.orm import Session
 
 from database.models import User
 from database.session import get_session
-from routes.deps import get_current_user
+from routes.deps import get_generation_user
 from services.user_status import get_user_status
 
 router = APIRouter(prefix="/api/me", tags=["me"])
@@ -68,7 +69,7 @@ class StatusOut(BaseModel):
 
 @router.get("/status", response_model=StatusOut)
 def get_status(
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_generation_user),
     db: Session = Depends(get_session),
 ) -> StatusOut:
     status = get_user_status(db, user.id)

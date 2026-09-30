@@ -49,11 +49,19 @@ def _login(auth_client, session, factory):
     return usuario
 
 
-# ============================================================================ não autenticado
-def test_sem_sessao_recebe_401(auth_client):
+# ============================================================================ não autenticado / Free anônimo
+def test_sem_sessao_devolve_status_do_visitante_anonimo(auth_client):
+    """Free anônimo (aprovação do CÉREBRO): a rota usa get_generation_user, não get_current_user
+    -- sem sessão, devolve o status Free (0/5) de uma identidade anônima recém-criada, nunca 401
+    (é isso que permite ao frontend mostrar "usados X/5" antes de qualquer login)."""
     resposta = auth_client.get(URL)
-    assert resposta.status_code == 401
-    assert resposta.json()["code"] == "not_authenticated"
+    assert resposta.status_code == 200
+    assert resposta.headers["set-cookie"].startswith("minhoca_anon=")
+    assert resposta.json() == {
+        "plan": {"code": "free", "name": "Free"},
+        "usage": {"used": 0, "limit": 5, "remaining": 5, "period": "week"},
+        "entitlement": None,
+    }
 
 
 # ============================================================================ Free

@@ -59,10 +59,15 @@ def test_nome_do_arquivo_e_sempre_minhoca_id_nunca_o_original(auth_client, facto
     assert "saida.mp4" not in resposta.headers["content-disposition"]  # nunca o nome do arquivo em disco
 
 
-# ============================================================================ autenticação
-def test_sem_sessao_401(auth_client):
+# ============================================================================ autenticação / Free anônimo
+def test_sem_sessao_cria_identidade_anonima_e_devolve_404_generico(auth_client):
+    """Free anônimo (aprovação do CÉREBRO): a rota usa get_generation_user, não get_current_user
+    -- sem sessão, ganha uma identidade anônima automaticamente (nunca 401); como a geração #1
+    não existe (e não pertence a essa identidade recém-criada), o 404 genérico de sempre continua
+    valendo -- ownership por user_id funciona igual para identidade anônima."""
     resposta = auth_client.get(_url(1))
-    assert resposta.status_code == 401
+    assert resposta.status_code == 404
+    assert resposta.headers["set-cookie"].startswith("minhoca_anon=")
 
 
 # ============================================================================ autorização / IDOR

@@ -17,6 +17,7 @@ EXPECTED_TABLES = {
     "payment_events",
     "login_codes",  # Etapa 3
     "auth_sessions",  # Etapa 3
+    "anonymous_identities",  # Free anônimo -- aprovação do CÉREBRO, migration 0006
 }
 
 

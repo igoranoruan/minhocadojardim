@@ -4,6 +4,8 @@
   (Um código de 6 dígitos cai em segundos num ataque offline, seja qual for o hash; a defesa real é o
   segredo fora do banco + validade curta + limite de tentativas.)
 - Token de sessão: 256 bits aleatórios; o banco guarda só o SHA-256 (o token já tem alta entropia).
+- Token de identidade anônima (Free sem login): mesmo padrão do token de sessão -- 256 bits
+  aleatórios, banco guarda só o SHA-256, sem segredo adicional (a entropia do token já basta).
 - IP: guardado apenas como HMAC com segredo separado, só para limitar abuso. Isso NÃO garante, por si só,
   que o dado deixe de ser pessoal para fins de LGPD (tratamento jurídico fica para etapa própria).
 """
@@ -12,7 +14,7 @@ import hmac
 import re
 import secrets
 
-from config import LOGIN_CODE_LENGTH, SESSION_TOKEN_BYTES
+from config import ANON_TOKEN_BYTES, LOGIN_CODE_LENGTH, SESSION_TOKEN_BYTES
 
 _EMAIL_RE = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 _CODE_RE = re.compile(rf"[0-9]{{{LOGIN_CODE_LENGTH}}}")
@@ -47,6 +49,15 @@ def generate_session_token() -> str:
 
 
 def hash_session_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def generate_anon_device_token() -> str:
+    """Token do cookie de identidade anônima (mesma entropia do token de sessão)."""
+    return secrets.token_urlsafe(ANON_TOKEN_BYTES)
+
+
+def hash_anon_device_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 

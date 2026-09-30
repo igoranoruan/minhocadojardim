@@ -33,6 +33,18 @@ DEV_IP_HASH_SECRET = "dev-only-ip-hash-secret-never-use-in-production-0002"
 # Rotas que NÃO passam pela checagem de Origin (servidor-a-servidor, sem cookie): webhooks futuros.
 ORIGIN_CHECK_EXEMPT_PREFIXES = ("/api/webhooks/",)
 
+# ------------------------------------------------------------------- identidade anônima (Free sem login)
+# Cookie SEPARADO do cookie de sessão (SESSION_COOKIE_NAME): identifica um "usuário-dispositivo"
+# (database/models/anonymous_identity.py) para permitir o Free (5 gerações/semana) sem exigir
+# login -- ver services/anon_identity.py e routes/deps.py::get_generation_user. Mesmos atributos
+# de segurança do cookie de sessão (HttpOnly, SameSite=Lax, Secure em produção, __Host- em
+# produção) -- ver Settings.anon_cookie_name/anon_cookie_secure abaixo.
+ANON_TOKEN_BYTES = 32  # 256 bits, mesma entropia do token de sessão
+ANON_COOKIE_NAME = "minhoca_anon"
+ANON_COOKIE_NAME_PRODUCTION = "__Host-minhoca_anon"
+# Debounce de last_seen_at (mesmo padrão de SESSION_LAST_USED_UPDATE_INTERVAL_SECONDS).
+ANON_LAST_SEEN_UPDATE_INTERVAL_SECONDS = 3600
+
 # ----------------------------------------------------------------------------- planos e gerações (Etapa 4)
 # O limite de vídeos por lote é definido por plano (Plan.max_batch_size em services/plans.py),
 # não aqui: cada plano pago tem seu próprio teto (Etapa 4.1).
@@ -137,6 +149,7 @@ class Settings:
     login_code_max_per_email_per_hour: int
     login_code_max_per_ip_per_hour: int
     session_ttl_days: int
+    anon_cookie_ttl_days: int
     bgutil_pot_provider_base_url: str
     ffmpeg_path: str
     ffprobe_path: str
@@ -166,6 +179,14 @@ class Settings:
 
     @property
     def session_cookie_secure(self) -> bool:
+        return self.is_production
+
+    @property
+    def anon_cookie_name(self) -> str:
+        return ANON_COOKIE_NAME_PRODUCTION if self.is_production else ANON_COOKIE_NAME
+
+    @property
+    def anon_cookie_secure(self) -> bool:
         return self.is_production
 
     @property
@@ -234,6 +255,10 @@ def load_settings() -> Settings:
         login_code_max_per_email_per_hour=_int_env("AUTH_CODE_MAX_PER_EMAIL_PER_HOUR", default=5, minimum=1),
         login_code_max_per_ip_per_hour=_int_env("AUTH_CODE_MAX_PER_IP_PER_HOUR", default=20, minimum=1),
         session_ttl_days=_int_env("AUTH_SESSION_TTL_DAYS", default=30, minimum=1),
+        # 365 dias: cookie de longa duração (identidade de dispositivo, não uma sessão de login) --
+        # o navegador pode limitar isso na prática (ex.: teto de ~400 dias do Chrome), o que é
+        # aceitável: o pior caso é o visitante virar "novo dispositivo" mais cedo, nunca um erro.
+        anon_cookie_ttl_days=_int_env("ANON_COOKIE_TTL_DAYS", default=365, minimum=1),
         bgutil_pot_provider_base_url=os.getenv("BGUTIL_POT_PROVIDER_BASE_URL", BGUTIL_POT_PROVIDER_BASE_URL).strip(),
         ffmpeg_path=os.getenv("FFMPEG_PATH", FFMPEG_PATH).strip() or FFMPEG_PATH,
         ffprobe_path=os.getenv("FFPROBE_PATH", FFPROBE_PATH).strip() or FFPROBE_PATH,

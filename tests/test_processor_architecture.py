@@ -121,8 +121,19 @@ def test_output_sha256_e_o_unico_hash_do_resultado():
 
 
 def test_nenhuma_migration_nova_foi_criada():
+    """Protege que a camada de processamento continua sem migration própria. A lista é o
+    histórico REAL de migrations já aprovadas em outras etapas (0004 display_filename, 0005
+    request_fingerprint, 0006 anonymous_identities -- Free anônimo, aprovação do CÉREBRO) --
+    nenhuma delas foi criada por esta camada; uma 7ª entrada aqui ainda quebraria este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py", "0004_display_filename.py", "0005_batch_request_fingerprint.py"]
+    assert versoes == [
+        "0001_estrutura_inicial.py",
+        "0002_autenticacao.py",
+        "0003_resultado_geracao.py",
+        "0004_display_filename.py",
+        "0005_batch_request_fingerprint.py",
+        "0006_anonymous_identities.py",
+    ]
 
 
 def test_processor_nao_usa_datetime_now_diretamente():

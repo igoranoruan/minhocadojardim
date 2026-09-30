@@ -23,6 +23,7 @@ from config import SESSION_LAST_USED_UPDATE_INTERVAL_SECONDS, Settings, get_sett
 from database.models import AuthSession, LoginCode, User
 from database.models.user import normalize_email
 from database.types import utcnow
+from services.anon_identity import promote_anonymous_user
 from services.mailer import EmailMessage, EmailSender
 from utils.security import (
     constant_time_equals,
@@ -163,9 +164,9 @@ def _login_code_message(email: str, code: str, cfg: Settings) -> EmailMessage:
     minutes = max(1, cfg.login_code_ttl_seconds // 60)
     return EmailMessage(
         to=email,
-        subject="Seu código de acesso ao Klango",
+        subject="Seu código de acesso ao Minhoca de Jardim",
         text=(
-            "Seu código de acesso ao Klango:\n\n"
+            "Seu código de acesso ao Minhoca de Jardim:\n\n"
             f"    {code}\n\n"
             f"Ele vale por {minutes} minuto(s) e só pode ser usado uma vez.\n"
             "Se você não pediu este código, ignore este e-mail.\n"
@@ -237,7 +238,20 @@ def _enforce_send_limits(db: Session, *, email: str, ip_hash: str | None, now: d
 
 
 # ------------------------------------------------------------------------------ verificar código
-def verify_login_code(db: Session, *, email: str, code: str, cfg: Settings | None = None) -> LoginResult:
+def verify_login_code(
+    db: Session,
+    *,
+    email: str,
+    code: str,
+    cfg: Settings | None = None,
+    anon_user_id: int | None = None,
+) -> LoginResult:
+    """`anon_user_id` (Free anônimo -- aprovação do CÉREBRO): quando a chamada vem de um
+    navegador com uma identidade anônima ativa (routes/auth.py resolve isto ANTES de chamar --
+    nunca informado pelo cliente), o usuário é resolvido por `promote_anonymous_user` em vez de
+    `_get_or_create_verified_user` (ver services/anon_identity.py para a política de promoção/
+    "sem merge automático"). `None` (comportamento padrão, sem identidade anônima) preserva
+    exatamente o comportamento anterior a esta etapa."""
     cfg = cfg or get_settings()
     email = normalize_email(email) if isinstance(email, str) else ""
     if not is_valid_email_format(email):
@@ -295,7 +309,10 @@ def verify_login_code(db: Session, *, email: str, code: str, cfg: Settings | Non
             if closed.rowcount != 1:  # outra verificação já usou este código
                 db.rollback()
                 raise InvalidCodeError()
-            user = _get_or_create_verified_user(db, email, now)
+            if anon_user_id is None:
+                user = _get_or_create_verified_user(db, email, now)
+            else:
+                user = promote_anonymous_user(db, anon_user_id=anon_user_id, email=email, now=now)
             token, expires_at = _create_session(db, user, now, cfg)
             db.commit()
             logger.info("[AUTH] login confirmado para %s", mask_email(email))

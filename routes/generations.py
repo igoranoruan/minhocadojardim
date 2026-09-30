@@ -14,8 +14,13 @@ processor/ffmpeg.py e services/generation_flow.py), não mais um único JSON. Ev
   (download inválido, cota esgotada, falha de processamento, etc.) -- ver `_error_payload_for`.
   Antes desta etapa esses erros viravam status HTTP diferentes (422/429/503/500); como a resposta
   já commitou em 200 assim que o stream abre, não é mais possível trocar o status no meio —
-  decisão consciente, tomada com o dono do produto. 401 (sem sessão) continua HTTP 401 normal,
-  porque get_current_user roda ANTES de qualquer stream começar.
+  decisão consciente, tomada com o dono do produto.
+
+POST /api/generations e GET /api/generations/{id}/download usam get_generation_user (Free
+anônimo -- aprovação do CÉREBRO): sessão autenticada OU identidade anônima por cookie, nunca 401
+para um visitante sem login. As rotas de LOTE (download-batch/batches/{id}/download) continuam em
+get_current_user -- lote é sempre de plano pago (services/plans.py: Free não tem lote), então
+login continua obrigatório ali, sem mudança nenhuma.
 
 Erros: {"detail": "...", "code": "..."} dentro do evento `error` -- mesmo formato de sempre, só
 que agora no corpo do evento em vez do corpo da resposta HTTP. Nenhuma classe de erro das Etapas
@@ -45,7 +50,7 @@ from database.models import User
 from database.session import get_session
 from download.errors import DownloadError
 from processor.errors import ProcessorError
-from routes.deps import get_current_user
+from routes.deps import get_current_user, get_generation_user
 from services import result_storage
 from services.batch_filenames import InvalidFilenameError, sanitize_batch_filenames
 from services.batch_fingerprint import compute_batch_fingerprint
@@ -261,13 +266,14 @@ def _stream_generation(engine_bind, url: str, user_id: int) -> Iterator[str]:
 @router.post("/generations")
 def create_generation(
     body: CreateGenerationBody,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_generation_user),
     db: Session = Depends(get_session),
 ) -> StreamingResponse:
-    """Rota fina: só resolve a sessão (get_current_user, ANTES de qualquer stream -- 401 continua
-    HTTP 401 normal) e devolve o stream. `db.get_bind()` (a engine, não a Session em si) é o que
-    a thread de trabalho usa para montar sua PRÓPRIA Session -- ver _run_generation_in_background.
-    Toda a orquestração real mora em _run_generation_in_background/_stream_generation, acima."""
+    """Rota fina: só resolve o usuário (get_generation_user -- sessão autenticada OU identidade
+    anônima, Free sem login) ANTES de qualquer stream, e devolve o stream. `db.get_bind()` (a
+    engine, não a Session em si) é o que a thread de trabalho usa para montar sua PRÓPRIA Session
+    -- ver _run_generation_in_background. Toda a orquestração real mora em
+    _run_generation_in_background/_stream_generation, acima."""
     return StreamingResponse(
         _stream_generation(db.get_bind(), body.url, user.id),
         media_type="text/event-stream",
@@ -483,13 +489,16 @@ def download_batch(
 @router.get("/generations/{generation_id}/download")
 def download_generation(
     generation_id: int,
-    user: User = Depends(get_current_user),
+    user: User = Depends(get_generation_user),
     db: Session = Depends(get_session),
 ) -> FileResponse:
     """Etapa 8B.3. `storage_key` NUNCA vem da URL/query string — é lido internamente da geração,
     já com ownership/status/expiração verificados por services.usage.get_downloadable_generation
-    (única fonte dessa checagem, não duplicada aqui). Serve tanto geração avulsa quanto item de
-    lote -- nenhuma rota separada para lote (Etapa 9.3).
+    (única fonte dessa checagem, não duplicada aqui) -- o ownership por user_id vale IGUAL para
+    identidade anônima (Free sem login, get_generation_user): o dono é o user_id que fez a
+    reserva, autenticado ou não, e um dispositivo diferente nunca enxerga a geração de outro
+    (mesma checagem de sempre, nenhuma duplicação de lógica). Serve tanto geração avulsa quanto
+    item de lote -- nenhuma rota separada para lote (Etapa 9.3).
 
     Nome do arquivo (Etapa 9.3, correção de filename): `generation.display_filename` quando
     presente (sanitizado na criação do lote, já com `.mp4` garantido), senão o padrão fixo de

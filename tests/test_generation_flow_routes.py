@@ -2,8 +2,12 @@
 
 Desde a barra de progresso real (SSE), a rota devolve `text/event-stream`: 200 sempre que o
 stream chega a abrir, com os eventos (`status`/`progress`/`complete`/`error`) carregando o que
-antes eram status HTTP diferentes (422/429/503) ou o corpo de sucesso direto. 401 (sem sessão)
-continua HTTP 401 normal -- get_current_user roda ANTES de qualquer stream começar.
+antes eram status HTTP diferentes (422/429/503) ou o corpo de sucesso direto.
+
+Free anônimo (aprovação do CÉREBRO): a rota usa get_generation_user, não get_current_user --
+sessão ausente já não é mais 401 (o visitante ganha uma identidade anônima automaticamente; ver
+tests/test_anon_identity.py para a suíte completa desse comportamento). Só um erro real de
+domínio (download/processamento/cota/etc.) vira o evento `error` dentro do stream 200.
 
 O TestClient roda o ASGI da ponta a ponta e só devolve o Response depois do generator terminar
 (StreamingResponse é drenado internamente) -- por isso `resposta.text` já contém o stream inteiro,
@@ -44,12 +48,23 @@ def _eventos(resposta) -> list[tuple[str, dict]]:
     return eventos
 
 
-# ============================================================================ autenticação
-def test_sem_sessao_401(auth_client):
-    """401 continua HTTP 401 normal -- acontece ANTES de qualquer stream começar."""
-    resposta = auth_client.post("/api/generations", json={"url": "https://www.tiktok.com/@a/video/1"})
-    assert resposta.status_code == 401
-    assert resposta.json()["code"] == "not_authenticated"
+# ============================================================================ autenticação / Free anônimo
+def test_sem_sessao_cria_identidade_anonima_em_vez_de_401(auth_client):
+    """Free anônimo (aprovação do CÉREBRO): sem sessão E sem cookie, a rota abre o stream mesmo
+    assim (nunca 401) -- get_generation_user cria um usuário-dispositivo na primeira visita, e o
+    AnonymousCookieMiddleware grava o cookie na resposta (StreamingResponse incluído -- é
+    exatamente o caso que motivou o middleware em vez de Response injetado por Depends)."""
+    resposta = auth_client.post("/api/generations", json={"url": "https://plataforma-invalida.example/x"})
+    assert resposta.status_code == 200
+
+    cookie = resposta.headers["set-cookie"]
+    baixo = cookie.lower()
+    assert cookie.startswith("minhoca_anon=")
+    assert "httponly" in baixo and "samesite=lax" in baixo and "path=/" in baixo
+    assert "secure" not in baixo  # desenvolvimento em http
+
+    eventos = _eventos(resposta)
+    assert eventos[-1][0] == "error"  # plataforma não suportada -- mas o stream abriu (200), nunca 401
 
 
 def test_corpo_sem_url_e_recusado(auth_client, factory, session):

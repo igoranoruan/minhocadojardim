@@ -133,10 +133,23 @@ def test_sem_redis_celery_fila_ou_servico_externo():
 
 
 def test_a_etapa_4_nao_criou_tabelas_nem_migration():
+    """Protege que a Etapa 4 (services/usage.py) continua sem tabela/migration própria. A lista
+    e o conjunto de tabelas são o histórico REAL já aprovado em outras etapas (0004
+    display_filename, 0005 request_fingerprint, 0006 anonymous_identities -- Free anônimo,
+    aprovação do CÉREBRO) -- nenhuma delas foi criada por esta camada; uma 7ª migration ou uma
+    tabela nova aqui ainda quebrariam este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
-    assert versoes == ["0001_estrutura_inicial.py", "0002_autenticacao.py", "0003_resultado_geracao.py", "0004_display_filename.py", "0005_batch_request_fingerprint.py"]
+    assert versoes == [
+        "0001_estrutura_inicial.py",
+        "0002_autenticacao.py",
+        "0003_resultado_geracao.py",
+        "0004_display_filename.py",
+        "0005_batch_request_fingerprint.py",
+        "0006_anonymous_identities.py",
+    ]
     assert set(Base.metadata.tables) == {
-        "users", "payments", "entitlements", "generations", "batches", "payment_events", "login_codes", "auth_sessions",
+        "users", "payments", "entitlements", "generations", "batches", "payment_events",
+        "login_codes", "auth_sessions", "anonymous_identities",
     }
 
 
