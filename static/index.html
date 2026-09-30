@@ -15,9 +15,16 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
+        :root {
+            --klango-teal: #19D3AE;
+            --klango-teal-dark: #0E9F83;
+            --klango-ink: #090D0F;
+            --klango-text: #F5F7F8;
+            --klango-text-soft: #87939D;
+        }
         * { font-family: 'Sora', system-ui, sans-serif; }
         html { scroll-behavior: smooth; }
-        body { background: #050810; color: #f8fafc; }
+        body { background: var(--klango-ink); color: #f8fafc; position: relative; overflow-x: hidden; }
         .bg-card { background: #0b1220; border: 1px solid #1b2738; }
         .bg-card-soft { background: #09101c; border: 1px solid #172235; }
         .hero-glow { box-shadow: 0 24px 80px rgba(25, 211, 174, 0.10); }
@@ -34,18 +41,55 @@
         @media (max-width: 640px) {
             .hero-title { font-size: 2.25rem; line-height: 1.06; }
         }
+
+        /* ---- Direção visual final: grid discreto + glow ambiental de profundidade ----
+           Camadas puramente decorativas (position: fixed, z-index: 0, pointer-events: none),
+           atrás de todo o conteúdo real (.klango-content, z-index: 1). Não alteram DOM
+           funcional, IDs ou qualquer script -- só composição visual de fundo, na paleta
+           oficial KLANGO (#19D3AE / #0E9F83), inspirada na referência mas sem copiar cores
+           azul/roxo nem estrutura da Lumen. */
+        .bg-klango-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(245, 247, 248, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245, 247, 248, 0.035) 1px, transparent 1px);
+            background-size: 64px 64px;
+            -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, black 0%, transparent 72%);
+            mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, black 0%, transparent 72%);
+        }
+        .bg-klango-glow {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse 60% 38% at 50% -4%, rgba(25, 211, 174, 0.16), transparent 60%),
+                radial-gradient(ellipse 46% 32% at 88% 30%, rgba(14, 159, 131, 0.09), transparent 65%),
+                radial-gradient(ellipse 46% 32% at 6% 68%, rgba(25, 211, 174, 0.07), transparent 65%);
+        }
+        .klango-content { position: relative; z-index: 1; }
     </style>
 </head>
 
-<body class="min-h-screen bg-[#050810]">
-    <div class="w-full">
+<body class="min-h-screen bg-[#090D0F]">
+    <div class="bg-klango-grid"></div>
+    <div class="bg-klango-glow"></div>
+    <div class="w-full klango-content">
         <!-- HEADER -->
-        <header class="w-full border-b border-slate-800/70 bg-[#050810]/95">
-            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between">
-                <a href="#topo" class="flex items-center min-w-0">
+        <header class="w-full sticky top-0 z-30 border-b border-white/5 bg-[#090D0F]/80 backdrop-blur-md">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 flex items-center justify-between gap-4">
+                <a href="#topo" class="flex items-center min-w-0 shrink-0">
                     <span class="font-extrabold tracking-tight text-white text-lg sm:text-xl whitespace-nowrap">KLANGO</span><span class="font-extrabold tracking-tight text-[#87939D] text-lg sm:text-xl whitespace-nowrap">.MP4</span>
                 </a>
-                <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-2 py-1">
+                <nav class="hidden sm:flex items-center gap-8 text-sm font-medium text-slate-400">
+                    <a href="#comoFunciona" class="hover:text-white transition-colors">Como funciona</a>
+                    <a href="#secaoPlanos" class="hover:text-white transition-colors">Planos</a>
+                    <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+                </nav>
+                <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
                     Acesso
                 </button>
             </div>
@@ -53,26 +97,26 @@
 
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
             <!-- HERO -->
-            <section class="pt-16 sm:pt-24 pb-12 sm:pb-16 text-center">
-                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-semibold mb-6">
+            <section class="pt-20 sm:pt-32 pb-14 sm:pb-20 text-center">
+                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-semibold mb-7">
                     <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
                 </div>
-                <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 -mt-4 mb-4"></div>
+                <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 -mt-5 mb-4"></div>
 
-                <p class="text-[#19D3AE] text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-4">
+                <p class="text-[#19D3AE] text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-5">
                     FERRAMENTA PARA REUTILIZAÇÃO DE CONTEÚDO
                 </p>
 
-                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-tight text-white max-w-4xl mx-auto">
+                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-4xl mx-auto">
                     Reutilize o conteúdo que já funcionou.
                 </h1>
 
-                <p class="mt-5 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto [text-wrap:balance]">
+                <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto [text-wrap:balance]">
                     Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
                 </p>
 
-                <div class="max-w-3xl mx-auto mt-9">
+                <div class="max-w-3xl mx-auto mt-10">
                     <div class="bg-card p-2.5 rounded-2xl hero-glow">
                         <div class="flex flex-col sm:flex-row gap-2">
                             <div class="relative flex-1">
@@ -100,14 +144,14 @@
             </section>
 
             <!-- PROCESSO -->
-            <section id="comoFunciona" class="py-12 sm:py-16 border-t section-line">
+            <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Do link ao seu editor, sem complicação.</h2>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-                    <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mt-10">
+                    <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
                         <div class="flex items-center gap-3 mb-4">
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">01</span>
@@ -116,7 +160,7 @@
                         <p class="text-sm text-slate-400 leading-relaxed">Cole o link do conteúdo que você quer reutilizar.</p>
                     </div>
 
-                    <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+                    <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
                         <div class="flex items-center gap-3 mb-4">
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">02</span>
@@ -125,7 +169,7 @@
                         <p class="text-sm text-slate-400 leading-relaxed">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
                     </div>
 
-                    <div class="bg-card-soft rounded-2xl p-5 sm:p-6 relative overflow-hidden">
+                    <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
                         <div class="flex items-center gap-3 mb-4">
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">03</span>
@@ -144,15 +188,15 @@
             </section>
 
             <!-- PLANOS -->
-            <section id="secaoPlanos" class="py-12 sm:py-16 border-t section-line">
+            <section id="secaoPlanos" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">PLANOS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Escolha o acesso que faz sentido para você.</h2>
                     <p class="text-sm text-slate-400 mt-3">Comece simples e escolha o plano conforme o volume de conteúdo que você processa.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 items-stretch">
-                    <div class="bg-card rounded-2xl p-6 flex flex-col">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10 items-stretch">
+                    <div class="bg-card rounded-3xl p-7 flex flex-col glow-hover">
                         <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
                         <div class="text-xs text-slate-500 mt-1">7 dias</div>
@@ -162,10 +206,10 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('weekly')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Comprar acesso semanal</button>
+                        <button onclick="abrirModalPagamento('weekly')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Acesso semanal</button>
                     </div>
 
-                    <div class="bg-card rounded-2xl p-6 flex flex-col border-emerald-500/70 ring-1 ring-emerald-500/50 relative">
+                    <div class="bg-card rounded-3xl p-7 flex flex-col border-emerald-500/70 ring-1 ring-emerald-500/50 relative glow-hover">
                         <span class="absolute -top-3 right-5 bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full">Recomendado</span>
                         <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Mensal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 16,90</div>
@@ -176,10 +220,10 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Comprar acesso mensal</button>
+                        <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Acesso mensal</button>
                     </div>
 
-                    <div class="bg-card rounded-2xl p-6 flex flex-col border-amber-500/40 ring-1 ring-amber-500/30 relative">
+                    <div class="bg-card rounded-3xl p-7 flex flex-col border-amber-500/40 ring-1 ring-amber-500/30 relative glow-hover">
                         <span class="absolute -top-3 right-5 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full">Maior lote disponível</span>
                         <div class="text-xs text-amber-400 font-bold uppercase tracking-wider">VIP Batch</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 29,90</div>
@@ -190,7 +234,7 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Limpeza de metadados</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Processamento de vídeo</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm transition-colors">Comprar acesso VIP Batch</button>
+                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm transition-colors">Acesso VIP Batch</button>
                     </div>
                 </div>
             </section>
@@ -207,8 +251,8 @@
             </section>
 
             <!-- BATCH -->
-            <section id="secaoBatch" class="hidden py-8">
-                <div class="bg-card rounded-2xl p-6 border-amber-500/30">
+            <section id="secaoBatch" class="hidden py-10">
+                <div class="bg-card rounded-3xl p-7 border-amber-500/30 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-amber-950/40 border border-amber-700/40 flex items-center justify-center text-amber-400"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="min-w-0">
@@ -234,65 +278,69 @@
             </section>
 
             <!-- FAQ -->
-            <section id="faq" class="py-12 sm:py-16 border-t section-line">
+            <section id="faq" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto">
-                    <div class="text-center mb-8">
+                    <div class="text-center mb-10">
                         <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Perguntas frequentes</h2>
                     </div>
 
                     <div class="space-y-3">
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O que é o KLANGO.MP4?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Baixa vídeos de plataformas compatíveis e prepara uma nova versão em MP4, com limpeza de metadados, para você levar ao seu editor e adaptar.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que é o KLANGO.MP4?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Baixa vídeos de plataformas compatíveis e prepara uma nova versão em MP4, com limpeza de metadados, para você levar ao seu editor e adaptar.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O arquivo é baixado e processado para gerar uma nova versão em MP4, com remoção de metadados e foco em compatibilidade para edição.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo é baixado e processado para gerar uma nova versão em MP4, com remoção de metadados e foco em compatibilidade para edição.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O que acontece com o vídeo depois de pronto?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O link de download fica disponível por um tempo limitado depois do processamento. Depois desse período, o link deixa de funcionar e você precisa gerar o vídeo novamente para baixá-lo.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que acontece com o vídeo depois de pronto?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O link de download fica disponível por um tempo limitado depois do processamento. Depois desse período, o link deixa de funcionar e você precisa gerar o vídeo novamente para baixá-lo.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento é único ou tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão. Não existe cobrança automática nem renovação — o acesso fica ativo pelo período contratado e, se quiser continuar depois, basta fazer uma nova compra.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento é único ou tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão. Não existe cobrança automática nem renovação — o acesso fica ativo pelo período contratado e, se quiser continuar depois, basta fazer uma nova compra.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O plano expira?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sim. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano). Depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O plano expira?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano). Depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com PIX?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sim. O PIX é processado pelo Mercado Pago e o acesso é liberado assim que o pagamento é confirmado.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com PIX?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O PIX é processado pelo Mercado Pago e o acesso é liberado assim que o pagamento é confirmado.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sim. O cartão também é um pagamento único, processado pelo Mercado Pago — sem cobrança automática.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O cartão também é um pagamento único, processado pelo Mercado Pago — sem cobrança automática.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento em lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Nos planos pagos, você pode enviar vários vídeos de uma vez e dar um nome diferente para cada arquivo. A quantidade por operação e por semana varia conforme o plano contratado.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento em lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Nos planos pagos, você pode enviar vários vídeos de uma vez, dar um nome diferente para cada arquivo e baixar os resultados todos de uma vez ou individualmente, como preferir. A quantidade de vídeos por operação e por semana varia conforme o plano contratado.</div>
                         </details>
-                        <details class="faq-item bg-card rounded-xl group">
-                            <summary class="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o acesso?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-5 pb-5 text-sm text-slate-400 leading-relaxed">Sem senha. Você informa seu e-mail, recebe um código de 6 dígitos e usa esse código para entrar.</div>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o acesso?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sem senha. Você informa seu e-mail, recebe um código de 6 dígitos e usa esse código para entrar.</div>
                         </details>
                     </div>
                 </div>
             </section>
 
             <!-- PAGAMENTO -->
-            <section class="py-10 sm:py-12">
-                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex items-center gap-4">
+            <!-- Ícone: mantido fa-shield-halved. Avaliado substituir pelo logo oficial do Mercado Pago
+                 (item 17 do briefing), mas não existe asset oficial/autorizado no projeto nem foi
+                 fornecido um pelo Mercado Pago -- por regra explícita, não se inventa/baixa um logo
+                 de terceiros, então o ícone atual foi preservado (ver relatório). -->
+            <section class="py-12 sm:py-16">
+                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex items-center gap-4 glow-hover">
                     <div class="w-11 h-11 shrink-0 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-shield-halved"></i></div>
                     <div>
                         <h3 class="font-bold text-white">Pagamento protegido pelo Mercado Pago</h3>
@@ -303,32 +351,31 @@
         </main>
 
         <!-- FOOTER -->
+        <!-- Coluna "Legal" removida por decisão da evolução visual final: nenhuma página real de
+             Política de Privacidade/Termos de Uso existe ainda para linkar, e o produto não deve
+             prometer em produção uma página que não existe. Quando essas páginas forem publicadas,
+             podem voltar aqui com links reais (ver relatório). Layout redistribuído para 2 colunas
+             equilibradas -- nenhum link quebrado foi criado. -->
         <footer class="border-t border-slate-800/70 mt-8">
-            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-14 grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm">
                 <div>
                     <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
-                    <div class="flex items-center gap-2.5 mt-4">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mt-5 mb-2.5">Siga nas redes sociais</div>
+                    <div class="flex items-center gap-2.5">
                         <a href="https://www.instagram.com/klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no Instagram" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-instagram text-sm"></i></a>
                         <a href="https://www.tiktok.com/@klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no TikTok" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-tiktok text-sm"></i></a>
                     </div>
                 </div>
 
-                <div>
+                <div class="sm:text-right">
                     <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Produto</div>
-                    <nav class="flex flex-col gap-2 text-slate-400">
+                    <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
                         <a href="#comoFunciona" class="hover:text-white transition-colors w-fit">Como funciona</a>
                         <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
                         <a href="#faq" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
+                        <button type="button" onclick="abrirAcesso()" class="hover:text-white transition-colors w-fit sm:self-end text-left">Acesso</button>
                     </nav>
-                </div>
-
-                <div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Legal</div>
-                    <!-- Sem links de Política de Privacidade/Termos de Uso ainda -- nenhum documento real
-                         existe para linkar (ver auditoria); este aviso só estrutura o espaço visual sem
-                         apontar para uma página que não existe. -->
-                    <p class="text-slate-600 text-xs leading-relaxed">Política de Privacidade e Termos de Uso em breve.</p>
                 </div>
             </div>
             <div class="border-t border-slate-800/70">
@@ -338,11 +385,21 @@
     </div>
 
     <!-- MODAL DE ACESSO -->
+    <!-- Ícone integrado à linha do título (em vez de empilhado acima dele) -- corrige o problema
+         relatado de o ícone parecer "vagando" sozinho. Reduzido para w-8 h-8 em círculo (era
+         w-11 h-11 em chip quadrado) só aqui: aqui o ícone funciona como selo do título, não como
+         chip de destaque de recurso -- os demais ícones "chip" do sistema (carteira do checkout,
+         Mercado Pago, lote) continuam w-11 h-11 quadrados, sem mudança. `leading-none` no título +
+         `items-center` no container garantem o alinhamento vertical exato entre ícone e texto.
+         Mesma estrutura de cabeçalho para as 3 situações (e-mail, código, conectado), já que o
+         ícone+título ficam fora dos blocos de cada passo. -->
     <div id="modalAcesso" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-40">
         <div class="bg-card w-full max-w-md rounded-2xl p-6 relative shadow-2xl">
             <button type="button" onclick="fecharAcesso()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            <div class="w-11 h-11 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400 mb-4"><i class="fa-solid fa-user"></i></div>
-            <h2 class="text-xl font-extrabold text-white">Acesso</h2>
+            <div class="flex items-center gap-2.5 mb-1 pr-8">
+                <div class="w-8 h-8 shrink-0 rounded-full bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-user text-xs"></i></div>
+                <h2 class="text-xl font-extrabold text-white leading-none">Acesso</h2>
+            </div>
 
             <!-- Passo 1: e-mail -->
             <div id="acessoPassoEmail">
@@ -377,17 +434,33 @@
     </div>
 
     <!-- MODAL DE PAGAMENTO -->
+    <!-- Evolução visual do checkout (item 14 do briefing): resumo do plano vira um "cartão de
+         pedido" com nome+preço em destaque e checklist de confiança verdadeiro (pagamento único /
+         sem renovação / acesso conforme o plano). Nenhum id foi removido ou renomeado e nenhuma
+         função foi alterada -- só composição, hierarquia e microcopy estática e verdadeira. -->
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
-        <div class="bg-card max-w-md w-full p-6 rounded-2xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div class="bg-card max-w-md w-full p-6 sm:p-7 rounded-3xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             <div class="w-11 h-11 mx-auto rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-emerald-400"></i></div>
             <h3 id="modalTitulo" class="text-xl font-bold text-white text-center mb-1">Escolha como pagar</h3>
-            <p id="modalDescricao" class="text-xs text-slate-400 text-center mb-5">Escolha Pix ou cartão. O pagamento é único e libera o período contratado após a confirmação.</p>
+            <p id="modalDescricao" class="text-xs text-slate-400 text-center mb-5 leading-relaxed">Escolha Pix ou cartão. O pagamento é único e libera o período contratado após a confirmação.</p>
 
-            <div class="bg-[#060b14] border border-slate-800 rounded-xl p-4 mb-4">
-                <div class="flex justify-between items-center mb-2"><span class="text-xs text-slate-500">Plano</span><strong id="modalPlano" class="text-xs text-white">—</strong></div>
-                <div class="flex justify-between items-center"><span class="text-xs text-slate-500">Valor</span><strong id="modalValor" class="text-sm text-emerald-400">—</strong></div>
+            <div class="bg-[#060b14] border border-slate-800 rounded-2xl p-5 mb-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Plano escolhido</span>
+                    <strong id="modalPlano" class="text-xs text-white">—</strong>
+                </div>
+                <div class="flex justify-between items-end mt-3">
+                    <span class="text-xs text-slate-500">Valor</span>
+                    <strong id="modalValor" class="text-2xl font-extrabold text-emerald-400">—</strong>
+                </div>
             </div>
+
+            <ul class="space-y-1.5 mb-5 text-xs text-slate-400">
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Pagamento único</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Sem renovação automática</li>
+                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Acesso conforme o plano escolhido</li>
+            </ul>
 
             <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-4">
                 <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all"> <i class="fa-solid fa-qrcode mr-1"></i> PIX<span class="block text-[9px] font-medium text-slate-400 mt-0.5">Pagamento único</span></button>
@@ -833,12 +906,15 @@
         const pixBtn = document.getElementById("metodoPixBtn");
         const cartaoBtn = document.getElementById("metodoCartaoBtn");
 
+        // Estados visuais só trocam de classe CSS (mesma lógica, mesmas duas opções) -- nenhuma
+        // cor azul/roxa: o método selecionado usa o verde/turquesa oficial da marca (PIX) ou um
+        // destaque neutro em branco (cartão), para diferenciar sem sair da paleta aprovada.
         if (tipo === "pix") {
             pixBtn.className = "py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all";
-            cartaoBtn.className = "py-3 rounded-xl border border-gray-800 bg-gray-950/50 text-gray-400 text-xs font-extrabold transition-all";
+            cartaoBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all";
         } else {
-            cartaoBtn.className = "py-3 rounded-xl border border-blue-500 bg-blue-950/30 text-blue-400 text-xs font-extrabold transition-all";
-            pixBtn.className = "py-3 rounded-xl border border-gray-800 bg-gray-950/50 text-gray-400 text-xs font-extrabold transition-all";
+            cartaoBtn.className = "py-3 rounded-xl border border-white/40 bg-white/5 text-white text-xs font-extrabold transition-all";
+            pixBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all";
         }
 
         await criarPaymentEMontarBrick(tipo);
