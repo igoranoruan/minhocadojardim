@@ -16,7 +16,7 @@ WORKDIR /app
 # config.py usa FFMPEG_PATH="ffmpeg" e FFPROBE_PATH="ffprobe" (busca pelo PATH, não caminho absoluto).
 # curl/ca-certificates: necessários só para baixar e instalar o Deno abaixo (runtime JS).
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg curl ca-certificates \
+    && apt-get install -y --no-install-recommends ffmpeg curl ca-certificates unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Deno (runtime JavaScript exigido pelo yt-dlp para negociar os clients do YouTube que usam
