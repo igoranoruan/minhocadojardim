@@ -43,3 +43,40 @@ def health_ready(session: Session = Depends(get_session)):
             content={"status": "unavailable", "database": "unavailable"},
         )
     return {"status": "ok", "database": "ok"}
+# ----------------------------------------------------------------------------------------------
+# ROTA TEMPORÁRIA DE DIAGNÓSTICO — remover depois do teste.
+# Testa EXCLUSIVAMENTE conectividade de rede privada do Render entre KLANGO e BGUTIL.
+# Não usa yt-dlp, não usa o plugin, não participa do pipeline de geração.
+# ----------------------------------------------------------------------------------------------
+@router.get("/health/bgutil-ping", response_model=None)
+def health_bgutil_ping():
+    import urllib.error
+    import urllib.request
+
+    from config import get_settings
+
+    base_url = get_settings().bgutil_pot_provider_base_url
+    if not base_url:
+        return JSONResponse(status_code=200, content={"status": "base_url_vazia"})
+
+    url = f"{base_url.rstrip('/')}/ping"
+    try:
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            corpo = resp.read().decode("utf-8", errors="replace")
+            return JSONResponse(
+                status_code=200,
+                content={"status": "alcancado", "http_status": resp.status, "body": corpo},
+            )
+    except urllib.error.URLError as exc:
+        return JSONResponse(
+            status_code=200,
+            content={"status": "falha_de_rede", "detalhe": str(exc.reason)},
+        )
+    except Exception as exc:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "status": "erro_inesperado",
+                "detalhe": f"{exc.__class__.__name__}: {exc}",
+            },
+        )
