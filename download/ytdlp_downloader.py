@@ -127,7 +127,14 @@ class YtDlpDownloader(PlatformDownloader):
         """Liga o PO Token Provider (BGUTIL) só quando configurado (config.py) e só para YouTube.
         Sem isso, o yt-dlp segue com o player client mweb sem PO Token: funciona para parte dos
         vídeos, e o que falhar vira DownloadFailedError diagnosticável (nunca uma pilha de
-        fallbacks — regra do produto). PO Token não é garantia de acesso a todo vídeo."""
+        fallbacks — regra do produto). PO Token não é garantia de acesso a todo vídeo.
+
+        DIAGNÓSTICO TEMPORÁRIO (ver instruções de reversão à parte -- NÃO É PERMANENTE): captura
+        a saída interna verbose do yt-dlp só para esta chamada (só YouTube, só quando base_url
+        está configurado -- mesmo guard de sempre), encaminhada para o logger já existente do
+        projeto (logger = logging.getLogger("minhoca"), nunca para stdout/print), só para
+        confirmar em qual etapa da cadeia BGUTIL o fluxo chega. Não afeta TikTok/Instagram/
+        Pinterest -- nenhum deles passa do "return" abaixo."""
         base_url = get_settings().bgutil_pot_provider_base_url
         if self.platform is not Platform.YOUTUBE or not base_url:
             return
@@ -136,6 +143,24 @@ class YtDlpDownloader(PlatformDownloader):
         extractor_args["youtubepot-bgutilhttp"] = {"base_url": [base_url]}
         extractor_args["youtube"] = youtube_args
         options["extractor_args"] = extractor_args
+
+        # --- INÍCIO DIAGNÓSTICO TEMPORÁRIO (remover após capturar os logs) ---
+        class _DiagnosticoBgutilLogger:
+            def debug(self, msg, *args, **kwargs):
+                logger.info("[DIAG-BGUTIL] %s", msg)
+
+            def info(self, msg, *args, **kwargs):
+                logger.info("[DIAG-BGUTIL] %s", msg)
+
+            def warning(self, msg, *args, **kwargs):
+                logger.warning("[DIAG-BGUTIL] %s", msg)
+
+            def error(self, msg, *args, **kwargs):
+                logger.error("[DIAG-BGUTIL] %s", msg)
+
+        options["verbose"] = True
+        options["logger"] = _DiagnosticoBgutilLogger()
+        # --- FIM DIAGNÓSTICO TEMPORÁRIO ---
 
     def download(self, url: str, dest_stub: Path) -> RawDownload:
         options = self._build_options(dest_stub)
