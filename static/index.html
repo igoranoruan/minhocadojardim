@@ -374,29 +374,14 @@
                 </div>
             </section>
 
-            <!-- PAGAMENTO -->
-            <!-- 02/10/2026, 3ª rodada: Igor mandou o selo oficial Mercado Pago + Pix (imagem dele,
-                 não baixada por nós) -- salvo em static/mercadopago-pix.png (redimensionado de
-                 1538x1023 pra 480x319, só pra não carregar um arquivo maior do que precisa pra
-                 aparecer pequeno). Substitui de vez a fileira de ícones do Font Awesome (achada
-                 "ainda amadora"/não era pedido): agora o selo oficial é a prova de confiança, texto
-                 só reforça em uma frase curta. Como o checkout só tem 2 métodos (Pix e cartão de
-                 crédito, ver metodoPagamentoSwitch) o texto não lista mais bandeira por bandeira.
-                 Selo dentro de uma caixa branca porque o arquivo (como a maioria dos selos oficiais
-                 de pagamento) foi desenhado pra fundo claro -- direto no card escuro do site ficava
-                 destoando ("não harmonizado"). -->
-            <section class="py-12 sm:py-16">
-                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-5 glow-hover">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#19D3AE] mb-2"><i class="fa-solid fa-lock text-[10px]"></i> Pagamento seguro</div>
-                        <h3 class="font-extrabold text-white text-lg">Processado pelo Mercado Pago</h3>
-                        <p class="text-sm text-slate-400 mt-1">Pague com Pix ou cartão de crédito. Seus dados são processados em ambiente seguro -- o KLANGO.MP4 nunca armazena número de cartão.</p>
-                    </div>
-                    <div class="bg-white rounded-xl px-4 py-2.5 shrink-0 mx-auto sm:mx-0">
-                        <img src="/static/mercadopago-pix.png" alt="Mercado Pago e Pix" class="h-14 w-auto block">
-                    </div>
-                </div>
-            </section>
+            <!-- PAGAMENTO: seção removida (02/10/2026, 4ª rodada) -- pedido explícito do Igor depois
+                 de ver o selo oficial Mercado Pago + Pix renderizado (ver histórico de commits: ícone
+                 genérico -> selo com ícones Font Awesome -> selo oficial em caixa branca -> removido).
+                 O selo de "Pagamento protegido"/confiança continua existindo em outro lugar real do
+                 fluxo: dentro do próprio Modal de Pagamento (checklist "Pagamento único"/"Sem
+                 renovação automática"/"Acesso conforme o plano escolhido", ver mais abaixo). Nada
+                 ficou "pendurado" por causa disso: a imagem static/mercadopago-pix.png foi apagada
+                 junto (não tem mais nenhuma referência a ela no projeto). -->
         </main>
 
         <!-- FOOTER -->
