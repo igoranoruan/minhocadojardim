@@ -116,7 +116,15 @@ class BrevoEmailSender(HttpEmailSender):
             url=self._URL,
             headers={"api-key": self._api_key},
             body={
-                "sender": {"email": self._sender_email},
+                # "name" (02/10/2026): sem isso, o Brevo manda só o e-mail no campo "sender", e
+                # clientes de e-mail (confirmado no Gmail por print do Igor) mostram o REMETENTE
+                # como "noreply" (o começo literal de noreply@klango.site) em vez do nome da marca
+                # -- mesmo o nome "KLANGO MP4" já estando configurado no painel do Brevo (esse nome
+                # é só para a interface do painel, não é enviado automaticamente na API transacional
+                # se a chamada não pedir). Hardcoded (mesmo padrão já usado no assunto/corpo da
+                # mensagem, em _login_code_message) em vez de um campo novo em Settings -- a marca
+                # não é um dado de configuração por ambiente.
+                "sender": {"email": self._sender_email, "name": "KLANGO.MP4"},
                 "to": [{"email": message.to}],
                 "subject": message.subject,
                 "textContent": message.text,

@@ -187,7 +187,9 @@ def test_brevo_envia_post_com_header_api_key(monkeypatch, cfg):
 def test_brevo_usa_email_from_como_remetente_e_dados_da_mensagem(cfg):
     sender = build_email_sender(_cfg_brevo(cfg, email_from="contato@minhoca.example"))
     requisicao = sender.build_request(MENSAGEM)
-    assert requisicao.body["sender"] == {"email": "contato@minhoca.example"}
+    # "name" (02/10/2026): sem isso, o cliente de e-mail do destinatário mostra só o começo do
+    # e-mail ("contato", "noreply" etc.) como remetente em vez do nome da marca -- ver mailer.py.
+    assert requisicao.body["sender"] == {"email": "contato@minhoca.example", "name": "KLANGO.MP4"}
     assert requisicao.body["to"] == [{"email": MENSAGEM.to}]
     assert requisicao.body["subject"] == MENSAGEM.subject
     assert requisicao.body["textContent"] == MENSAGEM.text
