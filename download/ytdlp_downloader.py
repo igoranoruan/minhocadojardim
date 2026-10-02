@@ -147,13 +147,6 @@ class YtDlpDownloader(PlatformDownloader):
         vídeos, e o que falhar vira DownloadFailedError diagnosticável (nunca uma pilha de
         fallbacks — regra do produto). PO Token não é garantia de acesso a todo vídeo.
 
-        DIAGNÓSTICO TEMPORÁRIO (ver instruções de reversão à parte -- NÃO É PERMANENTE): captura
-        a saída interna verbose do yt-dlp só para esta chamada (só YouTube, só quando base_url
-        está configurado -- mesmo guard de sempre), encaminhada para o logger já existente do
-        projeto (logger = logging.getLogger("minhoca"), nunca para stdout/print), só para
-        confirmar em qual etapa da cadeia BGUTIL o fluxo chega. Não afeta TikTok/Instagram/
-        Pinterest -- nenhum deles passa do "return" abaixo.
-
         force_mweb (NOVO -- fallback, não é mais um comportamento sempre ligado): só quando True
         o client é forçado para "mweb". Por quê não é sempre True: um diagnóstico anterior já
         documentado neste projeto (download/service.py, config do YouTube, comentário de 26/09)
@@ -167,7 +160,12 @@ class YtDlpDownloader(PlatformDownloader):
         client via bgutil HTTP server" seguido de "Retrieved a gvs PO Token for mweb client".
         NÃO combinar com player_skip (webpage/configs): isso remove o Visitor Data exigido antes
         do pedido de PO Token e quebra a cadeia (confirmado em teste anterior, descartado por
-        esse motivo)."""
+        esse motivo).
+
+        (02/10/2026: removido o logger verbose [DIAG-BGUTIL] que existia aqui -- era temporário,
+        usado só para fechar o diagnóstico do bloqueio do YouTube, que já terminou: a causa era o
+        IP de datacenter do Render, não client/PO-Token, ver YtDlpDownloader._apply_youtube_proxy.
+        Mantido só o comportamento funcional, sem o log extra poluindo a produção.)"""
         base_url = get_settings().bgutil_pot_provider_base_url
         if self.platform is not Platform.YOUTUBE or not base_url:
             return
@@ -178,24 +176,6 @@ class YtDlpDownloader(PlatformDownloader):
         extractor_args["youtubepot-bgutilhttp"] = {"base_url": [base_url]}
         extractor_args["youtube"] = youtube_args
         options["extractor_args"] = extractor_args
-
-        # --- INÍCIO DIAGNÓSTICO TEMPORÁRIO (remover após capturar os logs) ---
-        class _DiagnosticoBgutilLogger:
-            def debug(self, msg, *args, **kwargs):
-                logger.info("[DIAG-BGUTIL] %s", msg)
-
-            def info(self, msg, *args, **kwargs):
-                logger.info("[DIAG-BGUTIL] %s", msg)
-
-            def warning(self, msg, *args, **kwargs):
-                logger.warning("[DIAG-BGUTIL] %s", msg)
-
-            def error(self, msg, *args, **kwargs):
-                logger.error("[DIAG-BGUTIL] %s", msg)
-
-        options["verbose"] = True
-        options["logger"] = _DiagnosticoBgutilLogger()
-        # --- FIM DIAGNÓSTICO TEMPORÁRIO ---
 
     def _run_extract(self, options: dict, url: str):
         with yt_dlp.YoutubeDL(options) as ydl:
