@@ -30,8 +30,13 @@
         .hero-glow { box-shadow: 0 24px 80px rgba(25, 211, 174, 0.10); }
         .glow-hover { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
         .glow-hover:hover { box-shadow: 0 18px 50px rgba(16, 185, 129, 0.10); }
-        .bg-gradient-cyber { background: linear-gradient(135deg, #059669 0%, #10b981 100%); }
-        .text-gradient { background: linear-gradient(135deg, #34d399 0%, #5eead4 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        /* 02/10/2026: usavam verdes soltos (#059669/#10b981/#34d399/#5eead4) em vez das variáveis
+           oficiais da marca já definidas acima -- resultado: os botões principais (CTA do hero,
+           planos, modal de acesso, downloads) tinham um tom de verde ligeiramente diferente do
+           teal usado no resto do site (ícones, FAQ, checklist do checkout). Corrigido para usar
+           --klango-teal/--klango-teal-dark, a mesma cor em todo lugar. */
+        .bg-gradient-cyber { background: linear-gradient(135deg, var(--klango-teal-dark) 0%, var(--klango-teal) 100%); }
+        .text-gradient { background: linear-gradient(135deg, var(--klango-teal-dark) 0%, var(--klango-teal) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
         .section-line { border-color: rgba(148, 163, 184, 0.12); }
         .input-focus:focus { border-color: rgba(16, 185, 129, .75); box-shadow: 0 0 0 3px rgba(16, 185, 129, .08); }
         .faq-item[open] summary i { transform: rotate(45deg); }
@@ -87,7 +92,7 @@
                 <nav class="hidden sm:flex items-center gap-8 text-sm font-medium text-slate-400">
                     <a href="#comoFunciona" class="hover:text-white transition-colors">Como funciona</a>
                     <a href="#secaoPlanos" class="hover:text-white transition-colors">Planos</a>
-                    <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+                    <a href="#faq" class="hover:text-white transition-colors">Perguntas frequentes</a>
                 </nav>
                 <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
                     Acesso
@@ -98,14 +103,18 @@
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
             <!-- HERO -->
             <section class="pt-20 sm:pt-32 pb-14 sm:pb-20 text-center">
-                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-semibold mb-7">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mb-7">
+                    <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
                 </div>
                 <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 mt-1.5 mb-4"></div>
 
+                <!-- 02/10/2026: quebra de linha fixa (span + br), não mais o texto corrido deixado
+                     pro navegador quebrar sozinho -- o wrap automático, dependendo da largura exata
+                     da tela, podia cortar em "REUTILIZAÇÃO" / "DE CONTEÚDO" de forma desequilibrada
+                     ou até deixar "DE" sozinho numa ponta. Agora sempre quebra no mesmo lugar. -->
                 <p class="text-[#19D3AE] text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-5">
-                    FERRAMENTA PARA REUTILIZAÇÃO DE CONTEÚDO
+                    <span class="block">FERRAMENTA PARA REUTILIZAÇÃO</span><span class="block">DE CONTEÚDO</span>
                 </p>
 
                 <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-4xl mx-auto">
@@ -150,33 +159,33 @@
             <!-- PROCESSO -->
             <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
+                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Do link ao seu editor, sem complicação.</h2>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mt-10">
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
-                        <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
+                        <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">01</span>
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">01</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Cole o link</h3>
                         </div>
                         <p class="text-sm text-slate-400 leading-relaxed">Cole o link do conteúdo que você quer reutilizar.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
-                        <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
+                        <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">02</span>
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">02</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Limpa e prepara</h3>
                         </div>
                         <p class="text-sm text-slate-400 leading-relaxed">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
-                        <div class="absolute top-0 left-0 right-0 h-px bg-emerald-500/40"></div>
+                        <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="w-8 h-8 shrink-0 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-extrabold">03</span>
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">03</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Baixe e reutilize</h3>
                         </div>
                         <p class="text-sm text-slate-400 leading-relaxed">Baixe o arquivo e leve para seu editor para adaptar e publicar.</p>
@@ -194,9 +203,12 @@
             <!-- PLANOS -->
             <section id="secaoPlanos" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">PLANOS</p>
+                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">PLANOS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Escolha o acesso que faz sentido para você.</h2>
                     <p class="text-sm text-slate-400 mt-3">Comece simples e escolha o plano conforme o volume de conteúdo que você processa.</p>
+                    <!-- 02/10/2026: antes a seção de Planos não dizia em lugar nenhum o que o Free
+                         já oferece de graça -- quem caía direto aqui não tinha como comparar. -->
+                    <p class="text-xs text-slate-500 mt-3">Grátis: 5 gerações por semana, sem downloads em lote. Os planos abaixo aumentam esse limite e liberam o processamento em lote.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10 items-stretch">
@@ -205,42 +217,41 @@
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
                         <div class="text-xs text-slate-500 mt-1">7 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>5 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote <span class="text-slate-500">(até 5 vídeos, 3/semana)</span></li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>5 gerações/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 5 vídeos, 3/semana</span></span></li>
                         </ul>
                         <button onclick="abrirModalPagamento('weekly')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Acesso semanal</button>
                     </div>
 
-                    <div class="bg-card rounded-3xl p-7 flex flex-col border-emerald-500/70 ring-1 ring-emerald-500/50 relative glow-hover">
-                        <span class="absolute -top-3 right-5 bg-emerald-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full">Recomendado</span>
-                        <div class="text-xs text-emerald-400 font-bold uppercase tracking-wider">Mensal</div>
+                    <div class="bg-card rounded-3xl p-7 flex flex-col border-[#19D3AE]/70 ring-1 ring-[#19D3AE]/50 relative glow-hover">
+                        <span class="absolute -top-3 right-5 bg-[#19D3AE] text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Recomendado</span>
+                        <div class="text-xs text-[#19D3AE] font-bold uppercase tracking-wider">Mensal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 16,90</div>
                         <div class="text-xs text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>10 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Downloads em lote <span class="text-slate-500">(até 5 vídeos, 5/semana)</span></li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Limpeza de metadados</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-emerald-400 mt-0.5"></i>Processamento de vídeo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 5 vídeos, 5/semana</span></span></li>
                         </ul>
                         <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Acesso mensal</button>
                     </div>
 
                     <div class="bg-card rounded-3xl p-7 flex flex-col border-amber-500/40 ring-1 ring-amber-500/30 relative glow-hover">
-                        <span class="absolute -top-3 right-5 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full">Maior lote disponível</span>
+                        <span class="absolute -top-3 right-5 bg-amber-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Maior lote disponível</span>
                         <div class="text-xs text-amber-400 font-bold uppercase tracking-wider">VIP Batch</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 29,90</div>
                         <div class="text-xs text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>15 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Downloads em lote <span class="text-slate-500">(até 15 vídeos, sem limite semanal de operações)</span></li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Limpeza de metadados</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Processamento de vídeo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 15 vídeos, sem limite semanal</span></span></li>
                         </ul>
                         <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm transition-colors">Acesso VIP Batch</button>
                     </div>
                 </div>
+                <!-- 02/10/2026: "Limpeza de metadados" e "Processamento de vídeo" eram bullets
+                     IDÊNTICOS nos 3 cards (são a mesma funcionalidade-base, válida em qualquer
+                     plano) -- só inflavam a lista sem ajudar a comparar. Viraram uma linha só,
+                     comum aos três, abaixo da grade. -->
+                <p class="text-center text-xs text-slate-500 mt-6"><i class="fa-solid fa-check text-[#19D3AE] mr-1.5"></i>Todos os planos incluem limpeza de metadados e processamento de vídeo.</p>
             </section>
 
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
@@ -291,7 +302,7 @@
             <section id="faq" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto">
                     <div class="text-center mb-10">
-                        <p class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
+                        <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Perguntas frequentes</h2>
                     </div>
 
@@ -303,6 +314,19 @@
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
+                        </details>
+                        <!-- 02/10/2026: movida pra cá (antes vinha lá embaixo, depois das perguntas
+                             de pagamento) -- é uma dúvida sobre confiança/risco do produto, então faz
+                             mais sentido logo ao lado de "quais plataformas são compatíveis". -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
+                        </details>
+                        <!-- 02/10/2026: nova -- a seção de Planos e o resto do FAQ não diziam em
+                             lugar nenhum o que o plano Free oferece. -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quantas gerações grátis eu tenho?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sem pagar nada, você tem 5 gerações por semana (sem downloads em lote). Os planos pagos aumentam esse limite e liberam o processamento em lote.</div>
                         </details>
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que o YouTube demora mais que as outras plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
@@ -332,9 +356,11 @@
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O cartão também é um pagamento único, processado pelo Mercado Pago — sem cobrança automática.</div>
                         </details>
+                        <!-- 02/10/2026: nova -- o fluxo de reembolso existe e é testado, mas não
+                             era mencionado em nenhum lugar visível pro usuário. -->
                         <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso ser reembolsado?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Em caso de cobrança indevida ou problema comprovado no processamento, entre em contato em <strong class="text-slate-200">contato@klango.site</strong> para solicitar o reembolso. Cada caso é avaliado individualmente.</div>
                         </details>
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento em lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
@@ -352,13 +378,29 @@
             <!-- Ícone: mantido fa-shield-halved. Avaliado substituir pelo logo oficial do Mercado Pago
                  (item 17 do briefing), mas não existe asset oficial/autorizado no projeto nem foi
                  fornecido um pelo Mercado Pago -- por regra explícita, não se inventa/baixa um logo
-                 de terceiros, então o ícone atual foi preservado (ver relatório). -->
+                 de terceiros, então o ícone atual foi preservado (ver relatório).
+                 02/10/2026: o selo sozinho (ícone de escudo genérico) não passava confiança
+                 suficiente -- adicionada uma fileira com as bandeiras aceitas. Visa/Mastercard/Amex/
+                 Diners usam os ícones oficiais do Font Awesome (fa-brands); Pix, Boleto, Elo e
+                 Hipercard não têm ícone correspondente no Font Awesome Free e NÃO têm asset oficial
+                 no projeto, então aparecem como selo de texto em vez de um logo desenhado à mão
+                 (mesma regra de não inventar logo de terceiros do parágrafo acima). -->
             <section class="py-12 sm:py-16">
-                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex items-center gap-4 glow-hover">
-                    <div class="w-11 h-11 shrink-0 rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-shield-halved"></i></div>
-                    <div>
+                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-4 glow-hover">
+                    <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="flex-1">
                         <h3 class="font-bold text-white">Pagamento protegido pelo Mercado Pago</h3>
                         <p class="text-sm text-slate-400 mt-1">Seus dados de pagamento são processados em ambiente seguro.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-base" title="Pix"><i class="fa-brands fa-pix"></i></span>
+                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="Visa"><i class="fa-brands fa-cc-visa"></i></span>
+                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="Mastercard"><i class="fa-brands fa-cc-mastercard"></i></span>
+                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="American Express"><i class="fa-brands fa-cc-amex"></i></span>
+                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="Diners Club"><i class="fa-brands fa-cc-diners-club"></i></span>
+                        <span class="px-2 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">ELO</span>
+                        <span class="px-2 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">HIPERCARD</span>
+                        <span class="px-2 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">BOLETO</span>
                     </div>
                 </div>
             </section>
@@ -419,8 +461,17 @@
         <div class="bg-card w-full max-w-md rounded-2xl p-6 relative shadow-2xl">
             <button type="button" onclick="fecharAcesso()" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             <div class="flex items-center gap-2.5 mb-1 pr-8">
-                <div class="w-8 h-8 shrink-0 rounded-full bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400"><i class="fa-solid fa-user text-xs"></i></div>
+                <div class="w-8 h-8 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-user text-xs"></i></div>
                 <h2 class="text-xl font-extrabold text-white leading-none">Acesso</h2>
+            </div>
+
+            <!-- Indicador de passo (02/10/2026: fluxo de 2 etapas até conectar -- e-mail/código --
+                 some assim que conecta, porque "conectado" deixa de ser uma etapa e vira o estado
+                 final, com seu próprio selo de sucesso abaixo). Só visual (não afeta nenhuma
+                 função nem lógica); atualizado em mostrarPassoAcesso. -->
+            <div id="acessoPassoIndicador" class="flex items-center gap-1.5 mt-3 mb-4">
+                <span id="acessoDot1" class="h-1 flex-1 rounded-full bg-[#19D3AE] transition-colors"></span>
+                <span id="acessoDot2" class="h-1 flex-1 rounded-full bg-slate-700 transition-colors"></span>
             </div>
 
             <!-- Passo 1: e-mail -->
@@ -444,9 +495,17 @@
                 </div>
             </div>
 
-            <!-- Passo 3: conectado -->
-            <div id="acessoPassoConectado" class="hidden">
-                <p class="text-sm text-slate-400 mt-1 mb-5">Você está conectado como <strong id="acessoEmailAtual" class="text-slate-200"></strong>.</p>
+            <!-- Passo 3: conectado (02/10/2026: antes era só uma frase corrida + 2 botões -- pedido
+                 explícito do Igor pra deixar essa tela "mais bonita", já que é a confirmação de
+                 sucesso do login, não só mais um formulário. -->
+            <div id="acessoPassoConectado" class="hidden text-center">
+                <div class="w-14 h-14 mx-auto rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center mt-1 mb-3">
+                    <i class="fa-solid fa-circle-check text-2xl text-[#19D3AE]"></i>
+                </div>
+                <p class="text-sm font-bold text-white">Você está conectado</p>
+                <p class="inline-flex items-center gap-1.5 mt-2 mb-6 px-3 py-1.5 rounded-full bg-[#060b14] border border-slate-800 text-xs text-slate-300">
+                    <i class="fa-solid fa-envelope text-[10px] text-slate-500"></i><strong id="acessoEmailAtual" class="text-slate-200 font-normal"></strong>
+                </p>
                 <button type="button" onclick="fecharAcesso()" class="w-full h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Concluído</button>
                 <button type="button" onclick="sair()" class="w-full mt-3 text-xs text-slate-500 hover:text-slate-300 transition-colors">Sair</button>
             </div>
@@ -463,9 +522,15 @@
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
         <div class="bg-card max-w-md w-full p-6 sm:p-7 rounded-3xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="w-11 h-11 mx-auto rounded-xl bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-emerald-400"></i></div>
+            <div class="w-11 h-11 mx-auto rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-[#19D3AE]"></i></div>
             <h3 id="modalTitulo" class="text-xl font-bold text-white text-center mb-1">Escolha como pagar</h3>
-            <p id="modalDescricao" class="text-xs text-slate-400 text-center mb-5 leading-relaxed">Escolha Pix ou cartão. O pagamento é único e libera o período contratado após a confirmação.</p>
+            <!-- 02/10/2026: era um <p> de texto corrido só com separador "•"
+                 ("10 gerações/dia • lote de até 5 (5/semana) • acesso por 30 dias") -- ficava
+                 "embolado" (queixa literal do Igor, com print). Virou uma fileira de selos curtos,
+                 um por informação, que quebram linha de forma legível em vez de depender de um
+                 único texto corrido quebrando no meio de uma frase. Preenchido via JS
+                 (abrirModalPagamento), nunca com texto estático aqui. -->
+            <div id="modalDescricao" class="flex flex-wrap justify-center gap-1.5 mb-5"></div>
 
             <div class="bg-[#060b14] border border-slate-800 rounded-2xl p-5 mb-4">
                 <div class="flex justify-between items-center">
@@ -474,7 +539,7 @@
                 </div>
                 <div class="flex justify-between items-end mt-3">
                     <span class="text-xs text-slate-500">Valor</span>
-                    <strong id="modalValor" class="text-2xl font-extrabold text-emerald-400">—</strong>
+                    <strong id="modalValor" class="text-2xl font-extrabold text-[#19D3AE]">—</strong>
                 </div>
             </div>
 
@@ -484,9 +549,13 @@
                 <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Acesso conforme o plano escolhido</li>
             </ul>
 
+            <!-- 02/10/2026: tirado o "Pagamento único" que repetia (já embaixo de cada botão) --
+                 a mesma frase já aparece na lista de confiança acima e no aviso final do rodapé do
+                 modal; repetir pela 3ª/4ª vez só nos botões deixava o modal mais apertado sem
+                 agregar informação nova. -->
             <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-4">
-                <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all"> <i class="fa-solid fa-qrcode mr-1"></i> PIX<span class="block text-[9px] font-medium text-slate-400 mt-0.5">Pagamento único</span></button>
-                <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO<span class="block text-[9px] font-medium text-slate-500 mt-0.5">Pagamento único</span></button>
+                <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all"><i class="fa-solid fa-qrcode mr-1"></i> PIX</button>
+                <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO</button>
             </div>
 
             <!-- O Payment Brick (MercadoPago.js) é montado aqui dentro -- um único container reutilizado
@@ -502,21 +571,24 @@
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
 
-    // Nome/descrição são só rótulos de exibição -- nunca o preço, que SEMPRE vem da resposta do
+    // Nome/detalhes são só rótulos de exibição -- nunca o preço, que SEMPRE vem da resposta do
     // backend (POST /api/payments -> amount_cents), nunca calculado ou fixado aqui (Etapa 10.2,
     // item 13: "o valor exibido no frontend deve ser derivado da resposta do backend").
+    // "detalhes" (02/10/2026): era um único "descricao" de texto corrido com "•" separando os 3
+    // fatos do plano -- renderizava embolado no modal (queixa do Igor). Virou uma lista, um fato
+    // por item, pra virar selos separados em vez de uma frase só (ver abrirModalPagamento).
     const PLANOS = {
         weekly: {
             nome: "Semanal",
-            descricao: "5 gerações/dia • lote de até 5 (3/semana) • acesso por 7 dias"
+            detalhes: ["5 gerações/dia", "lote de até 5 (3/semana)", "acesso por 7 dias"]
         },
         monthly: {
             nome: "Mensal",
-            descricao: "10 gerações/dia • lote de até 5 (5/semana) • acesso por 30 dias"
+            detalhes: ["10 gerações/dia", "lote de até 5 (5/semana)", "acesso por 30 dias"]
         },
         vip_batch: {
             nome: "VIP Batch",
-            descricao: "15 gerações/dia • lote de até 15 (sem limite semanal) • acesso por 30 dias"
+            detalhes: ["15 gerações/dia", "lote de até 15 (sem limite semanal)", "acesso por 30 dias"]
         }
     };
 
@@ -563,7 +635,7 @@
         if (tipo === "vip") {
             badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-950/60 border border-amber-800/40 text-amber-400 text-xs font-semibold mb-4";
         } else {
-            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 text-xs font-semibold mb-4";
+            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mb-4";
         }
     }
 
@@ -572,7 +644,7 @@
 
         const classes = {
             normal: "p-3 bg-gray-950/80 border border-gray-800 text-gray-300 rounded-xl animate-fade",
-            success: "p-4 bg-emerald-950/40 border border-emerald-800/60 text-emerald-400 rounded-xl animate-fade",
+            success: "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] rounded-xl animate-fade",
             warning: "p-4 bg-amber-950/40 border border-amber-800/60 text-amber-400 rounded-xl animate-fade",
             error: "p-3 bg-red-950/40 border border-red-800/50 text-red-400 rounded-xl animate-fade"
         };
@@ -603,7 +675,7 @@
 
     function mostrarMensagemAcesso(texto, tipo = "normal") {
         const el = document.getElementById("acessoMensagem");
-        const cores = { erro: "text-red-400", sucesso: "text-emerald-400", normal: "text-slate-400" };
+        const cores = { erro: "text-red-400", sucesso: "text-[#19D3AE]", normal: "text-slate-400" };
 
         el.textContent = texto;
         el.className = `mt-3 text-xs text-center min-h-[1rem] ${cores[tipo] || cores.normal}`;
@@ -612,6 +684,17 @@
     function mostrarPassoAcesso(passo) {
         for (const id of ["acessoPassoEmail", "acessoPassoCodigo", "acessoPassoConectado"]) {
             document.getElementById(id).classList.toggle("hidden", id !== passo);
+        }
+
+        // Indicador de passo (só visual, ver comentário no HTML): some quando conecta, porque a
+        // partir dali o selo de sucesso já diz tudo sozinho.
+        const indicador = document.getElementById("acessoPassoIndicador");
+        const dot1 = document.getElementById("acessoDot1");
+        const dot2 = document.getElementById("acessoDot2");
+        if (indicador && dot1 && dot2) {
+            indicador.classList.toggle("hidden", passo === "acessoPassoConectado");
+            dot1.className = "h-1 flex-1 rounded-full transition-colors " + (passo === "acessoPassoEmail" ? "bg-[#19D3AE]" : "bg-slate-700");
+            dot2.className = "h-1 flex-1 rounded-full transition-colors " + (passo === "acessoPassoCodigo" ? "bg-[#19D3AE]" : "bg-slate-700");
         }
     }
 
@@ -684,7 +767,7 @@
         upgrades.forEach((codigo) => {
             const botao = document.createElement("button");
             botao.type = "button";
-            botao.className = "h-10 px-5 rounded-xl border border-emerald-500/60 text-emerald-400 hover:bg-emerald-950/40 font-bold text-xs transition-colors whitespace-nowrap";
+            botao.className = "h-10 px-5 rounded-xl border border-[#19D3AE]/40 text-[#19D3AE] hover:bg-[#19D3AE]/15 font-bold text-xs transition-colors whitespace-nowrap";
             botao.textContent = `Fazer upgrade para ${PLANOS[codigo].nome}`;
             botao.onclick = () => abrirModalPagamento(codigo);
             assinaturaUpgrade.appendChild(botao);
@@ -925,7 +1008,7 @@
 
     function mostrarStatusPagamento(texto, tipo = "normal") {
         const el = document.getElementById("pagamentoStatus");
-        const cores = { erro: "text-red-400", sucesso: "text-emerald-400", normal: "text-slate-400" };
+        const cores = { erro: "text-red-400", sucesso: "text-[#19D3AE]", normal: "text-slate-400" };
         el.textContent = texto;
         el.className = `mt-3 text-xs ${cores[tipo] || cores.normal}`;
     }
@@ -978,7 +1061,12 @@
         const info = PLANOS[plano];
 
         document.getElementById("modalPlano").textContent = info.nome;
-        document.getElementById("modalDescricao").textContent = info.descricao;
+        // Cada fato do plano vira um selo separado (não mais um texto corrido com "•") -- ver
+        // comentário em PLANOS/detalhes acima. escapeHtml por padrão, mesma regra de sempre, mesmo
+        // "detalhes" sendo sempre texto nosso (nunca entrada de usuário).
+        document.getElementById("modalDescricao").innerHTML = info.detalhes
+            .map((item) => `<span class="inline-block bg-[#060b14] border border-slate-800 rounded-full px-2.5 py-1 text-[10px] text-slate-300">${escapeHtml(item)}</span>`)
+            .join("");
         // "Calculando valor..." -- nunca um valor fixo/estimado aqui; o número real só aparece
         // depois que o backend responde com amount_cents (ver criarPaymentEMontarBrick).
         document.getElementById("modalValor").textContent = "Calculando valor...";
@@ -998,7 +1086,7 @@
         // cor azul/roxa: o método selecionado usa o verde/turquesa oficial da marca (PIX) ou um
         // destaque neutro em branco (cartão), para diferenciar sem sair da paleta aprovada.
         if (tipo === "pix") {
-            pixBtn.className = "py-3 rounded-xl border border-emerald-500 bg-emerald-950/40 text-emerald-400 text-xs font-extrabold transition-all";
+            pixBtn.className = "py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all";
             cartaoBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all";
         } else {
             cartaoBtn.className = "py-3 rounded-xl border border-white/40 bg-white/5 text-white text-xs font-extrabold transition-all";
@@ -1071,9 +1159,31 @@
                 amount: amountCents / 100,
                 payer: { email: document.getElementById("userEmail").value.trim() }
             },
+            // customVariables (02/10/2026): o tema "dark" sozinho vem com as cores padrão do
+            // Mercado Pago, que não batem com a paleta do site -- o item "Pix" na lista de
+            // "Meios de pagamento" aparecia num azul-marinho diferente do resto das caixas do
+            // modal, e o selo "Parcelamento disponível" do cartão aparecia num verde fora da
+            // paleta. customVariables é parte documentada e estável da API de customização dos
+            // Payment Bricks (MercadoPago.js v2) desde 2022 -- só ajusta cores/raio de borda,
+            // nenhum campo aqui mexe em método de pagamento aceito (isso já causou um 422 em
+            // produção antes, ver comentário acima sobre "excluded"; aqui o risco é bem menor,
+            // mas não foi possível testar visualmente neste ambiente por falta de acesso de
+            // rede ao SDK -- confirmar com print depois do deploy).
             customization: {
                 paymentMethods,
-                visual: { style: { theme: "dark" } }
+                visual: {
+                    style: {
+                        theme: "dark",
+                        customVariables: {
+                            baseColor: "#19D3AE",
+                            formBackgroundColor: "#0b1220",
+                            textPrimaryColor: "#F5F7F8",
+                            textSecondaryColor: "#87939D",
+                            inputBackgroundColor: "#060b14",
+                            successColor: "#19D3AE"
+                        }
+                    }
+                }
             },
             callbacks: {
                 onReady: () => {},
@@ -1155,7 +1265,7 @@
                         `<div class="bg-white rounded-xl p-3 flex items-center justify-center mb-3"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg"></div>` +
                         `<div class="relative">` +
                         `<input id="pixCopiaCola" type="text" readonly value="${escapeHtml(data.qr_code || "")}" class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 pr-[4.5rem] rounded-xl text-slate-300 text-center focus:outline-none select-all">` +
-                        `<button type="button" onclick="copiarCodigoPix(this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-[10px] font-bold hover:bg-emerald-900/60 transition-colors">Copiar</button>` +
+                        `<button type="button" onclick="copiarCodigoPix(this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[10px] font-bold hover:bg-[#19D3AE]/20 transition-colors">Copiar</button>` +
                         `</div>`;
                     iniciarPollingConfirmacaoPix();
                 }
@@ -1332,7 +1442,7 @@
             return;
         }
         setStatusBox(
-            '<div class="flex items-center justify-center gap-3 text-emerald-400">' +
+            '<div class="flex items-center justify-center gap-3 text-[#19D3AE]">' +
             '<i class="fa-solid fa-spinner animate-spin text-base"></i>' +
             `<span id="progressoIndeterminadoTexto">${escapeHtml(mensagem || "Processando...")}</span>` +
             '</div>',
@@ -1362,7 +1472,7 @@
         }
 
         setStatusBox(
-            '<div class="flex flex-col items-center gap-2 text-emerald-400">' +
+            '<div class="flex flex-col items-center gap-2 text-[#19D3AE]">' +
             `<span id="progressoTexto" class="text-xs sm:text-sm">${escapeHtml(mensagem || "Processando...")} (${percentArredondado}%)</span>` +
             '<div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">' +
             `<div id="progressoBarra" class="h-full bg-gradient-cyber transition-all" style="width: ${percentArredondado}%"></div>` +
@@ -1386,11 +1496,11 @@
 
         const wrapper = document.createElement("div");
         wrapper.className =
-            "p-4 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex flex-col items-center gap-3 animate-fade";
+            "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-xl flex flex-col items-center gap-3 animate-fade";
 
         const message = document.createElement("span");
         message.className =
-            "text-emerald-400 font-bold flex items-center gap-2 text-xs sm:text-sm";
+            "text-[#19D3AE] font-bold flex items-center gap-2 text-xs sm:text-sm";
         message.innerHTML =
             '<i class="fa-solid fa-circle-check"></i> Arquivo preparado com sucesso.';
 
@@ -1604,7 +1714,7 @@
             if (!linha) return;
             linha.statusTexto.textContent = texto;
             linha.statusTexto.className = "text-[11px] mt-1 " +
-                (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-emerald-400" : "text-slate-500");
+                (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-[#19D3AE]" : "text-slate-500");
         }
 
         function processarEventoSSELote(bloco) {
@@ -1635,7 +1745,7 @@
                         link.target = "_blank";
                         link.rel = "noopener";
                         link.download = dados.filename || "video_klango.mp4";
-                        link.className = "text-emerald-400 font-bold whitespace-nowrap text-xs";
+                        link.className = "text-[#19D3AE] font-bold whitespace-nowrap text-xs";
                         link.innerHTML = '<i class="fa-solid fa-file-arrow-down mr-1"></i>Baixar';
                         linha.acao.innerHTML = "";
                         linha.acao.appendChild(link);
@@ -1649,9 +1759,9 @@
                 aviso.remove();
                 rodape.innerHTML = "";
                 const resumo = document.createElement("div");
-                resumo.className = "p-4 bg-emerald-950/30 border border-emerald-800/50 rounded-xl";
+                resumo.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-xl";
                 const resumoTexto = document.createElement("div");
-                resumoTexto.className = "text-emerald-400 font-bold text-sm";
+                resumoTexto.className = "text-[#19D3AE] font-bold text-sm";
                 resumoTexto.textContent = `${dados.completed} de ${dados.item_count} vídeos preparados.`;
                 resumo.appendChild(resumoTexto);
                 if (dados.completed > 0 && batchIdAtual) {
