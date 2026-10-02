@@ -1465,7 +1465,7 @@
                         link.href = `/api/generations/${dados.generation_id}/download`;
                         link.target = "_blank";
                         link.rel = "noopener";
-                        link.download = dados.filename || "video_minhoca.mp4";
+                        link.download = dados.filename || "video_klango.mp4";
                         link.className = "text-emerald-400 font-bold whitespace-nowrap text-xs";
                         link.innerHTML = '<i class="fa-solid fa-file-arrow-down mr-1"></i>Baixar';
                         linha.acao.innerHTML = "";
@@ -1488,7 +1488,7 @@
                 if (dados.completed > 0 && batchIdAtual) {
                     const zipLink = document.createElement("a");
                     zipLink.href = `/api/batches/${batchIdAtual}/download`;
-                    zipLink.download = "minhoca_lote.zip";
+                    zipLink.download = "klango_lote.zip";
                     zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
                     zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
                     resumo.appendChild(zipLink);

@@ -163,9 +163,9 @@ def _login_code_message(email: str, code: str, cfg: Settings) -> EmailMessage:
     minutes = max(1, cfg.login_code_ttl_seconds // 60)
     return EmailMessage(
         to=email,
-        subject="Seu código de acesso ao Minhoca de Jardim",
+        subject="Seu código de acesso ao KLANGO.MP4",
         text=(
-            "Seu código de acesso ao Minhoca de Jardim:\n\n"
+            "Seu código de acesso ao KLANGO.MP4:\n\n"
             f"    {code}\n\n"
             f"Ele vale por {minutes} minuto(s) e só pode ser usado uma vez.\n"
             "Se você não pediu este código, ignore este e-mail.\n"
