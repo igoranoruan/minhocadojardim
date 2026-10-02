@@ -970,9 +970,13 @@
     async function montarPaymentBrick(metodo, amountCents) {
         const mp = await obterInstanciaMp();
 
+        // "excluded" NÃO é um valor aceito pelo Mercado Pago para creditCard/debitCard (confirmado
+        // em produção, 02/10/2026: a API respondia 422 "payment_brick_initialization_failed" e o
+        // Brick nunca carregava, para os dois métodos). Para desativar um tipo de pagamento, a
+        // própria chave deve ser OMITIDA do objeto -- nunca atribuída a "excluded".
         const paymentMethods = metodo === "pix"
-            ? { bankTransfer: "all", creditCard: "excluded", debitCard: "excluded", ticket: "excluded" }
-            : { creditCard: "all", bankTransfer: "excluded", debitCard: "excluded", ticket: "excluded" };
+            ? { bankTransfer: "all" }
+            : { creditCard: "all" };
 
         brickAtual = await mp.bricks().create("payment", "paymentBrickContainer", {
             initialization: {
