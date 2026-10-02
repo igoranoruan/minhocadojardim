@@ -375,30 +375,26 @@
             </section>
 
             <!-- PAGAMENTO -->
-            <!-- 02/10/2026, 2ª rodada: tirado o ícone de escudo genérico (fa-shield-halved) --
-                 pedido do Igor, agora que a fileira de bandeiras reais já cumpre esse papel de
-                 confiança, o ícone ficava redundante/parecia amador do lado delas. "Mercado Pago"
-                 virou o destaque de verdade (h3 maior), com um selinho de cadeado só como eyebrow.
-                 Visa/Mastercard/Amex/Diners/Pix continuam com ícone oficial do Font Awesome
-                 (fa-brands), agora maiores e do mesmo tamanho entre si. Elo/Hipercard/Boleto NÃO
-                 têm ícone no Font Awesome Free nem asset oficial no projeto -- forçá-los num
-                 quadradinho fingindo ser selo (como estava antes) é que lia como "amador"; viraram
-                 uma legenda de texto simples, sem fingir ser logo. Ainda não existe asset oficial
-                 do Mercado Pago no projeto (ver histórico) -- Igor está falando com o suporte deles
-                 sobre isso; assim que tiver o arquivo oficial, essa seção troca pra usá-lo. -->
+            <!-- 02/10/2026, 3ª rodada: Igor mandou o selo oficial Mercado Pago + Pix (imagem dele,
+                 não baixada por nós) -- salvo em static/mercadopago-pix.png (redimensionado de
+                 1538x1023 pra 480x319, só pra não carregar um arquivo maior do que precisa pra
+                 aparecer pequeno). Substitui de vez a fileira de ícones do Font Awesome (achada
+                 "ainda amadora"/não era pedido): agora o selo oficial é a prova de confiança, texto
+                 só reforça em uma frase curta. Como o checkout só tem 2 métodos (Pix e cartão de
+                 crédito, ver metodoPagamentoSwitch) o texto não lista mais bandeira por bandeira.
+                 Selo dentro de uma caixa branca porque o arquivo (como a maioria dos selos oficiais
+                 de pagamento) foi desenhado pra fundo claro -- direto no card escuro do site ficava
+                 destoando ("não harmonizado"). -->
             <section class="py-12 sm:py-16">
-                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 glow-hover">
-                    <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#19D3AE] mb-2"><i class="fa-solid fa-lock text-[10px]"></i> Pagamento seguro</div>
-                    <h3 class="font-extrabold text-white text-lg">Processado pelo Mercado Pago</h3>
-                    <p class="text-sm text-slate-400 mt-1 mb-5">Seus dados de pagamento são processados em ambiente seguro -- o KLANGO.MP4 nunca armazena número de cartão.</p>
-                    <div class="flex flex-wrap items-center gap-2.5">
-                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-xl" title="Pix"><i class="fa-brands fa-pix"></i></span>
-                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="Visa"><i class="fa-brands fa-cc-visa"></i></span>
-                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="Mastercard"><i class="fa-brands fa-cc-mastercard"></i></span>
-                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="American Express"><i class="fa-brands fa-cc-amex"></i></span>
-                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="Diners Club"><i class="fa-brands fa-cc-diners-club"></i></span>
+                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-5 glow-hover">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#19D3AE] mb-2"><i class="fa-solid fa-lock text-[10px]"></i> Pagamento seguro</div>
+                        <h3 class="font-extrabold text-white text-lg">Processado pelo Mercado Pago</h3>
+                        <p class="text-sm text-slate-400 mt-1">Pague com Pix ou cartão de crédito. Seus dados são processados em ambiente seguro -- o KLANGO.MP4 nunca armazena número de cartão.</p>
                     </div>
-                    <p class="text-[11px] text-slate-500 mt-3">Também aceita Elo, Hipercard e Boleto.</p>
+                    <div class="bg-white rounded-xl px-4 py-2.5 shrink-0 mx-auto sm:mx-0">
+                        <img src="/static/mercadopago-pix.png" alt="Mercado Pago e Pix" class="h-14 w-auto block">
+                    </div>
                 </div>
             </section>
         </main>
