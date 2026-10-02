@@ -646,7 +646,7 @@
         const validadeEl = document.getElementById("statusContaValidade");
         if (validadeEl) {
             if (data.entitlement && data.entitlement.expires_at) {
-                validadeEl.textContent = `Acesso até ${formatarData(data.entitlement.expires_at)}`;
+                validadeEl.textContent = formatarDiasRestantes(data.entitlement.expires_at);
                 validadeEl.classList.remove("hidden");
             } else {
                 limparStatusContaValidade();
@@ -819,6 +819,24 @@
         }
 
         return date.toLocaleDateString("pt-BR");
+    }
+
+    // Dias restantes em vez de data (pedido do Igor, 02/10/2026: "Acesso até DD/MM/AAAA" parecia
+    // bugado/pouco claro). Math.ceil conta qualquer fração de dia restante como mais 1 dia inteiro
+    // -- evita mostrar "0 dias" enquanto ainda faltam várias horas de acesso.
+    function formatarDiasRestantes(value) {
+        if (!value) return "—";
+
+        const expiraEm = new Date(value);
+        if (Number.isNaN(expiraEm.getTime())) {
+            return "—";
+        }
+
+        const diasRestantes = Math.ceil((expiraEm.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+        if (diasRestantes <= 0) return "Expira hoje";
+        if (diasRestantes === 1) return "Expira em 1 dia";
+        return `Expira em ${diasRestantes} dias`;
     }
 
     // ---- Checkout Mercado Pago: Payment Brick (Etapa 10.2) ----
