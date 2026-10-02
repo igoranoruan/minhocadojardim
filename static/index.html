@@ -375,33 +375,30 @@
             </section>
 
             <!-- PAGAMENTO -->
-            <!-- Ícone: mantido fa-shield-halved. Avaliado substituir pelo logo oficial do Mercado Pago
-                 (item 17 do briefing), mas não existe asset oficial/autorizado no projeto nem foi
-                 fornecido um pelo Mercado Pago -- por regra explícita, não se inventa/baixa um logo
-                 de terceiros, então o ícone atual foi preservado (ver relatório).
-                 02/10/2026: o selo sozinho (ícone de escudo genérico) não passava confiança
-                 suficiente -- adicionada uma fileira com as bandeiras aceitas. Visa/Mastercard/Amex/
-                 Diners usam os ícones oficiais do Font Awesome (fa-brands); Pix, Boleto, Elo e
-                 Hipercard não têm ícone correspondente no Font Awesome Free e NÃO têm asset oficial
-                 no projeto, então aparecem como selo de texto em vez de um logo desenhado à mão
-                 (mesma regra de não inventar logo de terceiros do parágrafo acima). -->
+            <!-- 02/10/2026, 2ª rodada: tirado o ícone de escudo genérico (fa-shield-halved) --
+                 pedido do Igor, agora que a fileira de bandeiras reais já cumpre esse papel de
+                 confiança, o ícone ficava redundante/parecia amador do lado delas. "Mercado Pago"
+                 virou o destaque de verdade (h3 maior), com um selinho de cadeado só como eyebrow.
+                 Visa/Mastercard/Amex/Diners/Pix continuam com ícone oficial do Font Awesome
+                 (fa-brands), agora maiores e do mesmo tamanho entre si. Elo/Hipercard/Boleto NÃO
+                 têm ícone no Font Awesome Free nem asset oficial no projeto -- forçá-los num
+                 quadradinho fingindo ser selo (como estava antes) é que lia como "amador"; viraram
+                 uma legenda de texto simples, sem fingir ser logo. Ainda não existe asset oficial
+                 do Mercado Pago no projeto (ver histórico) -- Igor está falando com o suporte deles
+                 sobre isso; assim que tiver o arquivo oficial, essa seção troca pra usá-lo. -->
             <section class="py-12 sm:py-16">
-                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-4 glow-hover">
-                    <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-shield-halved"></i></div>
-                    <div class="flex-1">
-                        <h3 class="font-bold text-white">Pagamento protegido pelo Mercado Pago</h3>
-                        <p class="text-sm text-slate-400 mt-1">Seus dados de pagamento são processados em ambiente seguro.</p>
+                <div class="max-w-3xl mx-auto bg-card rounded-2xl p-6 sm:p-7 glow-hover">
+                    <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#19D3AE] mb-2"><i class="fa-solid fa-lock text-[10px]"></i> Pagamento seguro</div>
+                    <h3 class="font-extrabold text-white text-lg">Processado pelo Mercado Pago</h3>
+                    <p class="text-sm text-slate-400 mt-1 mb-5">Seus dados de pagamento são processados em ambiente seguro -- o KLANGO.MP4 nunca armazena número de cartão.</p>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-xl" title="Pix"><i class="fa-brands fa-pix"></i></span>
+                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="Visa"><i class="fa-brands fa-cc-visa"></i></span>
+                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="Mastercard"><i class="fa-brands fa-cc-mastercard"></i></span>
+                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="American Express"><i class="fa-brands fa-cc-amex"></i></span>
+                        <span class="h-10 px-3 rounded-lg bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-200 text-2xl" title="Diners Club"><i class="fa-brands fa-cc-diners-club"></i></span>
                     </div>
-                    <div class="flex flex-wrap items-center gap-2 sm:justify-end">
-                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-base" title="Pix"><i class="fa-brands fa-pix"></i></span>
-                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="Visa"><i class="fa-brands fa-cc-visa"></i></span>
-                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="Mastercard"><i class="fa-brands fa-cc-mastercard"></i></span>
-                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="American Express"><i class="fa-brands fa-cc-amex"></i></span>
-                        <span class="w-9 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-300 text-lg" title="Diners Club"><i class="fa-brands fa-cc-diners-club"></i></span>
-                        <span class="px-2 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">ELO</span>
-                        <span class="px-2 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">HIPERCARD</span>
-                        <span class="px-2 h-7 rounded-md bg-[#060b14] border border-slate-800 flex items-center justify-center text-slate-400 text-[10px] font-bold">BOLETO</span>
-                    </div>
+                    <p class="text-[11px] text-slate-500 mt-3">Também aceita Elo, Hipercard e Boleto.</p>
                 </div>
             </section>
         </main>
@@ -1169,6 +1166,16 @@
             // produção antes, ver comentário acima sobre "excluded"; aqui o risco é bem menor,
             // mas não foi possível testar visualmente neste ambiente por falta de acesso de
             // rede ao SDK -- confirmar com print depois do deploy).
+            // 02/10/2026, 2ª rodada: o Igor identificou a causa real da "mancha verde" -- não é
+            // cor, é o TEXTO de "Parcelamento disponível" (selo próprio do Brick, desenhado pelo
+            // SDK do Mercado Pago dentro de #paymentBrickContainer, não é HTML nosso) maior que a
+            // caixa de destaque dele, vazando pra fora. Tentativa adicional: diminuir os tokens de
+            // fonte do Brick via customVariables (fontSizeSmall/fontSizeExtraSmall também fazem
+            // parte da mesma API documentada). Sem garantia de que o selo usa justamente esses
+            // tokens -- é um componente interno do Brick que não inspecionamos de perto (sem
+            // acesso de rede pra isso aqui). Igor já abriu chamado com o suporte do Mercado Pago
+            // sobre esse selo -- se a causa for mesmo um bug de CSS interno deles, a correção
+            // oficial deles é mais confiável que qualquer tentativa nossa por fora.
             customization: {
                 paymentMethods,
                 visual: {
@@ -1180,7 +1187,9 @@
                             textPrimaryColor: "#F5F7F8",
                             textSecondaryColor: "#87939D",
                             inputBackgroundColor: "#060b14",
-                            successColor: "#19D3AE"
+                            successColor: "#19D3AE",
+                            fontSizeSmall: "11px",
+                            fontSizeExtraSmall: "10px"
                         }
                     }
                 }
