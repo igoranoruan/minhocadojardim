@@ -132,6 +132,10 @@
                             </button>
                         </div>
 
+                        <input id="filenameInput" type="text" maxlength="80" autocomplete="off"
+                            placeholder="Nome do arquivo (opcional) — ex.: video_oferta"
+                            class="input-focus w-full h-11 mt-2 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-xs transition-all focus:border-[#19D3AE]/70">
+
                         <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
                     </div>
 
@@ -1131,6 +1135,10 @@
 
     async function baixarVideo() {
         const urlInput = document.getElementById("url").value.trim();
+        // Nome do arquivo opcional (02/10/2026) -- mesmo campo que o lote já tinha. Vazio vira
+        // null (nunca string vazia), pra o backend tratar igual a "não informado" (ver
+        // services.batch_filenames.sanitize_batch_filename).
+        const filenameInput = document.getElementById("filenameInput").value.trim() || null;
         const button = document.getElementById("downloadButton");
 
         if (!urlInput) {
@@ -1147,7 +1155,7 @@
                 method: "POST",
                 credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: urlInput })
+                body: JSON.stringify({ url: urlInput, filename: filenameInput })
             });
 
             if (!response.ok) {

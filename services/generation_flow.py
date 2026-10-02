@@ -44,6 +44,7 @@ from download.url_safety import validate_url
 from processor.errors import ProcessorError
 from processor.service import process_video
 from services import result_storage
+from services.batch_filenames import sanitize_batch_filename
 from services.usage import complete_generation, fail_generation, reserve_generation
 from utils.time_sp import resolve_now
 
@@ -117,7 +118,7 @@ def _mark_failed(db: Session, generation_id: int, original_exc: BaseException) -
 
 
 def generate_from_url(
-    db: Session, *, user: User, url: str,
+    db: Session, *, user: User, url: str, filename: str | None = None,
     on_progress: Callable[[str, float | None], None] | None = None,
 ) -> GenerationOutcome:
     """Executa o fluxo completo de UMA geração individual para `user`.
@@ -132,6 +133,8 @@ def generate_from_url(
     - ProcessorError/subclasses: falha no processamento, depois da reserva — a geração já foi
       marcada FAILED antes de relançar.
     - GenerationPersistenceError: falha ao gravar o resultado (sucesso OU falha) no banco.
+    - InvalidFilenameError (services.batch_filenames): `filename` inválido — levantada ANTES de
+      qualquer reserva, nenhuma cota é tocada.
 
     `on_progress(stage, percent)` (opcional, barra de progresso real): chamado com
     `stage="download"` uma vez, `percent=None` sempre (o yt-dlp roda com `noprogress=True` nesta
@@ -144,15 +147,23 @@ def generate_from_url(
     A partir da Etapa 9.3, o corpo desta função (depois da reserva) é o mesmo `_execute_reserved`
     reaproveitado pela orquestração de lote (`run_batch`, abaixo) — ver o comentário daquela
     função. Nenhum comportamento desta função mudou: a extração só move código, não altera ordem,
-    exceções nem efeitos colaterais."""
+    exceções nem efeitos colaterais.
+
+    `filename` (opcional, 02/10/2026 -- mesmo campo que o item de lote já tinha): sanitizado
+    AQUI, pela mesma função usada no lote (services.batch_filenames.sanitize_batch_filename),
+    ANTES de qualquer reserva -- um nome inválido levanta InvalidFilenameError sem consumir cota,
+    igual à regra já aplicada ao lote (routes/generations.py). O valor sanitizado é gravado em
+    Generation.display_filename (reserve_generation) e é o que o download individual já usa."""
     validated = validate_url(url)
     platform: Platform = detect_platform(validated.url)
+    display_filename = sanitize_batch_filename(filename)
 
     # services.usage.reserve_generation é a ÚNICA fonte de reserva (Etapa 4): nenhum contador
     # paralelo é criado aqui. Pode levantar QuotaExceededError/EntitlementInconsistencyError —
     # nesse ponto nada foi baixado ainda, então não há nada para limpar.
     reservation = reserve_generation(
         db, user_id=user.id, request_id=uuid.uuid4().hex, platform=platform.value,
+        display_filename=display_filename,
     )
     outcome = _execute_reserved(db, generation_id=reservation.generation_id, url=validated.url, on_progress=on_progress)
     logger.info(

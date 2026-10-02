@@ -80,6 +80,11 @@ _CAMEL_CASE_RE = re.compile(r"(?<!^)(?=[A-Z])")
 
 class CreateGenerationBody(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
+    # Opcional (02/10/2026 -- mesmo campo que o item de lote já tinha desde a Etapa 9.3):
+    # sanitizado por services.generation_flow.generate_from_url (services.batch_filenames) e
+    # persistido em Generation.display_filename; usado pelo download individual, que já lia esse
+    # campo há tempo (routes/generations.py, GET /generations/{id}/download).
+    filename: str | None = Field(default=None, max_length=200)
 
 
 class BatchItemBody(BaseModel):
@@ -202,7 +207,8 @@ def _sse_event(event: str, data: dict) -> str:
 
 
 def _run_generation_in_background(
-    engine_bind, url: str, user_id: int, event_queue: "queue.Queue[tuple[str, dict] | None]",
+    engine_bind, url: str, filename: str | None, user_id: int,
+    event_queue: "queue.Queue[tuple[str, dict] | None]",
 ) -> None:
     """Roda numa thread própria (daemon: nunca impede o processo de encerrar), com sua PRÓPRIA
     Session -- nunca a mesma nem compartilhada com a thread que monta a resposta (Session não é
@@ -230,7 +236,7 @@ def _run_generation_in_background(
             tipo_evento = "progress" if stage == "processing" else "status"
             event_queue.put((tipo_evento, {"stage": stage, "percent": percent, "message": mensagem}))
 
-        outcome = generate_from_url(session, user=user, url=url, on_progress=on_progress)
+        outcome = generate_from_url(session, user=user, url=url, filename=filename, on_progress=on_progress)
         event_queue.put((
             "complete",
             {
@@ -249,10 +255,12 @@ def _run_generation_in_background(
         event_queue.put(None)  # sinaliza o fim do stream para _stream_generation
 
 
-def _stream_generation(engine_bind, url: str, user_id: int) -> Iterator[str]:
+def _stream_generation(engine_bind, url: str, filename: str | None, user_id: int) -> Iterator[str]:
     event_queue: "queue.Queue[tuple[str, dict] | None]" = queue.Queue()
     thread = threading.Thread(
-        target=_run_generation_in_background, args=(engine_bind, url, user_id, event_queue), daemon=True,
+        target=_run_generation_in_background,
+        args=(engine_bind, url, filename, user_id, event_queue),
+        daemon=True,
     )
     thread.start()
     while True:
@@ -275,7 +283,7 @@ def create_generation(
     -- ver _run_generation_in_background. Toda a orquestração real mora em
     _run_generation_in_background/_stream_generation, acima."""
     return StreamingResponse(
-        _stream_generation(db.get_bind(), body.url, user.id),
+        _stream_generation(db.get_bind(), body.url, body.filename, user.id),
         media_type="text/event-stream",
         headers=NO_STORE,
     )

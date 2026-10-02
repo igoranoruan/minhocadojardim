@@ -312,9 +312,16 @@ def reserve_generation(
     user_id: int,
     request_id: str,
     platform: str | None = None,
+    display_filename: str | None = None,
     now: datetime | None = None,
 ) -> Reservation:
-    """Reserva UMA geração para o usuário ou levanta QuotaExceededError. Idempotente por request_id."""
+    """Reserva UMA geração para o usuário ou levanta QuotaExceededError. Idempotente por request_id.
+
+    `display_filename` (geração avulsa ganhando nome de arquivo opcional, 02/10/2026): já vem
+    SANITIZADO por quem chama (services.generation_flow, via services.batch_filenames) -- nada
+    aqui valida ou normaliza. Mesmo campo que o item de lote já usa (Generation.display_filename,
+    migration 0004) -- o download individual (routes/generations.py) já lê esse campo há tempo,
+    então nenhuma rota de download precisa mudar."""
     request_id = _validate_request_id(request_id)
     now = resolve_now(now)
     try:
@@ -339,6 +346,7 @@ def reserve_generation(
             period_day=allowance.period_day,
             period_week=allowance.period_week,
             platform=platform,
+            display_filename=display_filename,
             created_at=_utc(now),
         )
         db.add(generation)
