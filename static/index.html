@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KLANGO.MP4</title>
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
@@ -102,7 +102,7 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
                 </div>
-                <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 -mt-5 mb-4"></div>
+                <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 mt-1.5 mb-4"></div>
 
                 <p class="text-[#19D3AE] text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-5">
                     FERRAMENTA PARA REUTILIZAÇÃO DE CONTEÚDO
@@ -368,7 +368,7 @@
              equilibradas -- nenhum link quebrado foi criado. -->
         <footer class="border-t border-slate-800/70 mt-8">
             <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-14 grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm">
-                <div>
+                <div class="order-2 sm:order-1">
                     <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
                     <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mt-5 mb-2.5">Siga nas redes sociais</div>
@@ -378,13 +378,13 @@
                     </div>
                 </div>
 
-                <div class="sm:text-right">
+                <div class="order-1 sm:order-2 sm:text-right">
                     <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Produto</div>
                     <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
-                        <a href="#comoFunciona" class="hover:text-white transition-colors w-fit">Como funciona</a>
-                        <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
-                        <a href="#faq" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
                         <button type="button" onclick="abrirAcesso()" class="hover:text-white transition-colors w-fit sm:self-end text-left">Acesso</button>
+                        <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
+                        <a href="#comoFunciona" class="hover:text-white transition-colors w-fit">Como funciona</a>
+                        <a href="#faq" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
                     </nav>
                 </div>
             </div>
@@ -1074,6 +1074,29 @@
         });
     }
 
+    async function copiarCodigoPix(botao) {
+        const input = document.getElementById("pixCopiaCola");
+        if (!input) return;
+        try {
+            await navigator.clipboard.writeText(input.value);
+        } catch (err) {
+            // Fallback para contextos sem Clipboard API (raro em produção, HTTPS já garante isso
+            // na maioria dos navegadores) -- seleciona o texto pelo método antigo.
+            input.select();
+            try {
+                document.execCommand("copy");
+            } catch (_) {
+                return;
+            }
+        }
+        if (!botao) return;
+        const textoOriginal = botao.textContent;
+        botao.textContent = "Copiado!";
+        setTimeout(() => {
+            botao.textContent = textoOriginal;
+        }, 1500);
+    }
+
     async function submeterPagamento(formData) {
         if (!paymentAtual) {
             return Promise.reject(new Error("Pagamento não iniciado."));
@@ -1114,9 +1137,14 @@
                 setTimeout(() => fecharModalPagamento(), 1500);
             } else if (data.status === "pending") {
                 if (metodoAtual === "pix" && data.qr_code_base64) {
+                    // escapeHtml (já existente, usado no lote) protege o atributo value -- o código
+                    // Pix vem do Mercado Pago, nunca de input do usuário, mas nunca inserido cru.
                     document.getElementById("paymentBrickContainer").innerHTML =
                         `<div class="bg-white rounded-xl p-3 flex items-center justify-center mb-3"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg"></div>` +
-                        `<input type="text" readonly value="${data.qr_code || ""}" class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 rounded-xl text-slate-300 text-center focus:outline-none select-all">`;
+                        `<div class="relative">` +
+                        `<input id="pixCopiaCola" type="text" readonly value="${escapeHtml(data.qr_code || "")}" class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 pr-[4.5rem] rounded-xl text-slate-300 text-center focus:outline-none select-all">` +
+                        `<button type="button" onclick="copiarCodigoPix(this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-[10px] font-bold hover:bg-emerald-900/60 transition-colors">Copiar</button>` +
+                        `</div>`;
                     iniciarPollingConfirmacaoPix();
                 }
                 mostrarStatusPagamento("Aguardando confirmação do pagamento...", "normal");
