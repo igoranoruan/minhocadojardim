@@ -118,6 +118,20 @@ async def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/termos", include_in_schema=False)
+async def termos_de_uso() -> FileResponse:
+    """Termos de Uso (02/10/2026) -- link removido do rodapé em versão anterior do site porque a
+    página ainda não existia (ver comentário em static/index.html); agora que existe, a rota
+    serve em /termos (URL limpa) em vez de /static/termos.html."""
+    return FileResponse(STATIC_DIR / "termos.html")
+
+
+@app.get("/privacidade", include_in_schema=False)
+async def politica_de_privacidade() -> FileResponse:
+    """Política de Privacidade (02/10/2026) -- mesmo motivo/padrão de /termos acima."""
+    return FileResponse(STATIC_DIR / "privacidade.html")
+
+
 # Arquivos do frontend (imagens, favicon etc.), acessados em /static/...
 # O index.html aprovado já referencia /static/favicon.png.
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

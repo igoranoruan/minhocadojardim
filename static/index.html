@@ -365,13 +365,13 @@
         </main>
 
         <!-- FOOTER -->
-        <!-- Coluna "Legal" removida por decisão da evolução visual final: nenhuma página real de
-             Política de Privacidade/Termos de Uso existe ainda para linkar, e o produto não deve
-             prometer em produção uma página que não existe. Quando essas páginas forem publicadas,
-             podem voltar aqui com links reais (ver relatório). Layout redistribuído para 2 colunas
-             equilibradas -- nenhum link quebrado foi criado. -->
+        <!-- Coluna "Legal" (02/10/2026): restaurada agora que as páginas de verdade existem
+             (/termos e /privacidade, ver main.py) -- antes tinha sido removida porque prometer um
+             link quebrado seria pior que não ter a coluna (ver histórico). Layout voltou a 3
+             colunas (era 2 enquanto a Legal esteve fora); no mobile a ordem continua Produto, depois
+             Marca, e agora Legal por último (order-3), sem mudar a ordem das duas que já existiam. -->
         <footer class="border-t border-slate-800/70 mt-8">
-            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-14 grid grid-cols-1 sm:grid-cols-2 gap-10 text-sm">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-14 grid grid-cols-1 sm:grid-cols-3 gap-10 text-sm">
                 <div class="order-2 sm:order-1">
                     <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
@@ -389,6 +389,14 @@
                         <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
                         <a href="#comoFunciona" class="hover:text-white transition-colors w-fit">Como funciona</a>
                         <a href="#faq" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
+                    </nav>
+                </div>
+
+                <div class="order-3 sm:order-3 sm:text-right">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Legal</div>
+                    <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
+                        <a href="/termos" class="hover:text-white transition-colors w-fit">Termos de Uso</a>
+                        <a href="/privacidade" class="hover:text-white transition-colors w-fit">Política de Privacidade</a>
                     </nav>
                 </div>
             </div>
