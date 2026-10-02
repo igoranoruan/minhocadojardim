@@ -12,7 +12,7 @@ Regras:
 """
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -123,7 +123,22 @@ def compute_next_window(
 def grant_entitlement(
     db: Session, *, user_id: int, payment_id: int, plan_code: str, now: datetime | None = None
 ) -> Entitlement:
-    """Concede um acesso pago, empilhando depois do último. Idempotente por payment_id."""
+    """Concede um acesso pago. Idempotente por payment_id.
+
+    TROCA IMEDIATA (decisão do CÉREBRO, 02/10/2026, depois de um upgrade real em produção expor o
+    problema): se o usuário JÁ TEM um acesso vigente agora, o novo NÃO empilha depois dele -- o
+    vigente é encerrado NESTE INSTANTE (expires_at = now; os dias que sobravam são descartados,
+    sem crédito proporcional nem reembolso automático -- decisão explícita, simplicidade sobre
+    proporcionalidade para o lançamento) e o novo começa já. O empilhamento antigo (ver
+    entitlement_chain.next_window) só fazia sentido para RENOVAR o mesmo acesso antes de vencer;
+    para upgrade, o cliente espera o benefício imediatamente, não numa fila.
+
+    Qualquer acesso FUTURO já empilhado de uma compra anterior (não é o caso comum, mas é possível)
+    é realinhado para começar só depois que este novo acesso acabar (entitlement_chain.
+    realign_after) -- nenhum dia comprado de um acesso futuro é perdido, só adiado.
+
+    Sem acesso vigente agora (usuário Free, ou só com acessos futuros pendentes): comportamento
+    ORIGINAL preservado -- empilha depois do último acesso já concedido."""
     plan = get_plan(plan_code)
     if not plan.paid:
         raise InvalidEntitlementRequestError("O plano Free não gera entitlement.")
@@ -140,7 +155,31 @@ def grant_entitlement(
             db.commit()  # nada a gravar: só libera o lock
             return existing
 
-        start, end = compute_next_window(db, user_id, plan.duration_days, now)
+        items = _valid_granted(db, user_id, now)
+        overlaps = chain.find_overlaps(items)
+        if overlaps:
+            _log_inconsistency(user_id, overlaps)
+            raise EntitlementInconsistencyError(user_id, _pair_ids(overlaps))
+        current = next((item for item in items if chain.is_current(item, now)), None)
+
+        if current is None:
+            start, end = chain.next_window(items, now, plan.duration_days)
+        else:
+            # Guarda defensiva: is_current já garante now >= current.starts_at, mas nunca
+            # encerramos um acesso no MESMO instante em que começou (violaria o CHECK
+            # expires_at > starts_at) -- extremamente improvável (exigiria duas trocas no mesmo
+            # microssegundo, já serializadas por lock_user_row), mas nunca gravado sem checar.
+            current.expires_at = now if now > current.starts_at else current.starts_at + timedelta(seconds=1)
+            db.flush()
+
+            start, end = now, now + timedelta(days=plan.duration_days)
+
+            futuros = [item for item in items if item.id != current.id]
+            for item, new_start, new_end in chain.realign_after(futuros, end):
+                item.starts_at = new_start
+                item.expires_at = new_end
+            db.flush()
+
         entitlement = Entitlement(
             user_id=user_id,
             plan_code=plan.code,

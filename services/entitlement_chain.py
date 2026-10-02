@@ -34,6 +34,26 @@ def next_window(items, now: datetime, duration_days: int) -> tuple[datetime, dat
     return start, start + timedelta(days=duration_days)
 
 
+def realign_after(items, start_from: datetime) -> list[tuple]:
+    """Realinha os itens recebidos (presume-se: nenhum já começou) para começarem em
+    `start_from`, mantendo duration_days e a ordem entre si -- mesma mecânica de realign_future,
+    mas com o ponto de partida informado pelo CHAMADOR em vez de calculado a partir de itens já
+    iniciados. Usada pela troca imediata de upgrade (services.entitlements.grant_entitlement):
+    `start_from` é o fim do acesso NOVO que está sendo concedido agora, então qualquer acesso
+    futuro já empilhado de uma compra anterior é adiado para depois dele, nunca descartado.
+    Devolve [(item, novo_início, novo_fim)] apenas para os que realmente mudam."""
+    ordered = sorted(items, key=_order)
+    cursor = start_from
+    changes = []
+    for item in ordered:
+        new_start = cursor
+        new_end = new_start + timedelta(days=item.duration_days)
+        if (item.starts_at, item.expires_at) != (new_start, new_end):
+            changes.append((item, new_start, new_end))
+        cursor = new_end
+    return changes
+
+
 def realign_future(items, now: datetime) -> list[tuple]:
     """Realinha SÓ os acessos futuros (starts_at > now), mantendo duration_days e a ordem.
 

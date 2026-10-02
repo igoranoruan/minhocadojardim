@@ -38,29 +38,43 @@ def test_sem_acesso_ativo_o_novo_comeca_imediatamente(factory, session, plano, d
     assert acesso.duration_days == dias and acesso.status == "granted" and acesso.plan_code == plano
 
 
-def test_stacking_novo_acesso_comeca_quando_termina_o_atual_sem_sobrepor(factory, session):
+def test_comprar_com_um_plano_ja_vigente_troca_na_hora_sem_empilhar(factory, session):
+    """TROCA IMEDIATA (decisão do CÉREBRO, 02/10/2026, substitui o empilhamento antigo para este
+    caso -- ver o comentário de grant_entitlement): comprar um plano novo enquanto outro já está
+    vigente encerra o vigente NA HORA (dias restantes descartados) e o novo começa já. Antes desta
+    decisão, este mesmo cenário empilhava o novo depois do vigente terminar (era este teste que
+    provava isso, com o nome test_stacking_novo_acesso_comeca_quando_termina_o_atual_sem_sobrepor)
+    -- um upgrade real em produção (02/10/2026) mostrou que isso deixava o cliente pagando por um
+    plano melhor sem recebê-lo de imediato."""
     usuario = factory.user()
     a = give(factory, session, usuario, "weekly", now=NOW)
-    b = give(factory, session, usuario, "monthly", now=NOW + 1 * DIA)  # comprado DURANTE o acesso A
-    c = give(factory, session, usuario, "vip_batch", now=NOW + 2 * DIA)  # comprado durante A e B
+    b = give(factory, session, usuario, "monthly", now=NOW + 1 * DIA)  # upgrade DURANTE o acesso A
+    c = give(factory, session, usuario, "vip_batch", now=NOW + 3 * DIA)  # upgrade DURANTE o acesso B
     for acesso in (a, b, c):
         session.refresh(acesso)
 
-    assert b.starts_at == a.expires_at and b.expires_at == a.expires_at + 30 * DIA
-    assert c.starts_at == b.expires_at and c.expires_at == b.expires_at + 30 * DIA
-    assert find_overlaps([a, b, c]) == []  # nunca 01/10 -> 15/10 sobreposto
-    assert c.expires_at - a.starts_at == (7 + 30 + 30) * DIA  # nenhum dia comprado se perdeu
+    assert (a.starts_at, a.expires_at) == (NOW, NOW + 1 * DIA)  # A encerrado na hora da troca p/ B
+    assert (b.starts_at, b.expires_at) == (NOW + 1 * DIA, NOW + 3 * DIA)  # B encerrado na troca p/ C
+    assert (c.starts_at, c.expires_at) == (NOW + 3 * DIA, NOW + 3 * DIA + 30 * DIA)  # C começa já
+    assert find_overlaps([a, b, c]) == []
 
 
-def test_exemplo_do_produto_a_01_10_ate_08_10_e_b_08_10_ate_15_10(factory, session):
+def test_upgrade_com_acesso_futuro_ja_empilhado_adia_o_futuro_sem_perder_dias(factory, session):
+    """Caso raro, mas possível (ex.: um acesso futuro empilhado antes da troca imediata existir, ou
+    de um realinhamento de reembolso anterior): o upgrade troca o VIGENTE na hora, e o acesso
+    FUTURO que já estava empilhado depois dele não é descartado nem sobreposto -- só adiado pra
+    depois do novo acesso (entitlement_chain.realign_after), preservando sua duração."""
     usuario = factory.user()
-    inicio = NOW.replace(month=10, day=1)
-    a = give(factory, session, usuario, "weekly", now=inicio)
-    b = give(factory, session, usuario, "weekly", now=inicio + 2 * DIA)
-    session.refresh(a)
-    session.refresh(b)
-    assert (a.starts_at, a.expires_at) == (inicio, inicio + 7 * DIA)
-    assert (b.starts_at, b.expires_at) == (inicio + 7 * DIA, inicio + 14 * DIA)
+    a = raw_entitlement(factory, usuario, plan_code="weekly", starts_at=NOW - 1 * DIA, expires_at=NOW + 6 * DIA)
+    c = raw_entitlement(factory, usuario, plan_code="weekly", starts_at=NOW + 6 * DIA, expires_at=NOW + 13 * DIA)
+    b = give(factory, session, usuario, "monthly", now=NOW)  # upgrade DURANTE A, com C já empilhado
+    a, b, c = _reload(session, a, b, c)
+
+    assert (a.starts_at, a.expires_at) == (NOW - 1 * DIA, NOW)  # A encerrado na hora da troca
+    assert (b.starts_at, b.expires_at) == (NOW, NOW + 30 * DIA)  # B (novo) começa já
+    assert (c.starts_at, c.expires_at) == (NOW + 30 * DIA, NOW + 37 * DIA)  # C adiado pra depois de B
+    assert find_overlaps([a, b, c]) == []
+    assert c.duration_days == 7  # duração do futuro preservada, só a data mudou
 
 
 def test_acesso_anterior_expirado_nao_entra_na_cadeia(factory, session):
