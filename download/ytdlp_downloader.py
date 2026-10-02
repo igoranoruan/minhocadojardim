@@ -85,7 +85,7 @@ class YtDlpDownloader(PlatformDownloader):
         self.spec = spec
         self.platform = spec.platform
 
-    def _build_options(self, dest_stub: Path) -> dict:
+    def _build_options(self, dest_stub: Path, force_mweb: bool = False) -> dict:
         options = {
             "outtmpl": f"{dest_stub}.%(ext)s",
             "format": "mp4/best[ext=mp4]/best",
@@ -107,7 +107,7 @@ class YtDlpDownloader(PlatformDownloader):
             "cookiefile": None,  # nunca cookies pessoais como padrão (especificação do produto)
             **self.spec.extra_opts,
         }
-        self._apply_youtube_pot_provider(options)
+        self._apply_youtube_pot_provider(options, force_mweb=force_mweb)
         self._normalize_impersonate_target(options)
         return options
 
@@ -123,9 +123,9 @@ class YtDlpDownloader(PlatformDownloader):
         if isinstance(target, str):
             options["impersonate"] = ImpersonateTarget.from_str(target)
 
-    def _apply_youtube_pot_provider(self, options: dict) -> None:
+    def _apply_youtube_pot_provider(self, options: dict, force_mweb: bool = False) -> None:
         """Liga o PO Token Provider (BGUTIL) só quando configurado (config.py) e só para YouTube.
-        Sem isso, o yt-dlp segue com o player client mweb sem PO Token: funciona para parte dos
+        Sem isso, o yt-dlp segue com o client padrão sem PO Token: funciona para parte dos
         vídeos, e o que falhar vira DownloadFailedError diagnosticável (nunca uma pilha de
         fallbacks — regra do produto). PO Token não é garantia de acesso a todo vídeo.
 
@@ -134,12 +134,29 @@ class YtDlpDownloader(PlatformDownloader):
         está configurado -- mesmo guard de sempre), encaminhada para o logger já existente do
         projeto (logger = logging.getLogger("minhoca"), nunca para stdout/print), só para
         confirmar em qual etapa da cadeia BGUTIL o fluxo chega. Não afeta TikTok/Instagram/
-        Pinterest -- nenhum deles passa do "return" abaixo."""
+        Pinterest -- nenhum deles passa do "return" abaixo.
+
+        force_mweb (NOVO -- fallback, não é mais um comportamento sempre ligado): só quando True
+        o client é forçado para "mweb". Por quê não é sempre True: um diagnóstico anterior já
+        documentado neste projeto (download/service.py, config do YouTube, comentário de 26/09)
+        mostrou, com teste real, que forçar "mweb" faz OUTROS vídeos (que hoje funcionam com a
+        negociação automática do yt-dlp) devolverem só formatos de storyboard (sem vídeo/áudio
+        de verdade). Por isso "mweb" só é usado como SEGUNDA tentativa (ver download()), quando a
+        primeira tentativa (sem forçar nada -- comportamento ORIGINAL preservado) falha
+        especificamente com o erro de login/bot-check do YouTube. Evidência de que "mweb" forçado
+        funciona quando combinado com o BGUTIL: teste local controlado, mweb SEM player_skip +
+        BGUTIL local -> log real mostrou "[pot:bgutil:http] Generating a gvs PO Token for mweb
+        client via bgutil HTTP server" seguido de "Retrieved a gvs PO Token for mweb client".
+        NÃO combinar com player_skip (webpage/configs): isso remove o Visitor Data exigido antes
+        do pedido de PO Token e quebra a cadeia (confirmado em teste anterior, descartado por
+        esse motivo)."""
         base_url = get_settings().bgutil_pot_provider_base_url
         if self.platform is not Platform.YOUTUBE or not base_url:
             return
         extractor_args = dict(options.get("extractor_args") or {})
         youtube_args = dict(extractor_args.get("youtube") or {})
+        if force_mweb:
+            youtube_args["player_client"] = ["mweb"]
         extractor_args["youtubepot-bgutilhttp"] = {"base_url": [base_url]}
         extractor_args["youtube"] = youtube_args
         options["extractor_args"] = extractor_args
@@ -162,19 +179,66 @@ class YtDlpDownloader(PlatformDownloader):
         options["logger"] = _DiagnosticoBgutilLogger()
         # --- FIM DIAGNÓSTICO TEMPORÁRIO ---
 
+    def _run_extract(self, options: dict, url: str):
+        with yt_dlp.YoutubeDL(options) as ydl:
+            return ydl.extract_info(url, download=True)
+
+    def _should_retry_with_mweb(self, reason: str) -> bool:
+        """Segunda tentativa (mweb forçado + BGUTIL) só entra quando: é YouTube, o BGUTIL está
+        configurado, e a 1a tentativa falhou especificamente por login/bot-check (a mesma
+        categoria de "Sign in to confirm you're not a bot..."). Qualquer outro motivo de falha
+        (vídeo privado, removido, URL inválida, timeout, etc.) não tem relação com PO Token e
+        não deve gastar uma segunda tentativa -- o erro original já é o diagnóstico correto."""
+        return (
+            self.platform is Platform.YOUTUBE
+            and bool(get_settings().bgutil_pot_provider_base_url)
+            and reason == "conteúdo exige login na plataforma de origem"
+        )
+
+    def _error_for_reason(self, reason: str, exc: Exception):
+        if "filesize" in str(exc).lower():
+            return VideoTooLargeError(reason)
+        if reason == "tempo de rede esgotado":
+            return DownloadTimeoutError(reason)
+        return DownloadFailedError(reason)
+
+    def _cleanup_stub_files(self, dest_stub: Path) -> None:
+        """Remove qualquer arquivo que a 1a tentativa possa ter deixado para trás (ex.: uma
+        miniatura) antes da 2a tentativa -- sem isso, _resolve_output_path poderia pegar por
+        engano um arquivo da tentativa que falhou em vez do vídeo baixado de verdade na retry."""
+        directory = dest_stub.parent
+        for stray in directory.glob(f"{dest_stub.name}.*"):
+            try:
+                stray.unlink()
+            except OSError:
+                pass
+
     def download(self, url: str, dest_stub: Path) -> RawDownload:
-        options = self._build_options(dest_stub)
+        options = self._build_options(dest_stub, force_mweb=False)
         try:
-            with yt_dlp.YoutubeDL(options) as ydl:
-                info = ydl.extract_info(url, download=True)
+            info = self._run_extract(options, url)
         except yt_dlp.utils.DownloadError as exc:
             reason = _categorize_reason(str(exc))
             logger.warning("[DOWNLOAD] yt-dlp plataforma=%s motivo=%s", self.platform.value, reason)
-            if "filesize" in str(exc).lower():
-                raise VideoTooLargeError(reason) from None
-            if reason == "tempo de rede esgotado":
-                raise DownloadTimeoutError(reason) from None
-            raise DownloadFailedError(reason) from None
+
+            if not self._should_retry_with_mweb(reason):
+                raise self._error_for_reason(reason, exc) from None
+
+            logger.warning(
+                "[DOWNLOAD] yt-dlp plataforma=%s retry com mweb+BGUTIL apos bot-check",
+                self.platform.value,
+            )
+            self._cleanup_stub_files(dest_stub)
+            retry_options = self._build_options(dest_stub, force_mweb=True)
+            try:
+                info = self._run_extract(retry_options, url)
+            except yt_dlp.utils.DownloadError as exc2:
+                reason2 = _categorize_reason(str(exc2))
+                logger.warning(
+                    "[DOWNLOAD] yt-dlp plataforma=%s motivo=%s (apos retry mweb+BGUTIL)",
+                    self.platform.value, reason2,
+                )
+                raise self._error_for_reason(reason2, exc2) from None
 
         duration = info.get("duration") if isinstance(info, dict) else None
         path = self._resolve_output_path(dest_stub)
