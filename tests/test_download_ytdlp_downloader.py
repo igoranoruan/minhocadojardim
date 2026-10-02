@@ -182,3 +182,43 @@ def test_youtube_sempre_usa_o_player_client_mweb(tmp_path):
     downloader = YtDlpDownloader(YtDlpSpec(Platform.YOUTUBE, ("Youtube",), {"extractor_args": {"youtube": {"player_client": ["mweb"]}}}))
     options = downloader._build_options(tmp_path / "stub")
     assert options["extractor_args"]["youtube"]["player_client"] == ["mweb"]
+
+
+# ------------------------------------------------------------------ Proxy residencial — YouTube
+def test_proxy_desligado_por_padrao(tmp_path, use_settings):
+    use_settings(youtube_proxy_host="", youtube_proxy_port="")
+    downloader = YtDlpDownloader(_spec(Platform.YOUTUBE, ("Youtube",)))
+    options = downloader._build_options(tmp_path / "stub")
+    assert "proxy" not in options
+
+
+def test_proxy_ligado_quando_host_e_porta_configurados(tmp_path, use_settings):
+    """Credenciais com caracteres especiais (ex.: '=', comum em senhas geradas por provedores de
+    proxy como a Decodo) precisam chegar url-encoded na URL final -- sem isso, o '=' seria
+    interpretado como parte da sintaxe da URL em vez de um caractere literal da senha."""
+    use_settings(
+        youtube_proxy_host="gate.decodo.com",
+        youtube_proxy_port="10000",
+        youtube_proxy_username="spanl2gwpr",
+        youtube_proxy_password="5VZlsci1aWuei7H=8h",
+    )
+    downloader = YtDlpDownloader(_spec(Platform.YOUTUBE, ("Youtube",)))
+    options = downloader._build_options(tmp_path / "stub")
+    assert options["proxy"] == "http://spanl2gwpr:5VZlsci1aWuei7H%3D8h@gate.decodo.com:10000"
+
+
+def test_proxy_nunca_e_aplicado_fora_do_youtube(tmp_path, use_settings):
+    use_settings(youtube_proxy_host="gate.decodo.com", youtube_proxy_port="10000")
+    downloader = YtDlpDownloader(_spec(Platform.TIKTOK, ("TikTok",)))
+    options = downloader._build_options(tmp_path / "stub")
+    assert "proxy" not in options
+
+
+def test_proxy_sem_porta_fica_desligado_mesmo_com_host(tmp_path, use_settings):
+    """Guarda defensiva: host sozinho (sem porta) não monta uma URL quebrada -- fica vazio, e o
+    YouTube cai no comportamento original (rede direta), nunca numa URL inválida que derrubaria
+    o yt-dlp com um erro de configuração em vez do erro de bloqueio já conhecido."""
+    use_settings(youtube_proxy_host="gate.decodo.com", youtube_proxy_port="")
+    downloader = YtDlpDownloader(_spec(Platform.YOUTUBE, ("Youtube",)))
+    options = downloader._build_options(tmp_path / "stub")
+    assert "proxy" not in options

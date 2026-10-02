@@ -6,6 +6,7 @@ Nenhum secret fica neste arquivo: tudo vem de variáveis de ambiente.
 """
 import os
 from dataclasses import dataclass, field
+from urllib.parse import quote
 
 APP_NAME = "KLANGO.MP4"
 APP_VERSION = "2.0.0-etapa1"
@@ -71,6 +72,20 @@ MAX_REDIRECTS = 5
 # yt-dlp tenta o YouTube só com o player client mweb, sem PO Token (funciona para parte dos
 # vídeos; especificação do produto: PO Token NAO garante todos os vídeos).
 BGUTIL_POT_PROVIDER_BASE_URL = ""
+
+# Proxy residencial (Decodo), usado SÓ para YouTube (diagnóstico fechado em 02/10/2026: o
+# bloqueio "Sign in to confirm you're not a bot" + HTTP 429 não é de client/PO-Token, é o IP de
+# datacenter do Render sendo tratado como suspeito pelo YouTube -- nenhum ajuste de código
+# resolve isso, só trocar o IP de saída). Vazio (host/porta ausentes) = yt-dlp usa a rede direta
+# do servidor, comportamento ORIGINAL preservado para TikTok/Instagram/Pinterest (que nunca
+# passam por aqui -- ver YtDlpDownloader._apply_youtube_proxy) e para o próprio YouTube quando o
+# proxy não estiver configurado. Usuário/senha guardados SEPARADOS do host/porta (em vez de uma
+# URL única pronta) para nunca exigir que o Igor url-encode caracteres especiais da senha (ex.:
+# "=") na mão -- a montagem da URL final com urllib.parse.quote fica em Settings.youtube_proxy_url.
+YOUTUBE_PROXY_HOST = ""
+YOUTUBE_PROXY_PORT = ""
+YOUTUBE_PROXY_USERNAME = ""
+YOUTUBE_PROXY_PASSWORD = ""
 
 # ----------------------------------------------------------------------------- processamento (Etapa 6)
 # Reaproveita MAX_VIDEO_SIZE_BYTES (100 MB) e MAX_VIDEO_DURATION_SECONDS (5 min) definidas acima:
@@ -151,6 +166,11 @@ class Settings:
     session_ttl_days: int
     anon_cookie_ttl_days: int
     bgutil_pot_provider_base_url: str
+    youtube_proxy_host: str
+    youtube_proxy_port: str
+    # Credenciais do proxy nunca aparecem no repr (secrets, igual mp_access_token).
+    youtube_proxy_username: str = field(repr=False)
+    youtube_proxy_password: str = field(repr=False)
     ffmpeg_path: str
     ffprobe_path: str
     # Mercado Pago (Etapa 10.2). Nenhuma validação de prefixo (ex.: "TEST-") é feita aqui de
@@ -192,6 +212,19 @@ class Settings:
     @property
     def using_dev_secrets(self) -> bool:
         return self.auth_secret_key == DEV_AUTH_SECRET_KEY or self.ip_hash_secret == DEV_IP_HASH_SECRET
+
+    @property
+    def youtube_proxy_url(self) -> str:
+        """Monta a URL final do proxy (http://usuario:senha@host:porta) só quando host E porta
+        estão configurados -- usuário/senha podem ficar vazios (alguns provedores não exigem).
+        quote() (safe="") escapa qualquer caractere especial da senha (ex.: "=", "@", ":") para
+        nunca quebrar a URL nem ser interpretado como separador."""
+        if not self.youtube_proxy_host or not self.youtube_proxy_port:
+            return ""
+        user = quote(self.youtube_proxy_username, safe="")
+        password = quote(self.youtube_proxy_password, safe="")
+        auth = f"{user}:{password}@" if user or password else ""
+        return f"http://{auth}{self.youtube_proxy_host}:{self.youtube_proxy_port}"
 
 
 def _load_secrets(is_production: bool) -> tuple[str, str]:
@@ -260,6 +293,10 @@ def load_settings() -> Settings:
         # aceitável: o pior caso é o visitante virar "novo dispositivo" mais cedo, nunca um erro.
         anon_cookie_ttl_days=_int_env("ANON_COOKIE_TTL_DAYS", default=365, minimum=1),
         bgutil_pot_provider_base_url=os.getenv("BGUTIL_POT_PROVIDER_BASE_URL", BGUTIL_POT_PROVIDER_BASE_URL).strip(),
+        youtube_proxy_host=os.getenv("YOUTUBE_PROXY_HOST", YOUTUBE_PROXY_HOST).strip(),
+        youtube_proxy_port=os.getenv("YOUTUBE_PROXY_PORT", YOUTUBE_PROXY_PORT).strip(),
+        youtube_proxy_username=os.getenv("YOUTUBE_PROXY_USERNAME", YOUTUBE_PROXY_USERNAME).strip(),
+        youtube_proxy_password=os.getenv("YOUTUBE_PROXY_PASSWORD", YOUTUBE_PROXY_PASSWORD),
         ffmpeg_path=os.getenv("FFMPEG_PATH", FFMPEG_PATH).strip() or FFMPEG_PATH,
         ffprobe_path=os.getenv("FFPROBE_PATH", FFPROBE_PATH).strip() or FFPROBE_PATH,
         # Etapa 10.2: sem valor padrão de desenvolvimento (ao contrário de AUTH_SECRET_KEY) --

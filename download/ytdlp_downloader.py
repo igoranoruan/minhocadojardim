@@ -108,8 +108,26 @@ class YtDlpDownloader(PlatformDownloader):
             **self.spec.extra_opts,
         }
         self._apply_youtube_pot_provider(options, force_mweb=force_mweb)
+        self._apply_youtube_proxy(options)
         self._normalize_impersonate_target(options)
         return options
+
+    def _apply_youtube_proxy(self, options: dict) -> None:
+        """Liga o proxy residencial (Decodo) só quando configurado (config.py) e só para
+        YouTube -- mesmo guard de _apply_youtube_pot_provider, mesmo motivo: TikTok/Instagram/
+        Pinterest nunca devem ser afetados por uma mudança feita para o YouTube.
+
+        Diferente do BGUTIL (que só negocia o PO Token), aqui o proxy cobre TODA a requisição
+        do yt-dlp para o YouTube -- extração da página, player API e o download do vídeo em si
+        -- porque o diagnóstico de 02/10/2026 mostrou que o bloqueio ("Sign in to confirm
+        you're not a bot" + HTTP 429) acontece já na primeira requisição (download da webpage),
+        antes de qualquer client/PO-Token entrar em jogo. Trocar só uma parte da cadeia não
+        resolveria nada; a chave 'proxy' do yt-dlp já cobre todas as chamadas HTTP feitas por
+        ele (webpage, APIs e o arquivo de vídeo)."""
+        proxy_url = get_settings().youtube_proxy_url
+        if self.platform is not Platform.YOUTUBE or not proxy_url:
+            return
+        options["proxy"] = proxy_url
 
     def _normalize_impersonate_target(self, options: dict) -> None:
         """A CLI do yt-dlp converte a string de --impersonate para ImpersonateTarget antes de
