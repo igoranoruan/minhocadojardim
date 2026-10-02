@@ -950,21 +950,18 @@
     async function abrirModalPagamento(plano) {
         if (!PLANOS[plano]) return;
 
+        // Sem sessão: o pagamento exige login de verdade (e-mail -> código -> sessão, decisão da
+        // Etapa 3), nunca só um e-mail digitado num prompt() do navegador -- esse prompt() era
+        // resquício legado e não autenticava nada, só pré-preenchia o campo visual, deixando o
+        // usuário cair num 401 ao tentar pagar. Agora abre o modal de acesso real e para por ali;
+        // o usuário tenta de novo depois de concluir o login.
+        if (!sessaoEmail || !emailValido(sessaoEmail)) {
+            abrirAcesso();
+            return;
+        }
+
         planoSelecionadoGlobal = plano;
         paymentAtual = null;
-
-        let email = document.getElementById("userEmail").value.trim();
-
-        if (!emailValido(email)) {
-            email = prompt("Informe seu e-mail para vincular o pagamento:");
-
-            if (!email || !emailValido(email.trim())) {
-                return;
-            }
-
-            email = email.trim();
-            document.getElementById("userEmail").value = email;
-        }
 
         const info = PLANOS[plano];
 
