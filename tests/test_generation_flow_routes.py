@@ -134,6 +134,27 @@ def test_sucesso_sequencia_status_progress_complete(auth_client, factory, sessio
     assert corpo["size_bytes"] == 321
 
 
+def test_youtube_tem_mensagem_de_download_diferenciada(auth_client, factory, session, tmp_path):
+    """YouTube passa pelo proxy residencial (bem mais lento que as outras plataformas -- ver
+    YtDlpDownloader._apply_youtube_proxy) -- sem um aviso específico o usuário via "Baixando seu
+    vídeo..." parado por mais de um minuto e achava que tinha travado (relato real, 02/10/2026).
+    A plataforma vem da URL (detect_platform), não do retorno mockado de download_video."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+    download_path, output_path = _files(tmp_path)
+
+    with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path, platform=Platform.YOUTUBE)), \
+         patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
+        resposta = auth_client.post("/api/generations", json={"url": "https://youtu.be/abc123"})
+
+    assert resposta.status_code == 200
+    eventos = _eventos(resposta)
+    assert eventos[0] == (
+        "status",
+        {"stage": "download", "percent": None, "message": "Baixando do YouTube... pode levar até 2 minutos, aguarde."},
+    )
+
+
 # ============================================================================ ownership
 def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, tmp_path):
     """Prova que user_id/email/account_id no corpo nunca controlam ownership. Precisa de um plano

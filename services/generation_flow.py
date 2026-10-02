@@ -119,7 +119,7 @@ def _mark_failed(db: Session, generation_id: int, original_exc: BaseException) -
 
 def generate_from_url(
     db: Session, *, user: User, url: str, filename: str | None = None,
-    on_progress: Callable[[str, float | None], None] | None = None,
+    on_progress: Callable[[str, float | None, str], None] | None = None,
 ) -> GenerationOutcome:
     """Executa o fluxo completo de UMA geração individual para `user`.
 
@@ -136,13 +136,17 @@ def generate_from_url(
     - InvalidFilenameError (services.batch_filenames): `filename` inválido — levantada ANTES de
       qualquer reserva, nenhuma cota é tocada.
 
-    `on_progress(stage, percent)` (opcional, barra de progresso real): chamado com
+    `on_progress(stage, percent, platform)` (opcional, barra de progresso real): chamado com
     `stage="download"` uma vez, `percent=None` sempre (o yt-dlp roda com `noprogress=True` nesta
     etapa – de propósito, ver a auditoria; nunca um percentual inventado para o download), e com
     `stage="processing"` repetidamente durante o FFmpeg, com o percentual REAL vindo de
-    processor/ffmpeg.py (ou `None` se a duração do vídeo de entrada não for conhecida). Não afeta
-    em nada a quota, o status da geração, a limpeza dos temporários nem o tratamento de exceções
-    já existentes — é só um canal de leitura a mais, opcional.
+    processor/ffmpeg.py (ou `None` se a duração do vídeo de entrada não for conhecida). `platform`
+    (`Platform.value`, ex. "youtube") é repassado em toda chamada -- adicionado em 02/10/2026 para
+    quem monta a mensagem (routes/generations.py) poder diferenciar o YouTube, cujo download passa
+    pelo proxy residencial (bem mais lento, ~2min -- ver YtDlpDownloader._apply_youtube_proxy) das
+    demais plataformas, sem precisar redetectar a origem pela URL. Não afeta em nada a quota, o
+    status da geração, a limpeza dos temporários nem o tratamento de exceções já existentes — é só
+    um canal de leitura a mais, opcional.
 
     A partir da Etapa 9.3, o corpo desta função (depois da reserva) é o mesmo `_execute_reserved`
     reaproveitado pela orquestração de lote (`run_batch`, abaixo) — ver o comentário daquela
@@ -175,7 +179,7 @@ def generate_from_url(
 
 def _execute_reserved(
     db: Session, *, generation_id: int, url: str,
-    on_progress: Callable[[str, float | None], None] | None = None,
+    on_progress: Callable[[str, float | None, str], None] | None = None,
 ) -> GenerationOutcome:
     """Núcleo reutilizável (Etapa 9.3): download -> processamento -> storage -> complete/fail,
     para uma Generation JÁ RESERVADA (`generation_id`). Não reserva nada, não conhece usuário nem
@@ -196,14 +200,18 @@ def _execute_reserved(
         try:
             if on_progress is not None:
                 # Sem percentual real disponível nesta fase (yt-dlp com noprogress=True) — a UI
-                # deve tratar isto como estado indeterminado, nunca um número fingido.
-                on_progress("download", None)
+                # deve tratar isto como estado indeterminado, nunca um número fingido. `platform`
+                # (já conhecida nesta altura, linha acima) é repassada para quem monta a mensagem
+                # poder diferenciar o YouTube (via proxy residencial, bem mais lento que as demais
+                # plataformas -- ver YtDlpDownloader._apply_youtube_proxy) sem adivinhar a origem
+                # pela URL de novo.
+                on_progress("download", None, platform.value)
             download_result = download_video(validated.url)
             download_path = download_result.temp_path
 
             def _on_processing_progress(percent: float | None) -> None:
                 if on_progress is not None:
-                    on_progress("processing", percent)
+                    on_progress("processing", percent, platform.value)
 
             processing_result = process_video(download_result.temp_path, on_progress=_on_processing_progress)
             output_path = processing_result.output_path
@@ -296,7 +304,7 @@ def run_batch(
     db: Session,
     *,
     items: list[tuple[int, str]],
-    on_item_progress: Callable[[int, int, str, float | None], None] | None = None,
+    on_item_progress: Callable[[int, int, str, float | None, str], None] | None = None,
 ) -> list[BatchItemOutcome]:
     """Processa, SEQUENCIALMENTE (download/FFmpeg são pesados; nenhum paralelismo aqui, mesma
     postura de download/processor), cada item `(generation_id, url)` de um lote JÁ RESERVADO por
@@ -341,9 +349,12 @@ def run_batch(
                 resultados.append(BatchItemOutcome(position, generation_id, False, None, generation.error_code))
             continue
 
-        def _progress(stage: str, percent: float | None, _position=position, _gid=generation_id) -> None:
+        def _progress(
+            stage: str, percent: float | None, platform: str,
+            _position=position, _gid=generation_id,
+        ) -> None:
             if on_item_progress is not None:
-                on_item_progress(_position, _gid, stage, percent)
+                on_item_progress(_position, _gid, stage, percent, platform)
 
         try:
             outcome = _execute_reserved(db, generation_id=generation_id, url=url, on_progress=_progress)

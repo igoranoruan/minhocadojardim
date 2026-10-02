@@ -184,7 +184,7 @@ def test_on_item_progress_recebe_posicao_e_generation_id_corretos(factory, sessi
     items = list(zip(reservation.generation_ids, ["https://www.tiktok.com/@a/1", "https://www.tiktok.com/@a/2"]))
     chamadas = []
 
-    def on_progress(position, generation_id, stage, percent):
+    def on_progress(position, generation_id, stage, percent, platform):
         chamadas.append((position, generation_id, stage))
 
     with patch("services.generation_flow.download_video", side_effect=[fake_download_result(d) for d, _ in pares_arquivo]), \

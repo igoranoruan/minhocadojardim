@@ -231,8 +231,19 @@ def _run_generation_in_background(
     try:
         user = session.get(User, user_id)
 
-        def on_progress(stage: str, percent: float | None) -> None:
-            mensagem = "Baixando seu vídeo..." if stage == "download" else "Processando e limpando seu vídeo..."
+        def on_progress(stage: str, percent: float | None, platform: str) -> None:
+            # YouTube passa pelo proxy residencial (ver YtDlpDownloader._apply_youtube_proxy) --
+            # bem mais lento que as outras plataformas (download todo observado em produção em
+            # ~90-130s, contra poucos segundos nas demais). Sem um aviso específico, o usuário via
+            # só "Baixando seu vídeo..." parado por mais de um minuto e achava que tinha travado
+            # (relato real do Igor em 02/10/2026) -- esta mensagem só existe para gerenciar essa
+            # expectativa; não muda a duração real do download.
+            if stage == "download" and platform == "youtube":
+                mensagem = "Baixando do YouTube... pode levar até 2 minutos, aguarde."
+            elif stage == "download":
+                mensagem = "Baixando seu vídeo..."
+            else:
+                mensagem = "Processando e limpando seu vídeo..."
             tipo_evento = "progress" if stage == "processing" else "status"
             event_queue.put((tipo_evento, {"stage": stage, "percent": percent, "message": mensagem}))
 
@@ -325,8 +336,16 @@ def _run_batch_in_background(
 
         pares = list(zip(reservation.generation_ids, (item["url"] for item in items), strict=True))
 
-        def on_item_progress(position: int, generation_id: int, stage: str, percent: float | None) -> None:
-            mensagem = "Baixando..." if stage == "download" else "Processando e limpando..."
+        def on_item_progress(
+            position: int, generation_id: int, stage: str, percent: float | None, platform: str,
+        ) -> None:
+            # Mesmo aviso específico do YouTube da geração avulsa, acima -- ver aquele comentário.
+            if stage == "download" and platform == "youtube":
+                mensagem = "Baixando do YouTube... pode levar até 2 minutos, aguarde."
+            elif stage == "download":
+                mensagem = "Baixando..."
+            else:
+                mensagem = "Processando e limpando..."
             tipo_evento = "item_progress" if stage == "processing" else "item_status"
             event_queue.put((tipo_evento, {
                 "position": position, "generation_id": generation_id,
