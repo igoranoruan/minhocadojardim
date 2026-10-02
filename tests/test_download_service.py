@@ -163,7 +163,7 @@ def test_excecao_inesperada_vira_downloadfailederror_generico(registry, monkeypa
     assert "segredo123" not in capturado.value.user_message
 
 
-# ------------------------------------------------------------------ pin.it (Pinterest): resolução do link curto
+# ------------------------------------------------------------------ links curtos (pin.it, vm/vt.tiktok.com)
 def _validated(url: str) -> ValidatedUrl:
     return ValidatedUrl(url=url, scheme="https", host=url.split("/")[2], port=443, resolved_ips=("93.184.216.34",))
 
@@ -187,13 +187,43 @@ def test_pinterest_com_direto_nao_chama_resolve_redirect_chain(registry, monkeyp
     assert registry[Platform.PINTEREST].calls == ["https://pinterest.com/pin/123456789/"]
 
 
-def test_outras_plataformas_nao_chamam_resolve_redirect_chain(registry, monkeypatch):
-    """A resolução de link curto é exclusiva do pin.it -- TikTok/Instagram/YouTube não usam."""
+def test_urls_ja_longas_nao_chamam_resolve_redirect_chain(registry, monkeypatch):
+    """URLs que já chegam no formato longo (inclusive tiktok.com/www.tiktok.com direto, diferente
+    de vm.tiktok.com/vt.tiktok.com abaixo) não passam pela resolução de link curto -- só os hosts
+    em _SHORT_LINK_HOSTS (pin.it, vm.tiktok.com, vt.tiktok.com) usam."""
     _sem_ssrf(monkeypatch)
     for url in ("https://www.tiktok.com/@a/video/1", "https://instagram.com/reel/abc/", "https://youtu.be/abc123"):
         with patch("download.service.resolve_redirect_chain") as mock_resolve:
             download_video(url)
         mock_resolve.assert_not_called()
+
+
+@pytest.mark.parametrize("host_curto", ["vm.tiktok.com", "vt.tiktok.com"])
+def test_tiktok_link_curto_chama_resolve_redirect_chain_e_envia_a_url_longa_ao_downloader(
+    registry, monkeypatch, host_curto
+):
+    """CAUSA RAIZ CONFIRMADA EM PRODUÇÃO (02/10/2026): vt.tiktok.com (link curto gerado pelo botão
+    "Compartilhar" do app) devolvia "No suitable extractor found for URL" do yt-dlp, mesmo com o
+    host já reconhecido como TikTok em download/platform.py -- o extractor "TikTok" só reconhece a
+    URL longa (tiktok.com/@usuario/video/...), igual ao pin.it do Pinterest. Mesma correção."""
+    _sem_ssrf(monkeypatch)
+    url_longa = "https://www.tiktok.com/@usuario/video/7659614093048909064"
+    with patch("download.service.resolve_redirect_chain", return_value=_validated(url_longa)) as mock_resolve:
+        resultado = download_video(f"https://{host_curto}/ZSb5f7NnW/")
+
+    mock_resolve.assert_called_once_with(f"https://{host_curto}/ZSb5f7NnW/")
+    assert resultado.platform is Platform.TIKTOK
+    assert registry[Platform.TIKTOK].calls == [url_longa]  # o downloader recebeu a URL LONGA, não a curta
+
+
+def test_tiktok_link_curto_redirecionando_para_ip_privado_continua_bloqueado(registry, monkeypatch):
+    """Mesma garantia SSRF do pin.it (teste abaixo) -- resolve_redirect_chain já é SSRF-safe, o
+    downloader nunca chega a ser chamado se o redirecionamento apontar para IP privado."""
+    _sem_ssrf(monkeypatch)
+    with patch("download.service.resolve_redirect_chain", side_effect=SsrfBlockedError("host resolve para IP privado")):
+        with pytest.raises(SsrfBlockedError):
+            download_video("https://vt.tiktok.com/malicioso/")
+    assert registry[Platform.TIKTOK].calls == []
 
 
 def test_allowed_extractors_do_pinterest_continua_sem_generic():

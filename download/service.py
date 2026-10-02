@@ -190,6 +190,13 @@ _DOWNLOADERS: dict[Platform, PlatformDownloader] = {
     platform: YtDlpDownloader(spec) for platform, spec in _SPECS.items()
 }
 
+# Domínios de link curto que precisam ser resolvidos ANTES de chegar ao yt-dlp -- ver o comentário
+# dentro de download_video, abaixo, para a causa raiz completa.
+_SHORT_LINK_HOSTS: dict[Platform, frozenset[str]] = {
+    Platform.PINTEREST: frozenset({"pin.it"}),
+    Platform.TIKTOK: frozenset({"vm.tiktok.com", "vt.tiktok.com"}),
+}
+
 
 def download_video(url: str) -> DownloadResult:
     """Baixa e valida um vídeo. Levanta DownloadError (ou subclasse) em qualquer falha; nesse
@@ -197,14 +204,19 @@ def download_video(url: str) -> DownloadResult:
     validated = validate_url(url)
     platform = detect_platform(validated.url)
 
-    # pin.it (Pinterest) é um link curto: o extractor "Pinterest" do yt-dlp só reconhece a URL
-    # longa (pinterest.com/pin/...) -- é o extractor genérico do yt-dlp quem resolveria o
+    # Encurtadores: pin.it (Pinterest) e vm.tiktok.com/vt.tiktok.com (TikTok) são links curtos cujo
+    # extractor oficial do yt-dlp só reconhece a URL LONGA (pinterest.com/pin/... ou
+    # tiktok.com/@usuario/video/...) -- é o extractor genérico do yt-dlp quem resolveria o
     # redirecionamento sozinho, e esse extractor está deliberadamente fora de allowed_extractors
-    # (ver download/ytdlp_downloader.py). Por isso resolvemos o link curto NÓS MESMOS, com a mesma
-    # função já usada para isso em outras etapas (resolve_redirect_chain: nunca segue automático,
-    # revalida cada salto contra IP privado/SSRF, só HEAD, limite de saltos) — sem nunca abrir
-    # allowed_extractors. URLs pinterest.com diretas não passam por aqui.
-    if platform is Platform.PINTEREST and (urlsplit(validated.url).hostname or "").lower() == "pin.it":
+    # (ver download/ytdlp_downloader.py). vt.tiktok.com confirmado em produção (02/10/2026): yt-dlp
+    # devolvia "No suitable extractor found for URL" direto, mesmo com o host já reconhecido como
+    # TikTok em download/platform.py -- mesma causa raiz do pin.it, resolvida da mesma forma. Por
+    # isso resolvemos o link curto NÓS MESMOS, com a mesma função já usada para isso (
+    # resolve_redirect_chain: nunca segue automático, revalida cada salto contra IP privado/SSRF,
+    # só HEAD, limite de saltos) — sem nunca abrir allowed_extractors. URLs já longas (pinterest.com
+    # ou tiktok.com diretas) não passam por aqui.
+    host = (urlsplit(validated.url).hostname or "").lower()
+    if host in _SHORT_LINK_HOSTS.get(platform, frozenset()):
         validated = resolve_redirect_chain(validated.url)
 
     downloader = _DOWNLOADERS[platform]
