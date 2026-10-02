@@ -243,7 +243,12 @@
                 </div>
             </section>
 
-            <!-- MEU ACESSO -->
+            <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
+                 Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
+                 está no VIP Batch. Markup já existia desde antes, nunca tinha sido ligada ao JS;
+                 só adicionado o bloco de upgrade -- nada removido. Preço nunca aparece aqui
+                 hardcoded: o botão só abre o mesmo abrirModalPagamento(plano) que já busca o
+                 preço real no servidor. -->
             <section id="areaAssinatura" class="hidden py-8">
                 <div class="bg-card rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
@@ -251,6 +256,7 @@
                         <div id="assinaturaPlano" class="text-base font-bold text-white">—</div>
                         <div id="assinaturaStatus" class="text-sm text-slate-400 mt-1">—</div>
                     </div>
+                    <div id="assinaturaUpgrade" class="hidden flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto"></div>
                 </div>
             </section>
 
@@ -502,6 +508,11 @@
         }
     };
 
+    // Ordem de upgrade dos planos pagos (02/10/2026) -- usada só para decidir quais botões de
+    // upgrade mostrar em "Meu acesso" (ver atualizarVisibilidadeSecaoPlanos); não tem relação com
+    // cota, preço nem nenhuma regra de negócio, que continuam só no backend.
+    const ORDEM_PLANOS_PAGOS = ["weekly", "monthly", "vip_batch"];
+
     // Teto de vídeos por OPERAÇÃO de lote, por plano -- SÓ para a experiência do formulário
     // (quantos campos mostrar, quando desabilitar "Adicionar vídeo", mensagem de erro amigável
     // antes de chamar o servidor). Espelha services/plans.py::Plan.max_batch_size (Free=0 --
@@ -605,6 +616,9 @@
         setStatusConta("Pronto para processar");
         limparStatusContaValidade();
         esconderBatch();
+        // Sem sessão: nunca mostrar "Meu acesso" de um plano que não é mais confirmado -- volta a
+        // mostrar a vitrine de Planos normalmente (mesmo comportamento de um visitante Free).
+        atualizarVisibilidadeSecaoPlanos("free");
     }
 
     // ---- Status real da conta (UX-2): GET /api/me/status -- só apresenta o que o backend já
@@ -623,6 +637,46 @@
         if (period === "week") return "esta semana";
         if (period === "day") return "hoje";
         return ""; // período desconhecido: não inventa uma regra nova, só omite a palavra.
+    }
+
+    // Esconde a vitrine completa de Planos (3 cartões) pra quem já tem um plano pago ativo --
+    // mostra só o resumo "Meu acesso" + um botão de upgrade pra cada plano ACIMA do atual (pedido
+    // do Igor, 02/10/2026). "free" continua vendo a vitrine normalmente. Reaproveita
+    // abrirModalPagamento (o preço real continua vindo só do servidor, nunca hardcoded aqui).
+    function atualizarVisibilidadeSecaoPlanos(planoCode) {
+        const secaoPlanos = document.getElementById("secaoPlanos");
+        const areaAssinatura = document.getElementById("areaAssinatura");
+        const assinaturaPlano = document.getElementById("assinaturaPlano");
+        const assinaturaUpgrade = document.getElementById("assinaturaUpgrade");
+        if (!secaoPlanos || !areaAssinatura || !assinaturaPlano || !assinaturaUpgrade) return;
+
+        if (planoCode === "free" || !PLANOS[planoCode]) {
+            secaoPlanos.classList.remove("hidden");
+            areaAssinatura.classList.add("hidden");
+            return;
+        }
+
+        secaoPlanos.classList.add("hidden");
+        areaAssinatura.classList.remove("hidden");
+        assinaturaPlano.textContent = `Plano ${PLANOS[planoCode].nome}`;
+
+        const indiceAtual = ORDEM_PLANOS_PAGOS.indexOf(planoCode);
+        const upgrades = indiceAtual === -1 ? [] : ORDEM_PLANOS_PAGOS.slice(indiceAtual + 1);
+
+        assinaturaUpgrade.innerHTML = "";
+        if (upgrades.length === 0) {
+            assinaturaUpgrade.classList.add("hidden");
+            return;
+        }
+        assinaturaUpgrade.classList.remove("hidden");
+        upgrades.forEach((codigo) => {
+            const botao = document.createElement("button");
+            botao.type = "button";
+            botao.className = "h-10 px-5 rounded-xl border border-emerald-500/60 text-emerald-400 hover:bg-emerald-950/40 font-bold text-xs transition-colors whitespace-nowrap";
+            botao.textContent = `Fazer upgrade para ${PLANOS[codigo].nome}`;
+            botao.onclick = () => abrirModalPagamento(codigo);
+            assinaturaUpgrade.appendChild(botao);
+        });
     }
 
     function atualizarStatusContaVisual(data) {
@@ -647,6 +701,8 @@
         } else {
             setStatusConta(texto);
         }
+
+        atualizarVisibilidadeSecaoPlanos(plano.code);
 
         const validadeEl = document.getElementById("statusContaValidade");
         if (validadeEl) {
