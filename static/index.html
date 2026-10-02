@@ -206,9 +206,14 @@
                     <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">PLANOS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Escolha o acesso que faz sentido para você.</h2>
                     <p class="text-sm text-slate-400 mt-3">Comece simples e escolha o plano conforme o volume de conteúdo que você processa.</p>
-                    <!-- 02/10/2026: antes a seção de Planos não dizia em lugar nenhum o que o Free
-                         já oferece de graça -- quem caía direto aqui não tinha como comparar. -->
-                    <p class="text-xs text-slate-500 mt-3">Grátis: 5 gerações por semana, sem downloads em lote. Os planos abaixo aumentam esse limite e liberam o processamento em lote.</p>
+
+                    <!-- 02/10/2026 (2ª rodada): a frase corrida sobre o Free virou uma caixinha
+                         própria, no mesmo estilo visual dos cards de plano pago, pedido do Igor. -->
+                    <div class="max-w-[220px] mx-auto mt-6 bg-card rounded-2xl p-5">
+                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Free</div>
+                        <div class="mt-2 text-sm text-slate-300">5 gerações por semana</div>
+                        <div class="text-[11px] text-slate-500">(sem downloads em lote)</div>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10 items-stretch">
@@ -219,6 +224,8 @@
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>5 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 5 vídeos, 3/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nomes personalizados por vídeo</li>
                         </ul>
                         <button onclick="abrirModalPagamento('weekly')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Acesso semanal</button>
                     </div>
@@ -231,6 +238,8 @@
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 5 vídeos, 5/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nomes personalizados por vídeo</li>
                         </ul>
                         <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Acesso mensal</button>
                     </div>
@@ -243,15 +252,18 @@
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>15 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 15 vídeos, sem limite semanal</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Limpeza de metadados e hash</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-amber-400 mt-0.5"></i>Nomes personalizados por vídeo</li>
                         </ul>
                         <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm transition-colors">Acesso VIP Batch</button>
                     </div>
                 </div>
-                <!-- 02/10/2026: "Limpeza de metadados" e "Processamento de vídeo" eram bullets
-                     IDÊNTICOS nos 3 cards (são a mesma funcionalidade-base, válida em qualquer
-                     plano) -- só inflavam a lista sem ajudar a comparar. Viraram uma linha só,
-                     comum aos três, abaixo da grade. -->
-                <p class="text-center text-xs text-slate-500 mt-6"><i class="fa-solid fa-check text-[#19D3AE] mr-1.5"></i>Todos os planos incluem limpeza de metadados e processamento de vídeo.</p>
+                <!-- 02/10/2026 (2ª rodada): a linha única "Todos os planos incluem..." (1ª rodada)
+                     voltou a virar bullet DENTRO de cada card -- pedido do Igor, os cards estavam
+                     "muito básicos" com só 2 bullets. Cada card ganhou "Limpeza de metadados e
+                     hash" (renomeado de "processamento de vídeo" pro termo real que o produto usa)
+                     e "Nomes personalizados por vídeo" (feature real do lote, já existente --
+                     ver campo .batch-name / placeholder "Nome do arquivo (opcional)"). -->
             </section>
 
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
