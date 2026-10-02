@@ -36,6 +36,7 @@ import re
 import shutil
 import tempfile
 import threading
+import uuid
 import zipfile
 from collections.abc import Iterator
 from pathlib import Path
@@ -481,15 +482,27 @@ def download_batch(
 
     Nome de cada entrada (Etapa 9.3, correção de filename): `generation.display_filename` quando
     presente (sanitizado na criação do lote, já com `.mp4` garantido -- ver
-    services/batch_filenames.py), senão o padrão fixo já existente (`minhoca-{generation_id}.mp4`).
-    Nomes duplicados são PERMITIDOS na criação do lote (services.batch_filenames não deduplica --
+    services/batch_filenames.py), senão o padrão `klango-{8 chars aleatórios}.mp4` (02/10/2026 --
+    pedido do Igor: o padrão antigo, `minhoca-{generation_id}.mp4`, usava o ID sequencial do banco,
+    o que (a) expunha o VOLUME de gerações do site -- um nome como "minhoca-812.mp4" denuncia que já
+    rolaram 800+ gerações -- e (b) ainda carregava a marca antiga "minhoca" em vez de "klango". Os 8
+    caracteres vêm de `output_storage_key` (já um uuid4().hex gerado em result_storage.save() para
+    CADA geração -- nunca reaproveitado entre gerações diferentes), só truncado para um nome mais
+    curto; nunca é gerado um valor novo aqui, então o nome do mesmo arquivo é sempre igual em
+    downloads repetidos). Nomes duplicados são PERMITIDOS na criação do lote (services.batch_filenames não deduplica --
     contrato existente, preservado por esta correção); é aqui, na montagem do ZIP, que a
     deduplicação acontece de fato: `_unique_zip_name` (abaixo) garante que duas entradas com o
     MESMO nome nunca se sobrescrevam, gerando um nome único (`video.mp4` -> `video-2.mp4`)."""
     disponiveis = get_downloadable_batch_generations(db, batch_id, user.id)
 
+    # Nome do ZIP em si (visível ao usuário no download): mesmo motivo do klango-{...}.mp4 acima --
+    # "klango-lote-{batch_id}.zip" ainda exporia o ID sequencial do lote (volume de lotes já
+    # criados). O token é gerado aqui mesmo (nunca persistido -- o ZIP não tem identidade própria
+    # no banco, só existe no disco durante este download), então não precisa ser estável entre
+    # downloads repetidos do mesmo lote.
+    token = uuid.uuid4().hex[:8]
     tmp_dir = Path(tempfile.mkdtemp(prefix="minhoca-batch-zip-"))
-    zip_path = tmp_dir / f"minhoca-lote-{batch_id}.zip"
+    zip_path = tmp_dir / f"klango-lote-{token}.zip"
     nomes_usados: set[str] = set()
     try:
         with zipfile.ZipFile(zip_path, mode="w") as zip_file:
@@ -499,7 +512,7 @@ def download_batch(
                 # chave/caminho de _KEY_RE, nunca um caminho vindo do usuário); o NOME da entrada é
                 # que pode vir do usuário (display_filename, já sanitizado) -- nunca usado como
                 # caminho, só como arcname de um arquivo plano (sem "/", garantido na sanitização).
-                nome_base = generation.display_filename or f"minhoca-{generation.id}.mp4"
+                nome_base = generation.display_filename or f"klango-{generation.output_storage_key[:8]}.mp4"
                 zip_file.write(origem, arcname=_unique_zip_name(nome_base, nomes_usados))
     except Exception:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -507,7 +520,7 @@ def download_batch(
     return FileResponse(
         zip_path,
         media_type="application/zip",
-        filename=f"minhoca-lote-{batch_id}.zip",
+        filename=f"klango-lote-{token}.zip",
         headers=NO_STORE,
         background=BackgroundTask(shutil.rmtree, tmp_dir, ignore_errors=True),
     )
@@ -537,16 +550,17 @@ def download_generation(
     `authenticated_user_id`).
 
     Nome do arquivo (Etapa 9.3, correção de filename): `generation.display_filename` quando
-    presente (sanitizado na criação do lote, já com `.mp4` garantido), senão o padrão fixo de
-    sempre (`minhoca-{generation_id}.mp4`) -- geração avulsa nunca tem display_filename, então o
-    comportamento dela é IDÊNTICO ao de antes desta correção."""
+    presente (sanitizado na criação do lote, já com `.mp4` garantido), senão o padrão
+    `klango-{8 chars aleatórios}.mp4` (02/10/2026 -- mesmo padrão e mesmo motivo do fallback usado
+    no ZIP de lote, ver download_batch acima) -- geração avulsa nunca tem display_filename, então
+    ela sempre cai neste fallback."""
     generation = get_downloadable_generation(
         db, generation_id, user.id, authenticated_user_id=authenticated.id if authenticated else None,
     )
     if not result_storage.exists(generation.output_storage_key):
         raise GenerationDownloadNotFoundError()
     caminho = result_storage.resolve_path(generation.output_storage_key)
-    nome_arquivo = generation.display_filename or f"minhoca-{generation_id}.mp4"
+    nome_arquivo = generation.display_filename or f"klango-{generation.output_storage_key[:8]}.mp4"
     return FileResponse(
         caminho,
         media_type="video/mp4",

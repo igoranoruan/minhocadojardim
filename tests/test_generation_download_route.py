@@ -50,11 +50,13 @@ def test_sucesso_devolve_o_arquivo_com_os_headers_certos(auth_client, factory, s
     assert resposta.status_code == 200
     assert resposta.content == b"conteudo exato do mp4"
     assert resposta.headers["content-type"] == "video/mp4"
-    assert resposta.headers["content-disposition"] == f'attachment; filename="minhoca-{geracao.id}.mp4"'
+    assert resposta.headers["content-disposition"] == f'attachment; filename="klango-{chave[:8]}.mp4"'
     assert resposta.headers["cache-control"] == "no-store"
 
 
-def test_nome_do_arquivo_e_sempre_minhoca_id_nunca_o_original(auth_client, factory, session):
+def test_nome_do_arquivo_e_sempre_klango_storage_key_nunca_o_original(auth_client, factory, session):
+    """Fallback (02/10/2026, pedido do Igor): klango-{8 chars de output_storage_key}.mp4 -- nunca
+    o ID sequencial da geração (expunha volume de gerações do site) nem o nome do arquivo em disco."""
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
     chave = _salvar_resultado_real()
@@ -63,8 +65,9 @@ def test_nome_do_arquivo_e_sempre_minhoca_id_nunca_o_original(auth_client, facto
         output_storage_key=chave, output_expires_at=utcnow() + timedelta(minutes=10),
     )
     resposta = auth_client.get(_url(geracao.id))
-    assert f"minhoca-{geracao.id}.mp4" in resposta.headers["content-disposition"]
+    assert f"klango-{chave[:8]}.mp4" in resposta.headers["content-disposition"]
     assert "saida.mp4" not in resposta.headers["content-disposition"]  # nunca o nome do arquivo em disco
+    assert f"minhoca-{geracao.id}" not in resposta.headers["content-disposition"]  # nunca o padrão antigo
 
 
 # ============================================================================ autenticação / Free anônimo

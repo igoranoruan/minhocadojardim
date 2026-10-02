@@ -398,7 +398,9 @@ def test_download_individual_usa_fallback_quando_display_filename_e_none(auth_cl
     item = next(d for t, d in _eventos(resposta) if t == "item_complete")
 
     download = auth_client.get(f"/api/generations/{item['generation_id']}/download")
-    assert download.headers["content-disposition"] == f'attachment; filename="minhoca-{item["generation_id"]}.mp4"'
+    session.expire_all()
+    geracao = session.get(Generation, item["generation_id"])
+    assert download.headers["content-disposition"] == f'attachment; filename="klango-{geracao.output_storage_key[:8]}.mp4"'
 
 
 def test_geracao_individual_avulsa_continua_sem_display_filename_e_com_o_padrao_de_sempre(auth_client, factory, session, tmp_path):
@@ -417,9 +419,10 @@ def test_geracao_individual_avulsa_continua_sem_display_filename_e_com_o_padrao_
     corpo = next(d for t, d in _eventos(resposta) if t == "complete")
 
     session.expire_all()
-    assert session.get(Generation, corpo["generation_id"]).display_filename is None
+    geracao = session.get(Generation, corpo["generation_id"])
+    assert geracao.display_filename is None
     download = auth_client.get(f"/api/generations/{corpo['generation_id']}/download")
-    assert download.headers["content-disposition"] == f'attachment; filename="minhoca-{corpo["generation_id"]}.mp4"'
+    assert download.headers["content-disposition"] == f'attachment; filename="klango-{geracao.output_storage_key[:8]}.mp4"'
 
 
 def test_zip_usa_display_filename(auth_client, factory, session, tmp_path):

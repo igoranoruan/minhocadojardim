@@ -86,8 +86,9 @@ class Generation(Base):
     output_storage_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
     # Nome de EXIBIÇÃO opcional (Etapa 9.3, correção de filename de lote) -- só o que é
     # apresentado/entregue ao usuário (Content-Disposition do download, nome no ZIP). NULL para
-    # toda geração avulsa e para item de lote sem filename informado (mantém o padrão fixo
-    # minhoca-{id}.mp4). Nunca é o identificador técnico da geração nem a storage_key.
+    # toda geração avulsa e para item de lote sem filename informado (mantém o padrão
+    # klango-{8 chars de output_storage_key}.mp4, 02/10/2026). Nunca é o identificador técnico da
+    # geração nem a própria storage_key completa.
     display_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
