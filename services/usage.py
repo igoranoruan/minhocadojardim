@@ -7,7 +7,9 @@ O ledger `generations` é a ÚNICA fonte do consumo (não existe contador). Regr
   diário é COMPARTILHADO entre acessos empilhados no mesmo dia.
 - Free e pago são isolados: o uso pago não gasta o saldo Free da semana e vice-versa.
 - Contam para a cota: `completed` sempre; `reserved` (até GENERATION_RESERVATION_TTL_SECONDS).
-  `failed` não conta. Uma reservada antiga (processamento que caiu) deixa de contar.
+  `failed` não conta. Uma reservada antiga (processamento que caiu) deixa de contar -- e também é
+  marcada `failed` de verdade no banco (não só ignorada no cálculo), de forma oportunista, a cada
+  nova reserva de QUALQUER usuário (ver fail_stale_reservations/_sweep_stale_reservations_best_effort).
 - Sem acesso vigente => Free. Com sobreposição de acessos => erro (nunca se cai no Free em silêncio).
 
 Concorrência: reservar = lock do usuário (services/locks.py) + contar + inserir + commit, tudo numa
@@ -324,6 +326,7 @@ def reserve_generation(
     então nenhuma rota de download precisa mudar."""
     request_id = _validate_request_id(request_id)
     now = resolve_now(now)
+    _sweep_stale_reservations_best_effort(db, now)
     try:
         lock_user_row(db, user_id)  # 1ª instrução: serializa as reservas deste usuário
 
@@ -475,6 +478,7 @@ def reserve_batch(
     if display_filenames is not None and len(display_filenames) != size:
         raise InvalidBatchSizeError("display_filenames deve ter exatamente `size` posições.")
     now = resolve_now(now)
+    _sweep_stale_reservations_best_effort(db, now)
     try:
         lock_user_row(db, user_id)
 
@@ -701,7 +705,13 @@ def get_downloadable_batch_generations(
 def fail_stale_reservations(db: Session, now: datetime | None = None) -> int:
     """Marca como failed as reservas mais velhas que o TTL (orfãs de um processamento que caiu).
     Devolve quantas foram marcadas.
-    Ainda não é chamada por nada: a etapa de processamento decide quando."""
+
+    Chamada (02/10/2026) por _sweep_stale_reservations_best_effort, logo abaixo -- antes disso
+    existia mas nunca era chamada por nada: uma reserva órfã nunca bloqueava ninguém de verdade
+    (_compute_allowance já ignora sozinho "reserved" mais velho que o TTL ao calcular a cota),
+    mas a linha ficava "reserved" no banco pra sempre, mesmo claramente morta. Nenhum projeto tem
+    fila/cron aqui (decisão de arquitetura, sem Redis/Celery) -- por isso a limpeza é oportunista,
+    não agendada."""
     now = resolve_now(now)
     stale_before = now - timedelta(seconds=GENERATION_RESERVATION_TTL_SECONDS)
     try:
@@ -715,3 +725,22 @@ def fail_stale_reservations(db: Session, now: datetime | None = None) -> int:
     except Exception:
         db.rollback()
         raise
+
+
+def _sweep_stale_reservations_best_effort(db: Session, now: datetime) -> None:
+    """Roda fail_stale_reservations no início de TODA reserva nova (avulsa ou lote, ver as duas
+    chamadas abaixo) -- sem fila/cron no projeto, "a cada nova reserva de qualquer usuário" é o
+    gatilho mais simples que garante que a varredura acontece com alguma regularidade, sem inventar
+    infraestrutura nova. Roda ANTES de lock_user_row: é uma varredura GLOBAL (todos os usuários),
+    não específica de quem está reservando agora, então não precisa do lock desse usuário.
+
+    Nunca bloqueia a reserva em andamento: a pessoa que está reservando agora não tem nada a ver
+    com uma reserva órfã de outra pessoa (ou de outra requisição sua, de antes de uma queda do
+    servidor) -- uma falha aqui só é logada, nunca propagada."""
+    try:
+        marcadas = fail_stale_reservations(db, now)
+        if marcadas:
+            logger.info("[USAGE] %s reserva(s) órfã(s) marcada(s) como failed (TTL expirado)", marcadas)
+    except Exception:
+        db.rollback()
+        logger.warning("[USAGE] falha ao varrer reservas órfãs (não bloqueia a reserva atual)", exc_info=True)

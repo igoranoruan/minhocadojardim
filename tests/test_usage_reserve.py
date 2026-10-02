@@ -240,16 +240,37 @@ def test_can_consume_acompanha_as_reservas(factory, session):
 
 # ============================================================================ reservas órfãs
 def test_fail_stale_reservations_marca_so_as_antigas(factory, session):
+    """Linhas criadas direto pela factory (nunca via reserve_generation/_reservar): desde que
+    reserve_generation passou a varrer reservas órfãs sozinha no início de cada nova reserva
+    (_sweep_stale_reservations_best_effort, 02/10/2026), usar _reservar aqui para montar o cenário
+    marcaria a "velha" como failed ANTES da chamada explícita de fail_stale_reservations abaixo
+    que este teste quer exercitar isoladamente -- por isso o setup evita reserve_generation."""
     usuario = factory.user()
-    velha = _reservar(session, usuario, "velha", now=NOW.replace(hour=9))
-    recente = _reservar(session, usuario, "recente", now=NOW)
-    concluida_velha = _reservar(session, usuario, "concluida", now=NOW.replace(hour=9))
-    complete_generation(session, concluida_velha.generation_id, now=NOW.replace(hour=9))
+    velha = factory.generation(usuario, request_id="velha", status="reserved", created_at=NOW.replace(hour=9))
+    recente = factory.generation(usuario, request_id="recente", status="reserved", created_at=NOW)
+    concluida_velha = factory.generation(
+        usuario, request_id="concluida", status="completed", created_at=NOW.replace(hour=9),
+    )
     assert (NOW - NOW.replace(hour=9)).total_seconds() > GENERATION_RESERVATION_TTL_SECONDS
 
     assert fail_stale_reservations(session, now=NOW) == 1
     estados = {l.id: (l.status, l.error_code) for l in _linhas(session)}
-    assert estados[velha.generation_id] == ("failed", "reservation_expired")
-    assert estados[recente.generation_id][0] == "reserved"
-    assert estados[concluida_velha.generation_id][0] == "completed"
+    assert estados[velha.id] == ("failed", "reservation_expired")
+    assert estados[recente.id][0] == "reserved"
+    assert estados[concluida_velha.id][0] == "completed"
     assert fail_stale_reservations(session, now=NOW) == 0  # repetir não faz nada
+
+
+def test_reserve_generation_varre_reservas_orfas_de_outro_usuario_sozinha(factory, session):
+    """Comportamento NOVO (02/10/2026): toda chamada de reserve_generation varre (best-effort,
+    nunca bloqueia) reservas órfãs de QUALQUER usuário -- antes disso fail_stale_reservations
+    existia mas não era chamada por nada, e uma reserva órfã ficava "reserved" no banco para
+    sempre (sem efeito funcional -- _compute_allowance já ignora reserved velho -- mas sujo)."""
+    dono_da_orfa = factory.user()
+    orfa = factory.generation(dono_da_orfa, request_id="orfa", status="reserved", created_at=NOW.replace(hour=9))
+
+    outro_usuario = factory.user()
+    _reservar(session, outro_usuario, "nova")  # reserva de OUTRO usuário, no now=NOW padrão
+
+    session.expire_all()
+    assert session.get(Generation, orfa.id).status == "failed"
