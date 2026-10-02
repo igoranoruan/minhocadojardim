@@ -516,6 +516,7 @@
     let mpInstancia = null;        // instância de MercadoPago(publicKey) -- criada uma única vez
     let mpPublicKeyCarregada = null;
     let brickAtual = null;         // controller devolvido por mp.bricks().create(...) -- para poder unmount()
+    let pixPollingInterval = null; // id do setInterval que verifica a confirmação do PIX (ver iniciarPollingConfirmacaoPix)
 
     document.addEventListener("DOMContentLoaded", () => {
         inicializarBatch();
@@ -1059,6 +1060,7 @@
                     document.getElementById("paymentBrickContainer").innerHTML =
                         `<div class="bg-white rounded-xl p-3 flex items-center justify-center mb-3"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg"></div>` +
                         `<input type="text" readonly value="${data.qr_code || ""}" class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 rounded-xl text-slate-300 text-center focus:outline-none select-all">`;
+                    iniciarPollingConfirmacaoPix();
                 }
                 mostrarStatusPagamento("Aguardando confirmação do pagamento...", "normal");
             } else {
@@ -1074,6 +1076,7 @@
     }
 
     function fecharModalPagamento() {
+        pararPollingConfirmacaoPix();
         document.getElementById("modalPagamento").classList.add("hidden");
         if (brickAtual) {
             try { brickAtual.unmount(); } catch (err) { console.warn(err); }
@@ -1081,6 +1084,49 @@
         }
         document.getElementById("paymentBrickContainer").innerHTML = "";
         paymentAtual = null;
+    }
+
+    // Enquanto o QR Code do PIX estiver na tela, pergunta ao servidor a cada alguns segundos se o
+    // plano comprado já está ativo -- evita o usuário precisar dar F5 manualmente (pedido do Igor,
+    // 02/10/2026). Reaproveita GET /api/me/status e atualizarStatusContaVisual já existentes
+    // (mesma fonte de verdade de carregarStatusConta()); nenhum cálculo de pagamento é feito aqui.
+    // Para de verificar sozinho depois de alguns minutos -- se o pagamento ainda não confirmou
+    // nesse tempo, o F5 manual continua funcionando normalmente.
+    function pararPollingConfirmacaoPix() {
+        if (pixPollingInterval) {
+            clearInterval(pixPollingInterval);
+            pixPollingInterval = null;
+        }
+    }
+
+    function iniciarPollingConfirmacaoPix() {
+        pararPollingConfirmacaoPix(); // nunca duas verificações rodando ao mesmo tempo
+
+        const planoEsperado = paymentAtual ? paymentAtual.plan_code : null;
+        if (!planoEsperado) return;
+
+        const inicio = Date.now();
+        const DURACAO_MAXIMA_MS = 3 * 60 * 1000; // 3 minutos de verificação automática
+
+        pixPollingInterval = setInterval(async () => {
+            if (Date.now() - inicio > DURACAO_MAXIMA_MS) {
+                pararPollingConfirmacaoPix();
+                return;
+            }
+            try {
+                const res = await fetch("/api/me/status", { credentials: "same-origin" });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data && data.plan && data.plan.code === planoEsperado) {
+                    pararPollingConfirmacaoPix();
+                    atualizarStatusContaVisual(data);
+                    mostrarStatusPagamento("Pagamento confirmado! Acesso liberado.", "sucesso");
+                    setTimeout(() => fecharModalPagamento(), 1500);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }, 4000);
     }
 
     async function baixarVideo() {
