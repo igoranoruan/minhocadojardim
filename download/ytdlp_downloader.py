@@ -39,7 +39,7 @@ from yt_dlp.networking.impersonate import ImpersonateTarget
 
 from config import DOWNLOAD_CONNECT_TIMEOUT_SECONDS, MAX_VIDEO_SIZE_BYTES, get_settings
 from download.base import PlatformDownloader, RawDownload
-from download.errors import DownloadFailedError, DownloadTimeoutError, VideoTooLargeError
+from download.errors import DownloadFailedError, DownloadTimeoutError, NoVideoInPostError, VideoTooLargeError
 from download.platform import Platform
 
 logger = logging.getLogger("minhoca")
@@ -56,6 +56,15 @@ _REASON_KEYWORDS: tuple[tuple[str, str], ...] = (
     ("unsupported url", "URL não reconhecida pelo extractor"),
     ("timed out", "tempo de rede esgotado"),
     ("rate-limit", "limite de taxa da plataforma"),
+    # TikTok/Instagram/Pinterest sem vídeo (só imagem) -- mensagens REAIS confirmadas em produção
+    # (03/10/2026, ver download/errors.py::NoVideoInPostError): "No video formats found!" é a
+    # mensagem GENÉRICA do próprio núcleo do yt-dlp (quando o extractor devolve zero formats),
+    # confirmada no Pinterest e aplicável também ao TikTok (mesmo mecanismo interno); "There is no
+    # video in this post" é uma checagem PRÓPRIA do extractor do Instagram. As duas levam ao MESMO
+    # motivo aqui porque o tratamento é idêntico (ver _error_for_reason): tentar o fallback de
+    # imagem, nunca a 2ª tentativa com mweb (_should_retry_with_mweb não reconhece este motivo).
+    ("no video formats found", "post sem vídeo (conteúdo é imagem)"),
+    ("there is no video in this post", "post sem vídeo (conteúdo é imagem)"),
 )
 
 
@@ -198,6 +207,8 @@ class YtDlpDownloader(PlatformDownloader):
             return VideoTooLargeError(reason)
         if reason == "tempo de rede esgotado":
             return DownloadTimeoutError(reason)
+        if reason == "post sem vídeo (conteúdo é imagem)":
+            return NoVideoInPostError(reason)
         return DownloadFailedError(reason)
 
     def _cleanup_stub_files(self, dest_stub: Path) -> None:

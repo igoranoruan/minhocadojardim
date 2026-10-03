@@ -31,9 +31,11 @@ from download.errors import (
     DownloadFailedError,
     DownloadTimeoutError,
     InvalidFileError,
+    NoVideoInPostError,
     VideoTooLongError,
 )
 from download.file_validation import detect_media_type, validate_downloaded_file, validate_downloaded_image
+from download.image_fallback import fetch_post_image
 from download.platform import Platform, detect_platform
 from download.result import DownloadResult
 from download.tempfiles import cleanup, new_temp_stub
@@ -229,7 +231,16 @@ def download_video(url: str) -> DownloadResult:
     stub = new_temp_stub()
 
     try:
-        raw = _download_with_timeout(downloader, validated.url, stub)
+        try:
+            raw = _download_with_timeout(lambda: downloader.download(validated.url, stub))
+        except NoVideoInPostError:
+            # Post/pin sem vídeo nenhum (só imagem) -- TikTok, Instagram e Pinterest (03/10/2026,
+            # aprovação do CÉREBRO). O yt-dlp já confirmou (download/ytdlp_downloader.py) que não
+            # há vídeo; tentamos ler a imagem publicada na própria página pública do post (
+            # download/image_fallback.py) ANTES de desistir. Nenhuma mudança de comportamento para
+            # qualquer outro motivo de falha -- este bloco só é alcançado por esta exceção
+            # específica, nunca por vídeo privado/removido/timeout/etc.
+            raw = _download_with_timeout(lambda: fetch_post_image(validated.url, stub))
         _check_duration(raw)
         media_type = detect_media_type(raw.path)
         if media_type == "video":
@@ -263,14 +274,18 @@ def _check_duration(raw: RawDownload) -> None:
         raise VideoTooLongError(f"{raw.duration_seconds}s > {MAX_VIDEO_DURATION_SECONDS}s (informado pela plataforma)")
 
 
-def _download_with_timeout(downloader: PlatformDownloader, url: str, stub) -> RawDownload:
+def _download_with_timeout(fn) -> RawDownload:
+    """`fn` é uma chamada sem argumentos que devolve RawDownload (um `downloader.download(url,
+    stub)` já fechado em lambda, ou -- fallback de imagem, 03/10/2026 -- um `fetch_post_image(url,
+    stub)` já fechado do mesmo jeito): o watchdog abaixo é o mesmo para os dois casos, nenhuma
+    mudança de comportamento/timeout para o caminho de vídeo."""
     # NÃO usar `with ThreadPoolExecutor() as executor:` aqui: o __exit__ do context manager chama
     # shutdown(wait=True), que bloqueia até a thread terminar — ou seja, mesmo depois do timeout
     # abaixo, o chamador ficaria esperando o download lento terminar de qualquer jeito, anulando
     # o watchdog. Por isso o executor é criado e encerrado à mão, com wait=False no caminho de
     # timeout (só nesse caminho o chamador realmente precisa não esperar).
     executor = ThreadPoolExecutor(max_workers=1)
-    future = executor.submit(downloader.download, url, stub)
+    future = executor.submit(fn)
     try:
         result = future.result(timeout=DOWNLOAD_TIMEOUT_SECONDS)
     except FutureTimeoutError:

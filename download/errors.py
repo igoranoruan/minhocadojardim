@@ -65,6 +65,19 @@ class DownloadFailedError(DownloadError):
     user_message = GENERIC_USER_MESSAGE
 
 
+class NoVideoInPostError(DownloadError):
+    """Sinal específico do yt-dlp: o post/pin não tem vídeo nenhum (só imagem) -- TikTok,
+    Instagram e Pinterest (03/10/2026, aprovação do CÉREBRO, depois de confirmar em produção que
+    o yt-dlp recusa a extração nesse caso em vez de cair para a imagem sozinho: "No video formats
+    found!" no Pinterest, "There is no video in this post" no Instagram).
+
+    NUNCA chega ao usuário como está: download/service.py intercepta e tenta
+    download/image_fallback.py antes de desistir. Só vira GENERIC_USER_MESSAGE (via
+    DownloadFailedError) se o fallback de imagem também falhar."""
+
+    user_message = GENERIC_USER_MESSAGE
+
+
 class InvalidFileError(DownloadError):
     """O arquivo baixado não existe, está vazio, ou não é um vídeo válido."""
 
