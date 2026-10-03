@@ -10,13 +10,33 @@ NoVideoInPostError -- nunca para qualquer outro motivo de falha (vídeo privado,
 rate-limit etc. continuam EXATAMENTE como estavam, sem nenhuma tentativa extra, sem nenhuma mudança
 de comportamento no caminho de vídeo).
 
-Estratégia: ler a própria página pública do post/pin e extrair a imagem das tags
-<meta property="og:image"> / <meta name="twitter:image"> -- o mesmo dado que qualquer
-pré-visualização de link (WhatsApp, Slack, Twitter/X, etc.) já lê dessas páginas: não é scraping
-autenticado, não contorna login nenhum, e não lê nada que a própria plataforma não publique para
-qualquer visitante anônimo. Usa curl_cffi com impersonation de navegador (MESMO mecanismo e MESMA
-dependência já usados pelo TikTok em download/ytdlp_downloader.py) porque pelo menos o TikTok já
-exige esse fingerprint para servir a própria página (ver docstring do YtDlpSpec do TikTok).
+Estratégia (duas camadas, 03/10/2026 -- correção de corte/crop depois de teste real em produção
+confirmar que a tag og:image do Instagram devolve uma miniatura RECORTADA, nunca a imagem original
+inteira):
+1. PRIMEIRO tenta ler o "display_url" de dentro do JSON que o Instagram já embute na própria página
+   (a mesma informação que o navegador usa para renderizar a imagem em tela cheia) -- é a imagem
+   ORIGINAL, sem corte. Ancorado pelo "shortcode" da URL (extraído do próprio link, ex.: .../p/
+   ABC123/ -> "ABC123") para nunca pegar a imagem de um post sugerido/relacionado que também apareça
+   na mesma página -- só o trecho do JSON que pertence a ESTE post. Específico do Instagram (as
+   outras duas plataformas não têm esse formato de página); se o shortcode ou o JSON não forem
+   encontrados (página mudou, ou não é Instagram), cai para a estratégia 2 sem erro.
+2. Tags <meta property="og:image"> / <meta name="twitter:image"> -- o mesmo dado que qualquer
+   pré-visualização de link (WhatsApp, Slack, Twitter/X, etc.) já lê dessas páginas. Funciona nas
+   três plataformas; no Instagram é só o fallback de ÚLTIMO recurso (pode vir cortado), no TikTok/
+   Pinterest é a estratégia principal (nenhum problema de corte observado nelas).
+
+Em nenhum dos dois casos é scraping autenticado nem contorna login: é o mesmo dado que a própria
+plataforma já publica para qualquer visitante anônimo. Usa curl_cffi com impersonation de navegador
+(MESMO mecanismo e MESMA dependência já usados pelo TikTok em download/ytdlp_downloader.py) porque
+pelo menos o TikTok já exige esse fingerprint para servir a própria página (ver docstring do
+YtDlpSpec do TikTok).
+
+LIMITAÇÃO CONHECIDA (carrossel do Instagram, vários slides no mesmo post): a extração abaixo
+(_instagram_display_urls) já encontra TODAS as imagens do carrossel, na ordem, mas
+`fetch_post_image` por enquanto baixa só a PRIMEIRA (índice 0) -- o resto da camada (download/
+service.py, services/result_storage.py, generations) foi construído para UM arquivo de resultado
+por geração; baixar o carrossel inteiro é uma decisão de produto própria (ex.: entregar um .zip),
+não decidida ainda (CÉREBRO, 03/10/2026) -- combinado para perguntar antes de construir.
 
 SSRF: reaproveita a MESMA validação de download/url_safety.py (validate_url) -- a URL de entrada já
 foi validada e teve encurtadores resolvidos por download/service.py antes de chegar aqui; os
@@ -80,13 +100,64 @@ _CONTENT_TYPE_TO_EXTENSION = {
     "image/webp": "webp",
 }
 
+# Instagram: shortcode da URL (.../p/<shortcode>/, .../reel/<shortcode>/, .../tv/<shortcode>/) --
+# usado só para ANCORAR a busca no JSON embutido na página (nunca pegar a imagem de outro post).
+_INSTAGRAM_SHORTCODE_PATTERN = re.compile(r"/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+)")
+_SHORTCODE_JSON_KEY = re.compile(r'"shortcode"\s*:\s*"')
+_DISPLAY_URL_PATTERN = re.compile(r'"display_url"\s*:\s*"([^"]+)"')
 
-def _extract_image_url(html: str) -> str | None:
+
+def _unescape_json_string_url(value: str) -> str:
+    """Desfaz o escaping de string JSON de uma URL (\\/ -> /, \\u0026 -> &, etc.) sem precisar de
+    um parser JSON completo -- só os pontos que realmente aparecem numa URL."""
+    return (
+        value.replace("\\/", "/")
+        .replace("\\u0026", "&")
+        .replace("\\u003d", "=")
+        .replace("&amp;", "&")
+    )
+
+
+def _instagram_display_urls(html: str, post_url: str) -> list[str]:
+    """Imagens ORIGINAIS (sem corte) do post, na ordem -- 1 para post simples, várias para
+    carrossel. Ancorado pelo shortcode da própria URL para nunca pegar o JSON de um post
+    sugerido/relacionado que apareça na mesma página. Lista vazia (nunca erro) se o shortcode ou o
+    JSON esperado não forem encontrados -- quem chama cai para o fallback de og:image nesse caso."""
+    shortcode_match = _INSTAGRAM_SHORTCODE_PATTERN.search(post_url)
+    if not shortcode_match:
+        return []
+    shortcode = shortcode_match.group(1)
+    anchor = re.search(r'"shortcode"\s*:\s*"%s"' % re.escape(shortcode), html)
+    if not anchor:
+        return []
+    # Janela: do shortcode encontrado até o PRÓXIMO "shortcode" na página (início do JSON do
+    # próximo post, ex.: sugestões) -- ou o fim da página, se não houver outro.
+    rest = html[anchor.end():]
+    next_shortcode = _SHORTCODE_JSON_KEY.search(rest)
+    window = rest[: next_shortcode.start()] if next_shortcode else rest
+    urls = [_unescape_json_string_url(u) for u in _DISPLAY_URL_PATTERN.findall(window)]
+    # dedup preservando ordem (o mesmo display_url às vezes aparece mais de uma vez no JSON).
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for url in urls:
+        if url not in seen:
+            seen.add(url)
+            ordered.append(url)
+    return ordered
+
+
+def _extract_image_urls(html: str, post_url: str) -> list[str]:
+    """Todas as imagens candidatas do post, na ordem de preferência: JSON embutido do Instagram
+    (original, sem corte; pode ter mais de uma, ver _instagram_display_urls) primeiro, depois
+    og:image/twitter:image (as três plataformas; único caminho para TikTok/Pinterest)."""
+    instagram_urls = _instagram_display_urls(html, post_url)
+    if instagram_urls:
+        return instagram_urls
     for pattern in _META_IMAGE_PATTERNS:
         match = pattern.search(html)
         if match:
-            return match.group(1).replace("&amp;", "&")
-    return None
+            return [_unescape_json_string_url(match.group(1))]
+    return []
 
 
 def _get_with_validated_redirects(url: str, *, max_redirects: int = MAX_REDIRECTS):
@@ -139,10 +210,13 @@ def fetch_post_image(url: str, dest_stub: Path) -> RawDownload:
         logger.warning("[DOWNLOAD] fallback de imagem: página do post respondeu status=%s", page.status_code)
         raise DownloadFailedError()
 
-    image_url = _extract_image_url(page.text)
-    if not image_url:
-        logger.warning("[DOWNLOAD] fallback de imagem: nenhuma tag og:image/twitter:image encontrada")
+    image_urls = _extract_image_urls(page.text, url)
+    if not image_urls:
+        logger.warning("[DOWNLOAD] fallback de imagem: nenhuma imagem encontrada na página do post")
         raise DownloadFailedError()
+    # Carrossel do Instagram (vários slides): por enquanto baixa só o primeiro -- ver limitação
+    # documentada no topo do módulo (decisão de produto pendente para baixar o carrossel inteiro).
+    image_url = image_urls[0]
 
     try:
         image_response = _get_with_validated_redirects(image_url)

@@ -65,6 +65,13 @@ _REASON_KEYWORDS: tuple[tuple[str, str], ...] = (
     # imagem, nunca a 2ª tentativa com mweb (_should_retry_with_mweb não reconhece este motivo).
     ("no video formats found", "post sem vídeo (conteúdo é imagem)"),
     ("there is no video in this post", "post sem vídeo (conteúdo é imagem)"),
+    # Confirmado em produção (03/10/2026): a API interna que o yt-dlp usa para pegar os metadados
+    # do post do Instagram às vezes devolve uma resposta vazia (comum em posts só-imagem, parece
+    # ser uma particularidade dessa API específica, não necessariamente bloqueio/login) -- tentamos
+    # o MESMO fallback de imagem aqui (download/image_fallback.py usa uma via totalmente diferente,
+    # a página pública, não essa API), em vez de desistir direto -- pior caso, o fallback também
+    # falha e o usuário recebe exatamente o mesmo erro genérico de antes, sem nenhuma perda.
+    ("sent an empty media response", "post sem vídeo (conteúdo é imagem)"),
 )
 
 
