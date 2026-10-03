@@ -448,13 +448,15 @@ def create_batch(
 # da resposta de download individual, a partir da extensão REAL do resultado
 # (generation.output_extension, ou "mp4" quando None -- toda geração de vídeo, antiga ou nova). O
 # ZIP de lote (download_batch) não precisa disto: serve sempre "application/zip", qualquer que
-# seja o conteúdo interno.
+# seja o conteúdo interno. "zip" aqui é o CARROSSEL do Instagram (mesma data, "Todas as fotos, num
+# .zip") -- uma geração individual cujo resultado também é um .zip, mesmo content-type do lote.
 _CONTENT_TYPE_FOR_EXTENSION = {
     "mp4": "video/mp4",
     "jpg": "image/jpeg",
     "jpeg": "image/jpeg",
     "png": "image/png",
     "webp": "image/webp",
+    "zip": "application/zip",
 }
 
 

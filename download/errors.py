@@ -55,6 +55,12 @@ class ImageTooLargeError(DownloadError):
     user_message = "A imagem é maior do que a permitida."
 
 
+class ImageZipTooLargeError(ImageTooLargeError):
+    """Carrossel do Instagram (vários slides, 03/10/2026 -- aprovação do CÉREBRO): o .zip final com
+    todas as imagens passou de MAX_IMAGE_ZIP_SIZE_BYTES. Herda de ImageTooLargeError (mesma
+    user_message, mesmo tratamento em download/service.py) -- só muda o detalhe técnico de log."""
+
+
 class VideoTooLongError(DownloadError):
     user_message = "O vídeo é mais longo do que o permitido."
 

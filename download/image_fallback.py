@@ -31,12 +31,15 @@ plataforma já publica para qualquer visitante anônimo. Usa curl_cffi com imper
 pelo menos o TikTok já exige esse fingerprint para servir a própria página (ver docstring do
 YtDlpSpec do TikTok).
 
-LIMITAÇÃO CONHECIDA (carrossel do Instagram, vários slides no mesmo post): a extração abaixo
-(_instagram_display_urls) já encontra TODAS as imagens do carrossel, na ordem, mas
-`fetch_post_image` por enquanto baixa só a PRIMEIRA (índice 0) -- o resto da camada (download/
-service.py, services/result_storage.py, generations) foi construído para UM arquivo de resultado
-por geração; baixar o carrossel inteiro é uma decisão de produto própria (ex.: entregar um .zip),
-não decidida ainda (CÉREBRO, 03/10/2026) -- combinado para perguntar antes de construir.
+CARROSSEL DO INSTAGRAM (vários slides no mesmo post, 03/10/2026 -- aprovação do CÉREBRO, depois de
+perguntar explicitamente como entregar): quando `_instagram_display_urls` encontra MAIS de uma
+imagem, `fetch_post_image` baixa TODAS (até MAX_CAROUSEL_IMAGES, proteção contra post com
+quantidade anormal de slides -- ver config.py) e devolve um ÚNICO .zip com todas elas, reaproveitando
+o pipeline de UM arquivo de resultado por geração (download/service.py decide o media_type pela
+extensão real do arquivo, igual a vídeo/imagem única -- "zip" é só mais uma extensão reconhecida,
+ver download/file_validation.py). Post com UMA imagem só continua devolvendo essa imagem direto,
+sem nenhuma mudança de comportamento (mesma extensão, mesmo caminho de código de antes desta
+mudança).
 
 SSRF: reaproveita a MESMA validação de download/url_safety.py (validate_url) -- a URL de entrada já
 foi validada e teve encurtadores resolvidos por download/service.py antes de chegar aqui; os
@@ -51,15 +54,23 @@ escolha de streaming por lá.
 """
 import logging
 import re
+import zipfile
 from pathlib import Path
 
 from curl_cffi import requests as curl_requests
 
-from config import DOWNLOAD_CONNECT_TIMEOUT_SECONDS, MAX_IMAGE_SIZE_BYTES, MAX_REDIRECTS
+from config import (
+    DOWNLOAD_CONNECT_TIMEOUT_SECONDS,
+    MAX_CAROUSEL_IMAGES,
+    MAX_IMAGE_SIZE_BYTES,
+    MAX_IMAGE_ZIP_SIZE_BYTES,
+    MAX_REDIRECTS,
+)
 from download.base import RawDownload
 from download.errors import (
     DownloadFailedError,
     ImageTooLargeError,
+    ImageZipTooLargeError,
     InvalidUrlError,
     SsrfBlockedError,
     TooManyRedirectsError,
@@ -189,35 +200,10 @@ def _get_with_validated_redirects(url: str, *, max_redirects: int = MAX_REDIRECT
     raise TooManyRedirectsError(f"mais de {max_redirects} redirecionamentos.")
 
 
-def fetch_post_image(url: str, dest_stub: Path) -> RawDownload:
-    """Busca a imagem publicada na página pública de `url` (post/pin sem vídeo) e grava em
-    `dest_stub` + extensão (decidida pelo Content-Type da resposta). Levanta DownloadError (ou
-    subclasse) em qualquer falha -- mesmo contrato de PlatformDownloader.download, embora esta
-    função não implemente essa interface (é chamada diretamente por download/service.py, só para
-    o caminho de fallback)."""
-    try:
-        page = _get_with_validated_redirects(url)
-    except (InvalidUrlError, SsrfBlockedError, TooManyRedirectsError):
-        raise
-    except Exception as exc:
-        logger.warning(
-            "[DOWNLOAD] fallback de imagem: falha ao buscar a página do post (%s)",
-            exc.__class__.__name__,
-        )
-        raise DownloadFailedError() from None
-
-    if page.status_code != 200:
-        logger.warning("[DOWNLOAD] fallback de imagem: página do post respondeu status=%s", page.status_code)
-        raise DownloadFailedError()
-
-    image_urls = _extract_image_urls(page.text, url)
-    if not image_urls:
-        logger.warning("[DOWNLOAD] fallback de imagem: nenhuma imagem encontrada na página do post")
-        raise DownloadFailedError()
-    # Carrossel do Instagram (vários slides): por enquanto baixa só o primeiro -- ver limitação
-    # documentada no topo do módulo (decisão de produto pendente para baixar o carrossel inteiro).
-    image_url = image_urls[0]
-
+def _download_single_image(image_url: str) -> tuple[bytes, str]:
+    """Baixa UMA imagem (já com redirecionamentos validados) e devolve (bytes, extensão). Levanta
+    DownloadError (ou subclasse) em qualquer falha -- usado tanto pelo caminho de imagem única
+    quanto, uma vez por slide, pelo caminho de carrossel/.zip abaixo."""
     try:
         image_response = _get_with_validated_redirects(image_url)
     except (InvalidUrlError, SsrfBlockedError, TooManyRedirectsError):
@@ -250,6 +236,56 @@ def fetch_post_image(url: str, dest_stub: Path) -> RawDownload:
         logger.warning("[DOWNLOAD] fallback de imagem: tipo de imagem não reconhecido (content-type=%r)", content_type)
         raise DownloadFailedError("tipo de imagem não reconhecido.")
 
-    output_path = dest_stub.with_suffix(f".{extension}")
-    output_path.write_bytes(content)
+    return content, extension
+
+
+def fetch_post_image(url: str, dest_stub: Path) -> RawDownload:
+    """Busca a(s) imagem(ns) publicada(s) na página pública de `url` (post/pin sem vídeo) e grava
+    em `dest_stub` + extensão. Post com uma imagem só: grava a imagem direto (extensão decidida
+    pelo Content-Type da resposta, comportamento IDÊNTICO ao de antes do suporte a carrossel).
+    Carrossel do Instagram (mais de uma imagem): baixa todas (até MAX_CAROUSEL_IMAGES) e grava um
+    único `dest_stub.zip` com todas elas. Levanta DownloadError (ou subclasse) em qualquer falha --
+    mesmo contrato de PlatformDownloader.download, embora esta função não implemente essa interface
+    (é chamada diretamente por download/service.py, só para o caminho de fallback)."""
+    try:
+        page = _get_with_validated_redirects(url)
+    except (InvalidUrlError, SsrfBlockedError, TooManyRedirectsError):
+        raise
+    except Exception as exc:
+        logger.warning(
+            "[DOWNLOAD] fallback de imagem: falha ao buscar a página do post (%s)",
+            exc.__class__.__name__,
+        )
+        raise DownloadFailedError() from None
+
+    if page.status_code != 200:
+        logger.warning("[DOWNLOAD] fallback de imagem: página do post respondeu status=%s", page.status_code)
+        raise DownloadFailedError()
+
+    image_urls = _extract_image_urls(page.text, url)
+    if not image_urls:
+        logger.warning("[DOWNLOAD] fallback de imagem: nenhuma imagem encontrada na página do post")
+        raise DownloadFailedError()
+
+    if len(image_urls) == 1:
+        content, extension = _download_single_image(image_urls[0])
+        output_path = dest_stub.with_suffix(f".{extension}")
+        output_path.write_bytes(content)
+        return RawDownload(path=output_path, duration_seconds=None)
+
+    # Carrossel: várias imagens no mesmo post -- baixa todas (limitadas a MAX_CAROUSEL_IMAGES, só
+    # proteção contra uma quantidade anormal de slides; o Instagram permite até 10 na prática) e
+    # empacota num único .zip (decisão de produto do CÉREBRO, 03/10/2026).
+    bounded_urls = image_urls[:MAX_CAROUSEL_IMAGES]
+    output_path = dest_stub.with_suffix(".zip")
+    with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_STORED) as zip_file:
+        for index, image_url in enumerate(bounded_urls, start=1):
+            content, extension = _download_single_image(image_url)
+            zip_file.writestr(f"foto_{index:02d}.{extension}", content)
+
+    zip_size = output_path.stat().st_size
+    if zip_size > MAX_IMAGE_ZIP_SIZE_BYTES:
+        output_path.unlink(missing_ok=True)
+        raise ImageZipTooLargeError(f"{zip_size} bytes > limite de {MAX_IMAGE_ZIP_SIZE_BYTES} bytes")
+
     return RawDownload(path=output_path, duration_seconds=None)

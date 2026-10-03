@@ -12,8 +12,8 @@ quem decide QUAL validar é download/service.py, a partir da extensão REAL do a
 """
 from pathlib import Path
 
-from config import MAX_IMAGE_SIZE_BYTES, MAX_VIDEO_SIZE_BYTES
-from download.errors import ImageTooLargeError, InvalidFileError, VideoTooLargeError
+from config import MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_ZIP_SIZE_BYTES, MAX_VIDEO_SIZE_BYTES
+from download.errors import ImageTooLargeError, ImageZipTooLargeError, InvalidFileError, VideoTooLargeError
 
 # Extensões que o yt-dlp pode produzir para vídeo (com merge_output_format=mp4, o caso comum é
 # sempre .mp4; os outros ficam como rede de segurança para conteúdo que não passa por merge).
@@ -25,16 +25,27 @@ ALLOWED_EXTENSIONS = frozenset({"mp4", "mkv", "webm", "mov", "m4v"})
 # precisar de NENHUMA mudança no seletor de format (só vídeo tem seletor dedicado nesta camada).
 ALLOWED_IMAGE_EXTENSIONS = frozenset({"jpg", "jpeg", "png", "webp"})
 
+# Carrossel do Instagram (vários slides no mesmo post, 03/10/2026 -- aprovação do CÉREBRO):
+# download/image_fallback.py entrega um .zip com todas as imagens quando o post tem mais de uma.
+# Extensão PRÓPRIA (nunca misturada com ALLOWED_IMAGE_EXTENSIONS): um .zip não é uma imagem --
+# processor/image_service.py (Pillow) não abre um .zip, por isso precisa de media_type diferente
+# ("image_zip") para download/service.py e services/generation_flow.py escolherem a validação e o
+# processamento certos.
+ALLOWED_IMAGE_ZIP_EXTENSIONS = frozenset({"zip"})
+
 
 def detect_media_type(path: Path) -> str | None:
-    """"video" | "image" | None (extensão não reconhecida em nenhuma das duas listas), a partir da
-    extensão REAL do arquivo baixado. Usado por download/service.py para decidir qual das duas
-    validações abaixo chamar -- não valida nada sozinho (nem existência, nem tamanho)."""
+    """"video" | "image" | "image_zip" | None (extensão não reconhecida em nenhuma das três
+    listas), a partir da extensão REAL do arquivo baixado. Usado por download/service.py para
+    decidir qual das validações abaixo chamar -- não valida nada sozinho (nem existência, nem
+    tamanho)."""
     extension = path.suffix.lstrip(".").lower()
     if extension in ALLOWED_EXTENSIONS:
         return "video"
     if extension in ALLOWED_IMAGE_EXTENSIONS:
         return "image"
+    if extension in ALLOWED_IMAGE_ZIP_EXTENSIONS:
+        return "image_zip"
     return None
 
 
@@ -76,4 +87,21 @@ def validate_downloaded_image(path: Path) -> int:
     size = _file_size(path)
     if size > MAX_IMAGE_SIZE_BYTES:
         raise ImageTooLargeError(f"{size} bytes > limite de {MAX_IMAGE_SIZE_BYTES} bytes")
+    return size
+
+
+def validate_downloaded_image_zip(path: Path) -> int:
+    """Confere existência, extensão e tamanho do .zip de um CARROSSEL do Instagram (vários slides
+    no mesmo post, 03/10/2026 -- aprovação do CÉREBRO). Mesmo contrato das duas funções acima
+    (devolve o tamanho em bytes, nunca apaga o arquivo), com a extensão e o limite de tamanho
+    próprios do .zip -- NÃO confere o conteúdo do .zip (quantidade de imagens, se cada uma é uma
+    imagem válida, etc.) -- isso é processor/image_zip_service.py, igual ao padrão já usado para
+    vídeo/imagem única nesta mesma camada."""
+    extension = path.suffix.lstrip(".").lower()
+    if extension not in ALLOWED_IMAGE_ZIP_EXTENSIONS:
+        raise InvalidFileError(f"extensão não permitida: {extension!r}")
+
+    size = _file_size(path)
+    if size > MAX_IMAGE_ZIP_SIZE_BYTES:
+        raise ImageZipTooLargeError(f"{size} bytes > limite de {MAX_IMAGE_ZIP_SIZE_BYTES} bytes")
     return size

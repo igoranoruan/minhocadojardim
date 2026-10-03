@@ -43,6 +43,34 @@ def _sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
+def pil_format_for_extension(extension: str) -> str | None:
+    """"JPEG"/"PNG"/"WEBP" para uma extensão de imagem reconhecida, ou None. Reaproveitado por
+    processor/image_zip_service.py (carrossel do Instagram, 03/10/2026) para validar cada imagem
+    dentro do .zip com a MESMA lista usada aqui, sem duplicar o dicionário."""
+    return _PIL_FORMAT_FOR_EXTENSION.get(extension.lower())
+
+
+def strip_image_metadata(input_path: Path, output_path: Path, pil_format: str) -> None:
+    """Abre `input_path` com Pillow e regrava em `output_path` SEM metadado (ver docstring do
+    módulo) no formato `pil_format`. Levanta InvalidInputFileError/InvalidOutputFileError -- mesmo
+    contrato usado por `process_image` abaixo e por processor/image_zip_service.py (carrossel), que
+    reaproveita esta função uma vez por imagem do carrossel em vez de duplicar a lógica."""
+    try:
+        with Image.open(input_path) as image:
+            image.load()  # força a leitura completa agora -- um arquivo truncado falha aqui
+            if pil_format == "JPEG" and image.mode not in ("RGB", "L"):
+                image = image.convert("RGB")  # JPEG não suporta modos com canal alfa (ex.: RGBA)
+            image.save(output_path, format=pil_format)
+    except (UnidentifiedImageError, OSError) as exc:
+        raise InvalidInputFileError(f"imagem inválida: {exc.__class__.__name__}") from None
+
+    if not output_path.exists() or output_path.stat().st_size <= 0:
+        raise InvalidOutputFileError("arquivo de saída vazio ou ausente.")
+
+    with Image.open(output_path) as check_image:
+        check_image.verify()  # confere que a imagem regravada ainda é válida (defesa extra)
+
+
 def process_image(input_path: Path) -> ProcessingResult:
     """Processa `input_path` (imagem já baixada e validada pela Etapa 5, Pinterest/Instagram sem
     vídeo) e devolve uma cópia sem metadados. Levanta ProcessorError (ou subclasse) em qualquer
@@ -57,20 +85,7 @@ def process_image(input_path: Path) -> ProcessingResult:
     output_path = stub.with_suffix(f".{extension}")
 
     try:
-        try:
-            with Image.open(input_path) as image:
-                image.load()  # força a leitura completa agora -- um arquivo truncado falha aqui
-                if pil_format == "JPEG" and image.mode not in ("RGB", "L"):
-                    image = image.convert("RGB")  # JPEG não suporta modos com canal alfa (ex.: RGBA)
-                image.save(output_path, format=pil_format)
-        except (UnidentifiedImageError, OSError) as exc:
-            raise InvalidInputFileError(f"imagem inválida: {exc.__class__.__name__}") from None
-
-        if not output_path.exists() or output_path.stat().st_size <= 0:
-            raise InvalidOutputFileError("arquivo de saída vazio ou ausente.")
-
-        with Image.open(output_path) as check_image:
-            check_image.verify()  # confere que a imagem regravada ainda é válida (defesa extra)
+        strip_image_metadata(input_path, output_path, pil_format)
 
         output_size = output_path.stat().st_size
         output_sha256 = _sha256_of(output_path)  # só DEPOIS da validação final (nunca antes)

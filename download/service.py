@@ -34,7 +34,12 @@ from download.errors import (
     NoVideoInPostError,
     VideoTooLongError,
 )
-from download.file_validation import detect_media_type, validate_downloaded_file, validate_downloaded_image
+from download.file_validation import (
+    detect_media_type,
+    validate_downloaded_file,
+    validate_downloaded_image,
+    validate_downloaded_image_zip,
+)
 from download.image_fallback import fetch_post_image
 from download.platform import Platform, detect_platform
 from download.result import DownloadResult
@@ -247,6 +252,8 @@ def download_video(url: str) -> DownloadResult:
             size = validate_downloaded_file(raw.path)
         elif media_type == "image":
             size = validate_downloaded_image(raw.path)
+        elif media_type == "image_zip":
+            size = validate_downloaded_image_zip(raw.path)
         else:
             raise InvalidFileError(f"extensão não reconhecida: {raw.path.suffix!r}")
         return DownloadResult(

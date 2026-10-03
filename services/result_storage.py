@@ -39,7 +39,9 @@ _KEY_RE = re.compile(r"^[0-9a-f]{32}$")
 # database.models.generation.Generation.output_extension), mas ainda assim passa por esta mesma
 # validação de allow-list antes de virar parte de um caminho de arquivo -- mesma defesa que já
 # existia para storage_key, agora também para extension.
-_ALLOWED_EXTENSIONS = frozenset({"mp4", "mkv", "webm", "mov", "m4v", "jpg", "jpeg", "png", "webp"})
+_ALLOWED_EXTENSIONS = frozenset(
+    {"mp4", "mkv", "webm", "mov", "m4v", "jpg", "jpeg", "png", "webp", "zip"}
+)
 
 
 def _ensure_dir() -> Path:

@@ -43,6 +43,7 @@ from download.service import download_video
 from download.url_safety import validate_url
 from processor.errors import ProcessorError
 from processor.image_service import process_image
+from processor.image_zip_service import process_image_zip
 from processor.service import process_video
 from services import result_storage
 from services.batch_filenames import sanitize_batch_filename
@@ -220,14 +221,20 @@ def _execute_reserved(
                     on_progress("processing", percent, platform.value)
 
             # 03/10/2026 (suporte a imagem -- Pinterest/Instagram sem vídeo, aprovação do CÉREBRO):
-            # media_type decide qual das duas camadas de processamento usar -- process_video
-            # (FFmpeg) continua EXATAMENTE como antes para "video" (o caso de sempre); "image" usa
-            # o caminho novo e paralelo (Pillow, sem percentual de progresso real -- um único aviso
-            # "em andamento", já que não há etapas intermediárias para medir como no FFmpeg).
+            # media_type decide qual das camadas de processamento usar -- process_video (FFmpeg)
+            # continua EXATAMENTE como antes para "video" (o caso de sempre); "image" usa o caminho
+            # paralelo (Pillow, sem percentual de progresso real -- um único aviso "em andamento",
+            # já que não há etapas intermediárias para medir como no FFmpeg); "image_zip" (carrossel
+            # do Instagram, mesma data -- "Todas as fotos, num .zip") é o mesmo caminho de "image",
+            # só que processa várias imagens dentro de um .zip em vez de uma única.
             if download_result.media_type == "image":
                 if on_progress is not None:
                     on_progress("processing", None, platform.value)
                 processing_result = process_image(download_result.temp_path)
+            elif download_result.media_type == "image_zip":
+                if on_progress is not None:
+                    on_progress("processing", None, platform.value)
+                processing_result = process_image_zip(download_result.temp_path)
             else:
                 processing_result = process_video(download_result.temp_path, on_progress=_on_processing_progress)
             output_path = processing_result.output_path

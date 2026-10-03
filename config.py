@@ -74,6 +74,17 @@ MAX_REDIRECTS = 5
 # imagem de verdade nunca chega perto de 100 MB -- mas também não faz sentido reaproveitar o teto
 # de vídeo para aceitar, sem querer, um arquivo gigante só porque a extensão é de imagem.
 MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024
+
+# Carrossel do Instagram (vários slides no mesmo post, 03/10/2026 -- aprovação do CÉREBRO): entregue
+# como um .zip com todas as imagens. MAX_CAROUSEL_IMAGES protege contra um post com uma quantidade
+# anormal de slides (o Instagram permite até 10 na prática, então 10 já cobre qualquer carrossel
+# real -- um valor maior só serviria para aceitar algo fora do normal, nunca para um caso real
+# legítimo). MAX_IMAGE_ZIP_SIZE_BYTES é o teto do .zip FINAL (depois de todas as imagens baixadas):
+# 10 imagens no teto individual (MAX_IMAGE_SIZE_BYTES, 25 MB) deixariam até 250 MB sem este limite
+# próprio -- bem acima do que um carrossel de fotos de verdade pesa, então um teto menor e explícito
+# evita um .zip anormalmente grande sem impedir nenhum carrossel real.
+MAX_CAROUSEL_IMAGES = 10
+MAX_IMAGE_ZIP_SIZE_BYTES = 60 * 1024 * 1024
 # URL do PO Token Provider (BGUTIL), se o companion estiver rodando no ambiente. Vazio = o
 # yt-dlp tenta o YouTube só com o player client mweb, sem PO Token (funciona para parte dos
 # vídeos; especificação do produto: PO Token NAO garante todos os vídeos).
