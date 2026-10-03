@@ -117,6 +117,17 @@ _INSTAGRAM_SHORTCODE_PATTERN = re.compile(r"/(?:p|reel|reels|tv)/([A-Za-z0-9_-]+
 _SHORTCODE_JSON_KEY = re.compile(r'"shortcode"\s*:\s*"')
 _DISPLAY_URL_PATTERN = re.compile(r'"display_url"\s*:\s*"([^"]+)"')
 
+# 03/10/2026 (segunda tentativa depois do CÉREBRO reportar corte PERSISTENTE mesmo com
+# _DISPLAY_URL_PATTERN em produção -- indício de que a página anônima atual do Instagram nem
+# sempre embute mais "display_url" para visitante não-logado): "image_versions2.candidates" é a
+# estrutura que a API do Instagram usa para listar o mesmo arquivo em VÁRIAS resoluções (a primeira
+# da lista é sempre a de maior resolução == original, nunca a miniatura recortada do og:image) --
+# cada item de carrossel tem o seu próprio bloco "image_versions2". Tentativa adicional, NUNCA
+# removendo a tentativa de "display_url" (que continua primeiro, caso a página volte a trazê-la) --
+# puramente aditivo: se não casar, cai para og:image como já acontecia antes desta mudança.
+_CANDIDATES_BLOCK_PATTERN = re.compile(r'"image_versions2"\s*:\s*\{\s*"candidates"\s*:\s*\[(.*?)\]', re.DOTALL)
+_CANDIDATE_URL_PATTERN = re.compile(r'"url"\s*:\s*"([^"]+)"')
+
 
 def _unescape_json_string_url(value: str) -> str:
     """Desfaz o escaping de string JSON de uma URL (\\/ -> /, \\u0026 -> &, etc.) sem precisar de
@@ -129,25 +140,7 @@ def _unescape_json_string_url(value: str) -> str:
     )
 
 
-def _instagram_display_urls(html: str, post_url: str) -> list[str]:
-    """Imagens ORIGINAIS (sem corte) do post, na ordem -- 1 para post simples, várias para
-    carrossel. Ancorado pelo shortcode da própria URL para nunca pegar o JSON de um post
-    sugerido/relacionado que apareça na mesma página. Lista vazia (nunca erro) se o shortcode ou o
-    JSON esperado não forem encontrados -- quem chama cai para o fallback de og:image nesse caso."""
-    shortcode_match = _INSTAGRAM_SHORTCODE_PATTERN.search(post_url)
-    if not shortcode_match:
-        return []
-    shortcode = shortcode_match.group(1)
-    anchor = re.search(r'"shortcode"\s*:\s*"%s"' % re.escape(shortcode), html)
-    if not anchor:
-        return []
-    # Janela: do shortcode encontrado até o PRÓXIMO "shortcode" na página (início do JSON do
-    # próximo post, ex.: sugestões) -- ou o fim da página, se não houver outro.
-    rest = html[anchor.end():]
-    next_shortcode = _SHORTCODE_JSON_KEY.search(rest)
-    window = rest[: next_shortcode.start()] if next_shortcode else rest
-    urls = [_unescape_json_string_url(u) for u in _DISPLAY_URL_PATTERN.findall(window)]
-    # dedup preservando ordem (o mesmo display_url às vezes aparece mais de uma vez no JSON).
+def _dedupe_preserving_order(urls: list[str]) -> list[str]:
     seen: set[str] = set()
     ordered: list[str] = []
     for url in urls:
@@ -155,6 +148,70 @@ def _instagram_display_urls(html: str, post_url: str) -> list[str]:
             seen.add(url)
             ordered.append(url)
     return ordered
+
+
+def _image_versions2_urls(window: str) -> list[str]:
+    """Segunda tentativa de imagem ORIGINAL (ver comentário de _CANDIDATES_BLOCK_PATTERN acima):
+    um bloco "image_versions2.candidates" por item do post/carrossel; pega sempre a PRIMEIRA URL de
+    cada bloco (maior resolução, nunca a miniatura do og:image)."""
+    urls = []
+    for block_match in _CANDIDATES_BLOCK_PATTERN.finditer(window):
+        url_match = _CANDIDATE_URL_PATTERN.search(block_match.group(1))
+        if url_match:
+            urls.append(_unescape_json_string_url(url_match.group(1)))
+    return _dedupe_preserving_order(urls)
+
+
+def _instagram_display_urls(html: str, post_url: str) -> list[str]:
+    """Imagens ORIGINAIS (sem corte) do post, na ordem -- 1 para post simples, várias para
+    carrossel. Ancorado pelo shortcode da própria URL para nunca pegar o JSON de um post
+    sugerido/relacionado que apareça na mesma página. Lista vazia (nunca erro) se o shortcode ou
+    NENHUM dos dois formatos de JSON forem encontrados -- quem chama cai para o fallback de
+    og:image nesse caso. Tenta "display_url" primeiro, depois "image_versions2.candidates" (ver
+    comentário acima do pattern) -- nunca os dois juntos, o segundo só entra se o primeiro não
+    encontrar nada."""
+    shortcode_match = _INSTAGRAM_SHORTCODE_PATTERN.search(post_url)
+    if not shortcode_match:
+        logger.info("[DOWNLOAD] fallback de imagem (instagram): shortcode não encontrado na URL")
+        return []
+    shortcode = shortcode_match.group(1)
+    anchor = re.search(r'"shortcode"\s*:\s*"%s"' % re.escape(shortcode), html)
+    if not anchor:
+        logger.info(
+            "[DOWNLOAD] fallback de imagem (instagram): shortcode=%s não encontrado no JSON da página",
+            shortcode,
+        )
+        return []
+    # Janela: do shortcode encontrado até o PRÓXIMO "shortcode" na página (início do JSON do
+    # próximo post, ex.: sugestões) -- ou o fim da página, se não houver outro.
+    rest = html[anchor.end():]
+    next_shortcode = _SHORTCODE_JSON_KEY.search(rest)
+    window = rest[: next_shortcode.start()] if next_shortcode else rest
+
+    urls = _dedupe_preserving_order(
+        [_unescape_json_string_url(u) for u in _DISPLAY_URL_PATTERN.findall(window)]
+    )
+    if urls:
+        logger.info(
+            "[DOWNLOAD] fallback de imagem (instagram): shortcode=%s imagens via display_url=%s",
+            shortcode, len(urls),
+        )
+        return urls
+
+    urls = _image_versions2_urls(window)
+    if urls:
+        logger.info(
+            "[DOWNLOAD] fallback de imagem (instagram): shortcode=%s imagens via image_versions2=%s",
+            shortcode, len(urls),
+        )
+        return urls
+
+    logger.info(
+        "[DOWNLOAD] fallback de imagem (instagram): shortcode=%s encontrado, mas nenhuma imagem "
+        "original (display_url/image_versions2) -- vai cair para og:image (pode vir cortada)",
+        shortcode,
+    )
+    return []
 
 
 def _extract_image_urls(html: str, post_url: str) -> list[str]:
@@ -167,6 +224,7 @@ def _extract_image_urls(html: str, post_url: str) -> list[str]:
     for pattern in _META_IMAGE_PATTERNS:
         match = pattern.search(html)
         if match:
+            logger.info("[DOWNLOAD] fallback de imagem: usando og:image/twitter:image (pode vir cortada)")
             return [_unescape_json_string_url(match.group(1))]
     return []
 
