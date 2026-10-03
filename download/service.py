@@ -26,8 +26,14 @@ from urllib.parse import urlsplit
 
 from config import DOWNLOAD_TIMEOUT_SECONDS, MAX_VIDEO_DURATION_SECONDS
 from download.base import PlatformDownloader, RawDownload
-from download.errors import DownloadError, DownloadFailedError, DownloadTimeoutError, VideoTooLongError
-from download.file_validation import validate_downloaded_file
+from download.errors import (
+    DownloadError,
+    DownloadFailedError,
+    DownloadTimeoutError,
+    InvalidFileError,
+    VideoTooLongError,
+)
+from download.file_validation import detect_media_type, validate_downloaded_file, validate_downloaded_image
 from download.platform import Platform, detect_platform
 from download.result import DownloadResult
 from download.tempfiles import cleanup, new_temp_stub
@@ -225,13 +231,20 @@ def download_video(url: str) -> DownloadResult:
     try:
         raw = _download_with_timeout(downloader, validated.url, stub)
         _check_duration(raw)
-        size = validate_downloaded_file(raw.path)
+        media_type = detect_media_type(raw.path)
+        if media_type == "video":
+            size = validate_downloaded_file(raw.path)
+        elif media_type == "image":
+            size = validate_downloaded_image(raw.path)
+        else:
+            raise InvalidFileError(f"extensão não reconhecida: {raw.path.suffix!r}")
         return DownloadResult(
             platform=platform,
             temp_path=raw.path,
             size_bytes=size,
             duration_seconds=raw.duration_seconds,
             container_format=raw.path.suffix.lstrip("."),
+            media_type=media_type,
         )
     except DownloadError:
         cleanup(stub)

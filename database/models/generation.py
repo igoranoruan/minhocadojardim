@@ -90,5 +90,11 @@ class Generation(Base):
     # klango-{8 chars de output_storage_key}.mp4, 02/10/2026). Nunca é o identificador técnico da
     # geração nem a própria storage_key completa.
     display_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # Extensão REAL do resultado entregável -- "mp4" para vídeo, ou "jpg"/"jpeg"/"png"/"webp" para
+    # imagem (03/10/2026, suporte a Pinterest/Instagram sem vídeo, aprovação do CÉREBRO). NULL para
+    # toda geração sem resultado ainda (reserved/failed) e para toda geração já existente antes
+    # desta coluna -- services/usage.py::complete_generation() trata NULL como "mp4" (vídeo), o
+    # mesmo comportamento de sempre, então nenhuma linha antiga muda de significado.
+    output_extension: Mapped[str | None] = mapped_column(String(8), nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)

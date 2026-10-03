@@ -33,8 +33,9 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
     try:
         with eng.connect() as conn:
             # 0004 (Generation.display_filename) e 0005 (Batch.request_fingerprint), Etapa 9.3;
-            # 0006 (anonymous_identities), Free anônimo -- aprovação do CÉREBRO.
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0006"
+            # 0006 (anonymous_identities), Free anônimo -- aprovação do CÉREBRO; 0007
+            # (Generation.output_extension), suporte a imagem -- aprovação do CÉREBRO.
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0007"
     finally:
         eng.dispose()
 

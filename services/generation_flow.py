@@ -42,6 +42,7 @@ from download.platform import Platform, detect_platform
 from download.service import download_video
 from download.url_safety import validate_url
 from processor.errors import ProcessorError
+from processor.image_service import process_image
 from processor.service import process_video
 from services import result_storage
 from services.batch_filenames import sanitize_batch_filename
@@ -66,6 +67,11 @@ class GenerationOutcome:
     size_bytes: int
     duration_seconds: float
     output_sha256: str
+    # Extensão real do resultado: "mp4" (vídeo) ou "jpg"/"jpeg"/"png"/"webp" (imagem, 03/10/2026 --
+    # suporte a Pinterest/Instagram sem vídeo, aprovação do CÉREBRO). Default "mp4" preserva, sem
+    # nenhuma mudança, todo código/teste existente que já constrói um GenerationOutcome sem
+    # conhecer este campo.
+    output_extension: str = "mp4"
 
 
 class GenerationPersistenceError(Exception):
@@ -213,15 +219,28 @@ def _execute_reserved(
                 if on_progress is not None:
                     on_progress("processing", percent, platform.value)
 
-            processing_result = process_video(download_result.temp_path, on_progress=_on_processing_progress)
+            # 03/10/2026 (suporte a imagem -- Pinterest/Instagram sem vídeo, aprovação do CÉREBRO):
+            # media_type decide qual das duas camadas de processamento usar -- process_video
+            # (FFmpeg) continua EXATAMENTE como antes para "video" (o caso de sempre); "image" usa
+            # o caminho novo e paralelo (Pillow, sem percentual de progresso real -- um único aviso
+            # "em andamento", já que não há etapas intermediárias para medir como no FFmpeg).
+            if download_result.media_type == "image":
+                if on_progress is not None:
+                    on_progress("processing", None, platform.value)
+                processing_result = process_image(download_result.temp_path)
+            else:
+                processing_result = process_video(download_result.temp_path, on_progress=_on_processing_progress)
             output_path = processing_result.output_path
+            output_extension = output_path.suffix.lstrip(".").lower() or "mp4"
 
             # result_storage.save() fica no MESMO try de download/processamento de propósito: uma
             # falha aqui (ex.: disco cheio) deve ser tratada exatamente como uma falha de
             # download/processamento — fail_generation, cota liberada — sem precisar de um except
             # dedicado. Depois do save(), output_path já não existe mais (foi renomeado para o
             # storage); _cleanup_quietly no finally continua seguro (só apaga se o path existir).
-            storage_key = result_storage.save(output_path, size_bytes=processing_result.size_bytes)
+            storage_key = result_storage.save(
+                output_path, size_bytes=processing_result.size_bytes, extension=output_extension,
+            )
         except (DownloadError, ProcessorError) as exc:
             _mark_failed(db, generation_id, exc)
             raise
@@ -248,6 +267,7 @@ def _execute_reserved(
                 output_size_bytes=processing_result.size_bytes,
                 output_expires_at=output_expires_at,
                 output_storage_key=storage_key,
+                output_extension=output_extension,
                 now=now,
             )
         except Exception as persistence_exc:
@@ -282,6 +302,7 @@ def _execute_reserved(
         size_bytes=processing_result.size_bytes,
         duration_seconds=processing_result.duration_seconds,
         output_sha256=processing_result.output_sha256,
+        output_extension=output_extension,
     )
 
 
@@ -343,6 +364,7 @@ def run_batch(
                     size_bytes=generation.output_size_bytes or 0,
                     duration_seconds=(generation.duration_ms or 0) / 1000,
                     output_sha256=generation.output_sha256 or "",
+                    output_extension=generation.output_extension or "mp4",
                 )
                 resultados.append(BatchItemOutcome(position, generation_id, True, outcome, None))
             else:  # "failed"

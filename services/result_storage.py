@@ -31,6 +31,16 @@ logger = logging.getLogger("minhoca")
 # diretório de storage, qualquer que seja a string recebida.
 _KEY_RE = re.compile(r"^[0-9a-f]{32}$")
 
+# 03/10/2026 (suporte a imagem, aprovação do CÉREBRO): este módulo é propositalmente ISOLADO (ver
+# test_result_storage_nao_importa_banco_rotas_processor_download_ou_fastapi) -- por isso a lista de
+# extensões permitidas é definida AQUI, duplicada de download/file_validation.py em vez de
+# importada de lá. `extension` nunca vem direto do usuário: é sempre o valor já validado pela
+# camada de download/processamento (download.result.DownloadResult.media_type ->
+# database.models.generation.Generation.output_extension), mas ainda assim passa por esta mesma
+# validação de allow-list antes de virar parte de um caminho de arquivo -- mesma defesa que já
+# existia para storage_key, agora também para extension.
+_ALLOWED_EXTENSIONS = frozenset({"mp4", "mkv", "webm", "mov", "m4v", "jpg", "jpeg", "png", "webp"})
+
 
 def _ensure_dir() -> Path:
     directory = Path(RESULT_STORAGE_DIR)
@@ -38,51 +48,60 @@ def _ensure_dir() -> Path:
     return directory
 
 
-def _path_for(storage_key: str) -> Path:
+def _path_for(storage_key: str, extension: str = "mp4") -> Path:
     """Única função que conhece a relação chave -> caminho físico. `storage_key` nunca é aceito
     de fora deste módulo como dado externo — é sempre uma chave já gerada por `save()`. Levanta
-    ValueError para qualquer string que não tenha o formato exato de uma chave gerada aqui —
-    nunca resolve para um caminho fora de RESULT_STORAGE_DIR."""
+    ValueError para qualquer string que não tenha o formato exato de uma chave gerada aqui, ou
+    para qualquer `extension` fora de _ALLOWED_EXTENSIONS — nunca resolve para um caminho fora de
+    RESULT_STORAGE_DIR. `extension` default "mp4" preserva, sem nenhuma mudança, todo chamador
+    existente (vídeo) que não conhece este parâmetro."""
     if not _KEY_RE.fullmatch(storage_key):
         raise ValueError(f"storage_key com formato inválido: {storage_key!r}")
-    return _ensure_dir() / f"{storage_key}.mp4"
+    if extension not in _ALLOWED_EXTENSIONS:
+        raise ValueError(f"extensão não permitida: {extension!r}")
+    return _ensure_dir() / f"{storage_key}.{extension}"
 
 
-def save(source_path: Path, *, size_bytes: int) -> str:
-    """Move `source_path` (o MP4 já validado pelo processor/) para dentro do storage. Devolve o
-    `output_storage_key` gerado. `size_bytes` não é usado para nada além de log — o tamanho real
-    já foi calculado por processor/service.py; este parâmetro só existe para deixar explícito, no
-    ponto de chamada, que o tamanho já é conhecido antes do save (não é recalculado aqui)."""
+def save(source_path: Path, *, size_bytes: int, extension: str = "mp4") -> str:
+    """Move `source_path` (o resultado já validado pelo processor/) para dentro do storage.
+    Devolve o `output_storage_key` gerado. `size_bytes` não é usado para nada além de log — o
+    tamanho real já foi calculado por processor/service.py; este parâmetro só existe para deixar
+    explícito, no ponto de chamada, que o tamanho já é conhecido antes do save (não é recalculado
+    aqui). `extension` (03/10/2026, suporte a imagem): default "mp4" preserva o comportamento
+    exato de antes desta mudança para todo chamador de vídeo; quem salva uma imagem passa a
+    extensão real (ex.: "jpg")."""
     key = uuid.uuid4().hex
-    destination = _path_for(key)
+    destination = _path_for(key, extension)
     source_path.rename(destination)  # rename: sem copiar bytes, sem pico de RAM
-    logger.info("[RESULT_STORAGE] salvo key=%s bytes=%s", key, size_bytes)
+    logger.info("[RESULT_STORAGE] salvo key=%s bytes=%s extensao=%s", key, size_bytes, extension)
     return key
 
 
-def resolve_path(storage_key: str) -> Path:
+def resolve_path(storage_key: str, extension: str = "mp4") -> Path:
     """Etapa 8B.3: única forma pública de obter o Path físico de um resultado salvo — usada só
     pela rota de download, DEPOIS de já ter confirmado (services.usage.get_downloadable_generation
     + exists()) que a geração é do usuário certo, está completed, não expirou e o arquivo existe.
-    Reaproveita a MESMA validação de _path_for(): uma storage_key fora do formato uuid4().hex
-    nunca chega a virar caminho — levanta ValueError, nunca devolve um caminho fora de
-    RESULT_STORAGE_DIR nem aceita um caminho absoluto ou vindo de fora."""
-    return _path_for(storage_key)
+    Reaproveita a MESMA validação de _path_for(): uma storage_key fora do formato uuid4().hex, ou
+    uma extension fora da allow-list, nunca chega a virar caminho — levanta ValueError, nunca
+    devolve um caminho fora de RESULT_STORAGE_DIR nem aceita um caminho absoluto ou vindo de
+    fora."""
+    return _path_for(storage_key, extension)
 
 
-def exists(storage_key: str) -> bool:
+def exists(storage_key: str, extension: str = "mp4") -> bool:
     try:
-        return _path_for(storage_key).is_file()
+        return _path_for(storage_key, extension).is_file()
     except ValueError:
         return False
 
 
-def delete(storage_key: str) -> None:
+def delete(storage_key: str, extension: str = "mp4") -> None:
     """Remove o arquivo da chave, se existir. Nunca levanta (mesmo padrão de
     download/tempfiles.cleanup e processor/tempfiles.cleanup)."""
     try:
-        _path_for(storage_key).unlink(missing_ok=True)
+        _path_for(storage_key, extension).unlink(missing_ok=True)
     except ValueError:
-        logger.warning("[RESULT_STORAGE] delete() recebeu uma chave com formato inválido: %r", storage_key)
+        logger.warning("[RESULT_STORAGE] delete() recebeu uma chave ou extensão com formato inválido: "
+                        "key=%r extensao=%r", storage_key, extension)
     except OSError:
         logger.warning("[RESULT_STORAGE] falha ao remover key=%s", storage_key)

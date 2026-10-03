@@ -559,6 +559,7 @@ def complete_generation(
     output_size_bytes: int | None = None,
     output_expires_at: datetime | None = None,
     output_storage_key: str | None = None,
+    output_extension: str | None = None,
     now: datetime | None = None,
 ) -> None:
     """reserved -> completed (continua contando). Não precisa do lock: nunca aumenta o consumo.
@@ -567,7 +568,13 @@ def complete_generation(
     resultado disponível para download, quando existir — todos opcionais/None por padrão, sem
     nenhuma mudança na regra de cota/reserva. Quem calcula `output_expires_at` (finished_at + TTL)
     é o chamador (services/generation_flow.py), a partir do MESMO `now` passado aqui, para os dois
-    valores baterem exatamente."""
+    valores baterem exatamente.
+
+    output_extension (03/10/2026, suporte a imagem -- aprovação do CÉREBRO): "mp4" para vídeo,
+    extensão real (ex.: "jpg") para imagem. Default None preserva, sem nenhuma mudança, todo
+    chamador existente -- None no banco é tratado como "mp4" por quem lê (ver
+    get_downloadable_generation/get_downloadable_batch_generations, abaixo), então nenhuma geração
+    de vídeo (antiga ou nova) muda de comportamento."""
     now = resolve_now(now)
     try:
         result = db.execute(
@@ -581,6 +588,7 @@ def complete_generation(
                 output_size_bytes=output_size_bytes,
                 output_expires_at=output_expires_at,
                 output_storage_key=output_storage_key,
+                output_extension=output_extension,
             )
         )
         if result.rowcount != 1:
@@ -695,7 +703,7 @@ def get_downloadable_batch_generations(
         if g.output_storage_key
         and g.output_expires_at is not None
         and now < g.output_expires_at
-        and result_storage.exists(g.output_storage_key)
+        and result_storage.exists(g.output_storage_key, g.output_extension or "mp4")
     ]
     if not disponiveis:
         raise BatchNotFoundError()

@@ -49,6 +49,12 @@ class VideoTooLargeError(DownloadError):
     user_message = "O vídeo é maior do que o permitido."
 
 
+class ImageTooLargeError(DownloadError):
+    """Suporte a imagem (Pinterest/Instagram sem vídeo, 03/10/2026)."""
+
+    user_message = "A imagem é maior do que a permitida."
+
+
 class VideoTooLongError(DownloadError):
     user_message = "O vídeo é mais longo do que o permitido."
 

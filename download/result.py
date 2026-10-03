@@ -21,3 +21,9 @@ class DownloadResult:
     size_bytes: int
     duration_seconds: float | None
     container_format: str
+    # "video" | "image" (03/10/2026 -- suporte a Pinterest/Instagram sem vídeo, aprovação do
+    # CÉREBRO). Default "video" preserva, sem nenhuma mudança, todo código/teste existente que já
+    # constrói um DownloadResult sem conhecer este campo -- só download/service.py (o único lugar
+    # que decide isto de verdade, via download.file_validation.detect_media_type) passa "image"
+    # explicitamente.
+    media_type: str = "video"

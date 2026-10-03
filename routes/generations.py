@@ -444,6 +444,36 @@ def create_batch(
     )
 
 
+# 03/10/2026 (suporte a imagem -- Pinterest/Instagram sem vídeo, aprovação do CÉREBRO): content-type
+# da resposta de download individual, a partir da extensão REAL do resultado
+# (generation.output_extension, ou "mp4" quando None -- toda geração de vídeo, antiga ou nova). O
+# ZIP de lote (download_batch) não precisa disto: serve sempre "application/zip", qualquer que
+# seja o conteúdo interno.
+_CONTENT_TYPE_FOR_EXTENSION = {
+    "mp4": "video/mp4",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+    "webp": "image/webp",
+}
+
+
+def _resolve_download_filename(display_filename: str | None, storage_key: str, extension: str) -> str:
+    """Nome de download: `display_filename` quando presente, senão o padrão `klango-{8 chars}.<extensão>`
+    (02/10/2026, mesmo padrão de sempre). 03/10/2026 (suporte a imagem): `display_filename` é
+    sempre sanitizado ANTES do download (services.batch_filenames.sanitize_batch_filename, que
+    força `.mp4` por não conhecer a extensão real nesse momento) -- quando o resultado final não é
+    vídeo, o sufixo é corrigido aqui para a extensão real. `extension == "mp4"` (todo vídeo, e todo
+    chamador existente) devolve `display_filename` exatamente como está, sem nenhuma mudança."""
+    if display_filename is None:
+        return f"klango-{storage_key[:8]}.{extension}"
+    if extension == "mp4":
+        return display_filename
+    raiz, ponto, _sufixo = display_filename.rpartition(".")
+    base = raiz if ponto else display_filename
+    return f"{base}.{extension}"
+
+
 def _unique_zip_name(nome: str, usados: set[str]) -> str:
     """Devolve `nome` se ainda não foi usado nesta chamada de ZIP; senão gera um nome único
     inserindo um contador ANTES da extensão (`video.mp4` -> `video-2.mp4` -> `video-3.mp4`, ...),
@@ -507,12 +537,15 @@ def download_batch(
     try:
         with zipfile.ZipFile(zip_path, mode="w") as zip_file:
             for generation in disponiveis:
-                origem = result_storage.resolve_path(generation.output_storage_key)
+                extensao = generation.output_extension or "mp4"
+                origem = result_storage.resolve_path(generation.output_storage_key, extensao)
                 # Fonte sempre um arquivo já validado por result_storage (mesma validação de
                 # chave/caminho de _KEY_RE, nunca um caminho vindo do usuário); o NOME da entrada é
                 # que pode vir do usuário (display_filename, já sanitizado) -- nunca usado como
                 # caminho, só como arcname de um arquivo plano (sem "/", garantido na sanitização).
-                nome_base = generation.display_filename or f"klango-{generation.output_storage_key[:8]}.mp4"
+                nome_base = _resolve_download_filename(
+                    generation.display_filename, generation.output_storage_key, extensao,
+                )
                 zip_file.write(origem, arcname=_unique_zip_name(nome_base, nomes_usados))
     except Exception:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -557,13 +590,13 @@ def download_generation(
     generation = get_downloadable_generation(
         db, generation_id, user.id, authenticated_user_id=authenticated.id if authenticated else None,
     )
-    if not result_storage.exists(generation.output_storage_key):
+    extensao = generation.output_extension or "mp4"
+    if not result_storage.exists(generation.output_storage_key, extensao):
         raise GenerationDownloadNotFoundError()
-    caminho = result_storage.resolve_path(generation.output_storage_key)
-    nome_arquivo = generation.display_filename or f"klango-{generation.output_storage_key[:8]}.mp4"
+    caminho = result_storage.resolve_path(generation.output_storage_key, extensao)
     return FileResponse(
         caminho,
-        media_type="video/mp4",
-        filename=nome_arquivo,
+        media_type=_CONTENT_TYPE_FOR_EXTENSION.get(extensao, "application/octet-stream"),
+        filename=_resolve_download_filename(generation.display_filename, generation.output_storage_key, extensao),
         headers=NO_STORE,
     )

@@ -68,6 +68,12 @@ DOWNLOAD_CONNECT_TIMEOUT_SECONDS = 15
 DOWNLOAD_TEMP_DIR = "./tmp/downloads"
 # Salvaguarda contra redirecionamento infinito/abusivo nas checagens que a NOSSA camada resolve.
 MAX_REDIRECTS = 5
+
+# Pinterest/Instagram também servem pin/post de IMAGEM (sem vídeo) -- suporte adicionado em
+# 03/10/2026 (aprovação do CÉREBRO). Limite PRÓPRIO, bem menor que MAX_VIDEO_SIZE_BYTES: uma
+# imagem de verdade nunca chega perto de 100 MB -- mas também não faz sentido reaproveitar o teto
+# de vídeo para aceitar, sem querer, um arquivo gigante só porque a extensão é de imagem.
+MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024
 # URL do PO Token Provider (BGUTIL), se o companion estiver rodando no ambiente. Vazio = o
 # yt-dlp tenta o YouTube só com o player client mweb, sem PO Token (funciona para parte dos
 # vídeos; especificação do produto: PO Token NAO garante todos os vídeos).
