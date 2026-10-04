@@ -795,11 +795,15 @@
         <!-- Coluna "Legal" (02/10/2026): restaurada agora que as páginas de verdade existem
              (/termos e /privacidade, ver main.py) -- antes tinha sido removida porque prometer um
              link quebrado seria pior que não ter a coluna (ver histórico). Layout voltou a 3
-             colunas (era 2 enquanto a Legal esteve fora); no mobile a ordem continua Produto, depois
-             Marca, e agora Legal por último (order-3), sem mudar a ordem das duas que já existiam. -->
+             colunas (era 2 enquanto a Legal esteve fora).
+             Ordem no MOBILE (pedido do Igor, 04/10/2026): Produto, depois Legal, e Marca (KLANGO.MP4
+             + redes sociais) por último -- antes a Marca vinha em 2º lugar, antes da Legal. Só os
+             valores "order-*" (sem o prefixo sm:) mudaram; a ordem no DESKTOP (sm:order-*) continua
+             exatamente a mesma de antes (Marca, Produto, Legal), já que o pedido foi só sobre o
+             mobile. -->
         <footer class="border-t border-slate-800/70 mt-8">
             <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-14 grid grid-cols-1 sm:grid-cols-3 gap-10 text-sm">
-                <div class="order-2 sm:order-1">
+                <div class="order-3 sm:order-1">
                     <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
                     <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mt-5 mb-2.5">Siga nas redes sociais</div>
@@ -819,7 +823,7 @@
                     </nav>
                 </div>
 
-                <div class="order-3 sm:order-3 sm:text-right">
+                <div class="order-2 sm:order-3 sm:text-right">
                     <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Legal</div>
                     <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
                         <a href="/termos" class="hover:text-white transition-colors w-fit">Termos de Uso</a>
