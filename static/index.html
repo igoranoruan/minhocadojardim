@@ -338,9 +338,20 @@
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que o YouTube demora mais que as outras plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O YouTube tem uma camada extra de proteção contra automação, então o download de lá passa por uma conexão adicional antes de chegar até você — por isso pode levar até 2 minutos, bem mais que TikTok, Instagram e Pinterest. É normal: não significa erro, só aguarde na tela de processamento.</div>
                         </details>
+                        <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 3 da revisão de UX): resposta
+                             trocada de uma descrição vaga ("remoção de metadados e foco em
+                             compatibilidade") por detalhe técnico real e verificado no código antes
+                             de escrever (processor/ffmpeg.py): "-map_metadata -1 -map_chapters -1"
+                             SEMPRE presente nas 2 variantes de comando FFmpeg (remux rápido e
+                             recodificação completa), e um SHA-256 novo sempre calculado sobre o
+                             arquivo de saída (processor/service.py::_sha256_of). NÃO afirma que o
+                             vídeo é sempre recodificado do zero -- isso seria falso (o caminho
+                             rápido faz remux com `-c:v copy`/`-c:a copy` quando os codecs já são
+                             compatíveis, sem perda, mas também sem reencode); a resposta reflete
+                             os dois casos reais, com honestidade técnica. -->
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo é baixado e processado para gerar uma nova versão em MP4, com remoção de metadados e foco em compatibilidade para edição.</div>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo não é só copiado: removemos todo metadado original do arquivo (dados EXIF, informações de criação, capítulos) via FFmpeg, e o resultado final sempre ganha um hash (SHA-256) novo, diferente do arquivo original. Quando o vídeo já está num formato compatível, reaproveitamos os dados sem perda de qualidade; quando não está, recodificamos para gerar uma versão nova. Em ambos os casos, o que sai é sempre um MP4 novo, com metadado limpo, pronto para edição.</div>
                         </details>
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que acontece com o vídeo depois de pronto?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
