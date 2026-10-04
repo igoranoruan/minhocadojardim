@@ -41,17 +41,18 @@ def test_nenhum_campo_proibido_foi_adicionado(engine):
 
 # ============================================================================ migration aplicável / banco sobe
 def test_migration_0003_esta_no_historico_e_o_head_atual_e_posterior(db_url, alembic_cfg):
-    """0003 continua no histórico (esta suíte é sobre ELA); o head hoje é 0007 (Etapa 9.3:
+    """0003 continua no histórico (esta suíte é sobre ELA); o head hoje é 0008 (Etapa 9.3:
     0004 display_filename, 0005 request_fingerprint; Free anônimo -- aprovação do CÉREBRO:
-    0006 anonymous_identities; suporte a imagem -- aprovação do CÉREBRO: 0007 output_extension)
-    -- ver tests/test_db_migrations.py."""
+    0006 anonymous_identities; suporte a imagem -- aprovação do CÉREBRO: 0007 output_extension;
+    programa de indicação -- aprovação do CÉREBRO: 0008 referrals) -- ver
+    tests/test_db_migrations.py."""
     command.upgrade(alembic_cfg, "head")
     from database.session import create_db_engine
 
     eng = create_db_engine(db_url)
     try:
         with eng.connect() as conn:
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0007"
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0008"
     finally:
         eng.dispose()
 

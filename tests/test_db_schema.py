@@ -18,6 +18,7 @@ EXPECTED_TABLES = {
     "login_codes",  # Etapa 3
     "auth_sessions",  # Etapa 3
     "anonymous_identities",  # Free anônimo -- aprovação do CÉREBRO, migration 0006
+    "referrals",  # programa de indicação -- aprovação do CÉREBRO, migration 0008
 }
 
 

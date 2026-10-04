@@ -36,8 +36,16 @@ def test_a_sessao_e_descoberta_pelo_me_ao_carregar():
 
 
 def test_e_mail_nao_e_mais_autenticacao_nem_fica_salvo_no_navegador():
+    """localStorage é permitido SÓ para o programa de indicação (Etapa 8, aprovação do CÉREBRO):
+    guardar o "?ref=CODIGO" até o login (INDICACAO_STORAGE_KEY) e lembrar qual aviso de recompensa
+    já foi mostrado (INDICACAO_ULTIMO_PREMIO_VISTO_KEY) -- nenhum dos dois tem relação com e-mail/
+    sessão. Qualquer OUTRO uso de localStorage, e sessionStorage por completo, ainda quebram este
+    teste -- a proteção original (nenhum dado de autenticação no navegador) continua de pé."""
     html = _html()
-    assert "localStorage" not in html and "sessionStorage" not in html
+    chamadas_localstorage = re.findall(r"localStorage\.\w+\([^)]*\)", html)
+    chaves_aprovadas = ("INDICACAO_STORAGE_KEY", "INDICACAO_ULTIMO_PREMIO_VISTO_KEY")
+    assert all(any(chave in chamada for chave in chaves_aprovadas) for chamada in chamadas_localstorage)
+    assert "sessionStorage" not in html
     assert "/api/check-email" not in html and "/api/subscription?email=" not in html
     assert "ativarEmail" not in html
 
