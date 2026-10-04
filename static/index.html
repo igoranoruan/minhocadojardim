@@ -166,8 +166,33 @@
                          + margem), redimensionado para 640px de largura e com paleta reduzida via
                          PIL (FASTOCTREE, único método compatível com RGBA nesta instalação) --
                          388KB -> 79KB, mantendo a transparência. Puramente decorativo (aria-hidden),
-                         não altera nenhuma função. -->
-                    <div class="mt-8 flex justify-center">
+                         não altera nenhuma função.
+
+                         Ajustado no mesmo dia: o CÉREBRO achou a mascote "boiando" sozinha sem
+                         contexto. Adicionados os 4 selos de plataforma (TikTok/Instagram/YouTube/
+                         Pinterest) acima dela, como no mockup -- mas usando os ícones de marca
+                         oficiais do FontAwesome (fa-brands), não uma imagem gerada por IA tentando
+                         imitar os logos. Isso é uso nominativo padrão (indicar "funciona com essas
+                         plataformas", o mesmo texto que já existe no parágrafo logo acima: "Baixe
+                         vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest"), diferente do
+                         problema de marca registrada das gerações recusadas (que desenhavam os
+                         logos do zero, deformados, como se fossem arte original do site) ou do uso
+                         do rosto de uma pessoa real sugerindo endosso. -->
+                    <div class="mt-8 flex flex-col items-center gap-4">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-black border border-white/10 flex items-center justify-center shadow-lg">
+                                <i class="fa-brands fa-tiktok text-white text-lg sm:text-xl"></i>
+                            </div>
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-fuchsia-600 via-pink-500 to-orange-400 flex items-center justify-center shadow-lg">
+                                <i class="fa-brands fa-instagram text-white text-lg sm:text-xl"></i>
+                            </div>
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#FF0000] flex items-center justify-center shadow-lg">
+                                <i class="fa-brands fa-youtube text-white text-lg sm:text-xl"></i>
+                            </div>
+                            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#E60023] flex items-center justify-center shadow-lg">
+                                <i class="fa-brands fa-pinterest text-white text-lg sm:text-xl"></i>
+                            </div>
+                        </div>
                         <img src="/static/mascote.png" alt="" aria-hidden="true" loading="lazy"
                             class="w-40 sm:w-52 h-auto drop-shadow-[0_18px_40px_rgba(25,211,174,0.25)]">
                     </div>
