@@ -101,48 +101,47 @@
         </header>
 
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
-            <!-- HERO (04/10/2026, Etapa 5 da adaptação ao layout de referência enviado pelo CÉREBRO):
-                 texto alinhado à esquerda (era centralizado) para reproduzir literalmente a
-                 referência -- decisão confirmada com o CÉREBRO antes de implementar, depois de 2
-                 tentativas anteriores com a mascote centralizada não terem funcionado. Ícones de
-                 plataforma reposicionados para logo após o subtítulo (como na referência -- não mais
-                 agrupados com a mascote), e a mascote agora grande, ancorada à esquerda, ao final da
-                 composição (depois do checklist), em vez de pequena e centralizada sozinha. -->
-            <section class="pt-20 sm:pt-32 pb-14 sm:pb-20">
-                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mb-7">
+            <!-- HERO (04/10/2026, refinamento da primeira dobra pedido pelo CÉREBRO por escrito --
+                 documento "IMPLEMENTAÇÃO DA NOVA HOME"): eyebrow "FERRAMENTA PARA REUTILIZAÇÃO DE
+                 CONTEÚDO" removido por ser redundante com a própria headline logo abaixo. Nova
+                 ordem da primeira dobra: headline -> subtítulo -> banner da mascote -> status do
+                 plano/limite -> formulário (antes o status vinha primeiro, acima de tudo). Texto
+                 centralizado no mobile e alinhado à esquerda a partir do sm: (mx-auto sm:mx-0 nos
+                 blocos com max-width; o card do formulário leva "text-left" explícito pra não herdar
+                 a centralização no input/placeholder). Checklist "Limpeza de metadados / Nova versão
+                 em MP4 / Sem anúncios" removido por duplicar informação que já aparece em outras
+                 seções da página (Como Funciona, Antes/Depois) -- não removido de lá, só daqui.
+                 Nenhum id, endpoint ou função JS foi alterado; só HTML/CSS desta seção. -->
+            <section class="pt-20 sm:pt-32 pb-14 sm:pb-20 text-center sm:text-left">
+                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-2xl mx-auto sm:mx-0">
+                    Reutilize o conteúdo que já funcionou.
+                </h1>
+
+                <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
+                    Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
+                </p>
+
+                <!-- 04/10/2026: ilustração da mascote (static/mascote-video.jpg) -- pedido do
+                     CÉREBRO, aprovada depois de recusarmos duas versões anteriores geradas por IA
+                     que desenhavam os logos oficiais do TikTok, Instagram, YouTube e Pinterest
+                     (risco de marca). Esta versão usa só ícones genéricos de vídeo/arquivo MP4, sem
+                     nenhuma marca de terceiros -- conferida visualmente antes de implementar. -->
+                <div class="mt-6 max-w-xl mx-auto sm:mx-0">
+                    <img src="/static/mascote-video.jpg" alt="Mascote do KLANGO.MP4"
+                        class="w-full h-auto rounded-xl select-none" draggable="false">
+                </div>
+
+                <!-- Status do plano/limite (reposicionado pra depois do banner e antes do
+                     formulário, por pedido do CÉREBRO -- mesmos ids/classes/lógica de sempre,
+                     setStatusConta() e atualizarStatusContaVisual() continuam controlando o
+                     conteúdo normalmente, só o lugar no documento mudou). -->
+                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mt-6 mb-7">
                     <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
                 </div>
                 <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 mt-1.5 mb-4"></div>
 
-                <!-- 02/10/2026: quebra de linha fixa (span + br), não mais o texto corrido deixado
-                     pro navegador quebrar sozinho -- o wrap automático, dependendo da largura exata
-                     da tela, podia cortar em "REUTILIZAÇÃO" / "DE CONTEÚDO" de forma desequilibrada
-                     ou até deixar "DE" sozinho numa ponta. Agora sempre quebra no mesmo lugar. -->
-                <p class="text-[#19D3AE] text-[11px] sm:text-xs font-extrabold tracking-[0.18em] uppercase mb-5">
-                    <span class="block">FERRAMENTA PARA REUTILIZAÇÃO</span><span class="block">DE CONTEÚDO</span>
-                </p>
-
-                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-2xl">
-                    Reutilize o conteúdo que já funcionou.
-                </h1>
-
-                <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl">
-                    Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
-                </p>
-
-                <!-- 04/10/2026: ilustração da mascote (static/mascote-video.jpg) no lugar dos
-                     selos de plataforma individuais -- pedido do CÉREBRO, aprovada depois de
-                     recusarmos duas versões anteriores geradas por IA que desenhavam os logos
-                     oficiais do TikTok, Instagram, YouTube e Pinterest (risco de marca). Esta
-                     versão usa só ícones genéricos de vídeo/arquivo MP4, sem nenhuma marca de
-                     terceiros -- conferida visualmente antes de implementar. -->
-                <div class="mt-6 max-w-xl">
-                    <img src="/static/mascote-video.jpg" alt="Mascote do KLANGO.MP4"
-                        class="w-full h-auto rounded-xl select-none" draggable="false">
-                </div>
-
-                <div class="max-w-3xl mt-8">
+                <div class="max-w-3xl mt-2 mx-auto sm:mx-0 text-left">
                     <div class="bg-card p-2.5 rounded-2xl hero-glow">
                         <div class="flex flex-col sm:flex-row gap-2">
                             <div class="relative flex-1">
@@ -164,18 +163,6 @@
 
                         <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
                     </div>
-
-                    <div class="flex flex-wrap justify-start gap-3 mt-5 text-xs text-slate-400">
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Limpeza de metadados</span>
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Nova versão em MP4</span>
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Sem anúncios</span>
-                    </div>
-
-                    <!-- 04/10/2026: mascote no hero testada e removida DE NOVO no mesmo dia (4ª
-                         tentativa ao todo) -- desta vez grande e ancorada ao final da composição,
-                         seguindo a referência literalmente; o CÉREBRO achou "estranho e sem sentido"
-                         mesmo assim. Removida de vez por ora; static/mascote.png permanece no
-                         repositório sem uso, caso surja um contexto onde ela funcione melhor. -->
 
                     <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): prova social
                          HONESTA -- contagem real de gerações completed, vinda de GET /api/stats
