@@ -845,6 +845,24 @@
         </footer>
     </div>
 
+    <!-- TOAST DE INDICAÇÃO CONFIRMADA (pedido do Igor, 04/10/2026): avisa o indicador quando uma
+         indicação sua acabou de gerar recompensa -- texto e dias sempre vêm de
+         GET /api/me/referral (last_reward), nunca fixos aqui (ver mostrarToastIndicacao() no
+         script). Fixo no topo da tela, acima de tudo (z-[60], maior que os modais) porque pode
+         aparecer em qualquer página/estado, inclusive com um modal já aberto. Começa com
+         "opacity-0 -translate-y-4 pointer-events-none" (escondido por transição, não por
+         "hidden") -- mostrarToastIndicacao()/esconderToastIndicacao() só alternam essas classes. -->
+    <div id="indicacaoToast" class="fixed top-4 inset-x-4 sm:inset-x-auto sm:right-4 sm:left-auto sm:max-w-sm z-[60] opacity-0 -translate-y-4 pointer-events-none transition-all duration-300">
+        <div class="bg-card border border-[#19D3AE]/30 rounded-2xl shadow-2xl shadow-[#19D3AE]/10 p-4 flex items-start gap-3">
+            <div class="w-9 h-9 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gift text-sm"></i></div>
+            <div class="min-w-0 flex-1">
+                <div class="text-sm font-extrabold text-white">Sua indicação deu certo! 🎉</div>
+                <div id="indicacaoToastTexto" class="text-xs text-slate-400 mt-0.5 leading-relaxed">—</div>
+            </div>
+            <button type="button" onclick="esconderToastIndicacao()" class="shrink-0 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
+        </div>
+    </div>
+
     <!-- MODAL DE ACESSO -->
     <!-- Ícone integrado à linha do título (em vez de empilhado acima dele) -- corrige o problema
          relatado de o ícone parecer "vagando" sozinho. Reduzido para w-8 h-8 em círculo (era
@@ -1304,6 +1322,61 @@
         if (secao) secao.classList.add("hidden");
     }
 
+    // Aviso de "indicação confirmada" (pedido do Igor, 04/10/2026): guarda no PRÓPRIO NAVEGADOR
+    // (localStorage, não backend -- mesmo motivo de INDICACAO_STORAGE_KEY acima) o `applied_at` da
+    // última recompensa que o usuário já viu o aviso. Só mostra o toast quando o `last_reward` que
+    // acabou de vir de /api/me/referral tem um `applied_at` mais novo que esse -- nunca repete o
+    // aviso da mesma recompensa a cada vez que a página carrega.
+    const INDICACAO_ULTIMO_PREMIO_VISTO_KEY = "klango_ultimo_premio_indicacao_visto";
+
+    let indicacaoToastTimer = null;
+
+    function mostrarToastIndicacao(texto) {
+        const toast = document.getElementById("indicacaoToast");
+        const textoEl = document.getElementById("indicacaoToastTexto");
+        if (!toast || !textoEl) return;
+        textoEl.textContent = texto;
+        toast.classList.remove("opacity-0", "-translate-y-4", "pointer-events-none");
+        if (indicacaoToastTimer) clearTimeout(indicacaoToastTimer);
+        indicacaoToastTimer = setTimeout(esconderToastIndicacao, 8000);
+    }
+
+    function esconderToastIndicacao() {
+        const toast = document.getElementById("indicacaoToast");
+        if (!toast) return;
+        toast.classList.add("opacity-0", "-translate-y-4", "pointer-events-none");
+        if (indicacaoToastTimer) {
+            clearTimeout(indicacaoToastTimer);
+            indicacaoToastTimer = null;
+        }
+    }
+
+    // Só exibe o aviso se `last_reward` vier preenchido e for mais novo que o último já visto --
+    // todo o texto (dias, se foi marco com upgrade de plano) vem direto do dado real do backend,
+    // nunca um número fixo aqui.
+    function checarNovoPremioIndicacao(lastReward) {
+        if (!lastReward || typeof lastReward.applied_at !== "string") return;
+        let ultimoVisto = null;
+        try {
+            ultimoVisto = localStorage.getItem(INDICACAO_ULTIMO_PREMIO_VISTO_KEY);
+        } catch (err) {
+            return; // localStorage indisponível -- sem aviso, mas sem quebrar o resto da página.
+        }
+        if (ultimoVisto === lastReward.applied_at) return;
+
+        const dias = lastReward.reward_days;
+        const texto = lastReward.is_milestone
+            ? `Você completou um ciclo de indicações e ganhou ${dias} dias de VIP Batch!`
+            : `Você ganhou ${dias} dias extras de acesso por uma indicação.`;
+        mostrarToastIndicacao(texto);
+
+        try {
+            localStorage.setItem(INDICACAO_ULTIMO_PREMIO_VISTO_KEY, lastReward.applied_at);
+        } catch (err) {
+            // Sem persistir: pior caso é o aviso repetir numa próxima visita, não quebra nada.
+        }
+    }
+
     async function carregarIndicacao() {
         const secao = document.getElementById("secaoIndicacao");
         const input = document.getElementById("indicacaoLinkInput");
@@ -1321,6 +1394,7 @@
             }
             input.value = `${window.location.origin}/?ref=${dados.code}`;
             secao.classList.remove("hidden");
+            checarNovoPremioIndicacao(dados.last_reward);
         } catch (err) {
             console.error(err);
         }

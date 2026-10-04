@@ -267,6 +267,76 @@ def extend_entitlement(
         raise
 
 
+def grant_referral_milestone(
+    db: Session, *, user_id: int, entitlement_id: int, new_plan_code: str,
+    reverse_days: int, reward_days: int, now: datetime | None = None,
+) -> Entitlement:
+    """Marco de indicações (aprovação do CÉREBRO, 04/10/2026): troca o plano de um entitlement já
+    concedido para `new_plan_code` (upgrade automático -- ex.: VIP Batch) e ajusta o fim em
+    `reward_days - reverse_days` dias de uma vez só. `reverse_days` desfaz dias de recompensas de
+    indicação INDIVIDUAIS já somadas a este MESMO entitlement no ciclo atual (nunca de outro
+    entitlement) -- quem decide se é seguro reverter é sempre o chamador (services/referrals.py);
+    esta função nunca adivinha, só aplica o delta já calculado. `reverse_days=0` é o caso comum de
+    quando nenhuma recompensa do ciclo tinha sido aplicada ainda (ex.: todas estavam pending_plan).
+
+    NUNCA usada por pagamento algum (não lê nem cria Payment, sem relação com preço) -- mesma
+    categoria de extend_entitlement, só que também muda o plano. Mesma segurança: trava o usuário,
+    relê os acessos vigentes/futuros, recusa se houver sobreposição (nunca decide um "vencedor") e
+    realinha qualquer acesso futuro já empilhado depois do novo fim. Recusa também se o delta
+    resultar num acesso já vencido (sinal de reverse_days maior do que deveria -- falha alto em vez
+    de conceder um "upgrade" que já nasce expirado)."""
+    if reward_days <= 0:
+        raise InvalidEntitlementRequestError("reward_days deve ser positivo.")
+    if reverse_days < 0:
+        raise InvalidEntitlementRequestError("reverse_days não pode ser negativo.")
+    plan = get_plan(new_plan_code)
+    if not plan.paid:
+        raise InvalidEntitlementRequestError("O plano de destino do marco de indicação precisa ser pago.")
+    now = resolve_now(now)
+    try:
+        lock_user_row(db, user_id)
+        items = _valid_granted(db, user_id, now)
+        overlaps = chain.find_overlaps(items)
+        if overlaps:
+            _log_inconsistency(user_id, overlaps)
+            raise EntitlementInconsistencyError(user_id, _pair_ids(overlaps))
+
+        entitlement = next((item for item in items if item.id == entitlement_id), None)
+        if entitlement is None:
+            raise InvalidEntitlementRequestError(
+                f"Entitlement {entitlement_id} não é um acesso granted/vigente ou futuro de {user_id}."
+            )
+
+        fim_antigo = entitlement.expires_at
+        delta_dias = reward_days - reverse_days
+        novo_fim = fim_antigo + timedelta(days=delta_dias)
+        if novo_fim <= now:
+            # reverse_days maior do que deveria (dado inconsistente) resultaria num "upgrade" que já
+            # nasce vencido -- nunca gravado em silêncio.
+            raise EntitlementInconsistencyError(user_id, (entitlement.id,))
+
+        entitlement.plan_code = plan.code
+        entitlement.duration_days = plan.duration_days
+        entitlement.expires_at = novo_fim
+        db.flush()
+
+        futuros = [item for item in items if item.id != entitlement.id and item.starts_at >= fim_antigo]
+        for item, novo_inicio, novo_fim_futuro in chain.realign_after(futuros, entitlement.expires_at):
+            item.starts_at = novo_inicio
+            item.expires_at = novo_fim_futuro
+        db.flush()
+        db.commit()
+        logger.info(
+            "[ENTITLEMENT] marco de indicação aplicado user_id=%s id=%s plano->%s delta_dias=%s "
+            "(reward=%s reverse=%s) novo_fim=%s",
+            user_id, entitlement.id, plan.code, delta_dias, reward_days, reverse_days, entitlement.expires_at,
+        )
+        return entitlement
+    except Exception:
+        db.rollback()
+        raise
+
+
 def revoke_entitlement(
     db: Session, *, entitlement_id: int, reason: str, now: datetime | None = None
 ) -> RevocationResult:

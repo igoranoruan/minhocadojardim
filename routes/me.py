@@ -36,11 +36,13 @@ from database.models import User
 from database.session import get_session
 from routes.deps import get_current_user, get_generation_user
 from services.generation_history import get_generation_history
+from config import REFERRAL_MILESTONE_PLAN_CODE, REFERRAL_MILESTONE_REWARD_DAYS
 from services.referrals import (
     AlreadyClaimedError,
     InvalidReferralCodeError,
     SelfReferralError,
     claim_referral,
+    get_last_applied_reward,
     get_or_create_referral_code,
 )
 from services.user_status import get_user_status
@@ -169,11 +171,28 @@ async def already_claimed_handler(request, exc: AlreadyClaimedError) -> JSONResp
     )
 
 
+class LastRewardOut(BaseModel):
+    """Última recompensa de indicação já aplicada ao próprio usuário (como indicador) -- tudo aqui
+    vem direto da linha real em `referrals` (services.referrals.get_last_applied_reward), nunca
+    calculado/inventado nesta rota."""
+
+    reward_days: int
+    is_milestone: bool
+    plan_code: str | None = None  # só preenchido quando foi um marco (upgrade de plano)
+    applied_at: datetime
+
+
 class ReferralCodeOut(BaseModel):
-    """Só o código -- o link completo (klango.site/?ref=CODIGO) é montado no frontend a partir da
-    própria origem da página, sem precisar que o backend conheça/exponha a URL pública aqui."""
+    """O código -- o link completo (klango.site/?ref=CODIGO) é montado no frontend a partir da
+    própria origem da página, sem precisar que o backend conheça/exponha a URL pública aqui.
+
+    `last_reward` (04/10/2026, marco de indicações, aprovação do CÉREBRO): a última recompensa já
+    aplicada a este usuário como indicador, se houver -- permite ao frontend mostrar um aviso de
+    "sua indicação converteu" comparando `applied_at` com o que já foi mostrado antes (guardado no
+    próprio navegador), sem o backend precisar saber o que já foi "visto"."""
 
     code: str
+    last_reward: LastRewardOut | None = None
 
 
 @router.get("/referral", response_model=ReferralCodeOut)
@@ -184,8 +203,20 @@ def get_referral_code(
     """Etapa 8 da revisão de UX (aprovação do CÉREBRO): devolve o código de indicação do próprio
     usuário, gerando um na primeira chamada (services.referrals.get_or_create_referral_code) --
     SOMENTE login de verdade, mesmo motivo de /generations (um código persistente não faz sentido
-    pra um cookie de dispositivo sem conta)."""
-    return ReferralCodeOut(code=get_or_create_referral_code(db, user.id))
+    pra um cookie de dispositivo sem conta). Também devolve a última recompensa já aplicada (se
+    houver) -- ver LastRewardOut."""
+    code = get_or_create_referral_code(db, user.id)
+    reward = get_last_applied_reward(db, user.id)
+    last_reward = None
+    if reward is not None:
+        is_milestone = reward.reward_days == REFERRAL_MILESTONE_REWARD_DAYS
+        last_reward = LastRewardOut(
+            reward_days=reward.reward_days,
+            is_milestone=is_milestone,
+            plan_code=REFERRAL_MILESTONE_PLAN_CODE if is_milestone else None,
+            applied_at=reward.applied_at,
+        )
+    return ReferralCodeOut(code=code, last_reward=last_reward)
 
 
 class ClaimReferralBody(BaseModel):

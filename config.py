@@ -136,6 +136,17 @@ RESULT_TTL_SECONDS = 30 * 60
 REFERRAL_CODE_LENGTH = 8  # caracteres do código compartilhável (klango.site/?ref=CODIGO)
 REFERRAL_REWARD_DAYS = 7  # dias somados ao entitlement do indicador por indicação paga
 
+# Marco de indicações (aprovação do CÉREBRO, 04/10/2026): a cada REFERRAL_MILESTONE_EVERY
+# indicações pagas (3ª, 6ª, 9ª...), o indicador NÃO recebe mais REFERRAL_REWARD_DAYS pela indicação
+# que completa o ciclo -- em vez disso, o total das REFERRAL_MILESTONE_EVERY recompensas do ciclo
+# (que soma REFERRAL_MILESTONE_EVERY * REFERRAL_REWARD_DAYS, hoje 3*7=21) é substituído por um
+# bônus maior: REFERRAL_MILESTONE_REWARD_DAYS dias de acesso no plano REFERRAL_MILESTONE_PLAN_CODE
+# (upgrade automático, mesmo que o indicador esteja hoje num plano menor) -- ver
+# services/referrals.py::_apply_reward_or_queue.
+REFERRAL_MILESTONE_EVERY = 3
+REFERRAL_MILESTONE_REWARD_DAYS = 30
+REFERRAL_MILESTONE_PLAN_CODE = "vip_batch"
+
 
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).

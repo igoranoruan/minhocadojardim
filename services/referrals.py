@@ -20,13 +20,24 @@ depois de já ter chamado grant_entitlement com sucesso.
 import logging
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from config import REFERRAL_CODE_LENGTH, REFERRAL_REWARD_DAYS
+from config import (
+    REFERRAL_CODE_LENGTH,
+    REFERRAL_MILESTONE_EVERY,
+    REFERRAL_MILESTONE_PLAN_CODE,
+    REFERRAL_MILESTONE_REWARD_DAYS,
+    REFERRAL_REWARD_DAYS,
+)
 from database.models import Entitlement, Referral, User
-from services.entitlements import EntitlementError, extend_entitlement, get_current_entitlement
+from services.entitlements import (
+    EntitlementError,
+    extend_entitlement,
+    get_current_entitlement,
+    grant_referral_milestone,
+)
 from utils.security import generate_referral_code
 from utils.time_sp import resolve_now
 
@@ -49,6 +60,20 @@ class SelfReferralError(ReferralError):
 
 class AlreadyClaimedError(ReferralError):
     """Este usuário já tem um indicador registrado -- o vínculo é gravado uma única vez na vida."""
+
+
+def get_last_applied_reward(db: Session, referrer_id: int) -> Referral | None:
+    """Última recompensa de indicação já APLICADA (status='applied') a este indicador, ou None se
+    nunca recebeu nenhuma -- usada só pela rota GET /api/me/referral (routes/me.py), pra o
+    frontend conseguir mostrar um aviso de "indicação confirmada" sem inventar dado nenhum: tudo
+    que mostra (quantos dias, se foi um marco com upgrade de plano, quando aconteceu) vem direto
+    desta linha. Só leitura -- nenhuma mutação."""
+    return db.execute(
+        select(Referral)
+        .where(Referral.referrer_user_id == referrer_id, Referral.status == "applied")
+        .order_by(Referral.applied_at.desc(), Referral.id.desc())
+        .limit(1)
+    ).scalar_one_or_none()
 
 
 def get_or_create_referral_code(db: Session, user_id: int) -> str:
@@ -107,36 +132,100 @@ def claim_referral(db: Session, *, user_id: int, code: str) -> int:
     return referrer.id
 
 
+def _count_referrals_for_referrer(db: Session, referrer_id: int) -> int:
+    """Quantas indicações este indicador já converteu NA VIDA (aplicadas OU pending_plan) -- cada
+    linha é uma pessoa indicada que já fez o primeiro pagamento, não importa se o bônus já foi
+    aplicado ou ainda está esperando o indicador ter um plano vigente. É essa contagem (+1, pela
+    indicação que está sendo processada agora) que decide se esta é a indicação que completa um
+    ciclo de REFERRAL_MILESTONE_EVERY (marco de indicações, aprovação do CÉREBRO, 04/10/2026)."""
+    return db.execute(
+        select(func.count(Referral.id)).where(Referral.referrer_user_id == referrer_id)
+    ).scalar_one()
+
+
+def _reverse_days_for_milestone(db: Session, *, referrer_id: int, entitlement_id: int) -> int | None:
+    """Soma os `reward_days` das (REFERRAL_MILESTONE_EVERY - 1) indicações ANTERIORES deste
+    indicador -- só quando é seguro: todas já 'applied' e todas aplicadas a este MESMO
+    `entitlement_id` (nenhuma ficou pending_plan nem foi aplicada a um entitlement diferente, já
+    expirado/trocado no meio do ciclo). É a única situação em que desfazer dias já concedidos é
+    seguro, porque esses dias ainda estão todos dentro do mesmo acesso vigente, intactos.
+    Qualquer outra situação devolve None -- o chamador decide o que fazer, esta função nunca
+    adivinha (mesma filosofia de EntitlementInconsistencyError: nunca escolher um resultado
+    silenciosamente quando o histórico não está limpo)."""
+    anteriores = db.execute(
+        select(Referral)
+        .where(Referral.referrer_user_id == referrer_id)
+        .order_by(Referral.id.desc())
+        .limit(REFERRAL_MILESTONE_EVERY - 1)
+    ).scalars().all()
+    if len(anteriores) != REFERRAL_MILESTONE_EVERY - 1:
+        return None
+    if any(r.status != "applied" or r.applied_entitlement_id != entitlement_id for r in anteriores):
+        return None
+    return sum(r.reward_days for r in anteriores)
+
+
 def _apply_reward_or_queue(db: Session, *, referrer_id: int, referred_id: int, now: datetime) -> Referral:
     """Cria a linha de recompensa (Referral) para `referred_id` -- aplica IMEDIATAMENTE no
     entitlement vigente do indicador, se ele tiver um agora, ou deixa `pending_plan` (aplicado
     depois, na próxima vez que o indicador receber QUALQUER entitlement -- ver
-    _apply_pending_rewards_for_referrer, abaixo)."""
+    _apply_pending_rewards_for_referrer, abaixo).
+
+    Marco de indicações (aprovação do CÉREBRO, 04/10/2026): quando esta é a indicação que completa
+    um ciclo de REFERRAL_MILESTONE_EVERY (3ª, 6ª, 9ª...), a recompensa desta linha já nasce como
+    REFERRAL_MILESTONE_REWARD_DAYS dias de REFERRAL_MILESTONE_PLAN_CODE (upgrade automático) em vez
+    de REFERRAL_REWARD_DAYS -- e, se o indicador já tiver um plano vigente agora E as outras duas
+    indicações deste ciclo já tiverem sido aplicadas a ESTE MESMO entitlement, os dias delas são
+    desfeitos na mesma operação (o total do ciclo vira só o bônus do marco, não a soma dos dois).
+    Se o histórico do ciclo não estiver limpo (ex.: indicador ficou Free no meio do ciclo), o marco
+    ainda é aplicado, só que por cima -- sem tentar desfazer dias de um jeito arriscado -- e um
+    aviso fica no log para revisão manual."""
+    ordinal = _count_referrals_for_referrer(db, referrer_id) + 1
+    is_milestone = ordinal % REFERRAL_MILESTONE_EVERY == 0
+    reward_days = REFERRAL_MILESTONE_REWARD_DAYS if is_milestone else REFERRAL_REWARD_DAYS
+
     current = get_current_entitlement(db, referrer_id, now)
     if current is None:
         referral = Referral(
             referrer_user_id=referrer_id, referred_user_id=referred_id,
-            reward_days=REFERRAL_REWARD_DAYS, status="pending_plan",
+            reward_days=reward_days, status="pending_plan",
         )
         db.add(referral)
         db.commit()
         logger.info(
-            "[REFERRAL] recompensa pendente (indicador sem plano vigente agora): referrer_id=%s referred_id=%s",
-            referrer_id, referred_id,
+            "[REFERRAL] recompensa pendente (indicador sem plano vigente agora)%s: referrer_id=%s referred_id=%s",
+            " [marco]" if is_milestone else "", referrer_id, referred_id,
         )
         return referral
 
-    extend_entitlement(db, user_id=referrer_id, entitlement_id=current.id, extra_days=REFERRAL_REWARD_DAYS, now=now)
+    if is_milestone:
+        reverse_days = _reverse_days_for_milestone(db, referrer_id=referrer_id, entitlement_id=current.id)
+        if reverse_days is None:
+            logger.warning(
+                "[REFERRAL] marco de indicação sem histórico limpo pra reverter neste ciclo -- "
+                "aplicando o bônus por cima, sem desfazer dias anteriores: referrer_id=%s "
+                "referred_id=%s entitlement_id=%s",
+                referrer_id, referred_id, current.id,
+            )
+            reverse_days = 0
+        grant_referral_milestone(
+            db, user_id=referrer_id, entitlement_id=current.id,
+            new_plan_code=REFERRAL_MILESTONE_PLAN_CODE, reverse_days=reverse_days,
+            reward_days=reward_days, now=now,
+        )
+    else:
+        extend_entitlement(db, user_id=referrer_id, entitlement_id=current.id, extra_days=reward_days, now=now)
+
     referral = Referral(
         referrer_user_id=referrer_id, referred_user_id=referred_id,
-        reward_days=REFERRAL_REWARD_DAYS, status="applied",
+        reward_days=reward_days, status="applied",
         applied_entitlement_id=current.id, applied_at=now,
     )
     db.add(referral)
     db.commit()
     logger.info(
-        "[REFERRAL] recompensa aplicada na hora: referrer_id=%s referred_id=%s entitlement_id=%s",
-        referrer_id, referred_id, current.id,
+        "[REFERRAL] recompensa aplicada na hora%s: referrer_id=%s referred_id=%s entitlement_id=%s dias=%s",
+        " [marco]" if is_milestone else "", referrer_id, referred_id, current.id, reward_days,
     )
     return referral
 
@@ -146,14 +235,29 @@ def _apply_pending_rewards_for_referrer(db: Session, *, referrer_id: int, entitl
     mesmo acabou de ser indicado por alguém) -- aplica no entitlement recém-concedido qualquer
     recompensa que estava esperando um plano vigente existir (ramo pending_plan de
     _apply_reward_or_queue). Pode aplicar MAIS DE UMA, se o indicador ficou Free por um tempo e
-    acumulou indicações pendentes nesse período."""
+    acumulou indicações pendentes nesse período.
+
+    Uma pendência de MARCO (reward_days == REFERRAL_MILESTONE_REWARD_DAYS -- já decidido no momento
+    em que a linha foi criada, em _apply_reward_or_queue) aplica com upgrade de plano
+    (grant_referral_milestone), sempre com reverse_days=0: como ela estava pending_plan, nenhum dia
+    das outras indicações do mesmo ciclo chegou a ser somado a entitlement algum ainda -- não há o
+    que desfazer. Processadas em ordem de criação (ORDER BY id), igual a sempre."""
     pendentes = db.execute(
-        select(Referral).where(Referral.referrer_user_id == referrer_id, Referral.status == "pending_plan")
+        select(Referral)
+        .where(Referral.referrer_user_id == referrer_id, Referral.status == "pending_plan")
+        .order_by(Referral.id)
     ).scalars().all()
     for referral in pendentes:
-        extend_entitlement(
-            db, user_id=referrer_id, entitlement_id=entitlement.id, extra_days=referral.reward_days, now=now,
-        )
+        if referral.reward_days == REFERRAL_MILESTONE_REWARD_DAYS:
+            grant_referral_milestone(
+                db, user_id=referrer_id, entitlement_id=entitlement.id,
+                new_plan_code=REFERRAL_MILESTONE_PLAN_CODE, reverse_days=0,
+                reward_days=referral.reward_days, now=now,
+            )
+        else:
+            extend_entitlement(
+                db, user_id=referrer_id, entitlement_id=entitlement.id, extra_days=referral.reward_days, now=now,
+            )
         referral.status = "applied"
         referral.applied_entitlement_id = entitlement.id
         referral.applied_at = now
