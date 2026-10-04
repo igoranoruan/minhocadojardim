@@ -465,7 +465,15 @@
                  dias extras de plano quando a pessoa indicada faz o primeiro pagamento aprovado --
                  ver services/referrals.py. Só para quem tem login de verdade, mesmo motivo de
                  "Meus últimos downloads" (um código persistente não faz sentido pra um cookie de
-                 dispositivo sem conta). -->
+                 dispositivo sem conta).
+
+                 04/10/2026 (Etapa 4 da adaptação ao layout de referência): adicionado o bloco "Como
+                 funciona?" com os 3 passos numerados, que não existia antes (só havia o campo de
+                 link + botão copiar) -- reproduzindo o conteúdo da referência. O estado de "link
+                 copiado" também ficou mais evidente (botão vira preenchido/teal com ícone de check,
+                 em vez de só trocar o texto) -- ver copiarLinkIndicacao() no script. Mascote não
+                 incluída aqui: mesma situação em aberto da Home (ver histórico de commits de hoje),
+                 fora do escopo desta etapa. -->
             <section id="secaoIndicacao" class="hidden py-8">
                 <div class="bg-card rounded-3xl p-7 glow-hover">
                     <div class="flex items-center gap-3 mb-5">
@@ -479,9 +487,27 @@
                         <input id="indicacaoLinkInput" type="text" readonly
                             class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-xs"
                             onclick="this.select()">
-                        <button type="button" onclick="copiarLinkIndicacao(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-xs hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap">
+                        <button id="indicacaoCopiarBtn" type="button" onclick="copiarLinkIndicacao(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-xs hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap">
                             <i class="fa-solid fa-copy mr-1.5"></i>Copiar link
                         </button>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-800">
+                        <h3 class="text-sm font-bold text-white mb-4">Como funciona?</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[11px] font-extrabold">1</span>
+                                <p class="text-sm text-slate-400 leading-relaxed pt-0.5">Você compartilha seu link</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[11px] font-extrabold">2</span>
+                                <p class="text-sm text-slate-400 leading-relaxed pt-0.5">A pessoa assina um plano</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[11px] font-extrabold">3</span>
+                                <p class="text-sm text-slate-400 leading-relaxed pt-0.5">Você ganha 7 dias extras automaticamente</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -926,11 +952,21 @@
             }
         }
         if (!botao) return;
-        const textoOriginal = botao.innerHTML;
-        botao.textContent = "Copiado!";
+        // 04/10/2026 (Etapa 4 da adaptação ao layout de referência): estado de "copiado" mais
+        // evidente -- o botão vira preenchido/teal com ícone de check, em vez de só trocar o texto
+        // mantendo a mesma aparência neutra de antes. Classes trocadas e devolvidas depois do
+        // timeout, nunca um segundo elemento/botão novo.
+        const classesOriginais = botao.className;
+        const htmlOriginal = botao.innerHTML;
+        botao.className = botao.className
+            .replace("bg-[#19D3AE]/10", "bg-[#19D3AE]")
+            .replace("text-[#19D3AE]", "text-slate-950")
+            .replace("hover:bg-[#19D3AE]/20", "hover:brightness-110");
+        botao.innerHTML = `<i class="fa-solid fa-check mr-1.5"></i>Link copiado!`;
         setTimeout(() => {
-            botao.innerHTML = textoOriginal;
-        }, 1500);
+            botao.className = classesOriginais;
+            botao.innerHTML = htmlOriginal;
+        }, 1800);
     }
 
     // 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): busca a contagem REAL de vídeos
