@@ -183,8 +183,17 @@
                          CDC Art. 37) -- esta é a alternativa honesta que foi aprovada no lugar.
                          Começa com "hidden": só aparece depois que o número real chega, nunca mostra
                          um placeholder/zero por um instante. Se a chamada falhar, fica oculto pra
-                         sempre nesta visita -- não é informação essencial pro uso do site. -->
-                    <p id="statsProcessados" class="hidden mt-6 text-xs text-slate-500">
+                         sempre nesta visita -- não é informação essencial pro uso do site.
+                         04/10/2026 (pedido do Igor, referência do novo card "Meu acesso"): texto
+                         centralizado (antes seguia o alinhamento do container, à esquerda no
+                         desktop). Não foi movido no documento -- pra quem já tem plano pago, as
+                         seções de funil frio entre aqui e "Meu acesso" (Antes/Depois, Como Funciona,
+                         vitrine de Planos, Lote na Prática) já ficam todas escondidas
+                         (atualizarVisibilidadeFunilFrio/atualizarVisibilidadeSecaoPlanos), então na
+                         prática este texto já aparece imediatamente acima do card -- exatamente a
+                         posição pedida -- sem precisar duplicar o elemento nem mexer na prova social
+                         de quem ainda não comprou. Número continua 100% dinâmico (GET /api/stats). -->
+                    <p id="statsProcessados" class="hidden mt-6 mb-2 text-xs text-slate-500 text-center">
                         <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
                     </p>
                 </div>
@@ -497,18 +506,108 @@
 
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
                  Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
-                 está no VIP Batch. Markup já existia desde antes, nunca tinha sido ligada ao JS;
-                 só adicionado o bloco de upgrade -- nada removido. Preço nunca aparece aqui
-                 hardcoded: o botão só abre o mesmo abrirModalPagamento(plano) que já busca o
-                 preço real no servidor. -->
+                 está no VIP Batch. Preço nunca aparece aqui hardcoded: o botão só abre o mesmo
+                 abrirModalPagamento(plano) que já busca o preço real no servidor.
+
+                 04/10/2026, redesenho a pedido do Igor (referência visual de um "dashboard de
+                 acesso"): vira um card completo -- badge "ATIVO" (verdadeiro sempre que esta seção
+                 está visível: o backend já resolve plano expirado/revogado pra "free" antes de
+                 chegar aqui, ver comentário de routes/me.py::StatusOut/EntitlementOut -- "Free,
+                 entitlement expirado ou revoked já viram None por conta própria"), descrição da
+                 capacidade de lote do plano, bloco "X de Y restantes" + "Acesso válido até DD/MM",
+                 barra de uso e aviso de renovação da cota. TODOS os valores continuam vindo de
+                 GET /api/me/status (plan/usage/entitlement), preenchidos em
+                 atualizarCardAcessoDetalhes() -- nenhum cálculo de cota/validade/preço é feito
+                 aqui, só formatação de exibição. Nenhum id usado pela lógica existente foi
+                 removido: #assinaturaPlano e #assinaturaUpgrade continuam exatamente como antes
+                 (mesmas funções, atualizarVisibilidadeSecaoPlanos()); #assinaturaStatus já existia
+                 no HTML mas nunca tinha sido preenchido por nenhum JS -- reaproveitado aqui pra
+                 descrição do lote, em vez de criar mais um id. -->
             <section id="areaAssinatura" class="hidden py-8">
-                <div class="bg-card rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <div class="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">Meu acesso</div>
-                        <div id="assinaturaPlano" class="text-base font-bold text-white">—</div>
-                        <div id="assinaturaStatus" class="text-sm text-slate-400 mt-1">—</div>
+                <div class="bg-card rounded-3xl p-6 sm:p-7 border border-[#19D3AE]/20">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider font-bold pt-1.5">Meu acesso</div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[11px] font-extrabold uppercase tracking-wider shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#19D3AE]"></span> Ativo
+                        </span>
                     </div>
-                    <div id="assinaturaUpgrade" class="hidden flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto"></div>
+
+                    <div id="assinaturaPlano" class="text-xl sm:text-2xl font-extrabold text-white mt-3">—</div>
+                    <div id="assinaturaStatus" class="text-sm text-slate-400 mt-1">—</div>
+
+                    <!-- Bloco "X de Y restantes" + "Acesso válido até" -- grid de 1 coluna no
+                         mobile (nada aperta/estoura horizontalmente) e 2 no sm+, com divisória só
+                         a partir do sm. -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3 mt-5 p-4 rounded-2xl border border-slate-800 bg-[#060b14]">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group text-sm"></i></div>
+                            <div class="min-w-0">
+                                <div id="assinaturaRestantesNumero" class="text-lg font-extrabold text-white leading-tight truncate">—</div>
+                                <div id="assinaturaRestantesLabel" class="text-xs text-slate-500 truncate">—</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 min-w-0 sm:border-l sm:border-slate-800 sm:pl-4">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-calendar-check text-sm"></i></div>
+                            <div class="min-w-0">
+                                <div class="text-xs text-slate-500">Acesso válido até</div>
+                                <div id="assinaturaValidadeData" class="text-base font-extrabold text-[#19D3AE] truncate">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de uso: um segmento por unidade da cota quando ela é pequena (até 20,
+                         cobre os 3 planos atuais -- 5/10/15 por dia), senão vira uma barra contínua
+                         proporcional -- nunca estoura a largura disponível (ver
+                         atualizarCardAcessoDetalhes()). -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span id="assinaturaUsoLabel" class="text-xs font-bold text-slate-400">Uso de hoje</span>
+                            <span id="assinaturaUsoFracao" class="text-xs font-bold text-slate-500 shrink-0">—</span>
+                        </div>
+                        <div id="assinaturaUsoBarra" class="flex gap-1"></div>
+                    </div>
+
+                    <!-- Só aparece quando o período da cota é conhecido (dia/semana) -- nunca um
+                         texto de renovação genérico/inventado (ver atualizarCardAcessoDetalhes()). -->
+                    <div id="assinaturaRenova" class="hidden flex items-center gap-2 mt-4 text-xs text-slate-500">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="assinaturaRenovaTexto"></span>
+                    </div>
+
+                    <div id="assinaturaUpgrade" class="hidden flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-5 pt-5 border-t border-slate-800"></div>
+                </div>
+            </section>
+
+            <!-- BATCH (04/10/2026, pedido do Igor: quem já pagou sente mais utilidade em achar o
+                 processamento em lote logo depois do próprio status "Meu acesso" -- inclusive pra
+                 quem ainda não tem o plano certo, já ver ali embaixo o botão de upgrade pro VIP
+                 Batch, sem precisar rolar a página toda. Movido pra cá (antes ficava depois de
+                 Histórico/Indicação); nenhum id, classe ou função mudou -- só a posição no HTML.
+                 Continua escondida/mostrada exatamente como antes, por getElementById, sem
+                 depender de ordem no DOM -- ver atualizarVisibilidadeBatch() no script. -->
+            <section id="secaoBatch" class="hidden py-10">
+                <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
+                    <div class="flex items-start gap-3 mb-5">
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-extrabold text-white">Processamento em lote</h2>
+                            <p id="batchLimiteTexto" class="text-sm text-slate-400 mt-1">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeos</span>
+                        <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-violet-500/80">—</span>
+                    </div>
+
+                    <div id="batchItems" class="space-y-3"></div>
+
+                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-violet-500/60 hover:text-violet-400 font-bold text-xs transition-colors">
+                        <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
+                    </button>
+
+                    <button id="batchButton" onclick="processarLote()" class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
+                    <div id="batchStatus" class="mt-4 text-sm"></div>
                 </div>
             </section>
 
@@ -592,33 +691,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <!-- BATCH -->
-            <section id="secaoBatch" class="hidden py-10">
-                <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
-                    <div class="flex items-start gap-3 mb-5">
-                        <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-solid fa-layer-group"></i></div>
-                        <div class="min-w-0">
-                            <h2 class="text-base font-extrabold text-white">Processamento em lote</h2>
-                            <p id="batchLimiteTexto" class="text-sm text-slate-400 mt-1">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3 mb-3">
-                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeos</span>
-                        <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-violet-500/80">—</span>
-                    </div>
-
-                    <div id="batchItems" class="space-y-3"></div>
-
-                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-violet-500/60 hover:text-violet-400 font-bold text-xs transition-colors">
-                        <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
-                    </button>
-
-                    <button id="batchButton" onclick="processarLote()" class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
-                    <div id="batchStatus" class="mt-4 text-sm"></div>
                 </div>
             </section>
 
@@ -1595,11 +1667,117 @@
         upgrades.forEach((codigo) => {
             const botao = document.createElement("button");
             botao.type = "button";
-            botao.className = "h-10 px-5 rounded-xl border border-[#19D3AE]/40 text-[#19D3AE] hover:bg-[#19D3AE]/15 font-bold text-xs transition-colors whitespace-nowrap";
+            botao.className = "h-11 px-5 rounded-xl border border-[#19D3AE]/40 text-[#19D3AE] hover:bg-[#19D3AE]/15 hover:border-[#19D3AE] font-bold text-xs transition-colors whitespace-nowrap flex-1 sm:flex-none";
             botao.textContent = `Fazer upgrade para ${PLANOS[codigo].nome}`;
             botao.onclick = () => abrirModalPagamento(codigo);
             assinaturaUpgrade.appendChild(botao);
         });
+    }
+
+    // Formata a validade do acesso como data cheia ("04/10/2036"), pro novo card "Meu acesso"
+    // (pedido do Igor, 04/10/2026, com base na imagem de referência). Isto NÃO substitui nem
+    // mexe em #statusContaValidade/formatarDiasRestantes (o "Expira em N dias" do badge no topo
+    // da página continua existindo exatamente como está -- essa função só alimenta o campo NOVO
+    // "Acesso válido até" dentro do card, que é um elemento diferente). Mesma fonte de dado
+    // (entitlement.expires_at), só outra formatação, num lugar diferente da página.
+    function formatarDataAcesso(value) {
+        if (!value) return "—";
+        const data = new Date(value);
+        if (Number.isNaN(data.getTime())) return "—";
+        return data.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    // Preenche os detalhes do novo card "Meu acesso" (barra de uso, "X de Y restantes", validade
+    // em data cheia, aviso de renovação) -- pedido do Igor, 04/10/2026, com base na imagem de
+    // referência do card VIP Batch. Só EXIBE dados que já existem em /api/me/status
+    // (data.usage.remaining/limit/period, data.entitlement.expires_at) e nas constantes já
+    // existentes (LIMITE_LOTE_POR_PLANO) -- nenhum contador, data ou regra nova é criada aqui.
+    // Chamada de dentro de atualizarStatusContaVisual(), logo depois de
+    // atualizarVisibilidadeSecaoPlanos() -- não mexe em mais nada daquela função.
+    function atualizarCardAcessoDetalhes(plano, uso, entitlement) {
+        const restantesNumeroEl = document.getElementById("assinaturaRestantesNumero");
+        const restantesLabelEl = document.getElementById("assinaturaRestantesLabel");
+        const usoLabelEl = document.getElementById("assinaturaUsoLabel");
+        const usoFracaoEl = document.getElementById("assinaturaUsoFracao");
+        const usoBarraEl = document.getElementById("assinaturaUsoBarra");
+        const validadeDataEl = document.getElementById("assinaturaValidadeData");
+        const renovaWrapEl = document.getElementById("assinaturaRenova");
+        const renovaTextoEl = document.getElementById("assinaturaRenovaTexto");
+        const statusDescEl = document.getElementById("assinaturaStatus");
+
+        // Seção escondida (ex.: plano free) -- não há card pra preencher.
+        if (!restantesNumeroEl) return;
+
+        // Texto secundário logo abaixo do nome do plano: capacidade do lote, já existente em
+        // LIMITE_LOTE_POR_PLANO (mesma constante que já limita o formulário de lote -- não cria
+        // nada novo, só reaproveita pra exibir aqui também).
+        if (statusDescEl) {
+            const limiteLote = plano && LIMITE_LOTE_POR_PLANO[plano.code];
+            statusDescEl.textContent = limiteLote
+                ? `Processamento em lote de até ${limiteLote} vídeos por operação.`
+                : "—";
+        }
+
+        if (uso && typeof uso.remaining === "number" && typeof uso.limit === "number") {
+            const periodo = textoPeriodo(uso.period);
+            const usados = Math.max(0, uso.limit - uso.remaining);
+
+            restantesNumeroEl.textContent = `${uso.remaining} de ${uso.limit}`;
+            if (restantesLabelEl) restantesLabelEl.textContent = `restantes${periodo ? " " + periodo : ""}`;
+            if (usoLabelEl) usoLabelEl.textContent = uso.period === "week" ? "Uso desta semana" : "Uso de hoje";
+            if (usoFracaoEl) usoFracaoEl.textContent = `${usados}/${uso.limit}`;
+
+            if (usoBarraEl) {
+                usoBarraEl.innerHTML = "";
+                // Limites pequenos (os 3 planos pagos atuais: 5/10/15) viram uma barra segmentada,
+                // um bloco por unidade -- igual à referência visual enviada pelo Igor. Um limite
+                // maior (se algum dia existir) cai numa barra contínua proporcional, pra nunca
+                // estourar a tela com dezenas de segmentos.
+                const MAX_SEGMENTOS = 20;
+                if (uso.limit > 0 && uso.limit <= MAX_SEGMENTOS) {
+                    for (let i = 0; i < uso.limit; i++) {
+                        const seg = document.createElement("div");
+                        seg.className = "flex-1 h-2 rounded-full " + (i < usados ? "bg-[#19D3AE]" : "bg-slate-800");
+                        usoBarraEl.appendChild(seg);
+                    }
+                } else if (uso.limit > 0) {
+                    const trilho = document.createElement("div");
+                    trilho.className = "w-full h-2 rounded-full bg-slate-800 overflow-hidden";
+                    const preenchido = document.createElement("div");
+                    const pct = Math.min(100, Math.round((usados / uso.limit) * 100));
+                    preenchido.className = "h-full bg-[#19D3AE] rounded-full";
+                    preenchido.style.width = pct + "%";
+                    trilho.appendChild(preenchido);
+                    usoBarraEl.appendChild(trilho);
+                }
+            }
+
+            // Só afirma renovação automática quando o período é um valor conhecido e genuinamente
+            // recorrente (day/week) -- nunca inventa a frase pra um período desconhecido/vazio.
+            if (renovaWrapEl && renovaTextoEl) {
+                if (uso.period === "day") {
+                    renovaTextoEl.textContent = "Renova automaticamente amanhã";
+                    renovaWrapEl.classList.remove("hidden");
+                } else if (uso.period === "week") {
+                    renovaTextoEl.textContent = "Renova automaticamente semana que vem";
+                    renovaWrapEl.classList.remove("hidden");
+                } else {
+                    renovaWrapEl.classList.add("hidden");
+                }
+            }
+        } else {
+            restantesNumeroEl.textContent = "—";
+            if (restantesLabelEl) restantesLabelEl.textContent = "—";
+            if (usoFracaoEl) usoFracaoEl.textContent = "—";
+            if (usoBarraEl) usoBarraEl.innerHTML = "";
+            if (renovaWrapEl) renovaWrapEl.classList.add("hidden");
+        }
+
+        if (validadeDataEl) {
+            validadeDataEl.textContent = entitlement && entitlement.expires_at
+                ? formatarDataAcesso(entitlement.expires_at)
+                : "—";
+        }
     }
 
     // Esconde as seções de "funil frio" (Antes/Depois, Como Funciona, FAQ, demo de processamento em
@@ -1658,6 +1836,7 @@
         }
 
         atualizarVisibilidadeSecaoPlanos(plano.code);
+        atualizarCardAcessoDetalhes(plano, uso, data.entitlement);
         atualizarVisibilidadeFunilFrio(plano.code);
 
         const validadeEl = document.getElementById("statusContaValidade");
