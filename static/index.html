@@ -153,6 +153,37 @@
                         <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Nova versão em MP4</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Sem anúncios</span>
                     </div>
+
+                    <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 5 da revisão de UX): demonstração
+                         "antes/depois" no hero, pra quem ainda não processou nada entender o que
+                         realmente muda. Não é uma comparação de IMAGEM (o KLANGO.MP4 não altera o
+                         conteúdo visual do vídeo -- isso seria falso mostrar) -- é uma comparação do
+                         ARQUIVO, exatamente o que processor/ffmpeg.py e processor/service.py fazem de
+                         verdade (mesmo texto já verificado pra Etapa 3/FAQ): metadados removidos
+                         (-map_metadata -1 -map_chapters -1) e um SHA-256 novo sempre calculado sobre
+                         a saída. Rotulado "Exemplo" porque é conteúdo ilustrativo fixo, nunca dado de
+                         uma geração real do visitante. -->
+                    <div class="max-w-2xl mx-auto mt-7">
+                        <div class="bg-card-soft rounded-2xl p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-5 text-left">
+                            <div>
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3">Arquivo original</div>
+                                <ul class="space-y-2 text-xs text-slate-400">
+                                    <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Metadados do dispositivo e da plataforma de origem</li>
+                                    <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Mesmo hash do arquivo já publicado antes</li>
+                                    <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Nome de arquivo da plataforma de origem</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-[#19D3AE] mb-3">Depois do KLANGO.MP4</div>
+                                <ul class="space-y-2 text-xs text-slate-300">
+                                    <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Metadados removidos</li>
+                                    <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Hash novo (SHA-256 recalculado)</li>
+                                    <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nome de arquivo personalizável</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-center text-[11px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado.</p>
+                    </div>
                 </div>
             </section>
 
