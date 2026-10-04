@@ -101,8 +101,14 @@
         </header>
 
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
-            <!-- HERO -->
-            <section class="pt-20 sm:pt-32 pb-14 sm:pb-20 text-center">
+            <!-- HERO (04/10/2026, Etapa 5 da adaptação ao layout de referência enviado pelo CÉREBRO):
+                 texto alinhado à esquerda (era centralizado) para reproduzir literalmente a
+                 referência -- decisão confirmada com o CÉREBRO antes de implementar, depois de 2
+                 tentativas anteriores com a mascote centralizada não terem funcionado. Ícones de
+                 plataforma reposicionados para logo após o subtítulo (como na referência -- não mais
+                 agrupados com a mascote), e a mascote agora grande, ancorada à esquerda, ao final da
+                 composição (depois do checklist), em vez de pequena e centralizada sozinha. -->
+            <section class="pt-20 sm:pt-32 pb-14 sm:pb-20">
                 <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mb-7">
                     <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
@@ -117,15 +123,30 @@
                     <span class="block">FERRAMENTA PARA REUTILIZAÇÃO</span><span class="block">DE CONTEÚDO</span>
                 </p>
 
-                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-4xl mx-auto">
+                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-2xl">
                     Reutilize o conteúdo que já funcionou.
                 </h1>
 
-                <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto [text-wrap:balance]">
+                <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl">
                     Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
                 </p>
 
-                <div class="max-w-3xl mx-auto mt-10">
+                <div class="flex items-center gap-2.5 sm:gap-3 mt-6">
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-black border border-white/10 flex items-center justify-center shadow-lg">
+                        <i class="fa-brands fa-tiktok text-white text-base sm:text-lg"></i>
+                    </div>
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-fuchsia-600 via-pink-500 to-orange-400 flex items-center justify-center shadow-lg">
+                        <i class="fa-brands fa-instagram text-white text-base sm:text-lg"></i>
+                    </div>
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#FF0000] flex items-center justify-center shadow-lg">
+                        <i class="fa-brands fa-youtube text-white text-base sm:text-lg"></i>
+                    </div>
+                    <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#E60023] flex items-center justify-center shadow-lg">
+                        <i class="fa-brands fa-pinterest text-white text-base sm:text-lg"></i>
+                    </div>
+                </div>
+
+                <div class="max-w-3xl mt-8">
                     <div class="bg-card p-2.5 rounded-2xl hero-glow">
                         <div class="flex flex-col sm:flex-row gap-2">
                             <div class="relative flex-1">
@@ -148,20 +169,21 @@
                         <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
                     </div>
 
-                    <div class="flex flex-wrap justify-center gap-3 mt-5 text-xs text-slate-400">
+                    <div class="flex flex-wrap justify-start gap-3 mt-5 text-xs text-slate-400">
                         <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Limpeza de metadados</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Nova versão em MP4</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Sem anúncios</span>
                     </div>
 
-                    <!-- 04/10/2026: testada e removida no mesmo dia (3 idas e vindas) -- mascote
-                         oficial do KLANGO.MP4 (lagartixa 3D gerada por IA, static/mascote.png,
-                         mantido no repositório pra uso futuro) como ilustração decorativa no hero,
-                         primeiro sozinha ("boiando" sem contexto, segundo o CÉREBRO), depois com 4
-                         selos de plataforma (TikTok/Instagram/YouTube/Pinterest, ícones de marca
-                         oficiais do FontAwesome) acima dela ("simples demais", segundo o CÉREBRO).
-                         Removida por decisão do CÉREBRO; arquivo da imagem não apagado, só não é
-                         mais referenciado aqui. -->
+                    <!-- 04/10/2026 (Etapa 5, 3ª tentativa -- desta vez seguindo a referência
+                         literalmente, por decisão do CÉREBRO após as 2 tentativas anteriores):
+                         mascote oficial do KLANGO.MP4 (lagartixa 3D, static/mascote.png) grande,
+                         ancorada à esquerda, como elemento final da composição do hero -- não mais
+                         pequena e centralizada sozinha no meio do espaço em branco. -->
+                    <div class="mt-8 -mb-4 sm:-mb-6">
+                        <img src="/static/mascote.png" alt="Mascote do KLANGO.MP4 segurando um arquivo MP4"
+                            class="w-44 sm:w-60 h-auto select-none pointer-events-none" draggable="false">
+                    </div>
 
                     <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): prova social
                          HONESTA -- contagem real de gerações completed, vinda de GET /api/stats
