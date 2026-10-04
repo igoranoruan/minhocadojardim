@@ -25,7 +25,7 @@ from payments.errors import (
     PlanNotPurchasableError,
     UnknownPlanError,
 )
-from routes import auth, generations, health, me, payments, webhooks
+from routes import auth, generations, health, me, payments, stats, webhooks
 from services.auth import AuthError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
@@ -109,6 +109,7 @@ app.include_router(auth.router)
 app.include_router(generations.router)
 app.include_router(payments.router)
 app.include_router(me.router)
+app.include_router(stats.router)
 app.include_router(webhooks.router)
 
 

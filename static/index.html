@@ -184,6 +184,19 @@
                         </div>
                         <p class="text-center text-[11px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado.</p>
                     </div>
+
+                    <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): prova social
+                         HONESTA -- contagem real de gerações completed, vinda de GET /api/stats
+                         (services/stats.py -> SELECT COUNT(*) na tabela generations). O CÉREBRO
+                         chegou a propor um número aleatório/fake de "gerações entregues" e um
+                         contador fake de "pessoas online"; recusado (risco de publicidade enganosa,
+                         CDC Art. 37) -- esta é a alternativa honesta que foi aprovada no lugar.
+                         Começa com "hidden": só aparece depois que o número real chega, nunca mostra
+                         um placeholder/zero por um instante. Se a chamada falhar, fica oculto pra
+                         sempre nesta visita -- não é informação essencial pro uso do site. -->
+                    <p id="statsProcessados" class="hidden mt-6 text-xs text-slate-500">
+                        <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
+                    </p>
                 </div>
             </section>
 
@@ -652,7 +665,27 @@
     document.addEventListener("DOMContentLoaded", () => {
         inicializarBatch();
         carregarSessao();
+        carregarEstatisticas();
     });
+
+    // 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): busca a contagem REAL de vídeos
+    // já processados (GET /api/stats, services/stats.py) e exibe no hero. Sem autenticação, sem
+    // relação com cota/plano do visitante -- é um número do produto inteiro, não da conta dele.
+    // Falha silenciosa: se a rota não responder, o elemento simplesmente continua "hidden" (ver
+    // comentário no HTML) -- nunca mostra um número inventado nem quebra o resto da página.
+    async function carregarEstatisticas() {
+        try {
+            const resposta = await fetch("/api/stats");
+            if (!resposta.ok) return;
+            const dados = await resposta.json();
+            if (typeof dados.total_generations !== "number") return;
+            document.getElementById("statsProcessadosNumero").textContent =
+                dados.total_generations.toLocaleString("pt-BR");
+            document.getElementById("statsProcessados").classList.remove("hidden");
+        } catch (erro) {
+            console.warn("[STATS] não foi possível carregar /api/stats:", erro);
+        }
+    }
 
     function emailValido(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
