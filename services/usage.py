@@ -59,6 +59,10 @@ logger = logging.getLogger("minhoca")
 
 MAX_REQUEST_ID_LENGTH = 64
 MAX_ERROR_CODE_LENGTH = 64
+# Etapa 7 (revisão de UX, aprovação do CÉREBRO): teto de linhas que list_recent_generations pode
+# devolver numa única chamada -- nunca uma página de histórico sem fim, mesmo que o chamador peça
+# um `limit` maior.
+MAX_HISTORY_LIMIT = 50
 
 
 # ------------------------------------------------------------------------------ erros
@@ -708,6 +712,31 @@ def get_downloadable_batch_generations(
     if not disponiveis:
         raise BatchNotFoundError()
     return disponiveis
+
+
+def list_recent_generations(db: Session, user_id: int, *, limit: int = 20) -> list[Generation]:
+    """Etapa 7 (revisão de UX, aprovação do CÉREBRO): histórico de gerações do próprio usuário
+    autenticado ("meus últimos downloads") -- só LEITURA, não decide cota nem altera nada.
+
+    Devolve as últimas `limit` gerações deste usuário com um resultado final (completed ou
+    failed) -- nunca "reserved" (geração ainda em andamento, ou uma reserva órfã que nem chegou a
+    terminar; não é histórico útil mostrar isso). Ordenado da mais recente para a mais antiga
+    (created_at desc, com o id como desempate determinístico para linhas no mesmo segundo).
+    `limit` é sempre travado em MAX_HISTORY_LIMIT, qualquer que seja o valor pedido.
+
+    NÃO decide se uma geração ainda está disponível para download (expiração, arquivo físico) --
+    isso é responsabilidade de quem exibe o histórico (services/generation_history.py),
+    reaproveitando os mesmos critérios que get_downloadable_generation já usa, sem duplicar essa
+    lógica aqui."""
+    limit = max(1, min(limit, MAX_HISTORY_LIMIT))
+    return list(
+        db.execute(
+            select(Generation)
+            .where(Generation.user_id == user_id, Generation.status != "reserved")
+            .order_by(Generation.created_at.desc(), Generation.id.desc())
+            .limit(limit)
+        ).scalars().all()
+    )
 
 
 def fail_stale_reservations(db: Session, now: datetime | None = None) -> int:

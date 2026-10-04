@@ -327,6 +327,25 @@
                 </div>
             </section>
 
+            <!-- HISTÓRICO (03/10/2026, aprovação do CÉREBRO, Etapa 7 da revisão de UX): "meus
+                 últimos downloads". Só para quem tem login de verdade -- GET /api/me/generations
+                 exige sessão autenticada (routes/me.py::get_generations_history), diferente de
+                 /api/me/status, que também aceita a identidade Free anônima. Por isso esta seção
+                 só é mostrada/carregada em aplicarSessao(), nunca em aplicarSemSessao(). -->
+            <section id="secaoHistorico" class="hidden py-8">
+                <div class="bg-card rounded-3xl p-7 glow-hover">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-extrabold text-white">Meus últimos downloads</h2>
+                            <p class="text-sm text-slate-400 mt-1">Baixe de novo enquanto o arquivo ainda estiver disponível.</p>
+                        </div>
+                    </div>
+                    <div id="historicoLista" class="space-y-2"></div>
+                    <p id="historicoVazio" class="hidden text-sm text-slate-500">Você ainda não processou nenhum vídeo.</p>
+                </div>
+            </section>
+
             <!-- BATCH -->
             <section id="secaoBatch" class="hidden py-10">
                 <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
@@ -818,6 +837,7 @@
         document.getElementById("acessoEmailAtual").textContent = email;
         setStatusConta(`Conectado: ${email}`);
         carregarStatusConta();
+        carregarHistoricoGeracoes();
     }
 
     function aplicarSemSessao() {
@@ -825,6 +845,7 @@
         setStatusConta("Pronto para processar");
         limparStatusContaValidade();
         esconderBatch();
+        esconderHistorico();
         // Sem sessão: nunca mostrar "Meu acesso" de um plano que não é mais confirmado -- volta a
         // mostrar a vitrine de Planos normalmente (mesmo comportamento de um visitante Free).
         atualizarVisibilidadeSecaoPlanos("free");
@@ -963,6 +984,89 @@
         limiteLoteAtual = 0;
         const secao = document.getElementById("secaoBatch");
         if (secao) secao.classList.add("hidden");
+    }
+
+    // ---- Histórico de gerações (Etapa 7 da revisão de UX, aprovação do CÉREBRO) ----
+    // "Meus últimos downloads": GET /api/me/generations (routes/me.py::get_generations_history)
+    // exige login de verdade (401 sem sessão) -- por isso só é chamado a partir de aplicarSessao(),
+    // nunca para a identidade Free anônima. Reaproveita o MESMO mapa de ícone por plataforma já
+    // usado em atualizarIconePlataforma() (ICONE_FONTAWESOME_POR_PLATAFORMA) -- sem duplicar a
+    // lista. Rótulo e botão de cada item vêm inteiramente do que o backend já decidiu
+    // (`downloadable`, vindo de services/generation_history.py, que reaproveita os mesmos
+    // critérios de get_downloadable_generation) -- esta função nunca decide sozinha se um arquivo
+    // ainda pode ser baixado.
+    function esconderHistorico() {
+        const secao = document.getElementById("secaoHistorico");
+        if (secao) secao.classList.add("hidden");
+        const lista = document.getElementById("historicoLista");
+        if (lista) lista.innerHTML = "";
+    }
+
+    function _itemHistoricoHtml(item) {
+        const icone = ICONE_FONTAWESOME_POR_PLATAFORMA[item.platform] || "fa-solid fa-film";
+        const nome = item.display_filename || "Vídeo processado";
+        const data = formatarData(item.created_at);
+
+        let acaoHtml;
+        if (item.status === "completed" && item.downloadable) {
+            acaoHtml = `<a href="/api/generations/${item.id}/download" class="h-9 px-4 inline-flex items-center rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-bold hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap"><i class="fa-solid fa-download mr-1.5"></i>Baixar</a>`;
+        } else if (item.status === "failed") {
+            acaoHtml = `<span class="text-xs text-slate-500 font-semibold whitespace-nowrap">Falhou</span>`;
+        } else {
+            // completed, mas não mais disponível (expirado, ou arquivo físico ausente) -- mesmo
+            // critério de get_downloadable_generation, nunca uma suposição nova aqui.
+            acaoHtml = `<span class="text-xs text-slate-500 font-semibold whitespace-nowrap">Expirado</span>`;
+        }
+
+        return `
+            <div class="flex items-center justify-between gap-3 bg-card-soft rounded-xl px-4 py-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <i class="${icone} text-slate-500"></i>
+                    <div class="min-w-0">
+                        <div class="text-sm text-white truncate">${_escapeHtml(nome)}</div>
+                        <div class="text-xs text-slate-500">${data}</div>
+                    </div>
+                </div>
+                ${acaoHtml}
+            </div>`;
+    }
+
+    // display_filename vem sanitizado pelo backend (services/batch_filenames.py -- nunca contém
+    // "/" nem caracteres de controle), mas ainda pode conter "<"/"&"/etc. como texto literal de um
+    // nome escolhido pelo usuário -- escapado aqui antes de entrar no innerHTML, mesma cautela de
+    // qualquer outro dado de usuário já exibido na página.
+    function _escapeHtml(texto) {
+        const div = document.createElement("div");
+        div.textContent = texto;
+        return div.innerHTML;
+    }
+
+    async function carregarHistoricoGeracoes() {
+        const secao = document.getElementById("secaoHistorico");
+        const lista = document.getElementById("historicoLista");
+        const vazio = document.getElementById("historicoVazio");
+        if (!secao || !lista || !vazio) return;
+
+        try {
+            const res = await fetch("/api/me/generations", { credentials: "same-origin" });
+            if (!res.ok) {
+                // 401 (sessão caiu entre o carregamento da página e esta chamada) -- mesma
+                // filosofia de carregarStatusConta(): não força nada, só não mostra a seção.
+                esconderHistorico();
+                return;
+            }
+            const itens = await res.json();
+            secao.classList.remove("hidden");
+            if (!Array.isArray(itens) || itens.length === 0) {
+                lista.innerHTML = "";
+                vazio.classList.remove("hidden");
+                return;
+            }
+            vazio.classList.add("hidden");
+            lista.innerHTML = itens.map(_itemHistoricoHtml).join("");
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     async function carregarStatusConta() {
