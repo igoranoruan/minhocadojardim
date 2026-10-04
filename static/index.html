@@ -27,6 +27,17 @@
         body { background: var(--klango-ink); color: #f8fafc; position: relative; overflow-x: hidden; }
         .bg-card { background: #0b1220; border: 1px solid #1b2738; }
         .bg-card-soft { background: #09101c; border: 1px solid #172235; }
+        /* 04/10/2026: ver a função neutralizarFaixaParcelamento(), no JS mais abaixo na página --
+           ela acha o selo "Parcelamento disponível" desenhado pelo Brick do Mercado Pago e marca
+           o elemento com esta classe; JS não consegue setar estilo inline em ::before/::after,
+           então essa parte (gradiente/sombra que alguns selos desenham via pseudo-elemento) é
+           limpa aqui. */
+        .klango-sem-faixa::before, .klango-sem-faixa::after {
+            content: none !important;
+            background: none !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
         .hero-glow { box-shadow: 0 24px 80px rgba(25, 211, 174, 0.10); }
         .glow-hover { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
         .glow-hover:hover { box-shadow: 0 18px 50px rgba(16, 185, 129, 0.10); }
@@ -982,13 +993,20 @@
                              Pix, nem Mastercard/Visa/Mercado Pago), só a marca da própria KLANGO.
                              Troca de imagem acontece em trocarMetodoPagamento(), junto com a troca
                              visual dos botões PIX/CARTÃO. object-contain (não crop) pra mascote
-                             inteira continuar visível nos dois formatos de tela. -->
+                             inteira continuar visível nos dois formatos de tela.
+                             04/10/2026, ajuste fino: tamanho reduzido ~10% (h-36/w-36 -> h-32/w-32)
+                             a pedido do Igor, só pra dar mais respiro no checkout mobile -- mesma
+                             posição, mesma arte, mesma proporção (object-contain preserva). -->
                         <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt=""
-                            class="w-full sm:w-36 h-36 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
+                            class="w-full sm:w-32 h-32 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
                     </div>
 
                     <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Forma de pagamento</h4>
-                    <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-4">
+                    <!-- 04/10/2026, ajuste fino: mb-4 (1rem) -> mb-3 (0.75rem), ~25% a menos, a
+                         pedido do Igor -- só reduz o espaço vazio antes do conteúdo do Brick
+                         (que começa com "Meios de pagamento", já desenhado pelo SDK), sem colar
+                         as seções. -->
+                    <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-3">
                         <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all"><i class="fa-solid fa-qrcode mr-1"></i> PIX</button>
                         <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO</button>
                     </div>
@@ -1134,6 +1152,13 @@
     let mpPublicKeyCarregada = null;
     let brickAtual = null;         // controller devolvido por mp.bricks().create(...) -- para poder unmount()
     let pixPollingInterval = null; // id do setInterval que verifica a confirmação do PIX (ver iniciarPollingConfirmacaoPix)
+    // 04/10/2026: observa o DOM que o próprio Brick do Mercado Pago desenha dentro de
+    // #paymentBrickContainer, pra neutralizar a "faixa verde" atrás do texto "Parcelamento
+    // disponível" (bug reportado pelo Igor, já tentado 2x antes por customVariables -- ver
+    // comentário em montarPaymentBrick). Guardado numa variável pra poder desligar
+    // (disconnect()) sempre que o Brick atual é desmontado, nunca deixando mais de um observer
+    // ativo ao mesmo tempo. Ver neutralizarFaixaParcelamento().
+    let parcelamentoObserver = null;
 
     document.addEventListener("DOMContentLoaded", () => {
         capturarCodigoIndicacaoDaUrl();
@@ -2093,6 +2118,7 @@
         metodoAtual = metodo;
         mostrarStatusPagamento("Preparando pagamento...");
 
+        pararObservadorParcelamento(); // o Brick atual vai sumir -- nada mais pra observar nele
         if (brickAtual) {
             try { brickAtual.unmount(); } catch (err) { console.warn(err); }
             brickAtual = null;
@@ -2170,6 +2196,18 @@
             // acesso de rede pra isso aqui). Igor já abriu chamado com o suporte do Mercado Pago
             // sobre esse selo -- se a causa for mesmo um bug de CSS interno deles, a correção
             // oficial deles é mais confiável que qualquer tentativa nossa por fora.
+            // 04/10/2026, 3ª rodada: as duas tentativas acima (cor e depois fonte) não resolveram
+            // -- o Igor confirmou que a faixa continua lá. Como esse elemento é desenhado pelo
+            // próprio SDK dentro de #paymentBrickContainer (não é nosso <style>/CSS, então
+            // nenhuma regra nossa chega nele por seletor normal), a tentativa desta rodada é via
+            // JS: observar o DOM que o Brick desenha e, quando achar o texto exato "Parcelamento
+            // disponível", apagar só o background/box-shadow/gradiente do elemento (nunca a
+            // largura, altura, position ou o texto em si) -- ver neutralizarFaixaParcelamento()
+            // e iniciarObservadorParcelamento(), chamado logo abaixo. Não é garantido funcionar
+            // (dependemos da estrutura real do Brick, que não conseguimos inspecionar aqui por
+            // falta de acesso de rede a ela neste sandbox) -- se o Mercado Pago mudar o HTML
+            // interno do selo, isso simplesmente não encontra nada e não faz nada (nunca quebra
+            // o Brick). Não mexe em nenhum dado nem callback do pagamento em si.
             customization: {
                 paymentMethods,
                 visual: {
@@ -2189,7 +2227,7 @@
                 }
             },
             callbacks: {
-                onReady: () => {},
+                onReady: () => iniciarObservadorParcelamento(),
                 onError: (error) => {
                     console.error(error);
                     mostrarStatusPagamento("Não foi possível carregar o formulário de pagamento.", "erro");
@@ -2197,6 +2235,65 @@
                 onSubmit: ({ formData }) => submeterPagamento(formData)
             }
         });
+    }
+
+    // 04/10/2026 (3ª tentativa de corrigir a "faixa verde" do selo "Parcelamento disponível" --
+    // ver comentário grande acima, em montarPaymentBrick). Varre o HTML que o próprio Brick
+    // desenhou dentro de #paymentBrickContainer, acha o elemento cujo texto é exatamente
+    // "Parcelamento disponível" e apaga só o fundo/sombra dele -- nunca largura, altura,
+    // position ou o texto. Idempotente (rodar de novo não faz nada se já estiver limpo).
+    function neutralizarFaixaParcelamento() {
+        const container = document.getElementById("paymentBrickContainer");
+        if (!container) return;
+        const candidatos = container.querySelectorAll("*");
+        for (const el of candidatos) {
+            // Só elementos "folha" (sem filhos de elemento) pra não pegar um <div> enorme que só
+            // contém o texto em algum neto -- queremos o elemento mais específico possível.
+            if (el.children.length > 0) continue;
+            const texto = (el.textContent || "").trim().toLowerCase();
+            if (texto !== "parcelamento disponível") continue;
+
+            // Marca pra uma regra CSS cuidar de ::before/::after (JS não consegue setar estilo
+            // inline em pseudo-elemento) -- ver ".klango-sem-faixa::before/::after" no <style>
+            // principal da página.
+            el.classList.add("klango-sem-faixa");
+            el.style.setProperty("background", "transparent", "important");
+            el.style.setProperty("background-image", "none", "important");
+            el.style.setProperty("box-shadow", "none", "important");
+
+            // Repete até 2 níveis acima: o selo costuma ser um <span>/<div> dentro de outro
+            // elemento que é quem realmente tem o fundo colorido (o texto em si raramente é o
+            // dono do background). Mesma regra: só fundo/sombra, nunca layout.
+            let ancestral = el.parentElement;
+            for (let nivel = 0; nivel < 2 && ancestral && ancestral !== container; nivel++) {
+                ancestral.classList.add("klango-sem-faixa");
+                ancestral.style.setProperty("background", "transparent", "important");
+                ancestral.style.setProperty("background-image", "none", "important");
+                ancestral.style.setProperty("box-shadow", "none", "important");
+                ancestral = ancestral.parentElement;
+            }
+        }
+    }
+
+    function iniciarObservadorParcelamento() {
+        pararObservadorParcelamento(); // nunca dois observers ativos ao mesmo tempo
+        const container = document.getElementById("paymentBrickContainer");
+        if (!container) return;
+
+        neutralizarFaixaParcelamento(); // já tenta limpar o que estiver renderizado agora
+
+        // O selo de parcelamento pode aparecer depois (ex.: só depois que o Brick identifica a
+        // bandeira do cartão pelo BIN digitado) -- o observer garante que a limpeza roda de novo
+        // sempre que o Brick desenhar algo novo, sem precisar recriar o Brick inteiro.
+        parcelamentoObserver = new MutationObserver(() => neutralizarFaixaParcelamento());
+        parcelamentoObserver.observe(container, { childList: true, subtree: true, characterData: true });
+    }
+
+    function pararObservadorParcelamento() {
+        if (parcelamentoObserver) {
+            parcelamentoObserver.disconnect();
+            parcelamentoObserver = null;
+        }
     }
 
     async function copiarCodigoPix(botao) {
@@ -2300,6 +2397,7 @@
 
     function fecharModalPagamento() {
         pararPollingConfirmacaoPix();
+        pararObservadorParcelamento();
         document.getElementById("modalPagamento").classList.add("hidden");
         document.getElementById("modalPagamento").classList.remove("flex");
         if (brickAtual) {
