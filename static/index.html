@@ -745,46 +745,12 @@
                 </div>
             </div>
 
-            <!-- PAGAMENTOS (04/10/2026, pedido do CÉREBRO): selo de confiança no rodapé pra reforçar
-                 segurança na hora da compra. Mesmo princípio já usado em todo o site: texto real +
-                 ícones genéricos (fa-solid), nunca um logo de terceiro desenhado por IA -- o Igor
-                 mandou uma imagem gerada com os logos oficiais do Mastercard/Pix/Mercado Pago, que
-                 foi recusada pelo mesmo motivo já aplicado aos banners da Home (risco de marca
-                 independe de consentimento mútuo). "Mercado Pago" e "Pix" aparecem só como texto,
-                 igual já fazem o FAQ e o checkout (routes/payments, modalPagamento) -- nunca como
-                 logo. Nenhum número de parcelas é citado (ex.: "12x") porque o Payment Brick decide
-                 o parcelamento dinamicamente conforme bandeira/valor -- não está fixo no código
-                 (ver paymentMethods em abrirModalPagamento), e os planos (R$ 9,90 a R$ 29,90) são
-                 baixos demais pra garantir 12x de verdade; afirmar um número aqui seria inventar um
-                 dado. Esta seção só existe aqui no rodapé, fora do fluxo de checkout em si -- nenhuma
-                 mudança no Payment Brick, nos planos ou no backend de pagamento. -->
-            <div class="border-t border-slate-800/70">
-                <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 sm:py-12 text-center sm:text-left">
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Pagamentos</div>
-                    <p class="text-sm text-slate-400 mb-5 max-w-md mx-auto sm:mx-0">Pagamento processado pelo Mercado Pago, com Pix ou cartão de crédito.</p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto sm:mx-0">
-                        <div class="flex items-center gap-3 bg-card-soft rounded-xl px-4 py-3 text-left">
-                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-bolt"></i></div>
-                            <div class="min-w-0">
-                                <div class="text-sm font-bold text-white">Pix</div>
-                                <div class="text-[11px] text-slate-500">Aprovação imediata</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 bg-card-soft rounded-xl px-4 py-3 text-left">
-                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-credit-card"></i></div>
-                            <div class="min-w-0">
-                                <div class="text-sm font-bold text-white">Cartão de crédito</div>
-                                <div class="text-[11px] text-slate-500">Processado pelo Mercado Pago</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 mt-6 text-[11px] text-slate-500">
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-[#19D3AE]"></i>Compra segura e protegida</span>
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-[#19D3AE]"></i>Seus dados em segurança</span>
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-building-columns text-[#19D3AE]"></i>Processado pelo Mercado Pago</span>
-                    </div>
-                </div>
-            </div>
+            <!-- PAGAMENTOS: seção removida de novo (04/10/2026, 5ª rodada) -- pedido explícito do
+                 Igor depois de ver ao vivo ("criou mais objeção que tirou"). Tinha sido adicionada
+                 nesta mesma data como selo de confiança (texto real + ícones genéricos, sem logo de
+                 terceiro), mas na prática não convenceu visualmente. Mesmo padrão da remoção
+                 anterior (02/10/2026, ver histórico de commits): nada fica pendurado por causa
+                 disso, nenhum arquivo novo foi criado só pra esta seção. -->
 
             <div class="border-t border-slate-800/70">
                 <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 text-xs text-slate-600 text-center sm:text-left">© 2026 KLANGO.MP4</div>
@@ -953,7 +919,12 @@
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
         <div class="bg-card max-w-md w-full p-6 sm:p-7 rounded-3xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
             <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <div class="w-11 h-11 mx-auto rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center mb-4"><i class="fa-solid fa-wallet text-[#19D3AE]"></i></div>
+            <!-- 04/10/2026 (pedido do Igor): mascote segurando um QR code (PIX) ou um cartão (cartão
+                 de crédito) genéricos -- sem nenhum logo de terceiro (nem Pix, nem Mastercard/Visa/
+                 Mercado Pago), só a marca da própria KLANGO -- pra passar mais credibilidade na janela
+                 de pagamento. Troca de imagem acontece em trocarMetodoPagamento(), junto com a troca
+                 visual dos botões PIX/CARTÃO. -->
+            <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt="" class="w-32 h-auto mx-auto rounded-2xl mb-3 border border-slate-800">
             <h3 id="modalTitulo" class="text-xl font-bold text-white text-center mb-1">Escolha como pagar</h3>
             <!-- 02/10/2026: era um <p> de texto corrido só com separador "•"
                  ("10 gerações/dia • lote de até 5 (5/semana) • acesso por 30 dias") -- ficava
@@ -1042,6 +1013,14 @@
     // que continua sendo a única fonte de verdade sobre preço/status.
     let planoSelecionadoGlobal = null;
     let paymentAtual = null;       // { payment_id, amount_cents, plan_code, method, status } -- devolvido por POST /api/payments
+    // 04/10/2026 (pedido do Igor): quando abrirModalPagamento() precisa de login primeiro, guarda
+    // aqui qual plano o usuário queria comprar -- confirmarCodigo() usa isso pra pular a tela "Você
+    // está conectado!" e já abrir o pagamento (Pix/cartão) direto depois do código certo. Fica null
+    // quando o acesso foi aberto pelo botão "Acesso" do header/rodapé (login avulso, sem compra em
+    // andamento) -- aí sim mostra "conectado" normalmente. abrirAcesso() zera isso por padrão a cada
+    // abertura; abrirModalPagamento() o define OUTRA VEZ logo em seguida, só no caso de precisar de
+    // login pra pagar.
+    let planoPendenteAposLogin = null;
     let metodoAtual = null;        // "pix" | "credit_card" -- o método atualmente selecionado no switch
     let mpInstancia = null;        // instância de MercadoPago(publicKey) -- criada uma única vez
     let mpPublicKeyCarregada = null;
@@ -1800,6 +1779,19 @@
 
             aplicarSessao(data.email);
             limparCodigoCaixas();
+
+            // Veio de um botão de plano (abrirModalPagamento guardou qual) -- pula a tela "Você está
+            // conectado!" e já abre o pagamento (Pix/cartão) direto, exatamente como se a pessoa já
+            // estivesse logada quando clicou no plano. Login avulso (sem plano pendente) continua
+            // mostrando "conectado" normalmente.
+            if (planoPendenteAposLogin) {
+                const plano = planoPendenteAposLogin;
+                planoPendenteAposLogin = null;
+                fecharAcesso();
+                abrirModalPagamento(plano);
+                return;
+            }
+
             mostrarPassoAcesso("acessoPassoConectado");
             mostrarMensagemAcesso("Acesso confirmado.", "sucesso");
         } catch (err) {
@@ -1918,6 +1910,10 @@
         // o usuário tenta de novo depois de concluir o login.
         if (!sessaoEmail || !emailValido(sessaoEmail)) {
             abrirAcesso();
+            // Define DEPOIS de abrirAcesso() (que zera isso por padrão a cada abertura) -- assim
+            // confirmarCodigo() sabe que, terminado o login, é pra abrir o pagamento deste plano
+            // direto, em vez de mostrar a tela "Você está conectado!".
+            planoPendenteAposLogin = plano;
             return;
         }
 
@@ -1957,6 +1953,12 @@
         } else {
             cartaoBtn.className = "py-3 rounded-xl border border-white/40 bg-white/5 text-white text-xs font-extrabold transition-all";
             pixBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all";
+        }
+
+        // Troca a imagem da mascote junto com o método (ver comentário no <img id="modalMascoteImg">).
+        const mascoteImgEl = document.getElementById("modalMascoteImg");
+        if (mascoteImgEl) {
+            mascoteImgEl.src = tipo === "pix" ? "/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg";
         }
 
         await criarPaymentEMontarBrick(tipo);
@@ -2740,6 +2742,11 @@
         function abrirAcesso() {
             const modal = document.getElementById("modalAcesso");
             if (!modal) return;
+            // Toda abertura de Acesso começa sem plano pendente -- abrirModalPagamento() define de
+            // novo logo em seguida quando for o caso (ver comentário na declaração da variável).
+            // Login avulso pelo header/rodapé nunca passa por aqui depois, então nunca herda um
+            // plano de uma tentativa de compra anterior que o usuário tenha abandonado.
+            planoPendenteAposLogin = null;
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             if (sessaoEmail) {
