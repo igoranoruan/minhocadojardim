@@ -377,6 +377,113 @@
                      removida a pedido do Igor. -->
             </section>
 
+            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO): demonstração ilustrativa do
+                 processamento em lote, no mesmo espírito do Antes/Depois acima -- HTML/CSS real,
+                 dado de exemplo fictício, sempre visível (mesmo pra quem não tem plano pago), nunca
+                 uma imagem gerada por IA. Os elementos em formato de botão aqui (Adicionar vídeo,
+                 Processar e preparar lote, Baixar, Baixar tudo em ZIP) são <div>/<span>
+                 propositalmente, sem onclick/cursor-pointer/hover -- é uma ilustração estática de
+                 como a tela fica, não um atalho funcional fingindo processar algo de verdade (mesma
+                 régua de "sem botão falso" já aplicada no resto do site). A ação real de lote
+                 continua só na seção BATCH mais abaixo (#secaoBatch, visível após login com plano
+                 pago), que já usa "Processar e preparar lote" e "Baixar tudo em ZIP" com o mesmo
+                 texto -- não é força de expressão, é o texto real da função (ver
+                 processarLote()/zipLink mais abaixo no script). -->
+            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-violet-400 text-xs font-bold uppercase tracking-wider mb-3">PROCESSAMENTO EM LOTE</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez, <span class="text-violet-400">na prática.</span></h2>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Disponível nos planos pagos: monte sua lista, processe tudo de uma vez e baixe os arquivos prontos.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 items-start">
+                    <!-- Painel 1: monte a lista -->
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-violet-500/30">
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="w-7 h-7 shrink-0 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 text-xs font-extrabold">1</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Monte sua lista</h3>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil/video/7281...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">instagram.com/reel/Cx4f9...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">youtube.com/shorts/aB3xQ...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">pinterest.com/pin/98213...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil2/video/5529...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="w-full mt-3 h-10 rounded-xl border border-slate-700 text-slate-500 font-bold text-xs flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-plus"></i> Adicionar vídeo
+                        </div>
+                        <div class="w-full mt-3 h-11 bg-violet-400/15 border border-violet-400/40 text-violet-300 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-gears"></i> Processar e preparar lote
+                        </div>
+                    </div>
+
+                    <!-- Painel 2: resultado -->
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/40">
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="w-7 h-7 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">2</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe os arquivos prontos</h3>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_04.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_05.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                        </div>
+                        <p class="text-center text-[11px] text-slate-500 mt-3">5 de 5 vídeos preparados.</p>
+                        <div class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Exemplo ilustrativo do processamento em lote, disponível nos planos pagos. Links, nomes de arquivo e quantidade são fictícios.</p>
+                <div class="max-w-3xl mx-auto mt-8">
+                    <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
+                        class="w-full h-auto rounded-xl select-none" draggable="false">
+                </div>
+            </section>
+
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
                  Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
                  está no VIP Batch. Markup já existia desde antes, nunca tinha sido ligada ao JS;
