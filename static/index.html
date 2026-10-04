@@ -912,61 +912,169 @@
     </div>
 
     <!-- MODAL DE PAGAMENTO -->
-    <!-- Evolução visual do checkout (item 14 do briefing): resumo do plano vira um "cartão de
-         pedido" com nome+preço em destaque e checklist de confiança verdadeiro (pagamento único /
-         sem renovação / acesso conforme o plano). Nenhum id foi removido ou renomeado e nenhuma
-         função foi alterada -- só composição, hierarquia e microcopy estática e verdadeira. -->
+    <!-- 04/10/2026, redesenho completo pedido pelo Igor com referência visual (print de checkout
+         "premium" em 2 colunas) -- ver anexo/instrução completa da tarefa. Nenhum id usado pela
+         lógica de pagamento (JS) foi removido ou renomeado: #modalTitulo, #modalDescricao,
+         #modalPlano, #modalValor, #metodoPagamentoSwitch, #metodoPixBtn, #metodoCartaoBtn,
+         #paymentBrickContainer, #pagamentoStatus continuam existindo e sendo preenchidos pelas
+         mesmas funções de sempre -- só composição/hierarquia/CSS mudou. Duas ressalvas técnicas
+         importantes (reportadas ao Igor, não resolvidas silenciosamente):
+         1) O formulário de pagamento em si (identificação do pagador, campos de cartão, parcelas e
+            o botão que de fato envia o pagamento) é desenhado e controlado pelo SDK do Mercado Pago
+            dentro de #paymentBrickContainer (mp.bricks().create("payment", ...)) -- não é HTML
+            nosso. Conseguimos combinar as CORES com a marca (customization.visual.style, já
+            configurado) mas não temos acesso para redesenhar esse botão pixel a pixel como o mockup
+            mostra (texto "🔒 Pagar R$ X", raio/padding exatos) sem recriar o Brick, o que violaria a
+            regra "não alterar a lógica existente de pagamento".
+         2) "O QR Code expira em 15 minutos" (texto do mockup) NÃO foi incluído: o backend
+            (payments/gateway.py) não devolve nenhum campo de expiração do Pix hoje, então esse
+            número não é um dado real do sistema -- incluir um prazo fixo sem essa garantia seria
+            inventar informação (mesma regra já aplicada antes ao "12x" do rodapé). Posso implementar
+            isso de verdade se o Igor confirmar o prazo de expiração configurado na conta Mercado
+            Pago e eu adicionar esse campo na resposta do backend.
+         A imagem da mascote (calango com QR/cartão) é só ilustração estática ao lado do card do
+         plano (pedido do Igor) -- o QR Code real do Pix continua sendo o que o Mercado Pago gera
+         (ver submeterPagamento), sem nenhuma logo sobreposta nele, para não arriscar invalidar a
+         leitura do código. -->
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
-        <div class="bg-card max-w-md w-full p-6 sm:p-7 rounded-3xl border border-slate-700 relative shadow-2xl max-h-[90vh] overflow-y-auto">
-            <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <!-- 04/10/2026 (pedido do Igor): mascote segurando um QR code (PIX) ou um cartão (cartão
-                 de crédito) genéricos -- sem nenhum logo de terceiro (nem Pix, nem Mastercard/Visa/
-                 Mercado Pago), só a marca da própria KLANGO -- pra passar mais credibilidade na janela
-                 de pagamento. Troca de imagem acontece em trocarMetodoPagamento(), junto com a troca
-                 visual dos botões PIX/CARTÃO. -->
-            <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt="" class="w-32 h-auto mx-auto rounded-2xl mb-3 border border-slate-800">
-            <h3 id="modalTitulo" class="text-xl font-bold text-white text-center mb-1">Escolha como pagar</h3>
-            <!-- 02/10/2026: era um <p> de texto corrido só com separador "•"
-                 ("10 gerações/dia • lote de até 5 (5/semana) • acesso por 30 dias") -- ficava
-                 "embolado" (queixa literal do Igor, com print). Virou uma fileira de selos curtos,
-                 um por informação, que quebram linha de forma legível em vez de depender de um
-                 único texto corrido quebrando no meio de uma frase. Preenchido via JS
-                 (abrirModalPagamento), nunca com texto estático aqui. -->
-            <div id="modalDescricao" class="flex flex-wrap justify-center gap-1.5 mb-5"></div>
+        <div class="bg-card w-full max-w-5xl rounded-3xl border border-[#19D3AE]/20 relative shadow-2xl shadow-[#19D3AE]/5 max-h-[92vh] overflow-y-auto">
+            <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-500 hover:text-white transition-colors z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
 
-            <div class="bg-[#060b14] border border-slate-800 rounded-2xl p-5 mb-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Plano escolhido</span>
-                    <strong id="modalPlano" class="text-xs text-white">—</strong>
+            <div class="grid grid-cols-1 lg:grid-cols-5">
+                <!-- COLUNA ESQUERDA (~60%): checkout em si -->
+                <div class="lg:col-span-3 p-6 sm:p-8 lg:border-r lg:border-slate-800/80">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-wallet text-[#19D3AE]"></i></div>
+                        <div>
+                            <h3 id="modalTitulo" class="text-xl font-bold text-white leading-tight">Escolha como pagar</h3>
+                            <p class="text-xs text-slate-500">Finalize seu acesso de forma rápida e segura</p>
+                        </div>
+                    </div>
+
+                    <!-- 02/10/2026: selos com os detalhes de cota do plano (gerações/dia, lote) --
+                         a referência de 04/10/2026 não inclui essa linha no card do plano (só o
+                         checklist de confiança abaixo), então ficou escondida para seguir o layout
+                         pedido. innerHTML continua sendo preenchido normalmente por
+                         abrirModalPagamento() -- nada na lógica JS mudou, só a exibição. -->
+                    <div id="modalDescricao" class="hidden"></div>
+
+                    <!-- Card do plano + ilustração da mascote lado a lado (pedido explícito do
+                         Igor: a ilustração fica ao lado do card do plano, nunca como banner acima
+                         do título). -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-5">
+                        <div class="flex-1 bg-[#060b14] border border-slate-800 rounded-2xl p-5">
+                            <div class="flex justify-between items-center gap-2">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Plano escolhido</span>
+                                <strong id="modalPlano" class="text-[11px] whitespace-nowrap bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold px-2.5 py-1 rounded-full">—</strong>
+                            </div>
+                            <strong id="modalValor" class="block mt-3 text-2xl sm:text-3xl font-extrabold text-[#19D3AE]">—</strong>
+                            <ul class="space-y-1.5 mt-4 text-xs text-slate-400">
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Pagamento único</li>
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Sem renovação automática</li>
+                                <!-- Texto final vem de PLANOS[plano].detalhes (último item, já real e
+                                     dinâmico, ex. "acesso por 30 dias") -- preenchido em
+                                     abrirModalPagamento(), nunca hardcoded aqui. -->
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i><span id="modalAcessoDias">—</span></li>
+                            </ul>
+                        </div>
+                        <!-- 04/10/2026 (pedido do Igor): mascote segurando um QR code (PIX) ou um
+                             cartão (cartão de crédito) genéricos -- sem nenhum logo de terceiro (nem
+                             Pix, nem Mastercard/Visa/Mercado Pago), só a marca da própria KLANGO.
+                             Troca de imagem acontece em trocarMetodoPagamento(), junto com a troca
+                             visual dos botões PIX/CARTÃO. object-contain (não crop) pra mascote
+                             inteira continuar visível nos dois formatos de tela. -->
+                        <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt=""
+                            class="w-full sm:w-36 h-36 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
+                    </div>
+
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Forma de pagamento</h4>
+                    <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-4">
+                        <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all"><i class="fa-solid fa-qrcode mr-1"></i> PIX</button>
+                        <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO</button>
+                    </div>
+
+                    <!-- O Payment Brick (MercadoPago.js) é montado aqui dentro -- um único container reutilizado
+                         para Pix e cartão: trocar de método desmonta o Brick atual e monta de novo, restrito ao
+                         novo método (ver criarPaymentEMontarBrick). O HTML do Pix (QR/copia-e-cola) e do
+                         formulário de cartão são desenhados pelo próprio Brick -- não recriamos essa UI aqui.
+                         Ver ressalva técnica (1) no comentário do topo do modal. -->
+                    <div id="paymentBrickContainer" class="min-h-[4rem]"></div>
+                    <div id="pagamentoStatus" class="mt-3 text-xs text-slate-400"></div>
+
+                    <!-- Bloco de segurança: HTML/CSS real (nunca imagem), como pedido. -->
+                    <div class="flex items-center gap-3 mt-4 p-3.5 rounded-xl border border-slate-800 bg-[#060b14]">
+                        <i class="fa-solid fa-lock text-[#19D3AE]"></i>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-white">Pagamento seguro</p>
+                            <p class="text-[11px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
+                        </div>
+                        <i class="fa-solid fa-shield-halved text-slate-600"></i>
+                    </div>
+
+                    <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
                 </div>
-                <div class="flex justify-between items-end mt-3">
-                    <span class="text-xs text-slate-500">Valor</span>
-                    <strong id="modalValor" class="text-2xl font-extrabold text-[#19D3AE]">—</strong>
+
+                <!-- COLUNA DIREITA (~40%): redução de objeções, nunca um segundo formulário. -->
+                <div class="lg:col-span-2 p-6 sm:p-8 bg-[#060b14]/60 rounded-b-3xl lg:rounded-bl-none lg:rounded-r-3xl">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
+                        <h4 class="text-sm font-bold text-white">Por que escolher o KLANGO.MP4?</h4>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-5 leading-relaxed">Mais controle, mais segurança e total liberdade para reutilizar seus vídeos.</p>
+
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-shield-halved text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-xs">Vídeos limpos de metadados</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Mais privacidade e segurança para o seu conteúdo.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-xs">Processamento rápido</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Seu vídeo pronto em poucos minutos.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-xs">Suporte a várias plataformas</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">TikTok, Instagram, YouTube Shorts e muito mais.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-infinity text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-xs">Ideal para criadores e afiliados</p>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Mais praticidade para o seu dia a dia.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="flex items-center gap-3 mt-5 p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
+                        <i class="fa-solid fa-lock text-[#19D3AE]"></i>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-white">Pagamento seguro</p>
+                            <p class="text-[11px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
+                            <i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i>
+                            <p class="text-xs font-bold text-white mt-1.5">Acesso imediato</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Após a confirmação do pagamento.</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
+                            <i class="fa-solid fa-headset text-[#19D3AE] text-xs"></i>
+                            <p class="text-xs font-bold text-white mt-1.5">Suporte</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Estamos aqui para te ajudar.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <ul class="space-y-1.5 mb-5 text-xs text-slate-400">
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Pagamento único</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Sem renovação automática</li>
-                <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Acesso conforme o plano escolhido</li>
-            </ul>
-
-            <!-- 02/10/2026: tirado o "Pagamento único" que repetia (já embaixo de cada botão) --
-                 a mesma frase já aparece na lista de confiança acima e no aviso final do rodapé do
-                 modal; repetir pela 3ª/4ª vez só nos botões deixava o modal mais apertado sem
-                 agregar informação nova. -->
-            <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-4">
-                <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all"><i class="fa-solid fa-qrcode mr-1"></i> PIX</button>
-                <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO</button>
-            </div>
-
-            <!-- O Payment Brick (MercadoPago.js) é montado aqui dentro -- um único container reutilizado
-                 para Pix e cartão: trocar de método desmonta o Brick atual e monta de novo, restrito ao
-                 novo método (ver criarPaymentEMontarBrick). O HTML do Pix (QR/copia-e-cola) e do
-                 formulário de cartão são desenhados pelo próprio Brick -- não recriamos essa UI aqui. -->
-            <div id="paymentBrickContainer" class="min-h-[4rem]"></div>
-            <div id="pagamentoStatus" class="mt-3 text-xs text-slate-400"></div>
-            <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
         </div>
     </div>
 
@@ -1929,13 +2037,28 @@
         document.getElementById("modalDescricao").innerHTML = info.detalhes
             .map((item) => `<span class="inline-block bg-[#060b14] border border-slate-800 rounded-full px-2.5 py-1 text-[10px] text-slate-300">${escapeHtml(item)}</span>`)
             .join("");
+        // 04/10/2026: o checklist do card do plano (ver modal) mostra "Acesso por N dias" como 3º
+        // item -- texto real, tirado do último item de PLANOS[plano].detalhes (sempre "acesso por
+        // N dias", ver objeto PLANOS acima), só com a 1ª letra maiúscula. Nunca hardcoded.
+        const textoAcesso = info.detalhes[info.detalhes.length - 1] || "";
+        document.getElementById("modalAcessoDias").textContent = textoAcesso
+            ? textoAcesso.charAt(0).toUpperCase() + textoAcesso.slice(1)
+            : "Acesso conforme o plano escolhido";
         // "Calculando valor..." -- nunca um valor fixo/estimado aqui; o número real só aparece
         // depois que o backend responde com amount_cents (ver criarPaymentEMontarBrick).
         document.getElementById("modalValor").textContent = "Calculando valor...";
         document.getElementById("modalValor").classList.add("animate-pulse");
 
         document.getElementById("metodoPagamentoSwitch").classList.remove("hidden");
+        // 04/10/2026: bug real encontrado ao implementar o redesenho pedido pelo Igor -- faltava
+        // ".add(\"flex\")" aqui (só ".remove(\"hidden\")" existia). Sem isso, "items-center
+        // justify-center" no #modalPagamento nunca tinham efeito nenhum (precisam de display:flex
+        // no elemento) e o modal não era centralizado de verdade na tela -- só aparecia empilhado
+        // no topo. O modal de Acesso (abrirAcesso/fecharAcesso) já fazia esse mesmo par
+        // add("flex")/remove("flex") corretamente; o de pagamento só não tinha o add() nunca.
+        // fecharModalPagamento() já recebeu o remove("flex") correspondente, abaixo.
         document.getElementById("modalPagamento").classList.remove("hidden");
+        document.getElementById("modalPagamento").classList.add("flex");
 
         await trocarMetodoPagamento("pix");
     }
@@ -2139,13 +2262,26 @@
                 setTimeout(() => fecharModalPagamento(), 1500);
             } else if (data.status === "pending") {
                 if (metodoAtual === "pix" && data.qr_code_base64) {
+                    // 04/10/2026: card "Pague com PIX" (título + texto) envolvendo o QR real e o
+                    // campo copia-e-cola, pra bater com a referência visual do Igor -- mas o QR em
+                    // si continua sendo exatamente o PNG que o Mercado Pago devolve (data.qr_code_base64),
+                    // sem nenhuma logo sobreposta: colocar o "K" da KLANGO por cima arriscaria
+                    // invalidar a leitura do código (ver ressalva no comentário do topo do modal).
+                    // Não há "expira em N minutos" aqui porque o backend não devolve esse dado hoje
+                    // (mesma ressalva) -- nada inventado.
                     // escapeHtml (já existente, usado no lote) protege o atributo value -- o código
                     // Pix vem do Mercado Pago, nunca de input do usuário, mas nunca inserido cru.
                     document.getElementById("paymentBrickContainer").innerHTML =
-                        `<div class="bg-white rounded-xl p-3 flex items-center justify-center mb-3"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-52 h-52 mx-auto rounded-lg"></div>` +
-                        `<div class="relative">` +
-                        `<input id="pixCopiaCola" type="text" readonly value="${escapeHtml(data.qr_code || "")}" class="w-full bg-[#060b14] border border-slate-800 text-[10px] p-3 pr-[4.5rem] rounded-xl text-slate-300 text-center focus:outline-none select-all">` +
+                        `<div class="bg-[#060b14] border border-slate-800 rounded-2xl p-5">` +
+                        `<p class="text-sm font-bold text-white mb-1">Pague com PIX</p>` +
+                        `<p class="text-xs text-slate-500 mb-4">Escaneie o QR Code com o app do seu banco ou copie o código PIX.</p>` +
+                        `<div class="flex flex-col sm:flex-row items-center gap-4">` +
+                        `<div class="bg-white rounded-xl p-3 flex items-center justify-center shrink-0"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-40 h-40 rounded-lg"></div>` +
+                        `<div class="relative w-full">` +
+                        `<input id="pixCopiaCola" type="text" readonly value="${escapeHtml(data.qr_code || "")}" class="w-full bg-[#0b1220] border border-slate-800 text-[10px] p-3 pr-[4.5rem] rounded-xl text-slate-300 text-center sm:text-left focus:outline-none select-all">` +
                         `<button type="button" onclick="copiarCodigoPix(this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[10px] font-bold hover:bg-[#19D3AE]/20 transition-colors">Copiar</button>` +
+                        `</div>` +
+                        `</div>` +
                         `</div>`;
                     iniciarPollingConfirmacaoPix();
                 }
@@ -2165,6 +2301,7 @@
     function fecharModalPagamento() {
         pararPollingConfirmacaoPix();
         document.getElementById("modalPagamento").classList.add("hidden");
+        document.getElementById("modalPagamento").classList.remove("flex");
         if (brickAtual) {
             try { brickAtual.unmount(); } catch (err) { console.warn(err); }
             brickAtual = null;
