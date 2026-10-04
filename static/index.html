@@ -90,9 +90,9 @@
                     <span class="font-extrabold tracking-tight text-white text-lg sm:text-xl whitespace-nowrap">KLANGO</span><span class="font-extrabold tracking-tight text-[#87939D] text-lg sm:text-xl whitespace-nowrap">.MP4</span>
                 </a>
                 <nav class="hidden sm:flex items-center gap-8 text-sm font-medium text-slate-400">
-                    <a href="#comoFunciona" class="hover:text-white transition-colors">Como funciona</a>
+                    <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors">Como funciona</a>
                     <a href="#secaoPlanos" class="hover:text-white transition-colors">Planos</a>
-                    <a href="#faq" class="hover:text-white transition-colors">Perguntas frequentes</a>
+                    <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors">Perguntas frequentes</a>
                 </nav>
                 <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
                     Acesso
@@ -517,13 +517,15 @@
                     </div>
                     <div id="historicoLista" class="space-y-2"></div>
                     <p id="historicoVazio" class="hidden text-sm text-slate-500">Você ainda não processou nenhum vídeo.</p>
-                    <!-- 04/10/2026 (Etapa 3 da adaptação ao layout de referência): botão real, não
+                    <!-- 04/10/2026 (Etapa 3 da adaptação ao layout de referência; valores ajustados
+                         no mesmo dia a pedido do Igor, pra não poluir a seção): botão real, não
                          decorativo -- GET /api/me/generations já aceita `limit` (até
-                         MAX_HISTORY_LIMIT=50, ver routes/me.py), então "ver todos" só refaz a mesma
-                         chamada pedindo o teto em vez de inventar paginação nova no backend. Só
-                         aparece quando a primeira carga (20 itens) bate o teto do que foi pedido --
-                         sinal de que pode haver mais; depois de clicado, carrega até 50 e some (50
-                         já é o máximo que a API devolve, não há mais nada a revelar). -->
+                         MAX_HISTORY_LIMIT=50, ver routes/me.py, inalterado), então "ver todos" só
+                         refaz a mesma chamada pedindo um teto maior em vez de inventar paginação nova
+                         no backend. Só aparece quando a primeira carga (5 itens, ver
+                         HISTORICO_LIMITE_PADRAO no script) bate o teto do que foi pedido -- sinal de
+                         que pode haver mais; depois de clicado, carrega até 20 (HISTORICO_LIMITE_MAXIMO)
+                         e some. -->
                     <button id="historicoVerTodosBtn" type="button" onclick="carregarHistoricoGeracoes(true)"
                         class="hidden w-full mt-3 h-11 rounded-xl border border-slate-700 text-slate-300 hover:border-[#19D3AE]/50 hover:text-[#19D3AE] font-bold text-xs transition-colors">
                         Ver todos os downloads
@@ -729,8 +731,8 @@
                     <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
                         <button type="button" onclick="abrirAcesso()" class="hover:text-white transition-colors w-fit sm:self-end text-left">Acesso</button>
                         <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
-                        <a href="#comoFunciona" class="hover:text-white transition-colors w-fit">Como funciona</a>
-                        <a href="#faq" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
+                        <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors w-fit">Como funciona</a>
+                        <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
                     </nav>
                 </div>
 
@@ -1372,6 +1374,11 @@
         // Sem sessão: nunca mostrar "Meu acesso" de um plano que não é mais confirmado -- volta a
         // mostrar a vitrine de Planos normalmente (mesmo comportamento de um visitante Free).
         atualizarVisibilidadeSecaoPlanos("free");
+        // Idem pro funil frio (Antes/Depois, Como Funciona, FAQ, demo de lote): sem sessão, sempre
+        // volta a mostrar tudo de imediato (sem esperar a resposta assíncrona abaixo) -- importante
+        // sobretudo no logout, pra não deixar as seções escondidas por um instante depois que a
+        // pessoa já saiu da conta.
+        atualizarVisibilidadeFunilFrio(null);
         // 03/10/2026 (aprovação do CÉREBRO): visitante Free ANÔNIMO também tem direito de ver sua
         // cota real na bolha do topo -- antes desta mudança, só quem tinha feito login via
         // aplicarSessao() chamava carregarStatusConta(); o Free anônimo ficava preso no texto
@@ -1441,6 +1448,33 @@
         });
     }
 
+    // Esconde as seções de "funil frio" (Antes/Depois, Como Funciona, FAQ, demo de processamento em
+    // lote) pra quem já está LOGADO (sessaoEmail real, não a identidade Free anônima) E com um plano
+    // PAGO ativo -- pedido do Igor (04/10/2026): quem já comprou não precisa ver de novo o material
+    // de conversão toda vez que entra, só as funções de geração (individual e lote), indicação e
+    // histórico. Free (logado ou anônimo) e qualquer visitante deslogado continuam vendo tudo
+    // normalmente -- a regra é sessão + plano pago, não o dispositivo (mesmo critério já usado em
+    // atualizarVisibilidadeSecaoPlanos). Os links "Como funciona"/"Perguntas frequentes" do
+    // header/rodapé continuam funcionando mesmo com a seção escondida -- ver
+    // mostrarSecaoSeEscondida() logo abaixo.
+    const SECOES_FUNIL_FRIO_IDS = ["antesDepois", "comoFunciona", "faq", "loteNaPratica"];
+
+    function atualizarVisibilidadeFunilFrio(planoCode) {
+        const planoPago = !!sessaoEmail && !!planoCode && planoCode !== "free" && !!PLANOS[planoCode];
+        SECOES_FUNIL_FRIO_IDS.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle("hidden", planoPago);
+        });
+    }
+
+    // Reexibe uma seção do funil frio antes da rolagem nativa do navegador até a âncora -- assim um
+    // link real (header/rodapé) para "#comoFunciona"/"#faq" sempre funciona, mesmo que a seção esteja
+    // escondida pra quem já comprou (atualizarVisibilidadeFunilFrio acima).
+    function mostrarSecaoSeEscondida(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove("hidden");
+    }
+
     function atualizarStatusContaVisual(data) {
         const plano = data && data.plan;
 
@@ -1470,6 +1504,7 @@
         }
 
         atualizarVisibilidadeSecaoPlanos(plano.code);
+        atualizarVisibilidadeFunilFrio(plano.code);
 
         const validadeEl = document.getElementById("statusContaValidade");
         if (validadeEl) {
@@ -1577,14 +1612,15 @@
         return div.innerHTML;
     }
 
-    // 04/10/2026 (Etapa 3 da adaptação ao layout de referência): `verTodos` refaz a MESMA chamada
-    // pedindo o teto que a própria API já aceita (limit=50, routes/me.py::MAX_HISTORY_LIMIT) em vez
-    // de uma paginação nova -- o botão "Ver todos os downloads" só aparece quando a carga inicial
-    // (20 itens, o default da rota) veio com exatamente 20, sinal de que pode haver mais além desse
-    // teto; depois de clicado, carrega até 50 (o máximo que a rota aceita) e o botão some, porque
-    // não existe "mais" nenhum pra revelar além desse teto.
-    const HISTORICO_LIMITE_PADRAO = 20;
-    const HISTORICO_LIMITE_MAXIMO = 50;
+    // 04/10/2026 (Etapa 3 da adaptação ao layout de referência; valores ajustados no mesmo dia a
+    // pedido do Igor, pra não poluir a seção): `verTodos` refaz a MESMA chamada pedindo um teto maior
+    // -- ambos dentro do que a API já aceita (limit entre 1 e 50, routes/me.py::MAX_HISTORY_LIMIT,
+    // inalterado) -- em vez de uma paginação nova. O botão "Ver todos os downloads" só aparece quando
+    // a carga inicial (5 itens, o padrão aqui) veio com exatamente 5, sinal de que pode haver mais
+    // além desse teto; depois de clicado, carrega até 20 e o botão some, porque não existe "mais"
+    // nenhum pra revelar além desse teto.
+    const HISTORICO_LIMITE_PADRAO = 5;
+    const HISTORICO_LIMITE_MAXIMO = 20;
 
     async function carregarHistoricoGeracoes(verTodos = false) {
         const secao = document.getElementById("secaoHistorico");
