@@ -744,6 +744,48 @@
                     </nav>
                 </div>
             </div>
+
+            <!-- PAGAMENTOS (04/10/2026, pedido do CÉREBRO): selo de confiança no rodapé pra reforçar
+                 segurança na hora da compra. Mesmo princípio já usado em todo o site: texto real +
+                 ícones genéricos (fa-solid), nunca um logo de terceiro desenhado por IA -- o Igor
+                 mandou uma imagem gerada com os logos oficiais do Mastercard/Pix/Mercado Pago, que
+                 foi recusada pelo mesmo motivo já aplicado aos banners da Home (risco de marca
+                 independe de consentimento mútuo). "Mercado Pago" e "Pix" aparecem só como texto,
+                 igual já fazem o FAQ e o checkout (routes/payments, modalPagamento) -- nunca como
+                 logo. Nenhum número de parcelas é citado (ex.: "12x") porque o Payment Brick decide
+                 o parcelamento dinamicamente conforme bandeira/valor -- não está fixo no código
+                 (ver paymentMethods em abrirModalPagamento), e os planos (R$ 9,90 a R$ 29,90) são
+                 baixos demais pra garantir 12x de verdade; afirmar um número aqui seria inventar um
+                 dado. Esta seção só existe aqui no rodapé, fora do fluxo de checkout em si -- nenhuma
+                 mudança no Payment Brick, nos planos ou no backend de pagamento. -->
+            <div class="border-t border-slate-800/70">
+                <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 sm:py-12 text-center sm:text-left">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Pagamentos</div>
+                    <p class="text-sm text-slate-400 mb-5 max-w-md mx-auto sm:mx-0">Pagamento processado pelo Mercado Pago, com Pix ou cartão de crédito.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl mx-auto sm:mx-0">
+                        <div class="flex items-center gap-3 bg-card-soft rounded-xl px-4 py-3 text-left">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-bolt"></i></div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-bold text-white">Pix</div>
+                                <div class="text-[11px] text-slate-500">Aprovação imediata</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 bg-card-soft rounded-xl px-4 py-3 text-left">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-credit-card"></i></div>
+                            <div class="min-w-0">
+                                <div class="text-sm font-bold text-white">Cartão de crédito</div>
+                                <div class="text-[11px] text-slate-500">Processado pelo Mercado Pago</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-6 gap-y-2 mt-6 text-[11px] text-slate-500">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-lock text-[#19D3AE]"></i>Compra segura e protegida</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-[#19D3AE]"></i>Seus dados em segurança</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-building-columns text-[#19D3AE]"></i>Processado pelo Mercado Pago</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="border-t border-slate-800/70">
                 <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 text-xs text-slate-600 text-center sm:text-left">© 2026 KLANGO.MP4</div>
             </div>
