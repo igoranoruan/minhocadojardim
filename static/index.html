@@ -163,95 +163,6 @@
                          Removida por decisão do CÉREBRO; arquivo da imagem não apagado, só não é
                          mais referenciado aqui. -->
 
-                    <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 5 da revisão de UX; refeito 2x no
-                         mesmo dia a pedido do CÉREBRO pra chegar perto de uma referência dele -- uma
-                         ilustração gerada por IA, cartões empilhados com miniatura de vídeo + tabela
-                         de metadados com valores de exemplo bem concretos). Mantido como HTML/texto
-                         (nunca virou imagem fixa): se ajusta ao celular de verdade (a própria
-                         referência ficava com texto minúsculo numa tela de telefone) e continua
-                         editável na hora. Duas diferenças deliberadas em relação à referência, as
-                         únicas que não implementei literalmente:
-                         (1) a miniatura é um retângulo abstrato com ícone de "play" (gerado aqui
-                         mesmo, sem nenhuma imagem externa) em vez de reaproveitar a foto de uma
-                         criança gerada por IA que o CÉREBRO mandou -- não tem nenhuma relação com o
-                         produto (metadados de vídeo, não fotos de família) e evita usar imagem de
-                         criança numa peça de marketing sem necessidade nenhuma pra isso;
-                         (2) os valores de exemplo (aparelho/cidade/plataforma/nome de arquivo/hash)
-                         são fictícios e GENÉRICOS o bastante pra não parecerem um print real de
-                         verdade, mantendo o aviso "Exemplo ilustrativo" -- mesmo cuidado já aplicado
-                         nas duas versões anteriores desta mesma caixa (propaganda enganosa, CDC
-                         Art. 37). Continua sendo comparação do ARQUIVO, nunca da imagem/conteúdo do
-                         vídeo (processor/ffmpeg.py: -map_metadata -1 -map_chapters -1 + SHA-256 novo
-                         sempre calculado sobre a saída -- mesmo texto já verificado pra Etapa 3/FAQ). -->
-                    <div class="max-w-md mx-auto mt-7 space-y-0">
-                        <div class="rounded-2xl p-5 bg-card-soft border-2 border-rose-500/40 text-left">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-950 bg-rose-500 rounded-lg px-3 py-1.5">Antes</span>
-                                <div class="text-right">
-                                    <div class="text-xs font-bold text-slate-200">Arquivo original</div>
-                                    <div class="text-[10px] text-slate-500">Direto da plataforma de origem</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-slate-600 flex items-center justify-center bg-slate-800">
-                                    <img src="/static/mascote-luar.jpg" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover grayscale-[40%] brightness-75">
-                                    <div class="absolute inset-0 bg-slate-950/25"></div>
-                                    <i class="fa-solid fa-circle-play relative text-2xl text-white drop-shadow"></i>
-                                    <i class="fa-solid fa-triangle-exclamation absolute -top-2 -left-2 text-rose-400 bg-slate-950 rounded-full text-sm"></i>
-                                </div>
-                                <div class="text-xs font-mono text-slate-400 truncate">video_oferta.mp4</div>
-                            </div>
-                            <div class="rounded-xl bg-[#050810] border border-slate-800 p-3 space-y-2 text-[11px]">
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-slate-300">iPhone 13</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-slate-300">São Paulo, Brasil</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-calendar-days w-3.5 text-center"></i>Data de criação</span><span class="text-slate-300">14/08/2026 09:12</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-share-nodes w-3.5 text-center"></i>Plataforma</span><span class="text-slate-300">TikTok</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-fingerprint w-3.5 text-center"></i>Hash (SHA-256)</span><span class="text-slate-300">3f2a8f9c...</span></div>
-                            </div>
-                            <ul class="mt-3 space-y-1.5 text-[11px] text-slate-400">
-                                <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Metadados do dispositivo e da plataforma de origem</li>
-                                <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Mesmo hash do arquivo já publicado antes</li>
-                                <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Nome de arquivo da plataforma de origem</li>
-                            </ul>
-                        </div>
-
-                        <div class="flex justify-center py-2">
-                            <i class="fa-solid fa-circle-arrow-down text-2xl text-[#19D3AE]"></i>
-                        </div>
-
-                        <div class="rounded-2xl p-5 bg-card-soft border-2 border-[#19D3AE]/50 text-left">
-                            <div class="flex items-center justify-between mb-4">
-                                <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-950 bg-[#19D3AE] rounded-lg px-3 py-1.5">Depois</span>
-                                <div class="text-right">
-                                    <div class="text-xs font-bold text-white">Arquivo processado</div>
-                                    <div class="text-[10px] text-[#19D3AE]">Pelo KLANGO.MP4</div>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-3 mb-4">
-                                <div class="relative w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-[#19D3AE]/40 flex items-center justify-center bg-slate-800">
-                                    <img src="/static/mascote-luar.jpg" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover">
-                                    <div class="absolute inset-0 bg-[#0a2420]/35"></div>
-                                    <i class="fa-solid fa-circle-play relative text-2xl text-white drop-shadow"></i>
-                                    <i class="fa-solid fa-circle-check absolute -top-2 -left-2 text-[#19D3AE] bg-slate-950 rounded-full text-sm"></i>
-                                </div>
-                                <div class="text-xs font-mono text-slate-200 truncate">meu_video.mp4</div>
-                            </div>
-                            <div class="rounded-xl bg-[#050810] border border-[#19D3AE]/20 p-3 space-y-2 text-[11px]">
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-calendar-days w-3.5 text-center"></i>Data de criação</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-share-nodes w-3.5 text-center"></i>Plataforma</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
-                                <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-fingerprint w-3.5 text-center"></i>Hash (SHA-256)</span><span class="text-[#19D3AE] font-semibold">8c9d4e1a...</span></div>
-                            </div>
-                            <ul class="mt-3 space-y-1.5 text-[11px] text-slate-300">
-                                <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Metadados removidos</li>
-                                <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Hash novo (SHA-256 recalculado)</li>
-                                <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nome de arquivo personalizável</li>
-                            </ul>
-                        </div>
-                        <p class="text-center text-[11px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
-                    </div>
-
                     <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): prova social
                          HONESTA -- contagem real de gerações completed, vinda de GET /api/stats
                          (services/stats.py -> SELECT COUNT(*) na tabela generations). O CÉREBRO
@@ -264,6 +175,94 @@
                     <p id="statsProcessados" class="hidden mt-6 text-xs text-slate-500">
                         <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
                     </p>
+                </div>
+            </section>
+
+            <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
+                 CÉREBRO): vira seção própria (título/subtítulo/divisória, igual às outras seções),
+                 em vez de ficar dependurada dentro do Hero sem identificação nenhuma. Conteúdo dos
+                 cards (campos, cores, listas de X/✓) é o mesmo já aprovado nas Etapas 3/5/6 da
+                 revisão de UX anterior -- só a miniatura do vídeo virou destaque de largura cheia
+                 (estilo "preview de vídeo", com selo de duração "00:24") em vez do quadrado pequeno
+                 ao lado do nome do arquivo, reproduzindo a proporção da referência. -->
+            <section id="antesDepois" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja a diferença <span class="text-[#19D3AE]">na prática.</span></h2>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Seu vídeo limpo, pronto para editar e adaptar, sem informações desnecessárias.</p>
+                </div>
+
+                <div class="max-w-md mx-auto mt-10 space-y-0">
+                    <div class="rounded-2xl p-5 bg-card-soft border-2 border-rose-500/40 text-left">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-950 bg-rose-500 rounded-lg px-3 py-1.5">Antes</span>
+                            <div class="text-right">
+                                <div class="text-xs font-bold text-slate-200">Arquivo original</div>
+                                <div class="text-[10px] text-slate-500">Direto da plataforma de origem</div>
+                            </div>
+                        </div>
+                        <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-600 bg-slate-800 mb-3">
+                            <img src="/static/mascote-luar.jpg" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover grayscale-[40%] brightness-75">
+                            <div class="absolute inset-0 bg-slate-950/25"></div>
+                            <i class="fa-solid fa-circle-play absolute inset-0 m-auto w-fit h-fit text-4xl text-white drop-shadow"></i>
+                            <span class="absolute bottom-2 right-2 text-[10px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">00:24</span>
+                            <div class="absolute top-2 left-2 w-6 h-6 rounded-full bg-slate-950 flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-rose-400 text-xs"></i></div>
+                        </div>
+                        <div class="flex items-center gap-1.5 mb-4">
+                            <i class="fa-solid fa-file text-slate-600 text-xs"></i>
+                            <div class="text-xs font-mono text-slate-400 truncate">video_oferta.mp4</div>
+                        </div>
+                        <div class="rounded-xl bg-[#050810] border border-slate-800 p-3 space-y-2 text-[11px]">
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-slate-300">iPhone 13</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-slate-300">São Paulo, Brasil</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-calendar-days w-3.5 text-center"></i>Data de criação</span><span class="text-slate-300">14/08/2026 09:12</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-share-nodes w-3.5 text-center"></i>Plataforma</span><span class="text-slate-300">TikTok</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-fingerprint w-3.5 text-center"></i>Hash (SHA-256)</span><span class="text-slate-300">3f2a8f9c...</span></div>
+                        </div>
+                        <ul class="mt-3 space-y-1.5 text-[11px] text-slate-400">
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Metadados do dispositivo e da plataforma de origem</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Mesmo hash do arquivo já publicado antes</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Nome de arquivo da plataforma de origem</li>
+                        </ul>
+                    </div>
+
+                    <div class="flex justify-center py-2">
+                        <i class="fa-solid fa-circle-arrow-down text-2xl text-[#19D3AE]"></i>
+                    </div>
+
+                    <div class="rounded-2xl p-5 bg-card-soft border-2 border-[#19D3AE]/50 text-left">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-950 bg-[#19D3AE] rounded-lg px-3 py-1.5">Depois</span>
+                            <div class="text-right">
+                                <div class="text-xs font-bold text-white">Arquivo processado</div>
+                                <div class="text-[10px] text-[#19D3AE]">Pelo KLANGO.MP4</div>
+                            </div>
+                        </div>
+                        <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-[#19D3AE]/40 bg-slate-800 mb-3">
+                            <img src="/static/mascote-luar.jpg" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-[#0a2420]/35"></div>
+                            <i class="fa-solid fa-circle-play absolute inset-0 m-auto w-fit h-fit text-4xl text-white drop-shadow"></i>
+                            <span class="absolute bottom-2 right-2 text-[10px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">00:24</span>
+                            <div class="absolute top-2 left-2 w-6 h-6 rounded-full bg-slate-950 flex items-center justify-center"><i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i></div>
+                        </div>
+                        <div class="flex items-center gap-1.5 mb-4">
+                            <i class="fa-solid fa-file text-[#19D3AE] text-xs"></i>
+                            <div class="text-xs font-mono text-slate-200 truncate">meu_video.mp4</div>
+                        </div>
+                        <div class="rounded-xl bg-[#050810] border border-[#19D3AE]/20 p-3 space-y-2 text-[11px]">
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-calendar-days w-3.5 text-center"></i>Data de criação</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-share-nodes w-3.5 text-center"></i>Plataforma</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
+                            <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-fingerprint w-3.5 text-center"></i>Hash (SHA-256)</span><span class="text-[#19D3AE] font-semibold">8c9d4e1a...</span></div>
+                        </div>
+                        <ul class="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Metadados removidos</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Hash novo (SHA-256 recalculado)</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nome de arquivo personalizável</li>
+                        </ul>
+                    </div>
+                    <p class="text-center text-[11px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
                 </div>
             </section>
 
