@@ -447,6 +447,17 @@
                     </div>
                     <div id="historicoLista" class="space-y-2"></div>
                     <p id="historicoVazio" class="hidden text-sm text-slate-500">Você ainda não processou nenhum vídeo.</p>
+                    <!-- 04/10/2026 (Etapa 3 da adaptação ao layout de referência): botão real, não
+                         decorativo -- GET /api/me/generations já aceita `limit` (até
+                         MAX_HISTORY_LIMIT=50, ver routes/me.py), então "ver todos" só refaz a mesma
+                         chamada pedindo o teto em vez de inventar paginação nova no backend. Só
+                         aparece quando a primeira carga (20 itens) bate o teto do que foi pedido --
+                         sinal de que pode haver mais; depois de clicado, carrega até 50 e some (50
+                         já é o máximo que a API devolve, não há mais nada a revelar). -->
+                    <button id="historicoVerTodosBtn" type="button" onclick="carregarHistoricoGeracoes(true)"
+                        class="hidden w-full mt-3 h-11 rounded-xl border border-slate-700 text-slate-300 hover:border-[#19D3AE]/50 hover:text-[#19D3AE] font-bold text-xs transition-colors">
+                        Ver todos os downloads
+                    </button>
                 </div>
             </section>
 
@@ -1238,34 +1249,47 @@
         if (secao) secao.classList.add("hidden");
         const lista = document.getElementById("historicoLista");
         if (lista) lista.innerHTML = "";
+        const btnVerTodos = document.getElementById("historicoVerTodosBtn");
+        if (btnVerTodos) btnVerTodos.classList.add("hidden");
     }
 
+    // 04/10/2026 (Etapa 3 da adaptação ao layout de referência): badge de status colorido SEMPRE
+    // visível (antes a etiqueta e o botão de baixar se excluíam -- ou um ou outro) + botão "Baixar
+    // novamente" como linha separada, só quando `downloadable` for true. Cores/rótulos continuam
+    // vindo inteiramente do que o backend decidiu (`status`/`downloadable`), nenhuma suposição nova.
     function _itemHistoricoHtml(item) {
         const icone = ICONE_FONTAWESOME_POR_PLATAFORMA[item.platform] || "fa-solid fa-film";
         const nome = item.display_filename || "Vídeo processado";
         const data = formatarData(item.created_at);
 
-        let acaoHtml;
+        let badgeClasses, badgeLabel, botaoHtml = "";
         if (item.status === "completed" && item.downloadable) {
-            acaoHtml = `<a href="/api/generations/${item.id}/download" class="h-9 px-4 inline-flex items-center rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-bold hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap"><i class="fa-solid fa-download mr-1.5"></i>Baixar</a>`;
+            badgeClasses = "bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE]";
+            badgeLabel = "Disponível";
+            botaoHtml = `<a href="/api/generations/${item.id}/download" class="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-bold hover:bg-[#19D3AE]/20 transition-colors"><i class="fa-solid fa-download"></i>Baixar novamente</a>`;
         } else if (item.status === "failed") {
-            acaoHtml = `<span class="text-xs text-slate-500 font-semibold whitespace-nowrap">Falhou</span>`;
+            badgeClasses = "bg-rose-500/10 border border-rose-500/30 text-rose-400";
+            badgeLabel = "Falhou";
         } else {
             // completed, mas não mais disponível (expirado, ou arquivo físico ausente) -- mesmo
             // critério de get_downloadable_generation, nunca uma suposição nova aqui.
-            acaoHtml = `<span class="text-xs text-slate-500 font-semibold whitespace-nowrap">Expirado</span>`;
+            badgeClasses = "bg-slate-700/30 border border-slate-600/50 text-slate-400";
+            badgeLabel = "Expirado";
         }
 
         return `
-            <div class="flex items-center justify-between gap-3 bg-card-soft rounded-xl px-4 py-3">
-                <div class="flex items-center gap-3 min-w-0">
-                    <i class="${icone} text-slate-500"></i>
-                    <div class="min-w-0">
-                        <div class="text-sm text-white truncate">${_escapeHtml(nome)}</div>
-                        <div class="text-xs text-slate-500">${data}</div>
+            <div class="bg-card-soft rounded-xl px-4 py-3">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <i class="${icone} text-slate-500"></i>
+                        <div class="min-w-0">
+                            <div class="text-sm text-white truncate">${_escapeHtml(nome)}</div>
+                            <div class="text-xs text-slate-500">${data}</div>
+                        </div>
                     </div>
+                    <span class="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${badgeClasses}">${badgeLabel}</span>
                 </div>
-                ${acaoHtml}
+                ${botaoHtml}
             </div>`;
     }
 
@@ -1279,14 +1303,25 @@
         return div.innerHTML;
     }
 
-    async function carregarHistoricoGeracoes() {
+    // 04/10/2026 (Etapa 3 da adaptação ao layout de referência): `verTodos` refaz a MESMA chamada
+    // pedindo o teto que a própria API já aceita (limit=50, routes/me.py::MAX_HISTORY_LIMIT) em vez
+    // de uma paginação nova -- o botão "Ver todos os downloads" só aparece quando a carga inicial
+    // (20 itens, o default da rota) veio com exatamente 20, sinal de que pode haver mais além desse
+    // teto; depois de clicado, carrega até 50 (o máximo que a rota aceita) e o botão some, porque
+    // não existe "mais" nenhum pra revelar além desse teto.
+    const HISTORICO_LIMITE_PADRAO = 20;
+    const HISTORICO_LIMITE_MAXIMO = 50;
+
+    async function carregarHistoricoGeracoes(verTodos = false) {
         const secao = document.getElementById("secaoHistorico");
         const lista = document.getElementById("historicoLista");
         const vazio = document.getElementById("historicoVazio");
+        const btnVerTodos = document.getElementById("historicoVerTodosBtn");
         if (!secao || !lista || !vazio) return;
 
+        const limite = verTodos ? HISTORICO_LIMITE_MAXIMO : HISTORICO_LIMITE_PADRAO;
         try {
-            const res = await fetch("/api/me/generations", { credentials: "same-origin" });
+            const res = await fetch(`/api/me/generations?limit=${limite}`, { credentials: "same-origin" });
             if (!res.ok) {
                 // 401 (sessão caiu entre o carregamento da página e esta chamada) -- mesma
                 // filosofia de carregarStatusConta(): não força nada, só não mostra a seção.
@@ -1298,10 +1333,15 @@
             if (!Array.isArray(itens) || itens.length === 0) {
                 lista.innerHTML = "";
                 vazio.classList.remove("hidden");
+                if (btnVerTodos) btnVerTodos.classList.add("hidden");
                 return;
             }
             vazio.classList.add("hidden");
             lista.innerHTML = itens.map(_itemHistoricoHtml).join("");
+            if (btnVerTodos) {
+                const podeTerMais = !verTodos && itens.length >= HISTORICO_LIMITE_PADRAO;
+                btnVerTodos.classList.toggle("hidden", !podeTerMais);
+            }
         } catch (err) {
             console.error(err);
         }
