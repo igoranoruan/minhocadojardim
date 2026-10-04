@@ -50,5 +50,12 @@ COPY . .
 ENV PORT=10000
 EXPOSE 10000
 
-# uvicorn direto (sem gunicorn, sem start.sh) -- escuta em 0.0.0.0 na porta indicada por PORT.
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000}"]
+# Roda as migrations pendentes (alembic upgrade head) ANTES de subir o servidor -- correção de
+# incidente (03/10/2026): até aqui nada neste Dockerfile/CMD aplicava migrations automaticamente
+# em produção; elas vinham sendo aplicadas manualmente fora do deploy, e a migração 0008 (programa
+# de indicação) ficou pra trás, derrubando o LOGIN inteiro (SELECT em users.referral_code, coluna
+# que só existe no modelo, não no banco -- psycopg.errors.UndefinedColumn). "alembic upgrade head"
+# é idempotente (não faz nada se o banco já estiver no topo), então rodar em todo boot é seguro e
+# elimina essa classe inteira de incidente: se falhar, o deploy some sem nunca ficar "live" servindo
+# com o schema desatualizado, em vez de subir quebrado silenciosamente.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000}"]
