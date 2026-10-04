@@ -698,6 +698,15 @@
         // Sem sessão: nunca mostrar "Meu acesso" de um plano que não é mais confirmado -- volta a
         // mostrar a vitrine de Planos normalmente (mesmo comportamento de um visitante Free).
         atualizarVisibilidadeSecaoPlanos("free");
+        // 03/10/2026 (aprovação do CÉREBRO): visitante Free ANÔNIMO também tem direito de ver sua
+        // cota real na bolha do topo -- antes desta mudança, só quem tinha feito login via
+        // aplicarSessao() chamava carregarStatusConta(); o Free anônimo ficava preso no texto
+        // genérico "Pronto para processar" pra sempre, nunca sabendo quantas gerações grátis
+        // ainda tem. GET /api/me/status já suporta identidade anônima por cookie (nunca 401 --
+        // ver docstring de routes/me.py), então é só chamar aqui também. O resultado (async)
+        // sobrescreve os valores padrão acima com os reais assim que a resposta chega -- mesmo
+        // padrão já usado em aplicarSessao(), sem nenhum estado novo.
+        carregarStatusConta();
     }
 
     // ---- Status real da conta (UX-2): GET /api/me/status -- só apresenta o que o backend já
@@ -769,9 +778,14 @@
 
         const uso = data.usage;
         let texto = plano.name;
-        if (uso && typeof uso.remaining === "number") {
+        // 03/10/2026 (aprovação do CÉREBRO): "3 restantes" virou "3 de 5 restantes" -- mostrar só
+        // o restante não dá a noção de proporção (3 restantes de quantas? isso já usou metade da
+        // cota ou quase nada?). "limit" já vem pronto de /api/me/status (UsageOut.limit), nunca
+        // calculado aqui -- mesma fonte de verdade de sempre, só exibindo um campo a mais que já
+        // existia na resposta e não era usado.
+        if (uso && typeof uso.remaining === "number" && typeof uso.limit === "number") {
             const periodo = textoPeriodo(uso.period);
-            texto += ` · ${uso.remaining} restantes${periodo ? " " + periodo : ""}`;
+            texto += ` · ${uso.remaining} de ${uso.limit} restantes${periodo ? " " + periodo : ""}`;
         }
         // VIP Batch usa o estilo "vip" já existente em setStatusConta(); os demais planos
         // preservam o comportamento atual (estilo "normal", implícito ao omitir o 2º argumento).
