@@ -154,31 +154,43 @@
                         <span class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE]"></i> Sem anúncios</span>
                     </div>
 
-                    <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 5 da revisão de UX): demonstração
-                         "antes/depois" no hero, pra quem ainda não processou nada entender o que
-                         realmente muda. Não é uma comparação de IMAGEM (o KLANGO.MP4 não altera o
-                         conteúdo visual do vídeo -- isso seria falso mostrar) -- é uma comparação do
-                         ARQUIVO, exatamente o que processor/ffmpeg.py e processor/service.py fazem de
-                         verdade (mesmo texto já verificado pra Etapa 3/FAQ): metadados removidos
-                         (-map_metadata -1 -map_chapters -1) e um SHA-256 novo sempre calculado sobre
-                         a saída. Rotulado "Exemplo" porque é conteúdo ilustrativo fixo, nunca dado de
-                         uma geração real do visitante. -->
+                    <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 5 da revisão de UX; refeito no mesmo
+                         dia a pedido do CÉREBRO pra ficar visualmente mais parecido com uma referência
+                         dele -- uma ilustração estática gerada por IA, com valores de exemplo bem
+                         específicos tipo "iPhone 14"/"Rio de Janeiro"/"TikTok"). Mantido como HTML/
+                         texto (não virou uma imagem fixa): (1) se ajusta ao celular de verdade, a
+                         própria referência ficava com texto minúsculo numa tela de telefone; (2) texto
+                         continua editável na hora, sem depender de gerar imagem nova; (3) evita
+                         valores de exemplo tão específicos que pareçam print real em vez de ilustração
+                         (risco de propaganda enganosa -- CDC Art. 37) -- por isso os valores do lado
+                         ANTES ficam genéricos ("Presente", nunca uma cidade/aparelho inventado).
+                         Continua sendo uma comparação do ARQUIVO, nunca da imagem/conteúdo do vídeo
+                         (processor/ffmpeg.py: -map_metadata -1 -map_chapters -1 + SHA-256 novo sempre
+                         calculado sobre a saída -- mesmo texto já verificado pra Etapa 3/FAQ). -->
                     <div class="max-w-2xl mx-auto mt-7">
-                        <div class="bg-card-soft rounded-2xl p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-5 text-left">
-                            <div>
-                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-3">Arquivo original</div>
-                                <ul class="space-y-2 text-xs text-slate-400">
-                                    <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Metadados do dispositivo e da plataforma de origem</li>
-                                    <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Mesmo hash do arquivo já publicado antes</li>
-                                    <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Nome de arquivo da plataforma de origem</li>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+                            <div class="rounded-2xl p-5 bg-card-soft border border-rose-500/20">
+                                <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider text-rose-400 bg-rose-500/10 border border-rose-500/30 rounded-full px-2.5 py-1 mb-4">Antes</span>
+                                <div class="text-xs font-bold text-slate-300 mb-3">Arquivo original</div>
+                                <ul class="space-y-2.5 text-xs text-slate-400">
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-mobile-screen w-4 text-center text-slate-500"></i>Dispositivo</span><i class="fa-solid fa-xmark text-rose-400"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-location-dot w-4 text-center text-slate-500"></i>Localização</span><i class="fa-solid fa-xmark text-rose-400"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-calendar-days w-4 text-center text-slate-500"></i>Data de criação</span><i class="fa-solid fa-xmark text-rose-400"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-share-nodes w-4 text-center text-slate-500"></i>Plataforma de origem</span><i class="fa-solid fa-xmark text-rose-400"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-file w-4 text-center text-slate-500"></i>Nome do arquivo</span><i class="fa-solid fa-xmark text-rose-400"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-fingerprint w-4 text-center text-slate-500"></i>Hash (SHA-256)</span><i class="fa-solid fa-xmark text-rose-400"></i></li>
                                 </ul>
                             </div>
-                            <div>
-                                <div class="text-[10px] font-bold uppercase tracking-wider text-[#19D3AE] mb-3">Depois do KLANGO.MP4</div>
-                                <ul class="space-y-2 text-xs text-slate-300">
-                                    <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Metadados removidos</li>
-                                    <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Hash novo (SHA-256 recalculado)</li>
-                                    <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nome de arquivo personalizável</li>
+                            <div class="rounded-2xl p-5 bg-card-soft border border-[#19D3AE]/25">
+                                <span class="inline-block text-[10px] font-extrabold uppercase tracking-wider text-[#19D3AE] bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-full px-2.5 py-1 mb-4">Depois</span>
+                                <div class="text-xs font-bold text-white mb-3">Processado pelo KLANGO.MP4</div>
+                                <ul class="space-y-2.5 text-xs text-slate-300">
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-mobile-screen w-4 text-center text-[#19D3AE]/70"></i>Dispositivo</span><i class="fa-solid fa-check text-[#19D3AE]"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-location-dot w-4 text-center text-[#19D3AE]/70"></i>Localização</span><i class="fa-solid fa-check text-[#19D3AE]"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-calendar-days w-4 text-center text-[#19D3AE]/70"></i>Data de criação</span><i class="fa-solid fa-check text-[#19D3AE]"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-share-nodes w-4 text-center text-[#19D3AE]/70"></i>Plataforma de origem</span><i class="fa-solid fa-check text-[#19D3AE]"></i></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-file w-4 text-center text-[#19D3AE]/70"></i>Nome do arquivo</span><span class="text-[10px] text-[#19D3AE]">Editável</span></li>
+                                    <li class="flex items-center justify-between gap-2"><span class="flex items-center gap-2"><i class="fa-solid fa-fingerprint w-4 text-center text-[#19D3AE]/70"></i>Hash (SHA-256)</span><span class="text-[10px] text-[#19D3AE]">Novo</span></li>
                                 </ul>
                             </div>
                         </div>
