@@ -58,11 +58,17 @@ def test_rota_e_fina_toda_regra_fica_no_servico():
 
 
 def test_rota_nao_aceita_identidade_do_corpo():
+    """Teste desatualizado (auditoria de 04/10/2026): `filename` foi adicionado ao corpo no commit
+    1777e59 ("nome de arquivo opcional no processamento individual") -- mesmo campo que o item de
+    lote já tinha desde a Etapa 9.3, sem nenhuma relação com identidade/autenticação. O que este
+    teste realmente protege (pelo nome e pelo comentário original) é que NENHUM campo de identidade
+    (user_id/email/account_id) seja aceito no corpo -- isso continua garantido abaixo."""
     fonte = ROUTE_FILE.read_text(encoding="utf-8")
     tree = ast.parse(fonte)
     modelo = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "CreateGenerationBody")
     campos = [n.target.id for n in modelo.body if isinstance(n, ast.AnnAssign)]
-    assert campos == ["url"]  # nada de user_id/email/account_id como campo do corpo
+    assert campos == ["url", "filename"]
+    assert not any(campo in campos for campo in ("user_id", "email", "account_id"))
     assert "get_current_user" in fonte  # identidade vem exclusivamente da sessão
 
 

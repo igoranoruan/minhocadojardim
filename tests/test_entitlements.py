@@ -165,11 +165,22 @@ def test_limites_do_intervalo_inicio_incluso_fim_excluso(factory, session):
 
 
 def test_na_troca_exata_de_acessos_so_um_esta_vigente(factory, session):
+    """Teste desatualizado (auditoria de 04/10/2026): ficou órfão da TROCA IMEDIATA (a828681,
+    02/10/2026) -- aquele commit atualizou os dois testes que provavam o EMPILHAMENTO antigo, mas
+    este (de um dia antes, 698f5ed) não usava esse nome e passou despercebido. Comprava `a` e `b`
+    no MESMO instante padrão (`now=NOW` em ambos, já que give() usa NOW por padrão) -- sob troca
+    imediata isso aciona a guarda defensiva de grant_entitlement contra expires_at == starts_at
+    (`current.expires_at = ... else current.starts_at + timedelta(seconds=1)`), encerrando `a` em
+    1 segundo, nunca nos 7 dias que o teste esperava. Corrigido comprando `b` ALGUM TEMPO depois de
+    `a` (como os demais testes de troca imediata já fazem, ex.:
+    test_comprar_com_um_plano_ja_vigente_troca_na_hora_sem_empilhar) -- o que o teste realmente
+    quer provar (só um acesso vigente no instante exato da troca) continua intacto, só a troca
+    deixa de acontecer no mesmo microssegundo da compra do próprio `a`."""
     usuario = factory.user()
-    a = give(factory, session, usuario, "weekly")
-    b = give(factory, session, usuario, "monthly")
-    assert get_current_entitlement(session, usuario.id, now=NOW + 7 * DIA - DIA / 1000).id == a.id
-    assert get_current_entitlement(session, usuario.id, now=NOW + 7 * DIA).id == b.id
+    a = give(factory, session, usuario, "weekly", now=NOW)
+    b = give(factory, session, usuario, "monthly", now=NOW + 2 * DIA)  # troca DURANTE o Semanal
+    assert get_current_entitlement(session, usuario.id, now=NOW + 2 * DIA - DIA / 1000).id == a.id
+    assert get_current_entitlement(session, usuario.id, now=NOW + 2 * DIA).id == b.id
 
 
 # ============================================================================ inconsistência (sobreposição)

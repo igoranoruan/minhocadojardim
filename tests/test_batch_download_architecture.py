@@ -36,8 +36,14 @@ def test_download_batch_nao_decide_elegibilidade_sozinha():
 
 
 def test_download_batch_continua_fina():
+    """Teste desatualizado (auditoria de 04/10/2026): o limiar de 7 foi fixado no commit 698f5ed
+    (quando a função tinha exatamente 7 statements). O commit 688c305 ("Nome padrão de download:
+    klango-{aleatório} em vez de minhoca-{id sequencial}", correção de privacidade aprovada do
+    CÉREBRO -- evita expor o batch_id sequencial no nome do arquivo) acrescentou UM statement novo
+    (`token = uuid.uuid4().hex[:8]`), levando o total a 8 -- o limiar nunca foi atualizado para
+    refletir essa mudança legítima. A rota continua fina; só o número de linhas mudou."""
     funcao = _function_node(ROUTE_FILE, "download_batch")
-    assert len(funcao.body) <= 7, "routes/generations.py:download_batch deixou de ser fina"
+    assert len(funcao.body) <= 8, "routes/generations.py:download_batch deixou de ser fina"
 
 
 def test_rota_nao_importa_mais_o_que_so_servia_para_a_decisao_de_elegibilidade():
