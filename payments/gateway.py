@@ -15,6 +15,12 @@
    (payments.service.find_payment_for_webhook), trava por usuário, revalida external_reference, e
    é o ÚNICO lugar do sistema que chama grant_entitlement/revoke_entitlement -- por isso, e só
    aqui, este módulo importa services.entitlements.
+
+   Etapa 8 (programa de indicação, aprovação do CÉREBRO): depois de um grant_entitlement bem
+   sucedido, chama também services.referrals.process_entitlement_granted -- nunca antes, nunca em
+   caso de erro. Essa função não decide preço/plano, não lê Payment, e nunca levanta (qualquer
+   erro do programa de indicação é logado e engolido ali mesmo); é só a ponte entre "um pagamento
+   foi aprovado" e "talvez isso dispare ou aplique uma recompensa de indicação".
 """
 import logging
 from dataclasses import dataclass
@@ -30,6 +36,7 @@ from payments.errors import PaymentMethodMismatchError
 from payments.service import find_payment_for_webhook
 from services.entitlements import grant_entitlement, revoke_entitlement
 from services.locks import lock_user_row
+from services.referrals import process_entitlement_granted
 from utils.time_sp import resolve_now
 
 logger = logging.getLogger("minhoca")
@@ -242,7 +249,15 @@ def reconcile_webhook_payment(
 
     if status_local == "approved":
         # SEMPRE chamado -- nunca condicionado a Payment.status ter sido "pending" antes (correção 1).
-        grant_entitlement(db, user_id=payment.user_id, payment_id=payment.id, plan_code=payment.plan_code, now=now)
+        entitlement = grant_entitlement(
+            db, user_id=payment.user_id, payment_id=payment.id, plan_code=payment.plan_code, now=now
+        )
+        # Etapa 8 (programa de indicação, aprovação do CÉREBRO): chamado DEPOIS do grant_entitlement
+        # já ter commitado com sucesso -- nunca pode atrasar nem arriscar a concessão do acesso pago
+        # em si. process_entitlement_granted nunca levanta (engole e loga qualquer erro próprio),
+        # então uma falha no programa de indicação nunca vira um 502 para o Mercado Pago nem repete
+        # a notificação do webhook à toa.
+        process_entitlement_granted(db, user_id=payment.user_id, entitlement=entitlement, now=now)
         return ReconcileResult(outcome="granted", payment=payment)
 
     if status_local in ("refunded", "charged_back"):

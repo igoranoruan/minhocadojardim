@@ -29,6 +29,7 @@ from routes import auth, generations, health, me, payments, stats, webhooks
 from services.auth import AuthError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
+from services.referrals import AlreadyClaimedError, InvalidReferralCodeError, SelfReferralError
 from services.usage import BatchNotFoundError, GenerationDownloadNotFoundError, QuotaExceededError, UsageError
 from utils.anon_cookie import AnonymousCookieMiddleware
 from utils.logging_setup import setup_logging
@@ -102,6 +103,12 @@ app.add_exception_handler(PaymentGatewayError, payments.payment_gateway_handler)
 # InvalidWebhookSignatureError localmente dentro de routes/webhooks.py (para nunca criar
 # PaymentEvent nesse caso); ver o docstring de routes/webhooks.py.
 app.add_exception_handler(InvalidWebhookSignatureError, webhooks.invalid_signature_handler)
+
+# Programa de indicação (Etapa 8 da revisão de UX): tradução para HTTP, sem nenhuma regra de
+# negócio aqui -- ver services/referrals.py e routes/me.py.
+app.add_exception_handler(InvalidReferralCodeError, me.invalid_referral_code_handler)
+app.add_exception_handler(SelfReferralError, me.self_referral_handler)
+app.add_exception_handler(AlreadyClaimedError, me.already_claimed_handler)
 
 # Rotas da API.
 app.include_router(health.router)

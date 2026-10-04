@@ -28,13 +28,21 @@ relatório da microauditoria/autorização desta etapa.
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database.models import User
 from database.session import get_session
 from routes.deps import get_current_user, get_generation_user
 from services.generation_history import get_generation_history
+from services.referrals import (
+    AlreadyClaimedError,
+    InvalidReferralCodeError,
+    SelfReferralError,
+    claim_referral,
+    get_or_create_referral_code,
+)
 from services.user_status import get_user_status
 
 router = APIRouter(prefix="/api/me", tags=["me"])
@@ -140,3 +148,65 @@ def get_generations_history(
         )
         for item in historico
     ]
+
+
+# ------------------------------------------------------------------- Etapa 8: programa de indicação
+async def invalid_referral_code_handler(request, exc: InvalidReferralCodeError) -> JSONResponse:
+    return JSONResponse(status_code=422, content={"detail": "Código de indicação inválido.", "code": "invalid_referral_code"})
+
+
+async def self_referral_handler(request, exc: SelfReferralError) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={"detail": "Não é possível usar o próprio código de indicação.", "code": "self_referral"},
+    )
+
+
+async def already_claimed_handler(request, exc: AlreadyClaimedError) -> JSONResponse:
+    return JSONResponse(
+        status_code=409,
+        content={"detail": "Esta conta já tem um indicador registrado.", "code": "already_claimed"},
+    )
+
+
+class ReferralCodeOut(BaseModel):
+    """Só o código -- o link completo (klango.site/?ref=CODIGO) é montado no frontend a partir da
+    própria origem da página, sem precisar que o backend conheça/exponha a URL pública aqui."""
+
+    code: str
+
+
+@router.get("/referral", response_model=ReferralCodeOut)
+def get_referral_code(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> ReferralCodeOut:
+    """Etapa 8 da revisão de UX (aprovação do CÉREBRO): devolve o código de indicação do próprio
+    usuário, gerando um na primeira chamada (services.referrals.get_or_create_referral_code) --
+    SOMENTE login de verdade, mesmo motivo de /generations (um código persistente não faz sentido
+    pra um cookie de dispositivo sem conta)."""
+    return ReferralCodeOut(code=get_or_create_referral_code(db, user.id))
+
+
+class ClaimReferralBody(BaseModel):
+    code: str = Field(min_length=1, max_length=16)
+
+
+class ClaimReferralOut(BaseModel):
+    linked: bool = True
+
+
+@router.post("/referral/claim", response_model=ClaimReferralOut)
+def claim_referral_route(
+    body: ClaimReferralBody,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> ClaimReferralOut:
+    """Etapa 8 da revisão de UX (aprovação do CÉREBRO): o PRÓPRIO usuário recém-logado reivindica o
+    código de quem o indicou -- chamado pelo frontend logo após o login, só quando um `?ref=` foi
+    guardado antes do login (nunca antes disso: sem usuário autenticado não há em quem gravar
+    `referred_by_user_id`). Idempotente na prática: se já tiver um indicador, levanta
+    AlreadyClaimedError (409) -- o frontend trata isso como "nada a fazer", nunca como erro visível
+    ao usuário (ver atualização de static/index.html)."""
+    claim_referral(db, user_id=user.id, code=body.code)
+    return ClaimReferralOut()

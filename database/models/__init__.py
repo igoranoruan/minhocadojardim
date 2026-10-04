@@ -7,6 +7,7 @@ from database.models.generation import Generation
 from database.models.login_code import LoginCode
 from database.models.payment import Payment
 from database.models.payment_event import PaymentEvent
+from database.models.referral import Referral
 from database.models.user import User
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "LoginCode",
     "Payment",
     "PaymentEvent",
+    "Referral",
     "User",
 ]

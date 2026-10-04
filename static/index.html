@@ -346,6 +346,31 @@
                 </div>
             </section>
 
+            <!-- INDICAÇÃO (Etapa 8 da revisão de UX, aprovação do CÉREBRO): quem indica ganha 7
+                 dias extras de plano quando a pessoa indicada faz o primeiro pagamento aprovado --
+                 ver services/referrals.py. Só para quem tem login de verdade, mesmo motivo de
+                 "Meus últimos downloads" (um código persistente não faz sentido pra um cookie de
+                 dispositivo sem conta). -->
+            <section id="secaoIndicacao" class="hidden py-8">
+                <div class="bg-card rounded-3xl p-7 glow-hover">
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gift"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-extrabold text-white">Indique e ganhe 7 dias</h2>
+                            <p class="text-sm text-slate-400 mt-1">Cada pessoa que assinar um plano pelo seu link soma 7 dias ao seu acesso.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input id="indicacaoLinkInput" type="text" readonly
+                            class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-xs"
+                            onclick="this.select()">
+                        <button type="button" onclick="copiarLinkIndicacao(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-xs hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap">
+                            <i class="fa-solid fa-copy mr-1.5"></i>Copiar link
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- BATCH -->
             <section id="secaoBatch" class="hidden py-10">
                 <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
@@ -682,10 +707,116 @@
     let pixPollingInterval = null; // id do setInterval que verifica a confirmação do PIX (ver iniciarPollingConfirmacaoPix)
 
     document.addEventListener("DOMContentLoaded", () => {
+        capturarCodigoIndicacaoDaUrl();
         inicializarBatch();
         carregarSessao();
         carregarEstatisticas();
     });
+
+    // ---- Programa de indicação (Etapa 8 da revisão de UX, aprovação do CÉREBRO) ----
+    // Guarda um "?ref=CODIGO" da URL em localStorage até existir uma sessão autenticada pra
+    // reivindicar -- a reivindicação em si só pode acontecer DEPOIS do login, porque precisa de
+    // um user_id pra gravar users.referred_by_user_id (ver services/referrals.py::claim_referral).
+    // localStorage (não cookie) porque é só uma conveniência deste NAVEGADOR até o visitante logar
+    // -- nunca lido nem decidido pelo backend.
+    const INDICACAO_STORAGE_KEY = "klango_ref_code";
+
+    function capturarCodigoIndicacaoDaUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const codigo = params.get("ref");
+        if (!codigo) return;
+        try {
+            localStorage.setItem(INDICACAO_STORAGE_KEY, codigo);
+        } catch (err) {
+            // localStorage indisponível (modo privado restrito, etc.) -- sem reivindicação
+            // automática depois do login, mas o resto do site continua funcionando normalmente.
+            console.warn("[INDICACAO] não foi possível guardar o código:", err);
+        }
+        // Remove "?ref=..." da URL visível, sem recarregar a página -- cosmético, nunca afeta a
+        // reivindicação em si (que já leu o valor acima).
+        params.delete("ref");
+        const novaQuery = params.toString();
+        const novaUrl = window.location.pathname + (novaQuery ? `?${novaQuery}` : "") + window.location.hash;
+        window.history.replaceState({}, "", novaUrl);
+    }
+
+    async function tentarReivindicarIndicacao() {
+        let codigo;
+        try {
+            codigo = localStorage.getItem(INDICACAO_STORAGE_KEY);
+        } catch (err) {
+            return;
+        }
+        if (!codigo) return;
+        try {
+            await fetch("/api/me/referral/claim", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ code: codigo }),
+            });
+        } catch (err) {
+            console.warn("[INDICACAO] falha ao reivindicar:", err);
+        } finally {
+            // Sempre limpa, mesmo se falhou/já tinha indicador/código inválido -- nunca fica
+            // tentando de novo a cada login (qualquer resultado aqui é "nada a fazer", nunca um
+            // erro visível ao usuário -- ver routes/me.py::claim_referral_route).
+            try {
+                localStorage.removeItem(INDICACAO_STORAGE_KEY);
+            } catch (err) {
+                // ignorado
+            }
+        }
+    }
+
+    function esconderIndicacao() {
+        const secao = document.getElementById("secaoIndicacao");
+        if (secao) secao.classList.add("hidden");
+    }
+
+    async function carregarIndicacao() {
+        const secao = document.getElementById("secaoIndicacao");
+        const input = document.getElementById("indicacaoLinkInput");
+        if (!secao || !input) return;
+        try {
+            const res = await fetch("/api/me/referral", { credentials: "same-origin" });
+            if (!res.ok) {
+                esconderIndicacao();
+                return;
+            }
+            const dados = await res.json();
+            if (!dados || typeof dados.code !== "string" || !dados.code) {
+                esconderIndicacao();
+                return;
+            }
+            input.value = `${window.location.origin}/?ref=${dados.code}`;
+            secao.classList.remove("hidden");
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function copiarLinkIndicacao(botao) {
+        const input = document.getElementById("indicacaoLinkInput");
+        if (!input || !input.value) return;
+        try {
+            await navigator.clipboard.writeText(input.value);
+        } catch (err) {
+            // Mesmo fallback de copiarCodigoPix, acima -- contextos sem Clipboard API.
+            input.select();
+            try {
+                document.execCommand("copy");
+            } catch (_) {
+                return;
+            }
+        }
+        if (!botao) return;
+        const textoOriginal = botao.innerHTML;
+        botao.textContent = "Copiado!";
+        setTimeout(() => {
+            botao.innerHTML = textoOriginal;
+        }, 1500);
+    }
 
     // 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): busca a contagem REAL de vídeos
     // já processados (GET /api/stats, services/stats.py) e exibe no hero. Sem autenticação, sem
@@ -838,6 +969,8 @@
         setStatusConta(`Conectado: ${email}`);
         carregarStatusConta();
         carregarHistoricoGeracoes();
+        tentarReivindicarIndicacao();
+        carregarIndicacao();
     }
 
     function aplicarSemSessao() {
@@ -846,6 +979,7 @@
         limparStatusContaValidade();
         esconderBatch();
         esconderHistorico();
+        esconderIndicacao();
         // Sem sessão: nunca mostrar "Meu acesso" de um plano que não é mais confirmado -- volta a
         // mostrar a vitrine de Planos normalmente (mesmo comportamento de um visitante Free).
         atualizarVisibilidadeSecaoPlanos("free");

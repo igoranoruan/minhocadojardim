@@ -65,6 +65,21 @@ def constant_time_equals(a: str, b: str) -> bool:
     return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
 
 
+# Alfabeto do código de indicação (Etapa 8, programa de indicação): só maiúsculas e dígitos, SEM
+# os caracteres classicamente confundíveis ao digitar/ler em voz alta -- 0/O, 1/I/L -- já que este
+# código (diferente do token de sessão/anônimo, acima) é feito para ser DIGITADO ou lido por uma
+# pessoa, não só colado de um link. Não precisa da imprevisibilidade de um segredo (não protege
+# nada sensível: na pior hipótese, alguém usa o código de outra pessoa como indicador, o que só
+# soma dias de plano a quem já tinha o código -- nunca concede acesso nem dinheiro a quem adivinha).
+_REFERRAL_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"
+
+
+def generate_referral_code(length: int) -> str:
+    """Código aleatório (não precisa ser único por si só -- a unicidade é responsabilidade de quem
+    grava em users.referral_code, com retry em caso de colisão; ver services/referrals.py)."""
+    return "".join(secrets.choice(_REFERRAL_CODE_ALPHABET) for _ in range(length))
+
+
 def is_valid_email_format(email: str) -> bool:
     """Validação de formato (não prova que o e-mail existe: quem prova é o código enviado)."""
     return (

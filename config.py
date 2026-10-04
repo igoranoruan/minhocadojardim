@@ -129,6 +129,14 @@ RESULT_STORAGE_DIR = "./tmp/results"
 # constante e o cálculo de output_expires_at (finished_at + este TTL) existem.
 RESULT_TTL_SECONDS = 30 * 60
 
+# ----------------------------------------------------------------------------- indicação (Etapa 8)
+# Programa de indicação (revisão de UX, aprovação do CÉREBRO, 03/10/2026): quem indica ganha dias
+# extras de plano quando a pessoa indicada faz o PRIMEIRO pagamento aprovado (nunca no cadastro,
+# que é grátis e fácil de simular -- ver services/referrals.py).
+REFERRAL_CODE_LENGTH = 8  # caracteres do código compartilhável (klango.site/?ref=CODIGO)
+REFERRAL_REWARD_DAYS = 7  # dias somados ao entitlement do indicador por indicação paga
+
+
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).
 

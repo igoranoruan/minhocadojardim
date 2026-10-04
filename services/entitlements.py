@@ -207,6 +207,66 @@ def grant_entitlement(
         raise
 
 
+def extend_entitlement(
+    db: Session, *, user_id: int, entitlement_id: int, extra_days: int, now: datetime | None = None,
+) -> Entitlement:
+    """Etapa 8 (programa de indicação, aprovação do CÉREBRO): soma `extra_days` ao fim de um
+    entitlement já concedido -- usada por services/referrals.py para aplicar a recompensa de
+    indicação (dias extras de plano), NUNCA por pagamento algum (esta função não lê nem cria
+    Payment, não tem relação com preço).
+
+    Mesma segurança de grant_entitlement: trava o usuário, relê os acessos vigentes/futuros,
+    recusa se houver sobreposição (EntitlementInconsistencyError, nunca decide um "vencedor"), e
+    realinha qualquer acesso futuro já empilhado depois do novo fim -- nenhum dia comprado é
+    perdido, só adiado. `entitlement_id` precisa ser um acesso `granted` e NÃO expirado deste
+    `user_id` nesse momento (achado em `_valid_granted`, a MESMA fonte que grant_entitlement já
+    usa) -- um entitlement expirado ou revogado nunca é "reaberto" por uma recompensa; a
+    recompensa pendente continua pendente até o indicador ter um acesso vigente de novo."""
+    if extra_days <= 0:
+        raise InvalidEntitlementRequestError("extra_days deve ser positivo.")
+    now = resolve_now(now)
+    try:
+        lock_user_row(db, user_id)
+        items = _valid_granted(db, user_id, now)
+        overlaps = chain.find_overlaps(items)
+        if overlaps:
+            _log_inconsistency(user_id, overlaps)
+            raise EntitlementInconsistencyError(user_id, _pair_ids(overlaps))
+
+        entitlement = next((item for item in items if item.id == entitlement_id), None)
+        if entitlement is None:
+            raise InvalidEntitlementRequestError(
+                f"Entitlement {entitlement_id} não é um acesso granted/vigente ou futuro de {user_id}."
+            )
+
+        fim_antigo = entitlement.expires_at
+        entitlement.expires_at = fim_antigo + timedelta(days=extra_days)
+        db.flush()
+
+        # Só quem vem DEPOIS deste entitlement na cadeia (starts_at >= fim_antigo) pode ter sido
+        # empilhado em seguida a ele -- qualquer outro item de `items` termina ANTES de
+        # `entitlement` começar (nenhum overlap, já checado acima). Filtrar por "!= entitlement.id"
+        # sozinho seria um bug: um entitlement JÁ ENCERRADO (ex.: o antigo "current" que
+        # grant_entitlement acabou de clampar para expirar agora, numa troca imediata) nunca
+        # aparece aqui (_valid_granted já exclui expires_at <= now), mas um FUTURO já empilhado
+        # ANTES deste (quando `entitlement` não é o primeiro da cadeia) apareceria em `items` e
+        # seria incorretamente empurrado pra depois dele sem este filtro.
+        futuros = [item for item in items if item.id != entitlement.id and item.starts_at >= fim_antigo]
+        for item, novo_inicio, novo_fim in chain.realign_after(futuros, entitlement.expires_at):
+            item.starts_at = novo_inicio
+            item.expires_at = novo_fim
+        db.flush()
+        db.commit()
+        logger.info(
+            "[ENTITLEMENT] estendido (indicação) user_id=%s id=%s +%s dias -> novo fim %s",
+            user_id, entitlement.id, extra_days, entitlement.expires_at,
+        )
+        return entitlement
+    except Exception:
+        db.rollback()
+        raise
+
+
 def revoke_entitlement(
     db: Session, *, entitlement_id: int, reason: str, now: datetime | None = None
 ) -> RevocationResult:
