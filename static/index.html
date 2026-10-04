@@ -675,49 +675,136 @@
                 <h2 class="text-xl font-extrabold text-white leading-none">Acesso</h2>
             </div>
 
-            <!-- Indicador de passo (02/10/2026: fluxo de 2 etapas até conectar -- e-mail/código --
-                 some assim que conecta, porque "conectado" deixa de ser uma etapa e vira o estado
-                 final, com seu próprio selo de sucesso abaixo). Só visual (não afeta nenhuma
-                 função nem lógica); atualizado em mostrarPassoAcesso. -->
-            <div id="acessoPassoIndicador" class="flex items-center gap-1.5 mt-3 mb-4">
+            <!-- Indicador de passo (04/10/2026: barra de 3 segmentos, pedido do CÉREBRO pra combinar
+                 com a referência -- antes eram 2 pontinhos finos, 1 por etapa até conectar. Lógica
+                 igual: só o segmento da etapa atual fica preenchido, exceto em "conectado", onde os
+                 3 ficam preenchidos (barra completa = processo concluído). Só visual, não afeta
+                 nenhuma função; atualizado em mostrarPassoAcesso. -->
+            <div id="acessoPassoIndicador" class="flex items-center gap-1.5 mt-3 mb-5">
                 <span id="acessoDot1" class="h-1 flex-1 rounded-full bg-[#19D3AE] transition-colors"></span>
                 <span id="acessoDot2" class="h-1 flex-1 rounded-full bg-slate-700 transition-colors"></span>
+                <span id="acessoDot3" class="h-1 flex-1 rounded-full bg-slate-700 transition-colors"></span>
             </div>
 
-            <!-- Passo 1: e-mail -->
+            <!-- Passo 1: e-mail (04/10/2026: visual atualizado pra combinar com a referência enviada
+                 pelo CÉREBRO -- título grande, selos de benefício e rótulo acima do campo são só
+                 apresentação; pedirCodigo() continua igual, lendo #userEmail normalmente. -->
             <div id="acessoPassoEmail">
-                <p class="text-sm text-slate-400 mt-1 mb-5">Informe seu e-mail. Enviaremos um código para confirmar que é você.</p>
+                <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Vamos começar?</h3>
+                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Informe seu e-mail para receber um código de acesso. É rápido e seguro.</p>
+
+                <div class="grid grid-cols-3 gap-2 mb-5">
+                    <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
+                        <i class="fa-solid fa-envelope text-[#19D3AE]"></i>
+                        <span class="text-[11px] text-slate-400 leading-tight">Sem senha</span>
+                    </div>
+                    <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
+                        <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
+                        <span class="text-[11px] text-slate-400 leading-tight">Acesso em segundos</span>
+                    </div>
+                    <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-[#19D3AE]"></i>
+                        <span class="text-[11px] text-slate-400 leading-tight">Seus dados protegidos</span>
+                    </div>
+                </div>
+
+                <label for="userEmail" class="block text-xs font-semibold text-slate-400 mb-1.5">E-mail</label>
                 <div class="relative">
                     <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
-                    <input id="userEmail" type="email" autocomplete="email" placeholder="Seu e-mail..." onkeydown="if (event.key === 'Enter') pedirCodigo()" class="input-focus w-full h-12 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm">
+                    <input id="userEmail" type="email" autocomplete="email" placeholder="seu@email.com" onkeydown="if (event.key === 'Enter') pedirCodigo()" class="input-focus w-full h-12 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm">
                 </div>
-                <button id="acessoEnviarBtn" type="button" onclick="pedirCodigo()" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Enviar código</button>
+                <button id="acessoEnviarBtn" type="button" onclick="pedirCodigo()" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2">Enviar código<i class="fa-solid fa-arrow-right text-xs"></i></button>
+                <p class="text-center text-[11px] text-slate-500 mt-3 leading-relaxed">Enviaremos um código de 6 dígitos para confirmar que é você.</p>
             </div>
 
-            <!-- Passo 2: código -->
-            <div id="acessoPassoCodigo" class="hidden">
-                <p class="text-sm text-slate-400 mt-1 mb-5">Digite o código de 6 dígitos enviado para <strong id="acessoEmailEnviado" class="text-slate-200"></strong>. Ele vale por 10 minutos.</p>
-                <input id="userCodigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" onkeydown="if (event.key === 'Enter') confirmarCodigo()" class="input-focus w-full h-12 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-center text-lg tracking-widest">
-                <button id="acessoConfirmarBtn" type="button" onclick="confirmarCodigo()" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Entrar</button>
+            <!-- Passo 2: código (04/10/2026: ilustração decorativa (CSS puro, sem imagem) + campo de
+                 6 dígitos separados substituindo o único input de texto -- os 6 quadradinhos só
+                 espelham o valor no input oculto #userCodigo (ver sincronizarCodigoAcesso), então
+                 confirmarCodigo() continua lendo exatamente a mesma fonte de sempre, sem mudança de
+                 lógica. Contador de reenvio usa o "resend_after" que a própria API já devolve em
+                 POST /api/auth/request-code (services/auth.py -> cfg.login_code_min_interval_seconds)
+                 -- não é um número inventado, é o intervalo real que o backend aplica. -->
+            <div id="acessoPassoCodigo" class="hidden text-center">
+                <div class="relative w-16 h-16 mx-auto mt-1 mb-4">
+                    <div class="absolute inset-0 rounded-full border border-[#19D3AE]/20"></div>
+                    <div class="absolute inset-[6px] rounded-full border border-[#19D3AE]/30"></div>
+                    <div class="absolute inset-[12px] rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/40 flex items-center justify-center text-[#19D3AE]">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <span class="absolute top-0 right-0 w-3 h-3 rounded-full bg-[#19D3AE] border-2 border-[#0b1118]"></span>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Digite o código</h3>
+                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Enviamos um código de 6 dígitos para<br><strong id="acessoEmailEnviado" class="text-[#19D3AE] font-bold"></strong><br>Ele vale por 10 minutos.</p>
+
+                <input id="userCodigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="hidden">
+                <div id="acessoCodigoCaixas" class="flex items-center justify-center gap-2">
+                    <input type="text" inputmode="numeric" maxlength="1" data-codigo-idx="0" oninput="onCodigoBoxInput(this)" onkeydown="onCodigoBoxKeydown(event, this)" onpaste="onCodigoBoxPaste(event)" class="codigo-box input-focus w-11 h-12 sm:w-12 sm:h-14 bg-[#060b14] border border-slate-800 rounded-xl text-white text-center text-lg font-bold focus:outline-none">
+                    <input type="text" inputmode="numeric" maxlength="1" data-codigo-idx="1" oninput="onCodigoBoxInput(this)" onkeydown="onCodigoBoxKeydown(event, this)" onpaste="onCodigoBoxPaste(event)" class="codigo-box input-focus w-11 h-12 sm:w-12 sm:h-14 bg-[#060b14] border border-slate-800 rounded-xl text-white text-center text-lg font-bold focus:outline-none">
+                    <input type="text" inputmode="numeric" maxlength="1" data-codigo-idx="2" oninput="onCodigoBoxInput(this)" onkeydown="onCodigoBoxKeydown(event, this)" onpaste="onCodigoBoxPaste(event)" class="codigo-box input-focus w-11 h-12 sm:w-12 sm:h-14 bg-[#060b14] border border-slate-800 rounded-xl text-white text-center text-lg font-bold focus:outline-none">
+                    <input type="text" inputmode="numeric" maxlength="1" data-codigo-idx="3" oninput="onCodigoBoxInput(this)" onkeydown="onCodigoBoxKeydown(event, this)" onpaste="onCodigoBoxPaste(event)" class="codigo-box input-focus w-11 h-12 sm:w-12 sm:h-14 bg-[#060b14] border border-slate-800 rounded-xl text-white text-center text-lg font-bold focus:outline-none">
+                    <input type="text" inputmode="numeric" maxlength="1" data-codigo-idx="4" oninput="onCodigoBoxInput(this)" onkeydown="onCodigoBoxKeydown(event, this)" onpaste="onCodigoBoxPaste(event)" class="codigo-box input-focus w-11 h-12 sm:w-12 sm:h-14 bg-[#060b14] border border-slate-800 rounded-xl text-white text-center text-lg font-bold focus:outline-none">
+                    <input type="text" inputmode="numeric" maxlength="1" data-codigo-idx="5" oninput="onCodigoBoxInput(this)" onkeydown="onCodigoBoxKeydown(event, this)" onpaste="onCodigoBoxPaste(event)" class="codigo-box input-focus w-11 h-12 sm:w-12 sm:h-14 bg-[#060b14] border border-slate-800 rounded-xl text-white text-center text-lg font-bold focus:outline-none">
+                </div>
+
+                <button id="acessoConfirmarBtn" type="button" onclick="confirmarCodigo()" class="w-full mt-5 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2">Entrar<i class="fa-solid fa-arrow-right text-xs"></i></button>
                 <div class="mt-3 flex items-center justify-between text-xs">
-                    <button type="button" onclick="pedirCodigo()" class="text-slate-400 hover:text-white transition-colors">Reenviar código</button>
-                    <button type="button" onclick="voltarParaEmail()" class="text-slate-400 hover:text-white transition-colors">Trocar e-mail</button>
+                    <button id="acessoReenviarBtn" type="button" onclick="pedirCodigo()" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-rotate-right text-[11px]"></i><span id="acessoReenviarTexto">Reenviar código</span></button>
+                    <button type="button" onclick="voltarParaEmail()" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-envelope text-[11px]"></i>Trocar e-mail</button>
+                </div>
+
+                <div class="mt-5 bg-card-soft rounded-xl p-3.5 flex items-start gap-3 text-left">
+                    <i class="fa-solid fa-shield-halved text-[#19D3AE] mt-0.5"></i>
+                    <div>
+                        <p class="text-xs font-bold text-white">Não recebeu o código?</p>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Verifique sua caixa de entrada (e spam).</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Passo 3: conectado (02/10/2026: antes era só uma frase corrida + 2 botões -- pedido
-                 explícito do Igor pra deixar essa tela "mais bonita", já que é a confirmação de
-                 sucesso do login, não só mais um formulário. -->
+            <!-- Passo 3: conectado (04/10/2026: visual atualizado pra combinar com a referência --
+                 selo de sucesso com elementos decorativos e lista de 3 benefícios no lugar da frase
+                 única de antes; fecharAcesso()/sair() continuam as mesmas. -->
             <div id="acessoPassoConectado" class="hidden text-center">
-                <div class="w-14 h-14 mx-auto rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center mt-1 mb-3">
-                    <i class="fa-solid fa-circle-check text-2xl text-[#19D3AE]"></i>
+                <div class="relative w-16 h-16 mx-auto mt-1 mb-4">
+                    <span class="absolute -top-1 left-1 w-1.5 h-1.5 rounded-full bg-[#19D3AE]/60"></span>
+                    <span class="absolute top-2 -right-2 w-1 h-1 rounded-full bg-[#19D3AE]/60"></span>
+                    <span class="absolute -bottom-1 -left-1 w-1 h-1 rounded-full bg-[#19D3AE]/60"></span>
+                    <span class="absolute bottom-0 right-0 w-1.5 h-1.5 rounded-full bg-[#19D3AE]/60"></span>
+                    <div class="w-16 h-16 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center">
+                        <i class="fa-solid fa-check text-2xl text-[#19D3AE]"></i>
+                    </div>
                 </div>
-                <p class="text-sm font-bold text-white">Você está conectado</p>
-                <p class="inline-flex items-center gap-1.5 mt-2 mb-6 px-3 py-1.5 rounded-full bg-[#060b14] border border-slate-800 text-xs text-slate-300">
+                <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-3">Você está conectado!</h3>
+                <p class="inline-flex items-center gap-1.5 mb-5 px-3 py-1.5 rounded-full bg-[#060b14] border border-slate-800 text-xs text-slate-300">
                     <i class="fa-solid fa-envelope text-[10px] text-slate-500"></i><strong id="acessoEmailAtual" class="text-slate-200 font-normal"></strong>
                 </p>
-                <button type="button" onclick="fecharAcesso()" class="w-full h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm">Concluído</button>
-                <button type="button" onclick="sair()" class="w-full mt-3 text-xs text-slate-500 hover:text-slate-300 transition-colors">Sair</button>
+
+                <div class="space-y-2.5 text-left mb-5">
+                    <div class="bg-card-soft rounded-xl p-3 flex items-center gap-3">
+                        <div class="w-9 h-9 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-play text-xs"></i></div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-white">Pronto para processar</p>
+                            <p class="text-[11px] text-slate-500">Baixe, limpe e reutilize seus vídeos.</p>
+                        </div>
+                    </div>
+                    <div class="bg-card-soft rounded-xl p-3 flex items-center gap-3">
+                        <div class="w-9 h-9 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-chart-simple text-xs"></i></div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-white">Seus limites atualizados</p>
+                            <p class="text-[11px] text-slate-500">Acesse seu plano e acompanhe o uso.</p>
+                        </div>
+                    </div>
+                    <div class="bg-card-soft rounded-xl p-3 flex items-center gap-3">
+                        <div class="w-9 h-9 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gear text-xs"></i></div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-white">Todas as funções liberadas</p>
+                            <p class="text-[11px] text-slate-500">Conforme o seu plano atual.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" onclick="fecharAcesso()" class="w-full h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2">Concluído<i class="fa-solid fa-arrow-right text-xs"></i></button>
+                <button type="button" onclick="sair()" class="w-full mt-3 text-xs text-slate-500 hover:text-slate-300 transition-colors">Sair da conta</button>
             </div>
 
             <div id="acessoMensagem" class="mt-3 text-xs text-center min-h-[1rem] text-slate-400" role="status"></div>
@@ -1081,16 +1168,97 @@
             document.getElementById(id).classList.toggle("hidden", id !== passo);
         }
 
-        // Indicador de passo (só visual, ver comentário no HTML): some quando conecta, porque a
-        // partir dali o selo de sucesso já diz tudo sozinho.
-        const indicador = document.getElementById("acessoPassoIndicador");
+        // Indicador de passo (barra de 3 segmentos, ver comentário no HTML): só o segmento da etapa
+        // atual fica preenchido, exceto em "conectado", onde os 3 ficam preenchidos (barra completa).
         const dot1 = document.getElementById("acessoDot1");
         const dot2 = document.getElementById("acessoDot2");
-        if (indicador && dot1 && dot2) {
-            indicador.classList.toggle("hidden", passo === "acessoPassoConectado");
-            dot1.className = "h-1 flex-1 rounded-full transition-colors " + (passo === "acessoPassoEmail" ? "bg-[#19D3AE]" : "bg-slate-700");
-            dot2.className = "h-1 flex-1 rounded-full transition-colors " + (passo === "acessoPassoCodigo" ? "bg-[#19D3AE]" : "bg-slate-700");
+        const dot3 = document.getElementById("acessoDot3");
+        if (dot1 && dot2 && dot3) {
+            const conectado = passo === "acessoPassoConectado";
+            dot1.className = "h-1 flex-1 rounded-full transition-colors " + (passo === "acessoPassoEmail" || conectado ? "bg-[#19D3AE]" : "bg-slate-700");
+            dot2.className = "h-1 flex-1 rounded-full transition-colors " + (passo === "acessoPassoCodigo" || conectado ? "bg-[#19D3AE]" : "bg-slate-700");
+            dot3.className = "h-1 flex-1 rounded-full transition-colors " + (conectado ? "bg-[#19D3AE]" : "bg-slate-700");
         }
+
+        if (passo !== "acessoPassoCodigo") {
+            pararContadorReenvio();
+        }
+    }
+
+    // ---- Caixas individuais do código (04/10/2026): só espelham o dígito no input oculto
+    // #userCodigo -- confirmarCodigo() continua lendo exatamente o mesmo campo de sempre. ----
+    function sincronizarCodigoAcesso() {
+        const caixas = document.querySelectorAll("#acessoCodigoCaixas .codigo-box");
+        document.getElementById("userCodigo").value = Array.from(caixas).map((c) => c.value).join("");
+    }
+
+    function limparCodigoCaixas() {
+        document.querySelectorAll("#acessoCodigoCaixas .codigo-box").forEach((c) => { c.value = ""; });
+        sincronizarCodigoAcesso();
+    }
+
+    function onCodigoBoxInput(input) {
+        input.value = input.value.replace(/[^0-9]/g, "").slice(-1);
+        sincronizarCodigoAcesso();
+        if (input.value && input.nextElementSibling && input.nextElementSibling.classList.contains("codigo-box")) {
+            input.nextElementSibling.focus();
+        }
+    }
+
+    function onCodigoBoxKeydown(event, input) {
+        if (event.key === "Backspace" && !input.value && input.previousElementSibling && input.previousElementSibling.classList.contains("codigo-box")) {
+            input.previousElementSibling.focus();
+        } else if (event.key === "Enter") {
+            confirmarCodigo();
+        }
+    }
+
+    function onCodigoBoxPaste(event) {
+        const texto = (event.clipboardData || window.clipboardData).getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+        if (!texto) return;
+        event.preventDefault();
+        const caixas = document.querySelectorAll("#acessoCodigoCaixas .codigo-box");
+        texto.split("").forEach((digito, i) => { if (caixas[i]) caixas[i].value = digito; });
+        sincronizarCodigoAcesso();
+        const proxima = caixas[Math.min(texto.length, caixas.length - 1)];
+        if (proxima) proxima.focus();
+    }
+
+    // ---- Contador de reenvio (04/10/2026): usa o "resend_after" que a própria API devolve em
+    // POST /api/auth/request-code (services/auth.py -> cfg.login_code_min_interval_seconds) -- não
+    // é um número inventado, é o intervalo mínimo real que o backend já aplica entre reenvios. ----
+    let acessoContadorReenvioId = null;
+
+    function iniciarContadorReenvio(segundos) {
+        pararContadorReenvio();
+        const btn = document.getElementById("acessoReenviarBtn");
+        const texto = document.getElementById("acessoReenviarTexto");
+        if (!btn || !texto || !segundos || segundos <= 0) return;
+
+        let restante = Math.ceil(segundos);
+        btn.disabled = true;
+        btn.classList.add("opacity-50", "cursor-not-allowed");
+        texto.textContent = `Reenviar código em ${restante}s`;
+
+        acessoContadorReenvioId = setInterval(() => {
+            restante -= 1;
+            if (restante <= 0) {
+                pararContadorReenvio();
+                return;
+            }
+            texto.textContent = `Reenviar código em ${restante}s`;
+        }, 1000);
+    }
+
+    function pararContadorReenvio() {
+        if (acessoContadorReenvioId) {
+            clearInterval(acessoContadorReenvioId);
+            acessoContadorReenvioId = null;
+        }
+        const btn = document.getElementById("acessoReenviarBtn");
+        const texto = document.getElementById("acessoReenviarTexto");
+        if (btn) { btn.disabled = false; btn.classList.remove("opacity-50", "cursor-not-allowed"); }
+        if (texto) texto.textContent = "Reenviar código";
     }
 
     function aplicarSessao(email) {
@@ -1423,10 +1591,14 @@
             }
 
             document.getElementById("acessoEmailEnviado").textContent = email;
-            document.getElementById("userCodigo").value = "";
+            limparCodigoCaixas();
             mostrarPassoAcesso("acessoPassoCodigo");
             mostrarMensagemAcesso("Código enviado. Confira sua caixa de entrada.", "sucesso");
-            setTimeout(() => document.getElementById("userCodigo").focus(), 50);
+            iniciarContadorReenvio(data.resend_after);
+            setTimeout(() => {
+                const primeira = document.querySelector("#acessoCodigoCaixas .codigo-box");
+                if (primeira) primeira.focus();
+            }, 50);
         } catch (err) {
             console.error(err);
             mostrarMensagemAcesso("Erro ao falar com o servidor. Tente novamente.", "erro");
@@ -1459,7 +1631,7 @@
             }
 
             aplicarSessao(data.email);
-            document.getElementById("userCodigo").value = "";
+            limparCodigoCaixas();
             mostrarPassoAcesso("acessoPassoConectado");
             mostrarMensagemAcesso("Acesso confirmado.", "sucesso");
         } catch (err) {
@@ -1471,7 +1643,7 @@
     }
 
     function voltarParaEmail() {
-        document.getElementById("userCodigo").value = "";
+        limparCodigoCaixas();
         mostrarPassoAcesso("acessoPassoEmail");
         mostrarMensagemAcesso("");
         setTimeout(() => document.getElementById("userEmail").focus(), 50);
