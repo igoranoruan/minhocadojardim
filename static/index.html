@@ -129,8 +129,8 @@
                     <div class="bg-card p-2.5 rounded-2xl hero-glow">
                         <div class="flex flex-col sm:flex-row gap-2">
                             <div class="relative flex-1">
-                                <i class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none"></i>
-                                <input id="url" type="url" autocomplete="off"
+                                <i id="urlPlatformIcon" class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none transition-colors"></i>
+                                <input id="url" type="url" autocomplete="off" oninput="atualizarIconePlataforma()"
                                     placeholder="Cole o link do vídeo…"
                                     class="input-focus w-full h-14 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all focus:border-[#19D3AE]/70">
                             </div>
@@ -608,6 +608,55 @@
 
     function emailValido(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    // 03/10/2026 (aprovação do CÉREBRO): feedback visual instantâneo ao colar o link -- o ícone
+    // genérico de corrente vira o ícone da própria plataforma assim que reconhece o host, antes
+    // mesmo de clicar em "Processar e baixar". PURAMENTE COSMÉTICO: espelha (não substitui) a
+    // lista real de domínios de download/platform.py::_DOMAINS -- se um domínio for adicionado ou
+    // removido lá, atualizar aqui também. Nunca decide se a URL é aceita ou não (isso continua
+    // 100% no backend, com validação de SSRF e tudo mais); uma URL não reconhecida aqui ainda pode
+    // ser tentada normalmente, só não ganha o ícone colorido.
+    const DOMINIOS_PLATAFORMA = {
+        tiktok: ["tiktok.com", "www.tiktok.com", "vm.tiktok.com", "vt.tiktok.com", "m.tiktok.com"],
+        instagram: ["instagram.com", "www.instagram.com"],
+        pinterest: [
+            "pinterest.com", "www.pinterest.com", "pin.it",
+            "pinterest.co.uk", "pinterest.ca", "pinterest.de", "pinterest.fr",
+        ],
+        youtube: ["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"],
+    };
+    const ICONE_FONTAWESOME_POR_PLATAFORMA = {
+        tiktok: "fa-brands fa-tiktok",
+        instagram: "fa-brands fa-instagram",
+        pinterest: "fa-brands fa-pinterest",
+        youtube: "fa-brands fa-youtube",
+    };
+
+    function detectarPlataformaCliente(valorUrl) {
+        let host;
+        try {
+            host = new URL(valorUrl).hostname.toLowerCase();
+        } catch (_) {
+            return null; // URL incompleta/inválida enquanto o usuário ainda digita/cola -- normal, sem erro.
+        }
+        for (const [plataforma, hosts] of Object.entries(DOMINIOS_PLATAFORMA)) {
+            if (hosts.includes(host)) return plataforma;
+        }
+        return null;
+    }
+
+    function atualizarIconePlataforma() {
+        const icone = document.getElementById("urlPlatformIcon");
+        if (!icone) return;
+        const valor = document.getElementById("url").value.trim();
+        const plataforma = valor ? detectarPlataformaCliente(valor) : null;
+
+        if (plataforma) {
+            icone.className = `${ICONE_FONTAWESOME_POR_PLATAFORMA[plataforma]} absolute left-4 top-1/2 -translate-y-1/2 text-[#19D3AE] text-sm pointer-events-none transition-colors`;
+        } else {
+            icone.className = "fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none transition-colors";
+        }
     }
 
     function setStatusConta(texto, tipo = "normal") {
