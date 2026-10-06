@@ -85,6 +85,17 @@ class EmailUnavailableError(AuthError):
     detail = "Não foi possível enviar o código agora. Tente novamente em instantes."
 
 
+class ForbiddenError(AuthError):
+    """Sessão autenticada, mas sem permissão para a ação (05/10/2026: hoje só usado por
+    routes/deps.py::require_admin, para remover comentário sem ser o admin configurado em
+    ADMIN_EMAIL). Diferente de UnauthenticatedError (401, sem sessão): aqui a sessão é válida, só
+    falta a permissão específica."""
+
+    status_code = 403
+    code = "forbidden"
+    detail = "Você não tem permissão para esta ação."
+
+
 # ------------------------------------------------------------------------------ resultados
 @dataclass(frozen=True)
 class CodeIssued:

@@ -8,7 +8,7 @@ from config import Settings, get_settings
 from database.models import User
 from database.session import get_session
 from services.anon_identity import resolve_anon_identity
-from services.auth import UnauthenticatedError, authenticate_session
+from services.auth import ForbiddenError, UnauthenticatedError, authenticate_session
 from services.entitlements import get_current_entitlement
 from services.mailer import (
     EmailConfigurationError,
@@ -107,3 +107,18 @@ def get_optional_authenticated_user(
     parâmetro `authenticated_user_id`) -- nunca o contrário: o cookie Free sozinho continua
     incapaz de baixar uma geração de uma conta alheia, e continua incapaz de conceder acesso pago."""
     return authenticate_session(db, request.cookies.get(cfg.session_cookie_name))
+
+
+def require_admin(
+    user: User = Depends(get_current_user),
+    cfg: Settings = Depends(get_settings),
+) -> User:
+    """Sessão autenticada CUJO e-mail é o configurado em ADMIN_EMAIL (05/10/2026, aprovação do
+    CÉREBRO): único "admin" do produto hoje é o próprio CÉREBRO, sem cargo/permissão no banco. Sem
+    sessão: 401 (via get_current_user). Com sessão mas e-mail diferente, ou ADMIN_EMAIL não
+    configurado (string vazia nunca bate com e-mail real nenhum): 403 (ForbiddenError). Usado hoje
+    só para remover comentário (routes/comments.py) -- nenhum outro recurso administrativo existe
+    ainda."""
+    if not cfg.admin_email or user.email != cfg.admin_email:
+        raise ForbiddenError()
+    return user

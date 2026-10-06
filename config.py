@@ -147,6 +147,13 @@ REFERRAL_MILESTONE_EVERY = 3
 REFERRAL_MILESTONE_REWARD_DAYS = 30
 REFERRAL_MILESTONE_PLAN_CODE = "vip_batch"
 
+# ----------------------------------------------------------------------------- comentários (05/10/2026)
+# Único "admin" do produto hoje é o próprio CÉREBRO -- sem cargo/permissão no banco, só um e-mail
+# configurado por variável de ambiente (nunca hardcoded no código). Usado apenas para remover
+# comentários (routes/deps.py::require_admin); vazio = ninguém passa (string vazia nunca bate com
+# e-mail real nenhum, ver database/models/user.py::normalize_email -- todo e-mail de usuário é
+# não-vazio).
+
 
 def normalize_database_url(url: str) -> str:
     """Faz a URL no estilo Render/Heroku funcionar com o driver psycopg (v3).
@@ -224,6 +231,7 @@ class Settings:
     # vazio aqui significa "todo webhook recusado por padrão" (ver payments/webhook_signature.py)
     # -- silenciosamente nunca funcionar em produção é pior que falhar alto no startup.
     mp_webhook_secret: str = field(repr=False)
+    admin_email: str
 
     @property
     def is_production(self) -> bool:
@@ -341,6 +349,7 @@ def load_settings() -> Settings:
         mp_access_token=os.getenv("MP_ACCESS_TOKEN", "").strip(),
         mp_public_key=os.getenv("MP_PUBLIC_KEY", "").strip(),
         mp_webhook_secret=mp_webhook_secret,
+        admin_email=os.getenv("ADMIN_EMAIL", "").strip().lower(),
     )
 
 

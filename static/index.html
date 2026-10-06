@@ -103,6 +103,7 @@
                 <nav class="hidden sm:flex items-center gap-8 text-sm font-medium text-slate-400">
                     <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors">Como funciona</a>
                     <a href="#secaoPlanos" class="hover:text-white transition-colors">Planos</a>
+                    <a href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors">Comentários</a>
                     <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors">Perguntas frequentes</a>
                 </nav>
                 <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
@@ -196,6 +197,119 @@
                     <p id="statsProcessados" class="hidden mt-6 mb-2 text-xs text-slate-500 text-center">
                         <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
                     </p>
+                </div>
+            </section>
+
+            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; reposicionada e com selo de cadeado
+                 em 05/10/2026, mesmo pedido -- "deixar mais em cima pra não precisar rolar muito" e
+                 "com cadeado, só quem tem plano pago usa"): demonstração ilustrativa do
+                 processamento em lote, no mesmo espírito do Antes/Depois -- HTML/CSS real, dado de
+                 exemplo fictício, sempre visível (mesmo pra quem não tem plano pago), nunca uma
+                 imagem gerada por IA. Os elementos em formato de botão aqui (Adicionar vídeo,
+                 Processar e preparar lote, Baixar, Baixar tudo em ZIP) são <div>/<span>
+                 propositalmente, sem onclick/cursor-pointer/hover -- é uma ilustração estática de
+                 como a tela fica, não um atalho funcional fingindo processar algo de verdade (mesma
+                 régua de "sem botão falso" já aplicada no resto do site). A ação real de lote
+                 continua só na seção BATCH mais abaixo (#secaoBatch, visível após login com plano
+                 pago), que já usa "Processar e preparar lote" e "Baixar tudo em ZIP" com o mesmo
+                 texto -- não é força de expressão, é o texto real da função (ver
+                 processarLote()/zipLink mais abaixo no script). Movida pra logo após o Hero (antes
+                 era a 4ª seção, depois de Antes/Depois, Como Funciona e Planos) -- mesmo id
+                 (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS), só a posição
+                 no documento mudou. Ícone de cadeado acrescentado no selo acima do título -- reforço
+                 visual de "recurso pago", sem criar nenhum elemento clicável novo. -->
+            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-violet-400 text-xs font-bold uppercase tracking-wider mb-3"><i class="fa-solid fa-lock mr-1.5"></i>PROCESSAMENTO EM LOTE · PLANOS PAGOS</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez, <span class="text-violet-400">na prática.</span></h2>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Disponível nos planos pagos: monte sua lista, processe tudo de uma vez e baixe os arquivos prontos.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 items-start">
+                    <!-- Painel 1: monte a lista -->
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-violet-500/30">
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="w-7 h-7 shrink-0 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 text-xs font-extrabold">1</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Monte sua lista</h3>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil/video/7281...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">instagram.com/reel/Cx4f9...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">youtube.com/shorts/aB3xQ...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">pinterest.com/pin/98213...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
+                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil2/video/5529...</span>
+                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="w-full mt-3 h-10 rounded-xl border border-slate-700 text-slate-500 font-bold text-xs flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-plus"></i> Adicionar vídeo
+                        </div>
+                        <div class="w-full mt-3 h-11 bg-violet-400/15 border border-violet-400/40 text-violet-300 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-gears"></i> Processar e preparar lote
+                        </div>
+                    </div>
+
+                    <!-- Painel 2: resultado -->
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/40">
+                        <div class="flex items-center gap-3 mb-5">
+                            <span class="w-7 h-7 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">2</span>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe os arquivos prontos</h3>
+                        </div>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_04.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_05.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                        </div>
+                        <p class="text-center text-[11px] text-slate-500 mt-3">5 de 5 vídeos preparados.</p>
+                        <div class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP
+                        </div>
+                    </div>
+                </div>
+                <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Exemplo ilustrativo do processamento em lote, disponível nos planos pagos. Links, nomes de arquivo e quantidade são fictícios.</p>
+                <div class="max-w-3xl mx-auto mt-8">
+                    <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
+                        class="w-full h-auto rounded-xl select-none" draggable="false">
                 </div>
             </section>
 
@@ -397,113 +511,6 @@
                      removida a pedido do Igor. -->
             </section>
 
-            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO): demonstração ilustrativa do
-                 processamento em lote, no mesmo espírito do Antes/Depois acima -- HTML/CSS real,
-                 dado de exemplo fictício, sempre visível (mesmo pra quem não tem plano pago), nunca
-                 uma imagem gerada por IA. Os elementos em formato de botão aqui (Adicionar vídeo,
-                 Processar e preparar lote, Baixar, Baixar tudo em ZIP) são <div>/<span>
-                 propositalmente, sem onclick/cursor-pointer/hover -- é uma ilustração estática de
-                 como a tela fica, não um atalho funcional fingindo processar algo de verdade (mesma
-                 régua de "sem botão falso" já aplicada no resto do site). A ação real de lote
-                 continua só na seção BATCH mais abaixo (#secaoBatch, visível após login com plano
-                 pago), que já usa "Processar e preparar lote" e "Baixar tudo em ZIP" com o mesmo
-                 texto -- não é força de expressão, é o texto real da função (ver
-                 processarLote()/zipLink mais abaixo no script). -->
-            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
-                <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-violet-400 text-xs font-bold uppercase tracking-wider mb-3">PROCESSAMENTO EM LOTE</p>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez, <span class="text-violet-400">na prática.</span></h2>
-                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Disponível nos planos pagos: monte sua lista, processe tudo de uma vez e baixe os arquivos prontos.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 items-start">
-                    <!-- Painel 1: monte a lista -->
-                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-violet-500/30">
-                        <div class="flex items-center gap-3 mb-5">
-                            <span class="w-7 h-7 shrink-0 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 text-xs font-extrabold">1</span>
-                            <h3 class="font-bold text-white text-sm sm:text-base">Monte sua lista</h3>
-                        </div>
-                        <div class="space-y-2.5">
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil/video/7281...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">instagram.com/reel/Cx4f9...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">youtube.com/shorts/aB3xQ...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">pinterest.com/pin/98213...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil2/video/5529...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                        </div>
-                        <div class="w-full mt-3 h-10 rounded-xl border border-slate-700 text-slate-500 font-bold text-xs flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-plus"></i> Adicionar vídeo
-                        </div>
-                        <div class="w-full mt-3 h-11 bg-violet-400/15 border border-violet-400/40 text-violet-300 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-gears"></i> Processar e preparar lote
-                        </div>
-                    </div>
-
-                    <!-- Painel 2: resultado -->
-                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/40">
-                        <div class="flex items-center gap-3 mb-5">
-                            <span class="w-7 h-7 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">2</span>
-                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe os arquivos prontos</h3>
-                        </div>
-                        <div class="space-y-2.5">
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_04.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_05.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                        </div>
-                        <p class="text-center text-[11px] text-slate-500 mt-3">5 de 5 vídeos preparados.</p>
-                        <div class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP
-                        </div>
-                    </div>
-                </div>
-                <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Exemplo ilustrativo do processamento em lote, disponível nos planos pagos. Links, nomes de arquivo e quantidade são fictícios.</p>
-                <div class="max-w-3xl mx-auto mt-8">
-                    <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
-                        class="w-full h-auto rounded-xl select-none" draggable="false">
-                </div>
-            </section>
-
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
                  Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
                  está no VIP Batch. Preço nunca aparece aqui hardcoded: o botão só abre o mesmo
@@ -694,6 +701,52 @@
                 </div>
             </section>
 
+            <!-- COMENTÁRIOS (05/10/2026, aprovação do CÉREBRO): área pública -- qualquer visitante
+                 LÊ (GET /api/comments, sem login), só COMENTA quem tem sessão autenticada E plano
+                 pago VIGENTE agora (routes/comments.py -> services/comments.py::create_comment;
+                 se o plano expirar depois, o comentário já publicado continua). Os 5 comentários
+                 "Exemplo" (is_example=true, inseridos pela migration 0009, pra seção não nascer
+                 vazia) levam um selo "Exemplo" visível -- NUNCA apresentados como depoimento real
+                 (mesma régua de honestidade do resto do site, ver services/stats.py). Formulário
+                 sempre visível; quando o visitante não tem plano pago vigente, fica BLOQUEADO com
+                 um aviso em vez de escondido (mesmo espírito do "Lote na Prática": mostra que o
+                 recurso existe). Nome/corpo são renderizados só via textContent (nunca innerHTML
+                 com o texto do usuário) -- são as primeiras strings de visitante publicadas no
+                 site, então nunca confiadas como HTML. -->
+            <section id="comentarios" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">O que quem usa está dizendo.</h2>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Comentários de quem já processa vídeo com o KLANGO.MP4.</p>
+                </div>
+
+                <div class="max-w-2xl mx-auto mt-10">
+                    <div id="comentariosLista" class="space-y-3"></div>
+                    <p id="comentariosVazio" class="hidden text-center text-sm text-slate-500 mt-4">Seja o primeiro a comentar.</p>
+
+                    <div class="bg-card rounded-2xl p-5 sm:p-6 mt-6">
+                        <div id="comentarioFormAtivo" class="hidden">
+                            <input id="comentarioNome" type="text" maxlength="80" autocomplete="off"
+                                placeholder="Seu nome"
+                                class="input-focus w-full h-11 px-4 mb-2 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all focus:border-[#19D3AE]/70">
+                            <textarea id="comentarioTexto" maxlength="500" rows="3"
+                                placeholder="Escreva seu comentário…"
+                                class="input-focus w-full px-4 py-3 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all focus:border-[#19D3AE]/70 resize-none"></textarea>
+                            <button onclick="enviarComentario()"
+                                class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[.99] transition-all">
+                                <i class="fa-solid fa-paper-plane"></i> Comentar
+                            </button>
+                            <div id="comentarioStatus" class="mt-2 text-xs text-center"></div>
+                        </div>
+                        <div id="comentarioFormBloqueado" class="text-center py-2">
+                            <i class="fa-solid fa-lock text-slate-600 mb-2"></i>
+                            <p class="text-sm text-slate-400">Só quem tem um plano pago ativo pode comentar.</p>
+                            <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-2 text-xs font-bold text-[#19D3AE] hover:underline">Ver planos</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- FAQ -->
             <section id="faq" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto">
@@ -819,6 +872,7 @@
                         <button type="button" onclick="abrirAcesso()" class="hover:text-white transition-colors w-fit sm:self-end text-left">Acesso</button>
                         <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
                         <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors w-fit">Como funciona</a>
+                        <a href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors w-fit">Comentários</a>
                         <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
                     </nav>
                 </div>
@@ -1259,6 +1313,7 @@
         inicializarBatch();
         carregarSessao();
         carregarEstatisticas();
+        carregarComentarios();
     });
 
     // ---- Programa de indicação (Etapa 8 da revisão de UX, aprovação do CÉREBRO) ----
@@ -1448,6 +1503,98 @@
             document.getElementById("statsProcessados").classList.remove("hidden");
         } catch (erro) {
             console.warn("[STATS] não foi possível carregar /api/stats:", erro);
+        }
+    }
+
+    // ---- Comentários públicos (05/10/2026, aprovação do CÉREBRO) ----
+    // GET /api/comments é pública (sem autenticação) -- carregada pra todo visitante, independente
+    // de login ou plano. Cada comentário é montado via createElement/textContent (NUNCA innerHTML
+    // com nome/corpo do usuário): são as primeiras strings de visitante publicadas no site.
+    function escreverComentarioNoDOM(comentario) {
+        const card = document.createElement("div");
+        card.className = "bg-card-soft rounded-2xl p-4 text-left";
+
+        const topo = document.createElement("div");
+        topo.className = "flex items-center gap-2 mb-1.5";
+
+        const nome = document.createElement("span");
+        nome.className = "text-sm font-bold text-white";
+        nome.textContent = comentario.author_name;
+        topo.appendChild(nome);
+
+        if (comentario.is_example) {
+            const selo = document.createElement("span");
+            selo.className = "text-[10px] font-bold uppercase tracking-wider text-slate-500 border border-slate-700 rounded-full px-2 py-0.5";
+            selo.textContent = "Exemplo";
+            topo.appendChild(selo);
+        }
+
+        const corpo = document.createElement("p");
+        corpo.className = "text-sm text-slate-400 leading-relaxed";
+        corpo.textContent = comentario.body;
+
+        card.appendChild(topo);
+        card.appendChild(corpo);
+        return card;
+    }
+
+    async function carregarComentarios() {
+        const lista = document.getElementById("comentariosLista");
+        const vazio = document.getElementById("comentariosVazio");
+        if (!lista) return;
+        try {
+            const resposta = await fetch("/api/comments");
+            if (!resposta.ok) return;
+            const comentarios = await resposta.json();
+            lista.innerHTML = "";
+            comentarios.forEach((c) => lista.appendChild(escreverComentarioNoDOM(c)));
+            if (vazio) vazio.classList.toggle("hidden", comentarios.length > 0);
+        } catch (erro) {
+            console.warn("[COMENTARIOS] não foi possível carregar /api/comments:", erro);
+        }
+    }
+
+    // Só DESBLOQUEIA o formulário quando /api/me/status confirma plano.code diferente de "free"
+    // (mesma fonte de verdade que já decide o resto do site -- nunca um estado "otimista" aqui).
+    // Chamada por atualizarStatusContaVisual(data); enquanto isso não roda (visitante sem sessão
+    // paga confirmada), o formulário fica bloqueado -- estado inicial do HTML.
+    function atualizarVisibilidadeFormComentario(plano) {
+        const ativo = document.getElementById("comentarioFormAtivo");
+        const bloqueado = document.getElementById("comentarioFormBloqueado");
+        const liberado = !!plano && plano.code !== "free";
+        if (ativo) ativo.classList.toggle("hidden", !liberado);
+        if (bloqueado) bloqueado.classList.toggle("hidden", liberado);
+    }
+
+    async function enviarComentario() {
+        const nomeEl = document.getElementById("comentarioNome");
+        const textoEl = document.getElementById("comentarioTexto");
+        const statusEl = document.getElementById("comentarioStatus");
+        const nome = (nomeEl.value || "").trim();
+        const texto = (textoEl.value || "").trim();
+        if (statusEl) statusEl.textContent = "";
+        if (!nome || !texto) {
+            if (statusEl) statusEl.textContent = "Preencha seu nome e o comentário.";
+            return;
+        }
+        try {
+            const resposta = await fetch("/api/comments", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ author_name: nome, body: texto }),
+            });
+            const dados = await resposta.json().catch(() => null);
+            if (!resposta.ok) {
+                if (statusEl) statusEl.textContent = (dados && dados.detail) || "Não foi possível publicar o comentário.";
+                return;
+            }
+            nomeEl.value = "";
+            textoEl.value = "";
+            if (statusEl) statusEl.textContent = "Comentário publicado!";
+            await carregarComentarios();
+        } catch (erro) {
+            if (statusEl) statusEl.textContent = "Não foi possível publicar o comentário agora.";
         }
     }
 
@@ -1928,6 +2075,7 @@
         }
 
         atualizarVisibilidadeBatch(plano);
+        atualizarVisibilidadeFormComentario(plano);
     }
 
     // Mostra/esconde a seção de lote conforme o plano REAL confirmado por /api/me/status --

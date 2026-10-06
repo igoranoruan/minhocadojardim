@@ -143,8 +143,9 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
     e o conjunto de tabelas são o histórico REAL já aprovado em outras etapas (0004
     display_filename, 0005 request_fingerprint, 0006 anonymous_identities -- Free anônimo,
     aprovação do CÉREBRO; 0007 output_extension -- suporte a imagem, aprovação do CÉREBRO; 0008
-    referrals -- programa de indicação, aprovação do CÉREBRO) -- nenhuma delas foi criada por esta
-    camada; uma 9ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
+    referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
+    públicos, aprovação do CÉREBRO, 05/10/2026) -- nenhuma delas foi criada por esta camada; uma
+    10ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -155,10 +156,11 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
         "0006_anonymous_identities.py",
         "0007_output_extension.py",
         "0008_referrals.py",
+        "0009_comments.py",
     ]
     assert set(Base.metadata.tables) == {
         "users", "payments", "entitlements", "generations", "batches", "payment_events",
-        "login_codes", "auth_sessions", "anonymous_identities", "referrals",
+        "login_codes", "auth_sessions", "anonymous_identities", "referrals", "comments",
     }
 
 

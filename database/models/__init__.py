@@ -2,6 +2,7 @@
 from database.models.anonymous_identity import AnonymousIdentity
 from database.models.auth_session import AuthSession
 from database.models.batch import Batch
+from database.models.comment import Comment
 from database.models.entitlement import Entitlement
 from database.models.generation import Generation
 from database.models.login_code import LoginCode
@@ -14,6 +15,7 @@ __all__ = [
     "AnonymousIdentity",
     "AuthSession",
     "Batch",
+    "Comment",
     "Entitlement",
     "Generation",
     "LoginCode",

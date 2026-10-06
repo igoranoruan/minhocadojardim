@@ -25,8 +25,9 @@ from payments.errors import (
     PlanNotPurchasableError,
     UnknownPlanError,
 )
-from routes import auth, generations, health, me, payments, stats, webhooks
+from routes import auth, comments, generations, health, me, payments, stats, webhooks
 from services.auth import AuthError
+from services.comments import CommentError, CommentNotFoundError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
 from services.referrals import AlreadyClaimedError, InvalidReferralCodeError, SelfReferralError
@@ -110,6 +111,11 @@ app.add_exception_handler(InvalidReferralCodeError, me.invalid_referral_code_han
 app.add_exception_handler(SelfReferralError, me.self_referral_handler)
 app.add_exception_handler(AlreadyClaimedError, me.already_claimed_handler)
 
+# Comentários públicos (05/10/2026): tradução para HTTP, sem nenhuma regra de negócio aqui -- ver
+# services/comments.py e routes/comments.py.
+app.add_exception_handler(CommentError, comments.comment_error_handler)
+app.add_exception_handler(CommentNotFoundError, comments.comment_not_found_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -118,6 +124,7 @@ app.include_router(payments.router)
 app.include_router(me.router)
 app.include_router(stats.router)
 app.include_router(webhooks.router)
+app.include_router(comments.router)
 
 
 @app.get("/", include_in_schema=False)
