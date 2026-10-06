@@ -125,8 +125,9 @@ def test_nenhuma_migration_nova_foi_criada():
     histórico REAL de migrations já aprovadas em outras etapas (0004 display_filename, 0005
     request_fingerprint, 0006 anonymous_identities -- Free anônimo, aprovação do CÉREBRO; 0008
     referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
-    públicos, aprovação do CÉREBRO, 05/10/2026) -- nenhuma delas foi criada por esta camada; uma
-    10ª entrada aqui ainda quebraria este teste."""
+    públicos, aprovação do CÉREBRO, 05/10/2026; 0010 só atualiza o texto dos exemplos, sem mudar
+    schema) -- nenhuma delas foi criada por esta camada; uma
+    11ª entrada aqui ainda quebraria este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -138,6 +139,7 @@ def test_nenhuma_migration_nova_foi_criada():
         "0007_output_extension.py",
         "0008_referrals.py",
         "0009_comments.py",
+        "0010_comments_exemplo_natural.py",
     ]
 
 
