@@ -253,7 +253,7 @@
             <section id="paraQuemE" class="py-8 border-t section-line text-center">
                 <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-2">PARA QUEM É</p>
                 <h2 class="text-lg sm:text-xl font-extrabold text-white">Feito para quem cria e reaproveita conteúdo.</h2>
-                <p class="mt-2 text-[17px] leading-[1.5] sm:text-sm sm:leading-normal text-slate-500">Criadores · Afiliados<br class="sm:hidden"> Quem reaproveita vídeo com frequência</p>
+                <p class="mt-2 text-[17px] leading-[1.5] sm:text-sm sm:leading-normal text-slate-500">Criadores · Social Media · Afiliados</p>
             </section>
 
             <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
@@ -2753,6 +2753,19 @@
     // desenhou dentro de #paymentBrickContainer, acha o elemento cujo texto é exatamente
     // "Parcelamento disponível" e apaga só o fundo/sombra dele -- nunca largura, altura,
     // position ou o texto. Idempotente (rodar de novo não faz nada se já estiver limpo).
+    //
+    // 06/10/2026 (pedido do CÉREBRO): a mensagem em si foi considerada pouco clara -- não informa
+    // quantidade de parcelas, juros ou condições. Decisão: remover a mensagem da interface (não
+    // substituir por outra promessa de parcelamento). Como o texto é desenhado pelo próprio SDK
+    // do Mercado Pago dentro de #paymentBrickContainer (não é HTML nosso, não dá pra editar o
+    // texto na origem), a função passa a ESCONDER (display:none) o elemento com esse texto exato,
+    // além de só neutralizar o fundo -- e, se o elemento pai for só um wrapper deste mesmo texto
+    // (sem nenhum outro conteúdo próprio), o pai também é escondido, pra não sobrar uma caixinha
+    // vazia no lugar do selo. Nunca mexe em largura/altura/position de outro elemento, nem em
+    // nenhum campo funcional do formulário (número do cartão, parcelas, PIX etc.) -- só esconde
+    // este selo de texto específico. A lógica de fundo/sombra abaixo foi mantida por segurança
+    // (idempotente, inofensiva mesmo com o elemento já em display:none) caso o Mercado Pago mude
+    // o HTML interno do Brick e o texto volte a aparecer sem passar por este seletor.
     function neutralizarFaixaParcelamento() {
         const container = document.getElementById("paymentBrickContainer");
         if (!container) return;
@@ -2763,6 +2776,20 @@
             if (el.children.length > 0) continue;
             const texto = (el.textContent || "").trim().toLowerCase();
             if (texto !== "parcelamento disponível") continue;
+
+            // 06/10/2026: esconde o selo em si -- nunca o texto de outro campo, nunca o
+            // container do Brick inteiro, só este elemento folha com o texto exato.
+            el.style.setProperty("display", "none", "important");
+
+            // Se o pai imediato não tiver nenhum texto próprio além deste (ou seja, é só um
+            // wrapper do selo), esconde ele também, pra não deixar uma caixinha vazia.
+            const pai = el.parentElement;
+            if (pai && pai !== container) {
+                const textoPai = (pai.textContent || "").trim().toLowerCase();
+                if (textoPai === "parcelamento disponível") {
+                    pai.style.setProperty("display", "none", "important");
+                }
+            }
 
             // Marca pra uma regra CSS cuidar de ::before/::after (JS não consegue setar estilo
             // inline em pseudo-elemento) -- ver ".klango-sem-faixa::before/::after" no <style>
