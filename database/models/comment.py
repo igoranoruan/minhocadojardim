@@ -27,6 +27,14 @@ class Comment(Base):
 
     Exclusão é SEMPRE definitiva (hard delete, nunca soft-delete/flag): services/comments.py é o
     único módulo que escreve nesta tabela.
+
+    approved (06/10/2026, migration 0011, aprovação do CÉREBRO): moderação prévia -- todo
+    comentário REAL nasce approved=False (fila de espera) e só aparece publicamente depois que o
+    CÉREBRO aprova manualmente (routes/comments.py::approve_comment_route, admin-only, mesmo
+    require_admin do delete). Antes disso a leitura pública era imediata (qualquer um postava e já
+    aparecia no site); isso deixou de ser aceitável assim que o formulário foi liberado de verdade.
+    Rejeitar um comentário pendente é a própria exclusão (DELETE já existente) -- não existe um
+    terceiro estado "rejeitado", só "pendente" (approved=False) ou "publicado" (approved=True).
     """
 
     __tablename__ = "comments"
@@ -45,4 +53,5 @@ class Comment(Base):
     author_name: Mapped[str] = mapped_column(String(80), nullable=False)
     body: Mapped[str] = mapped_column(String(500), nullable=False)
     is_example: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    approved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False, default=utcnow)

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Moderação de comentários — KLANGO.MP4</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!--
+        06/10/2026 (pedido do CÉREBRO, aprovação do CÉREBRO): painel mínimo de moderação dos
+        comentários públicos. Reaproveita 100% a sessão já existente do site principal (cookie
+        HttpOnly, path="/", mesmo login por e-mail+código de sempre -- ver routes/auth.py e
+        static/index.html) -- esta página NÃO tem formulário de login próprio. O CÉREBRO faz login
+        em klango.site normalmente com o e-mail cadastrado em ADMIN_EMAIL e depois abre
+        klango.site/admin; toda chamada aqui usa credentials:"same-origin" e as rotas
+        (GET /api/comments/pending, POST /api/comments/{id}/approve, DELETE /api/comments/{id})
+        já são protegidas no backend por routes/deps.py::require_admin -- não existe nenhuma
+        checagem de admin só no frontend, então não há "segurança por obscuridade" na URL.
+        noindex/nofollow acima só evita que a página apareça em buscador; não é controle de acesso.
+        Sem onclick fake em lugar nenhum: todo botão aqui realmente chama a API.
+    -->
+    <style>
+        :root {
+            --klango-teal: #19D3AE;
+            --klango-ink: #090D0F;
+        }
+        * { font-family: 'Sora', system-ui, sans-serif; }
+        body { background: var(--klango-ink); color: #f8fafc; }
+        .bg-card { background: #0b1220; border: 1px solid #1b2738; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-2xl mx-auto px-5 sm:px-8 py-10 sm:py-14">
+        <a href="/" class="text-sm font-medium inline-flex items-center gap-2" style="color:var(--klango-teal)">&larr; Voltar para o KLANGO.MP4</a>
+
+        <h1 class="text-xl sm:text-2xl font-extrabold text-white mt-6">Comentários pendentes</h1>
+        <p id="adminSubtitulo" class="text-sm text-slate-500 mt-1">Carregando...</p>
+
+        <div id="adminAvisoAcesso" class="hidden mt-6 bg-card rounded-2xl p-5 text-sm text-slate-300 leading-relaxed">
+            Esta página só funciona para o e-mail de admin, com sessão ativa. Faça login em
+            <a href="/" class="underline" style="color:var(--klango-teal)">klango.site</a> com o e-mail de admin e volte aqui depois.
+        </div>
+
+        <div id="adminLista" class="mt-6 space-y-4"></div>
+
+        <p id="adminVazio" class="hidden mt-6 text-sm text-slate-500 text-center">Nenhum comentário pendente no momento.</p>
+    </div>
+
+    <script>
+        const NO_STORE_HEADERS = { "Content-Type": "application/json" };
+
+        function criarCardPendente(comentario) {
+            const card = document.createElement("div");
+            card.className = "bg-card rounded-2xl p-5";
+            card.id = `pendente-${comentario.id}`;
+
+            const topo = document.createElement("div");
+            topo.className = "flex items-center justify-between gap-3";
+
+            const nome = document.createElement("span");
+            nome.className = "font-bold text-white text-sm";
+            nome.textContent = comentario.author_name;
+
+            const data = document.createElement("span");
+            data.className = "text-[11px] text-slate-500";
+            data.textContent = new Date(comentario.created_at).toLocaleString("pt-BR");
+
+            topo.appendChild(nome);
+            topo.appendChild(data);
+
+            const corpo = document.createElement("p");
+            corpo.className = "text-sm text-slate-300 leading-relaxed mt-2";
+            corpo.textContent = comentario.body;
+
+            const acoes = document.createElement("div");
+            acoes.className = "flex gap-2 mt-4";
+
+            const btnAprovar = document.createElement("button");
+            btnAprovar.type = "button";
+            btnAprovar.className = "flex-1 h-10 rounded-xl font-bold text-xs text-slate-950";
+            btnAprovar.style.background = "var(--klango-teal)";
+            btnAprovar.textContent = "Aprovar e publicar";
+            btnAprovar.onclick = () => aprovarComentario(comentario.id);
+
+            const btnRejeitar = document.createElement("button");
+            btnRejeitar.type = "button";
+            btnRejeitar.className = "flex-1 h-10 rounded-xl font-bold text-xs text-red-400 border border-red-800/60";
+            btnRejeitar.textContent = "Rejeitar e apagar";
+            btnRejeitar.onclick = () => rejeitarComentario(comentario.id);
+
+            acoes.appendChild(btnAprovar);
+            acoes.appendChild(btnRejeitar);
+
+            card.appendChild(topo);
+            card.appendChild(corpo);
+            card.appendChild(acoes);
+            return card;
+        }
+
+        function removerCardDoDOM(id) {
+            const card = document.getElementById(`pendente-${id}`);
+            if (card) card.remove();
+            const lista = document.getElementById("adminLista");
+            const vazio = document.getElementById("adminVazio");
+            if (lista && vazio) vazio.classList.toggle("hidden", lista.children.length > 0);
+        }
+
+        async function aprovarComentario(id) {
+            const resposta = await fetch(`/api/comments/${id}/approve`, { method: "POST", credentials: "same-origin" });
+            if (resposta.ok) removerCardDoDOM(id);
+        }
+
+        async function rejeitarComentario(id) {
+            const resposta = await fetch(`/api/comments/${id}`, { method: "DELETE", credentials: "same-origin" });
+            if (resposta.ok) removerCardDoDOM(id);
+        }
+
+        async function carregarPendentes() {
+            const subtitulo = document.getElementById("adminSubtitulo");
+            const aviso = document.getElementById("adminAvisoAcesso");
+            const lista = document.getElementById("adminLista");
+            const vazio = document.getElementById("adminVazio");
+
+            try {
+                const resposta = await fetch("/api/comments/pending", { credentials: "same-origin" });
+                if (resposta.status === 401 || resposta.status === 403) {
+                    subtitulo.textContent = "Acesso restrito.";
+                    aviso.classList.remove("hidden");
+                    return;
+                }
+                if (!resposta.ok) {
+                    subtitulo.textContent = "Não foi possível carregar os comentários pendentes agora.";
+                    return;
+                }
+                const pendentes = await resposta.json();
+                subtitulo.textContent = pendentes.length === 1
+                    ? "1 comentário aguardando aprovação."
+                    : `${pendentes.length} comentários aguardando aprovação.`;
+                pendentes.forEach((c) => lista.appendChild(criarCardPendente(c)));
+                vazio.classList.toggle("hidden", pendentes.length > 0);
+            } catch (erro) {
+                subtitulo.textContent = "Não foi possível carregar os comentários pendentes agora.";
+            }
+        }
+
+        carregarPendentes();
+    </script>
+</body>
+</html>

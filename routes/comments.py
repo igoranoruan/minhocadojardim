@@ -1,11 +1,16 @@
 """Comentários públicos do site (05/10/2026, aprovação do CÉREBRO).
 
-GET    /api/comments       lista todos, mais recentes primeiro -- PÚBLICA, sem autenticação (o
-                            objetivo é quebrar objeção de quem ainda não assinou).
-POST   /api/comments       cria um comentário -- exige sessão autenticada E plano pago VIGENTE
-                            agora (services/comments.py::create_comment). Expirar depois NÃO
-                            apaga o comentário já publicado.
-DELETE /api/comments/{id}  remove definitivamente -- só o admin (routes/deps.py::require_admin).
+GET    /api/comments          lista APROVADOS, mais recentes primeiro -- PÚBLICA, sem autenticação
+                               (o objetivo é quebrar objeção de quem ainda não assinou).
+POST   /api/comments          cria um comentário -- exige sessão autenticada E plano pago VIGENTE
+                               agora (services/comments.py::create_comment). Nasce pendente
+                               (approved=False); expirar depois NÃO apaga o comentário já aprovado.
+GET    /api/comments/pending  fila de moderação (approved=False) -- só o admin (06/10/2026,
+                               aprovação do CÉREBRO: nenhum comentário pode mais aparecer no site
+                               sem revisão manual).
+POST   /api/comments/{id}/approve  publica um comentário pendente -- só o admin.
+DELETE /api/comments/{id}     remove definitivamente -- só o admin (routes/deps.py::require_admin).
+                               Também é como um comentário pendente é REJEITADO.
 
 Rota fina, mesmo padrão das demais: toda regra de negócio mora em services/comments.py; aqui só
 se resolve a identidade (sessão) e traduz exceção para HTTP ({"detail": "...", "code": "..."}).
@@ -26,9 +31,11 @@ from services.comments import (
     CommentNotFoundError,
     InvalidCommentError,
     NoActivePlanError,
+    approve_comment,
     create_comment,
     delete_comment,
     list_comments,
+    list_pending_comments,
 )
 
 router = APIRouter(prefix="/api/comments", tags=["comments"])
@@ -70,6 +77,7 @@ class CommentOut(BaseModel):
     author_name: str
     body: str
     is_example: bool
+    approved: bool
     created_at: datetime
 
 
@@ -84,6 +92,7 @@ def _out(comment) -> CommentOut:
         author_name=comment.author_name,
         body=comment.body,
         is_example=comment.is_example,
+        approved=comment.approved,
         created_at=comment.created_at,
     )
 
@@ -100,6 +109,27 @@ def post_comment(
     db: Session = Depends(get_session),
 ) -> CommentOut:
     comment = create_comment(db, user_id=user.id, author_name=body.author_name, body=body.body)
+    return _out(comment)
+
+
+# 06/10/2026 (pedido do CÉREBRO): fica ANTES de "/{comment_id}/approve" só por organização do
+# arquivo -- não há ambiguidade de rota real (FastAPI casa por caminho completo; "/pending" nunca
+# colide com "/{comment_id}/approve", que tem um segmento a mais).
+@router.get("/pending", response_model=list[CommentOut])
+def get_pending_comments(
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_session),
+) -> list[CommentOut]:
+    return [_out(c) for c in list_pending_comments(db)]
+
+
+@router.post("/{comment_id}/approve", response_model=CommentOut)
+def approve_comment_route(
+    comment_id: int,
+    _admin: User = Depends(require_admin),
+    db: Session = Depends(get_session),
+) -> CommentOut:
+    comment = approve_comment(db, comment_id)
     return _out(comment)
 
 

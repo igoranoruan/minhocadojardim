@@ -137,7 +137,7 @@ def test_nenhuma_migration_nova_foi_criada():
     referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
     públicos, aprovação do CÉREBRO, 05/10/2026; 0010 só atualiza o texto dos exemplos, sem mudar
     schema) -- nenhuma delas foi criada por esta camada; uma
-    11ª entrada aqui ainda quebraria este teste."""
+    12ª entrada aqui ainda quebraria este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -150,6 +150,7 @@ def test_nenhuma_migration_nova_foi_criada():
         "0008_referrals.py",
         "0009_comments.py",
         "0010_comments_exemplo_natural.py",
+        "0011_comments_moderacao.py",
     ]
 
 

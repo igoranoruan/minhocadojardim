@@ -146,7 +146,7 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
     referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
     públicos, aprovação do CÉREBRO, 05/10/2026; 0010 só atualiza o texto dos exemplos, sem mudar
     schema) -- nenhuma delas foi criada por esta camada; uma
-    11ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
+    12ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -159,6 +159,7 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
         "0008_referrals.py",
         "0009_comments.py",
         "0010_comments_exemplo_natural.py",
+        "0011_comments_moderacao.py",
     ]
     assert set(Base.metadata.tables) == {
         "users", "payments", "entitlements", "generations", "batches", "payment_events",

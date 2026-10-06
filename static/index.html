@@ -193,7 +193,11 @@
                          (atualizarVisibilidadeFunilFrio/atualizarVisibilidadeSecaoPlanos), então na
                          prática este texto já aparece imediatamente acima do card -- exatamente a
                          posição pedida -- sem precisar duplicar o elemento nem mexer na prova social
-                         de quem ainda não comprou. Número continua 100% dinâmico (GET /api/stats). -->
+                         de quem ainda não comprou. Número continua 100% dinâmico (GET /api/stats).
+                         06/10/2026 (pedido do CÉREBRO): além de "hidden" até a chamada responder,
+                         o bloco só aparece se o total passar de LIMIAR_EXIBICAO_STATS_PROCESSADOS
+                         (ver carregarEstatisticas) -- número continua real, só não é exibido
+                         enquanto ainda for baixo demais para servir como prova social. -->
                     <p id="statsProcessados" class="hidden mt-6 mb-2 text-xs text-slate-500 text-center">
                         <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
                     </p>
@@ -1465,12 +1469,21 @@
     // relação com cota/plano do visitante -- é um número do produto inteiro, não da conta dele.
     // Falha silenciosa: se a rota não responder, o elemento simplesmente continua "hidden" (ver
     // comentário no HTML) -- nunca mostra um número inventado nem quebra o resto da página.
+    //
+    // 06/10/2026 (pedido do CÉREBRO): o número não pode ser inflado/simulado (mesma régua de
+    // sempre, CDC Art. 37 -- ver services/stats.py), mas um total ainda baixo também não ajuda a
+    // prova social. Solução: continua 100% real e dinâmico, só que o bloco fica oculto enquanto o
+    // total não passa do LIMIAR abaixo -- aparece sozinho, sem precisar mexer em código de novo,
+    // assim que a contagem ultrapassar o limiar.
+    const LIMIAR_EXIBICAO_STATS_PROCESSADOS = 300;
+
     async function carregarEstatisticas() {
         try {
             const resposta = await fetch("/api/stats");
             if (!resposta.ok) return;
             const dados = await resposta.json();
             if (typeof dados.total_generations !== "number") return;
+            if (dados.total_generations <= LIMIAR_EXIBICAO_STATS_PROCESSADOS) return;
             document.getElementById("statsProcessadosNumero").textContent =
                 dados.total_generations.toLocaleString("pt-BR");
             document.getElementById("statsProcessados").classList.remove("hidden");
@@ -1564,8 +1577,7 @@
             }
             nomeEl.value = "";
             textoEl.value = "";
-            if (statusEl) statusEl.textContent = "Comentário publicado!";
-            await carregarComentarios();
+            if (statusEl) statusEl.textContent = "Comentário enviado! Ele aparece no site após aprovação.";
         } catch (erro) {
             if (statusEl) statusEl.textContent = "Não foi possível publicar o comentário agora.";
         }

@@ -147,6 +147,15 @@ async def politica_de_privacidade() -> FileResponse:
     return FileResponse(STATIC_DIR / "privacidade.html")
 
 
+@app.get("/admin", include_in_schema=False)
+async def painel_admin() -> FileResponse:
+    """Moderação de comentários (06/10/2026, aprovação do CÉREBRO) -- mesmo padrão de URL limpa
+    de /termos e /privacidade acima. A página em si não faz nenhuma checagem de acesso (só reusa
+    a sessão já existente via cookie); toda proteção real está nas rotas da API
+    (routes/deps.py::require_admin), nunca aqui."""
+    return FileResponse(STATIC_DIR / "admin.html")
+
+
 # Arquivos do frontend (imagens, favicon etc.), acessados em /static/...
 # O index.html aprovado já referencia /static/favicon.png.
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
