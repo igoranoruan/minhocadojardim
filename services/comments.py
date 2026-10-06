@@ -10,6 +10,18 @@ Regras:
 
 Os 5 comentários de exemplo (is_example=True, user_id=None) foram inseridos pela migration 0009,
 nunca por este módulo -- toda escrita daqui cria um comentário REAL (is_example sempre False).
+
+06/10/2026 (pedido do CÉREBRO): list_comments() não devolve mais os is_example=True para o
+público -- o selo "Exemplo" no nome estava, na avaliação do CÉREBRO, prejudicando mais a
+credibilidade da seção do que ajudando a quebrar objeção (intenção original da Etapa). Removê-lo
+e continuar exibindo os 5 textos fictícios como se fossem reais não é uma opção (depoimento
+inventado apresentado como genuíno, o que o próprio projeto já tratou como vedado -- ver
+services/stats.py). A alternativa escolhida, dentre as que o próprio CÉREBRO apontou como
+aceitáveis, foi recolher os exemplos de circulação: a seção passa a mostrar só comentários reais,
+com o estado vazio ("Seja o primeiro a comentar.") cobrindo o período até o primeiro. As 5 linhas
+continuam no banco (nunca apagadas, migrations 0009/0010 intactas); bastaria tirar o filtro abaixo
+para voltarem a aparecer -- não há motivo para apagá-las do banco por causa de uma decisão só
+sobre exibição.
 """
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -38,8 +50,14 @@ class CommentNotFoundError(CommentError):
 
 
 def list_comments(db: Session) -> list[Comment]:
-    """Todos os comentários, mais recentes primeiro. Pública -- sem filtro de usuário."""
-    return list(db.execute(select(Comment).order_by(Comment.created_at.desc())).scalars().all())
+    """Comentários REAIS, mais recentes primeiro. Pública -- sem filtro de usuário, mas os
+    is_example=True (seed ilustrativo da migration 0009) nunca aparecem aqui -- ver docstring do
+    módulo (decisão do CÉREBRO, 06/10/2026)."""
+    return list(
+        db.execute(
+            select(Comment).where(Comment.is_example.is_(False)).order_by(Comment.created_at.desc())
+        ).scalars().all()
+    )
 
 
 def create_comment(db: Session, *, user_id: int, author_name: str, body: str) -> Comment:

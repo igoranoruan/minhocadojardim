@@ -328,6 +328,42 @@
                             <i class="fa-solid fa-gears"></i> Processar e preparar lote
                         </div>
                     </div>
+
+                    <!-- 06/10/2026 (pedido do CÉREBRO): a seção mostrava só o passo "adicionar
+                         vídeo" -- faltava o passo seguinte (resultado pronto pra baixar), que é a
+                         outra metade do que o lote faz. Reaproveita o MESMO painel de resultado que
+                         existia na versão anterior da seção (dado de exemplo fictício, nunca uma
+                         imagem gerada por IA; "Baixar"/"Baixar tudo em ZIP" continuam <span>/<div>
+                         sem onclick -- mesma régua de "sem botão falso" de sempre). Setinha reusa o
+                         mesmo padrão visual do divisor em "Antes/Depois". -->
+                    <div class="flex justify-center py-2">
+                        <i class="fa-solid fa-circle-arrow-down text-2xl text-violet-400"></i>
+                    </div>
+
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/40">
+                        <div class="space-y-2.5">
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
+                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
+                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                            </div>
+                        </div>
+                        <p class="text-center text-[11px] text-slate-500 mt-3">3 de 3 vídeos preparados.</p>
+                        <div class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP
+                        </div>
+                    </div>
+
                     <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Demonstração ilustrativa.</p>
                     <div class="mt-8">
                         <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
