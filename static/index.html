@@ -200,119 +200,6 @@
                 </div>
             </section>
 
-            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; reposicionada e com selo de cadeado
-                 em 05/10/2026, mesmo pedido -- "deixar mais em cima pra não precisar rolar muito" e
-                 "com cadeado, só quem tem plano pago usa"): demonstração ilustrativa do
-                 processamento em lote, no mesmo espírito do Antes/Depois -- HTML/CSS real, dado de
-                 exemplo fictício, sempre visível (mesmo pra quem não tem plano pago), nunca uma
-                 imagem gerada por IA. Os elementos em formato de botão aqui (Adicionar vídeo,
-                 Processar e preparar lote, Baixar, Baixar tudo em ZIP) são <div>/<span>
-                 propositalmente, sem onclick/cursor-pointer/hover -- é uma ilustração estática de
-                 como a tela fica, não um atalho funcional fingindo processar algo de verdade (mesma
-                 régua de "sem botão falso" já aplicada no resto do site). A ação real de lote
-                 continua só na seção BATCH mais abaixo (#secaoBatch, visível após login com plano
-                 pago), que já usa "Processar e preparar lote" e "Baixar tudo em ZIP" com o mesmo
-                 texto -- não é força de expressão, é o texto real da função (ver
-                 processarLote()/zipLink mais abaixo no script). Movida pra logo após o Hero (antes
-                 era a 4ª seção, depois de Antes/Depois, Como Funciona e Planos) -- mesmo id
-                 (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS), só a posição
-                 no documento mudou. Ícone de cadeado acrescentado no selo acima do título -- reforço
-                 visual de "recurso pago", sem criar nenhum elemento clicável novo. -->
-            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
-                <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-violet-400 text-xs font-bold uppercase tracking-wider mb-3"><i class="fa-solid fa-lock mr-1.5"></i>PROCESSAMENTO EM LOTE · PLANOS PAGOS</p>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez, <span class="text-violet-400">na prática.</span></h2>
-                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Disponível nos planos pagos: monte sua lista, processe tudo de uma vez e baixe os arquivos prontos.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-10 items-start">
-                    <!-- Painel 1: monte a lista -->
-                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-violet-500/30">
-                        <div class="flex items-center gap-3 mb-5">
-                            <span class="w-7 h-7 shrink-0 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-violet-400 text-xs font-extrabold">1</span>
-                            <h3 class="font-bold text-white text-sm sm:text-base">Monte sua lista</h3>
-                        </div>
-                        <div class="space-y-2.5">
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil/video/7281...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">instagram.com/reel/Cx4f9...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">youtube.com/shorts/aB3xQ...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">pinterest.com/pin/98213...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-link text-slate-600 text-xs"></i>
-                                <span class="text-xs font-mono text-slate-400 truncate flex-1">tiktok.com/@perfil2/video/5529...</span>
-                                <i class="fa-solid fa-trash text-slate-700 text-xs"></i>
-                            </div>
-                        </div>
-                        <div class="w-full mt-3 h-10 rounded-xl border border-slate-700 text-slate-500 font-bold text-xs flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-plus"></i> Adicionar vídeo
-                        </div>
-                        <div class="w-full mt-3 h-11 bg-violet-400/15 border border-violet-400/40 text-violet-300 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-gears"></i> Processar e preparar lote
-                        </div>
-                    </div>
-
-                    <!-- Painel 2: resultado -->
-                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/40">
-                        <div class="flex items-center gap-3 mb-5">
-                            <span class="w-7 h-7 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">2</span>
-                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe os arquivos prontos</h3>
-                        </div>
-                        <div class="space-y-2.5">
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_04.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                            <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
-                                <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_05.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
-                            </div>
-                        </div>
-                        <p class="text-center text-[11px] text-slate-500 mt-3">5 de 5 vídeos preparados.</p>
-                        <div class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP
-                        </div>
-                    </div>
-                </div>
-                <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Exemplo ilustrativo do processamento em lote, disponível nos planos pagos. Links, nomes de arquivo e quantidade são fictícios.</p>
-                <div class="max-w-3xl mx-auto mt-8">
-                    <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
-                        class="w-full h-auto rounded-xl select-none" draggable="false">
-                </div>
-            </section>
-
             <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
                  CÉREBRO): vira seção própria (título/subtítulo/divisória, igual às outras seções),
                  em vez de ficar dependurada dentro do Hero sem identificação nenhuma. Conteúdo dos
@@ -400,6 +287,62 @@
                     <p class="text-center text-[11px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
                 </div>
             </section>
+
+            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; redesenhada em 05/10/2026, mesmo
+                 pedido): demonstração interativa do processamento em lote -- mesmo CARD visual do
+                 #secaoBatch real (ícone, título, mesmo estilo de campo), não mais o mockup de dois
+                 painéis "monte a lista / baixe prontos". Campos de link e nome ficam com cadeado
+                 (disabled + ícone fa-lock, nunca digitáveis) -- só quem tem plano pago ativo
+                 digita de verdade, na seção #secaoBatch mais abaixo. O botão "Adicionar vídeo" é
+                 REAL (adicionarCampoLotePreview()): quem clica vê a tela ganhar mais uma linha
+                 travada, pra entender como o lote funciona, sem nunca liberar o campo. Acima de
+                 LOTE_PREVIEW_VISIVEL_PADRAO linhas, o excesso fica atrás de "Ver mais/Ver menos"
+                 (alternarExpansaoLotePreview()) -- só pra tela não poluir se alguém ficar clicando
+                 em adicionar várias vezes. "Processar e preparar lote" continua sem onclick
+                 (cursor-default select-none, mesma régua de "sem botão falso" de sempre) -- único
+                 elemento desta seção que não faz nada de verdade ao ser clicado, porque não há
+                 nada de verdade pra fazer sem plano pago. Posição: depois de Antes/Depois (pedido
+                 do CÉREBRO, 05/10/2026) -- mesmo id (#loteNaPratica), mesma lógica de visibilidade
+                 (SECOES_FUNIL_FRIO_IDS), só a posição no documento mudou. -->
+            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-violet-400 text-xs font-bold uppercase tracking-wider mb-3"><i class="fa-solid fa-lock mr-1.5"></i>PROCESSAMENTO EM LOTE · PLANOS PAGOS</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez, <span class="text-violet-400">na prática.</span></h2>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Disponível nos planos pagos: monte sua lista, processe tudo de uma vez e baixe os arquivos prontos. Clique abaixo pra ver como funciona.</p>
+                </div>
+
+                <div class="max-w-xl mx-auto mt-10">
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-violet-500/30">
+                        <div class="flex items-start gap-3 mb-5">
+                            <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-solid fa-layer-group"></i></div>
+                            <div class="min-w-0">
+                                <h3 class="text-base font-extrabold text-white">Processamento em lote</h3>
+                                <p class="text-sm text-slate-400 mt-1">Adicione vários vídeos de uma vez. Dá pra dar um nome diferente pra cada arquivo.</p>
+                            </div>
+                        </div>
+
+                        <div id="loteNaPraticaItems" class="space-y-3"></div>
+
+                        <button type="button" id="lotePreviewVerMaisBtn" onclick="alternarExpansaoLotePreview()" class="hidden w-full mt-3 h-8 text-violet-400 hover:text-violet-300 font-bold text-xs transition-colors">
+                            Ver mais
+                        </button>
+
+                        <button type="button" onclick="adicionarCampoLotePreview()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-violet-500/60 hover:text-violet-400 font-bold text-xs transition-colors">
+                            <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
+                        </button>
+
+                        <div class="w-full mt-3 h-12 bg-violet-400/15 border border-violet-400/40 text-violet-300 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                            <i class="fa-solid fa-gears"></i> Processar e preparar lote
+                        </div>
+                    </div>
+                    <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Exemplo interativo do processamento em lote, disponível nos planos pagos. Os campos ficam liberados só pra quem tem plano pago ativo.</p>
+                    <div class="mt-8">
+                        <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
+                            class="w-full h-auto rounded-xl select-none" draggable="false">
+                    </div>
+                </div>
+            </section>
+
 
             <!-- PROCESSO -->
             <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
@@ -1311,6 +1254,7 @@
     document.addEventListener("DOMContentLoaded", () => {
         capturarCodigoIndicacaoDaUrl();
         inicializarBatch();
+        inicializarLotePreview();
         carregarSessao();
         carregarEstatisticas();
         carregarComentarios();
@@ -3140,6 +3084,111 @@
         if (!container || container.children.length) return;
         container.appendChild(criarCampoLote(1));
         atualizarContagemLote();
+    }
+
+    // ---- Preview travado do lote, na seção pública "Lote na Prática" (05/10/2026, pedido do
+    // CÉREBRO) -- campos sempre com cadeado (disabled), nunca digitáveis; só "Adicionar vídeo",
+    // "Remover" e "Ver mais/Ver menos" são reais (mexem no DOM local, sem chamar o backend). Acima
+    // de LOTE_PREVIEW_VISIVEL_PADRAO linhas, o excesso fica atrás de "Ver mais" pra não poluir a
+    // tela se alguém ficar clicando em adicionar.
+    const LOTE_PREVIEW_VISIVEL_PADRAO = 3;
+    const LOTE_PREVIEW_MAX = 15; // mesmo teto do maior plano (VIP Batch) -- ver services/plans.py
+    let lotePreviewExpandido = false;
+
+    function campoTravado(placeholder, extraClass) {
+        const wrap = document.createElement("div");
+        wrap.className = "relative" + (extraClass ? " " + extraClass : "");
+
+        const cadeado = document.createElement("i");
+        cadeado.className = "fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none";
+        wrap.appendChild(cadeado);
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.disabled = true;
+        input.placeholder = placeholder;
+        input.className = "w-full h-11 pl-10 pr-4 bg-[#050810] border border-slate-800 rounded-xl text-slate-600 placeholder-slate-600 text-xs cursor-not-allowed";
+        wrap.appendChild(input);
+
+        return wrap;
+    }
+
+    function criarCampoLotePreview(index) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "batch-item-preview bg-[#060b14] border border-slate-800 rounded-xl p-3";
+
+        const top = document.createElement("div");
+        top.className = "flex items-center justify-between gap-3 mb-2";
+
+        const label = document.createElement("div");
+        label.className = "batch-label-preview text-[11px] font-extrabold uppercase tracking-wider text-slate-400";
+        label.textContent = `VÍDEO ${String(index).padStart(2, "0")}`;
+        top.appendChild(label);
+
+        if (index > 1) {
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "text-slate-600 hover:text-red-400 text-xs px-2 py-1";
+            remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
+            remove.title = "Remover vídeo";
+            remove.onclick = () => {
+                wrapper.remove();
+                renumerarCamposLotePreview();
+            };
+            top.appendChild(remove);
+        }
+        wrapper.appendChild(top);
+
+        wrapper.appendChild(campoTravado("Cole o link do vídeo…"));
+        wrapper.appendChild(campoTravado("Nome do arquivo (opcional) — ex.: video_oferta", "mt-2"));
+
+        return wrapper;
+    }
+
+    function atualizarVisibilidadeLotePreview() {
+        const itens = Array.from(document.querySelectorAll("#loteNaPraticaItems .batch-item-preview"));
+        itens.forEach((item, index) => {
+            item.classList.toggle("hidden", !lotePreviewExpandido && index >= LOTE_PREVIEW_VISIVEL_PADRAO);
+        });
+        const escondidos = itens.length - LOTE_PREVIEW_VISIVEL_PADRAO;
+        const verMaisBtn = document.getElementById("lotePreviewVerMaisBtn");
+        if (!verMaisBtn) return;
+        if (escondidos <= 0) {
+            verMaisBtn.classList.add("hidden");
+            return;
+        }
+        verMaisBtn.classList.remove("hidden");
+        verMaisBtn.textContent = lotePreviewExpandido ? "Ver menos" : `Ver mais (${escondidos})`;
+    }
+
+    function alternarExpansaoLotePreview() {
+        lotePreviewExpandido = !lotePreviewExpandido;
+        atualizarVisibilidadeLotePreview();
+    }
+
+    function renumerarCamposLotePreview() {
+        document.querySelectorAll("#loteNaPraticaItems .batch-item-preview").forEach((item, index) => {
+            const label = item.querySelector(".batch-label-preview");
+            if (label) label.textContent = `VÍDEO ${String(index + 1).padStart(2, "0")}`;
+        });
+        atualizarVisibilidadeLotePreview();
+    }
+
+    function adicionarCampoLotePreview() {
+        const container = document.getElementById("loteNaPraticaItems");
+        if (!container) return;
+        const count = container.querySelectorAll(".batch-item-preview").length;
+        if (count >= LOTE_PREVIEW_MAX) return;
+        container.appendChild(criarCampoLotePreview(count + 1));
+        if (count + 1 > LOTE_PREVIEW_VISIVEL_PADRAO) lotePreviewExpandido = true;
+        atualizarVisibilidadeLotePreview();
+    }
+
+    function inicializarLotePreview() {
+        const container = document.getElementById("loteNaPraticaItems");
+        if (!container || container.children.length) return;
+        container.appendChild(criarCampoLotePreview(1));
+        atualizarVisibilidadeLotePreview();
     }
 
     // Gera um identificador único por ENVIO de lote -- exigido por POST /api/download-batch
