@@ -129,20 +129,37 @@
                     Reutilize o conteúdo que já funcionou.
                 </h1>
 
+                <!-- 06/10/2026 (rodada FINAL de conversão, aprovação do CÉREBRO): quebra de leitura
+                     explícita no mobile via <br class="sm:hidden"> (responsivo -- some sozinho a
+                     partir do sm:, onde o parágrafo volta a quebrar só pelo fluxo natural do
+                     container, exatamente como antes desta rodada). Nenhuma palavra do texto foi
+                     alterada. -->
                 <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
-                    Encontrou um vídeo que quer reaproveitar? Cole o link abaixo e receba um novo arquivo, pronto para editar e adaptar, sem os metadados da origem.
+                    Encontrou um vídeo que quer reaproveitar?<br class="sm:hidden">
+                    Cole o link abaixo e receba um novo arquivo,<br class="sm:hidden">
+                    pronto para editar e adaptar,<br class="sm:hidden">
+                    sem os metadados da origem.
                 </p>
 
                 <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): tira de passos discreta,
                      só texto + setas (sem ícones/cards novos), pra dar o mapa mental completo do
-                     fluxo em 1 linha, sem precisar rolar até "Como Funciona". Quebra em 2 linhas
-                     sozinha no mobile (flex-wrap), nunca estoura a largura. -->
-                <p class="mt-3 text-xs text-slate-500 flex flex-wrap items-center gap-x-1.5 gap-y-1 justify-center sm:justify-start">
-                    <span>Encontrou o vídeo</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                    <span>Cole o link</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                    <span>KLANGO processa</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                    <span>Baixe</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                    <span>Edite/adapte</span>
+                     fluxo em 1 linha, sem precisar rolar até "Como Funciona". Agrupada em 2 blocos
+                     ("Encontrou o vídeo → Cole o link" / "KLANGO processa → Baixe → Edite e adapte")
+                     que quebram em 2 linhas no mobile (flex-col) e voltam a ficar em 1 linha só no
+                     desktop (sm:flex-row, seta central reaparece só a partir do sm: via
+                     "hidden sm:inline-block") -- mesmo texto/setas de antes, só reagrupado pra nunca
+                     estourar a largura no mobile. -->
+                <p class="mt-3 text-xs text-slate-500 flex flex-col sm:flex-row items-center gap-y-1.5 sm:gap-x-1.5 justify-center sm:justify-start">
+                    <span class="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+                        <span>Encontrou o vídeo</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                        <span>Cole o link</span>
+                    </span>
+                    <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 hidden sm:inline-block"></i>
+                    <span class="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
+                        <span>KLANGO processa</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                        <span>Baixe</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                        <span>Edite e adapte</span>
+                    </span>
                 </p>
 
                 <!-- 04/10/2026: ilustração da mascote (static/mascote-video.jpg) -- pedido do
@@ -167,23 +184,35 @@
 
                 <div class="max-w-3xl mt-2 mx-auto sm:mx-0 text-left">
                     <div class="bg-card p-2.5 rounded-2xl hero-glow">
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <div class="relative flex-1">
+                        <!-- 06/10/2026 (rodada FINAL de conversão, correção PRIORITÁRIA pedida pelo
+                             CÉREBRO): ordem visual/semântica passa a ser link -> nome -> botão (antes
+                             o campo de nome vinha depois do botão). Resolvido só com CSS order, sem
+                             mover nenhum id/name/evento/validação/tracking do lugar: no mobile
+                             (flex-col) os 3 itens empilham na ordem order-1/2/3 = link, nome, botão;
+                             no desktop (sm:flex-row + flex-wrap) o campo de nome usa sm:basis-full
+                             (ocupa a linha inteira) e sm:order-3, então ele "estoura" pra uma segunda
+                             linha e o botão volta a ficar do lado do link (sm:order-2) -- o desktop
+                             fica visualmente IDÊNTICO a antes desta mudança. -->
+                        <div class="flex flex-col sm:flex-row sm:flex-wrap gap-2">
+                            <div class="relative flex-1 order-1">
                                 <i id="urlPlatformIcon" class="fa-solid fa-link absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none transition-colors"></i>
                                 <input id="url" type="url" autocomplete="off" oninput="atualizarIconePlataforma()"
                                     placeholder="Cole o link do vídeo…"
                                     class="input-focus w-full h-14 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm transition-all focus:border-[#19D3AE]/70">
                             </div>
+
+                            <div class="order-2 sm:order-3 sm:w-full sm:basis-full">
+                                <input id="filenameInput" type="text" maxlength="80" autocomplete="off"
+                                    placeholder="Nome do arquivo (opcional) — ex.: video_oferta"
+                                    class="input-focus w-full h-11 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-xs transition-all focus:border-[#19D3AE]/70">
+                            </div>
+
                             <button id="downloadButton" onclick="baixarVideo()"
-                                class="h-14 px-7 sm:px-9 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] flex items-center justify-center gap-2 text-sm whitespace-nowrap shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
+                                class="order-3 sm:order-2 h-14 px-7 sm:px-9 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] flex items-center justify-center gap-2 text-sm whitespace-nowrap shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
                                 <i class="fa-solid fa-download"></i>
                                 Processar e baixar
                             </button>
                         </div>
-
-                        <input id="filenameInput" type="text" maxlength="80" autocomplete="off"
-                            placeholder="Nome do arquivo (opcional) — ex.: video_oferta"
-                            class="input-focus w-full h-11 mt-2 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-xs transition-all focus:border-[#19D3AE]/70">
 
                         <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
                     </div>
@@ -3144,7 +3173,7 @@
                     '<p class="font-bold mb-1">Limite diário atingido.</p>' +
                     '<p class="text-xs mb-3">Faça upgrade para continuar processando hoje.</p>' +
                     '<button onclick="document.getElementById(\'areaAssinatura\').scrollIntoView({behavior:\'smooth\'})" ' +
-                    'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver meu acesso</button>',
+                    'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Meu acesso</button>',
                     "warning"
                 );
                 return;
