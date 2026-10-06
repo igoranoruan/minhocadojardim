@@ -130,7 +130,19 @@
                 </h1>
 
                 <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
-                    Baixe vídeos do TikTok, Instagram Reels, YouTube Shorts e Pinterest. Prepare uma nova versão em MP4 e leve o arquivo para editar e adaptar.
+                    Encontrou um vídeo que quer reaproveitar? Cole o link abaixo e receba um novo arquivo, pronto para editar e adaptar, sem os metadados da origem.
+                </p>
+
+                <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): tira de passos discreta,
+                     só texto + setas (sem ícones/cards novos), pra dar o mapa mental completo do
+                     fluxo em 1 linha, sem precisar rolar até "Como Funciona". Quebra em 2 linhas
+                     sozinha no mobile (flex-wrap), nunca estoura a largura. -->
+                <p class="mt-3 text-xs text-slate-500 flex flex-wrap items-center gap-x-1.5 gap-y-1 justify-center sm:justify-start">
+                    <span>Encontrou o vídeo</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                    <span>Cole o link</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                    <span>KLANGO processa</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                    <span>Baixe</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
+                    <span>Edite/adapte</span>
                 </p>
 
                 <!-- 04/10/2026: ilustração da mascote (static/mascote-video.jpg) -- pedido do
@@ -204,6 +216,17 @@
                 </div>
             </section>
 
+            <!-- PARA QUEM É (06/10/2026, rodada de conversão, aprovação do CÉREBRO): faixa pequena,
+                 só uma linha de eyebrow + headline + 3 tags -- nada de ícones/cards/grade nova, pra
+                 não virar "seção de personas". Fica no funil frio (SECOES_FUNIL_FRIO_IDS, ver JS):
+                 some pra quem já tem plano pago, igual Antes/Depois e as outras seções de quem ainda
+                 não comprou. -->
+            <section id="paraQuemE" class="py-8 border-t section-line text-center">
+                <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-2">PARA QUEM É</p>
+                <h2 class="text-lg sm:text-xl font-extrabold text-white">Feito para quem cria e reaproveita conteúdo.</h2>
+                <p class="mt-2 text-xs sm:text-sm text-slate-500">Criadores · Afiliados · Quem reaproveita vídeo com frequência</p>
+            </section>
+
             <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
                  CÉREBRO): vira seção própria (título/subtítulo/divisória, igual às outras seções),
                  em vez de ficar dependurada dentro do Hero sem identificação nenhuma. Conteúdo dos
@@ -215,7 +238,7 @@
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja a diferença <span class="text-[#19D3AE]">na prática.</span></h2>
-                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Seu vídeo limpo, pronto para editar e adaptar, sem informações desnecessárias.</p>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Mesmo vídeo, pronto para seguir no seu fluxo de edição — sem os dados que vieram da plataforma de origem.</p>
                 </div>
 
                 <div class="max-w-md mx-auto mt-10 space-y-0">
@@ -238,6 +261,11 @@
                             <i class="fa-solid fa-file text-slate-600 text-xs"></i>
                             <div class="text-xs font-mono text-slate-400 truncate">video_oferta.mp4</div>
                         </div>
+                        <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): rótulo só pra
+                             deixar explícito que a grade abaixo é PROVA/detalhe técnico, não o
+                             argumento principal do card -- nenhum campo foi removido, só ganhou
+                             esse cabeçalho acima (mesmo em "Depois", card seguinte). -->
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Detalhes técnicos</div>
                         <div class="rounded-xl bg-[#050810] border border-slate-800 p-3 space-y-2 text-[11px]">
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-slate-300">iPhone 13</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-slate-300">São Paulo, Brasil</span></div>
@@ -275,6 +303,7 @@
                             <i class="fa-solid fa-file text-[#19D3AE] text-xs"></i>
                             <div class="text-xs font-mono text-slate-200 truncate">meu_video.mp4</div>
                         </div>
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Detalhes técnicos</div>
                         <div class="rounded-xl bg-[#050810] border border-[#19D3AE]/20 p-3 space-y-2 text-[11px]">
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
@@ -312,7 +341,7 @@
             <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
-                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Adicione seus vídeos, processe em lote e baixe os arquivos prontos.</p>
+                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Pare de repetir o processo vídeo por vídeo: adicione todos de uma vez e baixe tudo pronto pra editar.</p>
                     <p class="mt-2 text-xs text-slate-500">Disponível nos planos pagos.</p>
                 </div>
 
@@ -440,7 +469,12 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 35 gerações no período</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('weekly')" class="mt-7 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Acesso semanal</button>
+                        <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): frase de
+                             posicionamento -- ajuda a responder "qual desses planos é pra mim" sem
+                             o visitante ter que comparar número por número. Não é feature nova, só
+                             copy; nenhum dado de services/plans.py foi tocado. -->
+                        <p class="mt-4 text-xs text-slate-500">Para quem precisa processar alguns vídeos por semana.</p>
+                        <button onclick="abrirModalPagamento('weekly')" class="mt-3 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Acesso semanal</button>
                     </div>
 
                     <div class="bg-card rounded-3xl p-7 flex flex-col border-[#19D3AE]/70 ring-1 ring-[#19D3AE]/50 relative glow-hover">
@@ -454,7 +488,8 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 300 gerações no período</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('monthly')" class="mt-7 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Acesso mensal</button>
+                        <p class="mt-4 text-xs text-slate-500">Para quem cria e reaproveita conteúdo com frequência.</p>
+                        <button onclick="abrirModalPagamento('monthly')" class="mt-3 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Acesso mensal</button>
                     </div>
 
                     <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 4 da revisão de UX): âmbar trocado
@@ -474,7 +509,8 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Limpeza de metadados e hash</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Até 450 gerações no período</li>
                         </ul>
-                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-7 w-full h-12 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-sm transition-colors">Acesso VIP Batch</button>
+                        <p class="mt-4 text-xs text-slate-500">Para quem trabalha com volume e quer processar vários vídeos de uma vez.</p>
+                        <button onclick="abrirModalPagamento('vip_batch')" class="mt-3 w-full h-12 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-sm transition-colors">Acesso VIP Batch</button>
                     </div>
                 </div>
                 <!-- 02/10/2026 (3ª rodada): "Nomes personalizados por vídeo" (2ª rodada) foi
@@ -689,11 +725,18 @@
                  recurso existe). Nome/corpo são renderizados só via textContent (nunca innerHTML
                  com o texto do usuário) -- são as primeiras strings de visitante publicadas no
                  site, então nunca confiadas como HTML. -->
+            <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): título/subtítulo viram
+                 dinâmicos (ver carregarComentarios) -- enquanto NENHUM comentário real aprovado
+                 existir, mostram "Primeiros usuários do KLANGO.MP4" (honesto, sem fingir
+                 comunidade que ainda não existe); assim que houver pelo menos 1, voltam sozinhos
+                 pro texto normal "O que quem usa está dizendo.". Texto inicial no HTML já é o
+                 estado vazio (mesma cautela de "statsProcessados": nunca mostrar por um instante
+                 um estado que pode não ser verdade; JS corrige assim que a resposta real chega). -->
             <section id="comentarios" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">O que quem usa está dizendo.</h2>
-                    <p class="mt-3 text-sm text-slate-400 leading-relaxed">Comentários de quem já processa vídeo com o KLANGO.MP4.</p>
+                    <h2 id="comentariosTitulo" class="text-2xl sm:text-3xl font-extrabold text-white">Primeiros usuários do KLANGO.MP4</h2>
+                    <p id="comentariosSubtitulo" class="mt-3 text-sm text-slate-400 leading-relaxed">Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.</p>
                 </div>
 
                 <div class="max-w-2xl mx-auto mt-10">
@@ -736,6 +779,15 @@
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que é o KLANGO.MP4?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Baixa vídeos de plataformas compatíveis e prepara uma nova versão em MP4, com limpeza de metadados, para você levar ao seu editor e adaptar.</div>
                         </details>
+                        <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): nova -- a
+                             objeção mais óbvia de quem chega na página ("por que pagar se existe
+                             grátis?") não tinha resposta em lugar nenhum. Sem atacar concorrente,
+                             sem prometer bypass/detecção -- só o que o produto realmente entrega a
+                             mais (preparo do arquivo, lote nos planos pagos). -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que usar o KLANGO.MP4 em vez de uma ferramenta gratuita?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Ferramentas gratuitas geralmente resolvem apenas o download. O KLANGO.MP4 foi feito para quem quer ir além: preparar um novo arquivo, pronto para editar e adaptar, sem os metadados da origem. Nos planos pagos, você também pode processar vários vídeos em lote, sem precisar repetir o processo um por um.</div>
+                        </details>
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
@@ -775,6 +827,17 @@
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que acontece com o vídeo depois de pronto?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O link de download fica disponível por um tempo limitado depois do processamento. Depois desse período, o link deixa de funcionar e você precisa gerar o vídeo novamente para baixá-lo.</div>
+                        </details>
+                        <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): nova -- dúvida
+                             de confiança sobre o arquivo em si (a pergunta acima só fala do LINK).
+                             Resposta reflete exatamente o comportamento real (services/usage.py::
+                             get_downloadable_generation bloqueia acesso após RESULT_TTL_SECONDS):
+                             NÃO afirma exclusão física automática do servidor, porque essa parte
+                             ainda não existe (ver config.py, comentário da Etapa 8B.4) -- só o
+                             acesso é bloqueado. Nenhuma promessa que o backend não cumpre hoje. -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 armazena meus vídeos?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo processado fica disponível para download por tempo limitado, por até 30 minutos depois de pronto. Após esse período, o acesso ao download expira e será necessário processar o vídeo novamente para baixá-lo. Não usamos seu vídeo para nenhum outro fim.</div>
                         </details>
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento é único ou tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
@@ -1524,6 +1587,25 @@
         return card;
     }
 
+    // 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): título/subtítulo da seção alternam
+    // entre o estado "primeiros usuários" (nenhum comentário real aprovado ainda) e o normal (pelo
+    // menos 1) -- nunca os dois ao mesmo tempo, nunca lista vazia com o título que promete
+    // depoimentos. GET /api/comments já só devolve approved=true/is_example=false (ver
+    // services/comments.py::list_comments), então "comentarios.length" aqui é exatamente a
+    // contagem que decide qual texto mostrar.
+    function atualizarCabecalhoComentarios(temComentarios) {
+        const titulo = document.getElementById("comentariosTitulo");
+        const subtitulo = document.getElementById("comentariosSubtitulo");
+        if (!titulo || !subtitulo) return;
+        if (temComentarios) {
+            titulo.textContent = "O que quem usa está dizendo.";
+            subtitulo.textContent = "Comentários de quem já processa vídeo com o KLANGO.MP4.";
+        } else {
+            titulo.textContent = "Primeiros usuários do KLANGO.MP4";
+            subtitulo.textContent = "Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.";
+        }
+    }
+
     async function carregarComentarios() {
         const lista = document.getElementById("comentariosLista");
         const vazio = document.getElementById("comentariosVazio");
@@ -1535,6 +1617,7 @@
             lista.innerHTML = "";
             comentarios.forEach((c) => lista.appendChild(escreverComentarioNoDOM(c)));
             if (vazio) vazio.classList.toggle("hidden", comentarios.length > 0);
+            atualizarCabecalhoComentarios(comentarios.length > 0);
         } catch (erro) {
             console.warn("[COMENTARIOS] não foi possível carregar /api/comments:", erro);
         }
@@ -1665,6 +1748,13 @@
 
     // ---- Acesso: e-mail -> código -> sessão (cookie HttpOnly gerenciado pelo servidor) ----
     let sessaoEmail = null;
+
+    // 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): código do plano atual, só pra
+    // decidir QUAL mensagem mostrar quando a cota estoura (exibirErroDaGeracao) -- nunca usado pra
+    // decidir se a geração é permitida (isso continua 100% no backend). "null" = ainda não
+    // confirmado pelo backend (estado inicial, antes de /api/me/status responder) ou visitante Free
+    // sem sessão; tratado como Free em exibirErroDaGeracao.
+    let planoAtualCode = null;
 
     async function chamarAuth(caminho, opcoes = {}) {
         const res = await fetch(`/api/auth/${caminho}`, {
@@ -1999,7 +2089,7 @@
     // atualizarVisibilidadeSecaoPlanos). Os links "Como funciona"/"Perguntas frequentes" do
     // header/rodapé continuam funcionando mesmo com a seção escondida -- ver
     // mostrarSecaoSeEscondida() logo abaixo.
-    const SECOES_FUNIL_FRIO_IDS = ["antesDepois", "comoFunciona", "faq", "loteNaPratica"];
+    const SECOES_FUNIL_FRIO_IDS = ["paraQuemE", "antesDepois", "comoFunciona", "faq", "loteNaPratica"];
 
     function atualizarVisibilidadeFunilFrio(planoCode) {
         const planoPago = !!sessaoEmail && !!planoCode && planoCode !== "free" && !!PLANOS[planoCode];
@@ -2025,6 +2115,8 @@
         if (!plano || typeof plano.name !== "string" || !plano.name) {
             return;
         }
+
+        planoAtualCode = plano.code || null;
 
         const uso = data.usage;
         let texto = plano.name;
@@ -3027,8 +3119,37 @@
         status.appendChild(wrapper);
     }
 
+    // 06/10/2026 (rodada de conversão, correção OBRIGATÓRIA, aprovação do CÉREBRO): antes, TODO
+    // plano pago que estourava a cota via "Escolha um plano" rolando até #secaoPlanos -- mas essa
+    // vitrine fica escondida pra qualquer plano pago (atualizarVisibilidadeSecaoPlanos), então o
+    // botão não levava a lugar nenhum pra Semanal/Mensal/VIP. Agora usa planoAtualCode (setado em
+    // atualizarStatusContaVisual, mesma fonte de verdade de sempre) pra decidir:
+    // - Free: comportamento de sempre, intacto (#secaoPlanos está visível pra Free).
+    // - Semanal/Mensal: CTA passa a rolar até #areaAssinatura (card "Meu acesso", onde os botões
+    //   reais de "Fazer upgrade para X" já existem -- nenhum sistema novo, só o alvo do scroll).
+    // - VIP Batch: sem CTA -- já é o teto, não existe upgrade possível. Só avisa quando renova
+    //   (mesma regra real de sempre: period "day", reseta no dia seguinte).
     function exibirErroDaGeracao(dados) {
         if (dados.code === "quota_exceeded") {
+            if (planoAtualCode === "vip_batch") {
+                setStatusBox(
+                    '<p class="font-bold">Você atingiu seu limite diário do VIP Batch.</p>' +
+                    '<p class="text-xs mt-1">Ele renova amanhã.</p>',
+                    "warning"
+                );
+                return;
+            }
+            if (planoAtualCode === "weekly" || planoAtualCode === "monthly") {
+                setStatusBox(
+                    '<p class="font-bold mb-1">Limite diário atingido.</p>' +
+                    '<p class="text-xs mb-3">Faça upgrade para continuar processando hoje.</p>' +
+                    '<button onclick="document.getElementById(\'areaAssinatura\').scrollIntoView({behavior:\'smooth\'})" ' +
+                    'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver meu acesso</button>',
+                    "warning"
+                );
+                return;
+            }
+            // Free (planoAtualCode === "free"/null): comportamento original, intacto.
             setStatusBox(
                 '<p class="font-bold mb-1">Limite de gerações atingido.</p>' +
                 '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
