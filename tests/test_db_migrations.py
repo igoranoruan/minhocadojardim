@@ -36,8 +36,11 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
             # 0006 (anonymous_identities), Free anônimo -- aprovação do CÉREBRO; 0007
             # (Generation.output_extension), suporte a imagem -- aprovação do CÉREBRO; 0008
             # (referrals/users.referral_code/referred_by_user_id), programa de indicação --
-            # aprovação do CÉREBRO.
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0008"
+            # aprovação do CÉREBRO; 0009/0010 (área de comentários públicos + revisão de copy dos
+            # exemplos) e 0011 (comments.approved, moderação prévia -- aprovação do CÉREBRO,
+            # 06/10/2026) -- teste atualizado nesta data só pra acompanhar o head real, sem
+            # nenhuma mudança de regra de negócio.
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0011"
     finally:
         eng.dispose()
 
