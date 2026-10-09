@@ -11,9 +11,20 @@ como nome de exibição.
 A função NÃO rejeita nomes repetidos dentro do mesmo lote. Dois ou mais
 itens podem ter o mesmo `filename`; a deduplicação necessária para evitar
 sobrescrita é responsabilidade da montagem do ZIP.
+
+08/10/2026 (pedido do CÉREBRO): antes, um acento (ã, ç, é etc.) no nome
+fazia a geração inteira falhar com "Nome de arquivo contém caracteres não
+permitidos.", obrigando o usuário a digitar tudo de novo sem acento. Agora
+acentos/diacríticos são removidos automaticamente ANTES da validação
+("não" vira "nao", "ação" vira "acao") -- ver _remover_acentos(). Só
+depois disso a regra de segurança (path traversal, caracteres fora do
+conjunto seguro) continua rodando exatamente como antes; um emoji, um
+caractere de outro alfabeto (ex.: chinês) ou qualquer coisa que não seja
+letra latina acentuada ainda é rejeitado, nunca descartado em silêncio.
 """
 
 import re
+import unicodedata
 
 
 # Letras/dígitos ASCII, espaço, ponto, hífen e underscore.
@@ -28,20 +39,38 @@ class InvalidFilenameError(Exception):
     """
 
 
+def _remover_acentos(texto: str) -> str:
+    """Remove acentos/diacríticos via decomposição Unicode (NFKD): separa a letra base de cada
+    sinal (ex.: "ã" -> "a" + til) e descarta só os sinais (unicodedata.combining != 0) -- "não"
+    vira "nao", "ação" vira "acao", "Olá" vira "Ola". Letras sem diacrítico e qualquer caractere
+    fora do alfabeto latino (emoji, ideograma etc.) passam intactos por aqui; continuam sendo
+    barrados depois por _SAFE_NAME_RE, exatamente como antes desta mudança."""
+    decomposto = unicodedata.normalize("NFKD", texto)
+    return "".join(c for c in decomposto if not unicodedata.combining(c))
+
+
 def sanitize_batch_filename(raw: str | None) -> str | None:
     """Valida e normaliza um filename opcional.
 
     `None` ou string vazia após normalização retornam `None`.
 
+    Acentos/diacríticos são removidos automaticamente (ver _remover_acentos) antes de qualquer
+    validação -- um nome com acento nunca mais é rejeitado só por causa do acento.
+
     Nomes válidos recebem `.mp4` quando necessário.
 
-    Tentativas de path traversal ou caracteres fora do conjunto permitido
-    levantam `InvalidFilenameError`.
+    Tentativas de path traversal ou caracteres fora do conjunto permitido (depois de acentos já
+    removidos) levantam `InvalidFilenameError`.
     """
     if raw is None:
         return None
 
     nome = raw.strip()
+
+    if not nome:
+        return None
+
+    nome = _remover_acentos(nome)
 
     if not nome:
         return None

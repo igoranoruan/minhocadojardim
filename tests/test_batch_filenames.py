@@ -46,6 +46,34 @@ def test_nome_composto_so_de_pontos_e_rejeitado():
         sanitize_batch_filename(".")
 
 
+# ============================================================================ acentos (08/10/2026 -- pedido do CÉREBRO)
+def test_acento_e_removido_em_vez_de_rejeitado():
+
+    assert sanitize_batch_filename("não") == "nao.mp4"
+    assert sanitize_batch_filename("ação final") == "acao final.mp4"
+    assert sanitize_batch_filename("Café com Pão.mp4") == "Cafe com Pao.mp4"
+
+
+def test_acento_e_removido_preservando_espacos_nas_pontas_ja_trimados():
+
+    assert sanitize_batch_filename("  Olá Mundo  ") == "Ola Mundo.mp4"
+
+
+def test_nome_so_de_letras_acentuadas_vira_as_letras_base():
+    """"ç" -> "c", "ã" -> "a": mesmo um nome inteiramente feito de letras com diacrítico vira
+    texto normal, seguindo o fluxo de sempre (extensão .mp4 adicionada ao final)."""
+
+    assert sanitize_batch_filename("çã") == "ca.mp4"
+
+
+def test_acento_nao_abre_brecha_para_path_traversal_ou_caractere_perigoso():
+    """Confirma que remover acento não desativa nenhuma validação existente: um nome com acento
+    E caractere perigoso continua sendo rejeitado normalmente."""
+
+    with pytest.raises(InvalidFilenameError):
+        sanitize_batch_filename("relatório;rm -rf.mp4")
+
+
 @pytest.mark.parametrize(
     "nome",
     [
