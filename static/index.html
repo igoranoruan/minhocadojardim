@@ -659,6 +659,71 @@
                 </div>
             </section>
 
+            <!-- IMPORTAR PASTA DO PINTEREST (Etapa 4, 10/10/2026 -- aprovação do CÉREBRO): seção
+                 NOVA e ISOLADA -- nenhuma linha de HTML/CSS/JS já existente foi alterada para criar
+                 esta seção (só leitura das constantes PLANOS/LIMITE_LOTE_POR_PLANO, e CHAMADAS a
+                 funções já existentes: criarCampoLote/atualizarContagemLote/processarLote/
+                 mostrarSecaoSeEscondida/escapeHtml -- nenhuma delas foi editada).
+
+                 Lista os pins de uma pasta pública do Pinterest (POST /api/pinterest/board-list,
+                 Etapa 3) e deixa escolher quais baixar -- o download em si NÃO é um caminho novo:
+                 ao clicar em "Baixar selecionados", os pins marcados são inseridos no MESMO
+                 #batchItems do processamento em lote logo acima, e o MESMO processarLote() já
+                 existente (e já testado) é quem efetivamente baixa/processa/gera o ZIP.
+
+                 Diferente de #secaoBatch (escondida inteira pro Free), esta seção é SEMPRE visível
+                 pra quem tem sessão de verdade -- pedido do CÉREBRO: Free vê um estado BLOQUEADO
+                 com CTA de upgrade, nunca escondido. Busca seu PRÓPRIO status (/api/me/status) de
+                 forma independente (carregarStatusPinterestBoard, chamada no DOMContentLoaded
+                 PRÓPRIO desta seção, nunca no bootstrap antigo) -- não depende de nenhuma variável
+                 mutável das funções antigas (planoAtualCode/limiteLoteAtual), só do que a PRÓPRIA
+                 resposta trouxer, sempre fresca no momento em que a seção é usada. -->
+            <section id="secaoPinterestBoard" class="hidden py-10">
+                <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
+                    <div class="flex items-start gap-3 mb-5">
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-brands fa-pinterest"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-extrabold text-white">Importar pasta do Pinterest</h2>
+                            <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha quais vídeos baixar em lote.</p>
+                        </div>
+                    </div>
+
+                    <!-- Estado BLOQUEADO (Free / sem sessão / plano sem lote) -- CTA de upgrade,
+                         NUNCA escondido (pedido explícito do CÉREBRO, item 4 da Etapa 4). -->
+                    <div id="pinterestBoardBloqueado" class="hidden rounded-2xl border border-slate-700 bg-[#060b14] p-5 text-center">
+                        <i class="fa-solid fa-lock text-slate-500 text-xl mb-2"></i>
+                        <p class="text-sm text-slate-300 font-bold">Importar pasta do Pinterest é um recurso dos planos com lote.</p>
+                        <p class="text-xs text-slate-500 mt-1">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
+                        <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-xs transition-colors">Ver planos</a>
+                    </div>
+
+                    <!-- Estado DESBLOQUEADO (planos com lote: Semanal/Mensal/VIP Batch). -->
+                    <div id="pinterestBoardLiberado" class="hidden">
+                        <div class="flex flex-col sm:flex-row gap-2 mb-3">
+                            <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.pinterest.com/usuario/pasta/" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-violet-500 focus:outline-none">
+                            <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Listar pasta</button>
+                        </div>
+
+                        <div id="pinterestBoardStatus" class="text-sm"></div>
+
+                        <div id="pinterestBoardResultado" class="hidden mt-4">
+                            <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                                <span id="pinterestBoardSelecionados" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">0 selecionados</span>
+                                <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[11px] font-bold uppercase tracking-wider text-violet-400 hover:text-violet-300">Selecionar os primeiros</button>
+                            </div>
+
+                            <div id="pinterestBoardGrade" class="grid grid-cols-3 gap-2"></div>
+
+                            <p id="pinterestBoardMaisAviso" class="hidden text-xs text-slate-500 mt-3">Esta pasta tem mais pins do que o mostrado aqui — só os primeiros itens aparecem.</p>
+
+                            <div id="pinterestBoardCotaTexto" class="text-xs text-slate-400 mt-4"></div>
+
+                            <button id="pinterestBoardBaixarBtn" type="button" onclick="baixarSelecaoPinterest()" disabled class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-download mr-1"></i>Baixar selecionados</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- HISTÓRICO (03/10/2026, aprovação do CÉREBRO, Etapa 7 da revisão de UX): "meus
                  últimos downloads". Só para quem tem login de verdade -- GET /api/me/generations
                  exige sessão autenticada (routes/me.py::get_generations_history), diferente de
@@ -3671,6 +3736,302 @@
             modal.classList.add("hidden");
             modal.classList.remove("flex");
         }
+
+    // ============================================================================================
+    // IMPORTAR PASTA DO PINTEREST (Etapa 4, 10/10/2026 -- aprovação do CÉREBRO)
+    //
+    // Bloco TOTALMENTE NOVO e ISOLADO: nenhuma linha acima deste comentário foi alterada para
+    // criar esta funcionalidade. As únicas ligações com o código já existente são:
+    // - LEITURA (nunca escrita) das constantes PLANOS e LIMITE_LOTE_POR_PLANO (já existentes) --
+    //   pra nunca duplicar o mapeamento de planos em outro lugar.
+    // - CHAMADAS (nunca edição) às funções já existentes criarCampoLote, atualizarContagemLote,
+    //   processarLote, mostrarSecaoSeEscondida e escapeHtml -- reaproveitando o MESMO motor de
+    //   download em lote já testado, em vez de duplicá-lo.
+    //
+    // Busca seu PRÓPRIO status (/api/me/status) de forma independente, sempre fresco no momento em
+    // que a seção é usada -- nunca lê planoAtualCode/limiteLoteAtual (variáveis mutáveis de outra
+    // função), só o que a própria resposta trouxer.
+    // ============================================================================================
+
+    let pinterestBoardPinsAtuais = [];      // [{pin_id, pin_url, thumbnail_url, has_video}, ...]
+    let pinterestBoardSelecaoIds = new Set(); // pin_id dos selecionados
+    let pinterestBoardLimiteSelecao = 0;      // menor valor entre max_batch_size do plano e gerações restantes hoje
+    let pinterestBoardMaxBatchSize = 0;       // só max_batch_size do plano (sem o corte por gerações restantes) --
+                                               // usado em baixarSelecaoPinterest() como rede de segurança contra uma
+                                               // corrida de carregamento com a busca de status ANTIGA e independente
+                                               // (carregarStatusConta(), que define limiteLoteAtual): na prática
+                                               // impossível de acontecer de verdade (o usuário ainda precisa colar o
+                                               // link, listar e escolher pins antes de chegar aqui), mas custa zero
+                                               // garantir -- nunca MENOR que o que processarLote() já exigiria.
+
+    async function carregarStatusPinterestBoard() {
+        const secao = document.getElementById("secaoPinterestBoard");
+        const bloqueado = document.getElementById("pinterestBoardBloqueado");
+        const liberado = document.getElementById("pinterestBoardLiberado");
+        if (!secao || !bloqueado || !liberado) return;
+
+        let data;
+        try {
+            const resp = await fetch("/api/me/status", { credentials: "include" });
+            if (!resp.ok) throw new Error("status indisponível");
+            data = await resp.json();
+        } catch (_erro) {
+            // Sem conseguir saber o plano, não mostra a seção (mesmo espírito defensivo de
+            // atualizarStatusContaVisual: nunca afirma um estado que o backend não confirmou).
+            secao.classList.add("hidden");
+            return;
+        }
+
+        const planoCode = data && data.plan && data.plan.code;
+        const maxBatchSize = (planoCode && LIMITE_LOTE_POR_PLANO[planoCode]) || 0;
+
+        secao.classList.remove("hidden");
+
+        if (maxBatchSize <= 0) {
+            bloqueado.classList.remove("hidden");
+            liberado.classList.add("hidden");
+            return;
+        }
+
+        bloqueado.classList.add("hidden");
+        liberado.classList.remove("hidden");
+
+        // Ajuste 1 do CÉREBRO (Etapa 4): a trava da seleção é o MENOR valor entre o limite de
+        // lote do plano e as gerações restantes de HOJE (uso.remaining, quando period === "day" --
+        // os 3 planos com lote são todos diários, nunca semanais -- ver services/plans.py).
+        const uso = data.usage;
+        const restantesHoje = (uso && uso.period === "day" && typeof uso.remaining === "number")
+            ? uso.remaining
+            : maxBatchSize; // sem dado de uso (nunca deveria acontecer pra quem tem lote): não trava artificialmente
+        pinterestBoardMaxBatchSize = maxBatchSize;
+        pinterestBoardLimiteSelecao = Math.min(maxBatchSize, restantesHoje);
+
+        atualizarCotaPinterestBoard();
+    }
+
+    function atualizarCotaPinterestBoard() {
+        const cotaEl = document.getElementById("pinterestBoardCotaTexto");
+        const baixarBtn = document.getElementById("pinterestBoardBaixarBtn");
+        const selecionarPrimeirosBtn = document.getElementById("pinterestBoardSelecionarPrimeirosBtn");
+        if (!cotaEl || !baixarBtn) return;
+
+        // Ajuste 3 do CÉREBRO (Etapa 4): o texto do botão já mostra o número X do limite atual
+        // ("até Y gerações restantes" muda esse X -- nunca fica "Selecionar os primeiros" genérico).
+        if (selecionarPrimeirosBtn) {
+            selecionarPrimeirosBtn.textContent = `Selecionar os primeiros ${Math.max(0, pinterestBoardLimiteSelecao)}`;
+        }
+
+        const selecionados = pinterestBoardSelecaoIds.size;
+
+        if (pinterestBoardLimiteSelecao <= 0) {
+            cotaEl.textContent = "Você atingiu seu limite diário de gerações. Volte amanhã para importar desta pasta.";
+            cotaEl.className = "text-xs text-amber-400 mt-4";
+            baixarBtn.disabled = true;
+            return;
+        }
+
+        cotaEl.className = "text-xs text-slate-400 mt-4";
+        cotaEl.textContent = selecionados > 0
+            ? `Isso vai usar ${selecionados} gerações. Você tem ${pinterestBoardLimiteSelecao} restantes hoje.`
+            : `Você tem ${pinterestBoardLimiteSelecao} gerações restantes hoje para usar nesta importação.`;
+        baixarBtn.disabled = selecionados === 0;
+    }
+
+    function atualizarContagemSelecaoPinterest() {
+        const el = document.getElementById("pinterestBoardSelecionados");
+        if (el) {
+            const n = pinterestBoardSelecaoIds.size;
+            el.textContent = `${n} selecionado${n === 1 ? "" : "s"}`;
+        }
+        atualizarCotaPinterestBoard();
+    }
+
+    function alternarSelecaoPinterestPin(pinId) {
+        const pin = pinterestBoardPinsAtuais.find((p) => p.pin_id === pinId);
+        if (!pin || !pin.has_video) return; // só vídeo é selecionável -- pedido original do CÉREBRO
+
+        if (pinterestBoardSelecaoIds.has(pinId)) {
+            pinterestBoardSelecaoIds.delete(pinId);
+        } else {
+            if (pinterestBoardSelecaoIds.size >= pinterestBoardLimiteSelecao) return; // trava real, não só visual
+            pinterestBoardSelecaoIds.add(pinId);
+        }
+        renderizarGradePinterestBoard();
+    }
+
+    // Ajuste 3 do CÉREBRO (Etapa 4): botão "Selecionar os primeiros X" -- seleciona, na ordem em
+    // que os pins vieram da pasta, só os que têm vídeo, até pinterestBoardLimiteSelecao.
+    function selecionarPrimeirosPinterest() {
+        pinterestBoardSelecaoIds = new Set();
+        for (const pin of pinterestBoardPinsAtuais) {
+            if (pinterestBoardSelecaoIds.size >= pinterestBoardLimiteSelecao) break;
+            if (pin.has_video) pinterestBoardSelecaoIds.add(pin.pin_id);
+        }
+        renderizarGradePinterestBoard();
+    }
+
+    // Ajuste 2 do CÉREBRO (Etapa 4): grade de 3 colunas no mobile (classe grid-cols-3 já no HTML),
+    // lazy-load das miniaturas (loading="lazy") e área de toque grande (todo o quadrado do pin é
+    // clicável, não só uma caixinha pequena de checkbox).
+    function renderizarGradePinterestBoard() {
+        const grade = document.getElementById("pinterestBoardGrade");
+        if (!grade) return;
+        grade.innerHTML = "";
+
+        pinterestBoardPinsAtuais.forEach((pin) => {
+            const selecionado = pinterestBoardSelecaoIds.has(pin.pin_id);
+            const quadrado = document.createElement("button");
+            quadrado.type = "button";
+            quadrado.title = pin.has_video ? "" : "Este pin não tem vídeo";
+            quadrado.className = "relative aspect-square rounded-xl overflow-hidden border-2 transition-colors " +
+                (!pin.has_video
+                    ? "border-slate-800 opacity-40 cursor-not-allowed"
+                    : selecionado
+                        ? "border-violet-400"
+                        : "border-slate-700 hover:border-violet-500/60");
+            if (pin.has_video) quadrado.onclick = () => alternarSelecaoPinterestPin(pin.pin_id);
+
+            if (pin.thumbnail_url) {
+                const img = document.createElement("img");
+                img.src = pin.thumbnail_url;
+                img.loading = "lazy";
+                img.alt = "";
+                img.className = "w-full h-full object-cover";
+                quadrado.appendChild(img);
+            } else {
+                const semImagem = document.createElement("div");
+                semImagem.className = "w-full h-full bg-slate-900 flex items-center justify-center text-slate-700";
+                semImagem.innerHTML = '<i class="fa-solid fa-image"></i>';
+                quadrado.appendChild(semImagem);
+            }
+
+            if (!pin.has_video) {
+                const selo = document.createElement("div");
+                selo.className = "absolute bottom-1 left-1 right-1 text-center text-[9px] font-bold uppercase tracking-wider bg-slate-950/80 text-slate-400 rounded px-1 py-0.5";
+                selo.textContent = "Sem vídeo";
+                quadrado.appendChild(selo);
+            } else if (selecionado) {
+                const check = document.createElement("div");
+                check.className = "absolute top-1 right-1 w-6 h-6 rounded-full bg-violet-400 text-slate-950 flex items-center justify-center text-xs";
+                check.innerHTML = '<i class="fa-solid fa-check"></i>';
+                quadrado.appendChild(check);
+            }
+
+            grade.appendChild(quadrado);
+        });
+
+        atualizarContagemSelecaoPinterest();
+    }
+
+    async function listarPastaPinterest() {
+        const urlInput = document.getElementById("pinterestBoardUrl");
+        const listarBtn = document.getElementById("pinterestBoardListarBtn");
+        const status = document.getElementById("pinterestBoardStatus");
+        const resultado = document.getElementById("pinterestBoardResultado");
+        if (!urlInput || !listarBtn || !status || !resultado) return;
+
+        const url = urlInput.value.trim();
+        if (!url) {
+            status.textContent = "Cole o link de uma pasta do Pinterest.";
+            status.className = "text-sm text-red-400";
+            return;
+        }
+
+        listarBtn.disabled = true;
+        listarBtn.classList.add("opacity-60", "cursor-not-allowed");
+        status.className = "text-sm text-slate-400";
+        status.textContent = "Carregando pasta...";
+        resultado.classList.add("hidden");
+
+        try {
+            const resp = await fetch("/api/pinterest/board-list", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url }),
+            });
+            const dados = await resp.json().catch(() => ({}));
+
+            if (!resp.ok) {
+                // Ajuste 4 do CÉREBRO (Etapa 4): a mensagem genérica de falha (o backend nunca
+                // distingue "não existe" de "privada" de "sem pins", de propósito -- mesma
+                // filosofia dos 404 genéricos já usados no resto do produto; services.pinterest_
+                // board.list_board SEMPRE embrulha qualquer falha de acesso à pasta no MESMO
+                // PinterestBoardError genérico, então aqui a distinção confiável é o STATUS HTTP
+                // (429/403 têm classe própria; qualquer outro código é "não deu pra acessar a
+                // pasta"), nunca o campo "code" da resposta) ganha aqui o passo a passo de pasta
+                // secreta, que é a causa mais comum na prática.
+                if (resp.status === 429) {
+                    status.textContent = dados.detail || "Muitas listagens em pouco tempo. Tente novamente mais tarde.";
+                } else if (resp.status === 403) {
+                    status.textContent = dados.detail || "Importar pasta do Pinterest é um recurso dos planos com lote.";
+                } else {
+                    status.textContent = (dados.detail || "Não foi possível acessar esta pasta do Pinterest agora.") +
+                        " Verifique se o link está certo e se a pasta não está marcada como secreta. " +
+                        "No Pinterest: Editar pasta → desmarque \"Manter pasta secreta\".";
+                }
+                status.className = "text-sm text-red-400";
+                return;
+            }
+
+            pinterestBoardPinsAtuais = Array.isArray(dados.pins) ? dados.pins : [];
+            pinterestBoardSelecaoIds = new Set();
+
+            if (!pinterestBoardPinsAtuais.length) {
+                status.textContent = "Nenhum pin encontrado nesta pasta.";
+                status.className = "text-sm text-red-400";
+                return;
+            }
+
+            status.textContent = "";
+            resultado.classList.remove("hidden");
+            document.getElementById("pinterestBoardMaisAviso").classList.toggle("hidden", !dados.has_more);
+            renderizarGradePinterestBoard();
+        } catch (_erro) {
+            status.textContent = "Não foi possível conectar agora. Tente novamente.";
+            status.className = "text-sm text-red-400";
+        } finally {
+            listarBtn.disabled = false;
+            listarBtn.classList.remove("opacity-60", "cursor-not-allowed");
+        }
+    }
+
+    // Ao confirmar a seleção: os pins marcados viram linhas do MESMO #batchItems do processamento
+    // em lote (criarCampoLote, já existente), e o MESMO processarLote() já existente/testado é
+    // quem efetivamente baixa -- nenhuma rota ou motor de download novo (reaproveita
+    // /api/download-batch, exatamente como aprovado na Etapa 3/4).
+    function baixarSelecaoPinterest() {
+        const selecionados = pinterestBoardPinsAtuais.filter((p) => pinterestBoardSelecaoIds.has(p.pin_id));
+        if (!selecionados.length) return;
+
+        const container = document.getElementById("batchItems");
+        const secaoBatch = document.getElementById("secaoBatch");
+        if (!container || !secaoBatch) return;
+
+        container.innerHTML = "";
+        selecionados.forEach((pin, indice) => {
+            const campo = criarCampoLote(indice + 1);
+            const urlField = campo.querySelector(".batch-url");
+            if (urlField) urlField.value = pin.pin_url;
+            container.appendChild(campo);
+        });
+
+        // Rede de segurança (ver comentário na declaração de pinterestBoardMaxBatchSize acima):
+        // garante que limiteLoteAtual (lido por processarLote(), variável antiga e independente)
+        // já reflita pelo menos o que esta seção já sabe ser verdade -- nunca reduz, só eleva se
+        // a busca de status antiga ainda não tiver chegado.
+        limiteLoteAtual = Math.max(limiteLoteAtual, pinterestBoardMaxBatchSize);
+
+        atualizarContagemLote();
+
+        secaoBatch.classList.remove("hidden");
+        secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
+        processarLote();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        carregarStatusPinterestBoard();
+    });
     </script>
 </body>
 </html>
