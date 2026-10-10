@@ -127,6 +127,10 @@ def test_opcoes_nunca_usam_extractor_generico():
     # Confirmado em produção (10/10/2026): sem isso, um pin só de imagem derruba a extração da
     # pasta INTEIRA ("No video formats found!") em vez de simplesmente entrar com formats=[].
     assert options["ignore_no_formats_error"] is True
+    # Confirmado em produção (10/10/2026, pasta real de 71 pins): sem isso, um pin tipo GIF/arquivo
+    # externo embutido também derruba a pasta INTEIRA ("No suitable extractor found for URL ...").
+    # Com True, só aquele pin específico é descartado -- os outros continuam na lista normalmente.
+    assert options["ignoreerrors"] is True
 
 
 def test_resolve_link_curto_pin_it_antes_de_chamar_o_yt_dlp():

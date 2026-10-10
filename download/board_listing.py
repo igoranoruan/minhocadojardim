@@ -98,6 +98,19 @@ def _build_options() -> dict:
         # primeiro pin sem vídeo, em vez de devolver esse pin com formats=[] (ver docstring do
         # módulo). Com True, vira só um aviso interno do yt-dlp -- nunca aparece para o usuário.
         "ignore_no_formats_error": True,
+        # Confirmado em produção (10/10/2026, pasta real de 71 pins do Igor): existe pelo menos
+        # um TIPO de pin que nem `ignore_no_formats_error` acima cobre -- um pin cujo conteúdo é
+        # um GIF/arquivo externo embutido (`domain` != "uploaded by user" + `embed.src`, dentro de
+        # `_extract_video` no código-fonte do yt-dlp). Esse tipo faz o yt-dlp tentar resolver a URL
+        # do arquivo embutido com um extractor GENÉRICO -- e como `allowed_extractors` acima é
+        # restrito a só "PinterestCollection" (de propósito, nunca o extractor genérico, mesmo
+        # princípio de download/service.py), isso falha com "No suitable extractor found for URL
+        # ...", e SEM essa opção aqui também abortava a listagem da PASTA INTEIRA, não só aquele
+        # pin. Com `ignoreerrors: True`, só ESSE pin problemático é descartado da lista (não conta
+        # cota, não aparece na grade) -- os outros pins da pasta continuam normalmente. Reproduzido
+        # e confirmado com o yt-dlp real (mesmo clone usado nas confirmações anteriores): sem a
+        # opção, o erro exato de produção se repete; com ela, só o pin problemático some da lista.
+        "ignoreerrors": True,
     }
 
 
