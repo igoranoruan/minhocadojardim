@@ -684,7 +684,7 @@
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-brands fa-pinterest"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Importar pasta do Pinterest</h2>
-                            <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha quais vídeos baixar em lote.</p>
+                            <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha quais fotos e vídeos baixar em lote.</p>
                         </div>
                     </div>
 
@@ -3847,8 +3847,12 @@
     }
 
     function alternarSelecaoPinterestPin(pinId) {
+        // Aprovado pelo CÉREBRO (10/10/2026): foto também é selecionável, mesma regra do vídeo --
+        // 1 item = 1 geração, sem distinção. O backend já sabe baixar a imagem de um pin sem vídeo
+        // (fallback de imagem em produção desde 03/10/2026, mesmo motor usado pelo lote), então
+        // aqui é só liberar a seleção -- nenhuma mudança de backend necessária.
         const pin = pinterestBoardPinsAtuais.find((p) => p.pin_id === pinId);
-        if (!pin || !pin.has_video) return; // só vídeo é selecionável -- pedido original do CÉREBRO
+        if (!pin) return;
 
         if (pinterestBoardSelecaoIds.has(pinId)) {
             pinterestBoardSelecaoIds.delete(pinId);
@@ -3859,13 +3863,14 @@
         renderizarGradePinterestBoard();
     }
 
-    // Ajuste 3 do CÉREBRO (Etapa 4): botão "Selecionar os primeiros X" -- seleciona, na ordem em
-    // que os pins vieram da pasta, só os que têm vídeo, até pinterestBoardLimiteSelecao.
+    // Ajuste 3 do CÉREBRO (Etapa 4; 10/10/2026 -- passou a incluir foto também, mesma regra do
+    // vídeo): botão "Selecionar os primeiros X" -- seleciona, na ordem em que os pins vieram da
+    // pasta, até pinterestBoardLimiteSelecao, foto ou vídeo.
     function selecionarPrimeirosPinterest() {
         pinterestBoardSelecaoIds = new Set();
         for (const pin of pinterestBoardPinsAtuais) {
             if (pinterestBoardSelecaoIds.size >= pinterestBoardLimiteSelecao) break;
-            if (pin.has_video) pinterestBoardSelecaoIds.add(pin.pin_id);
+            pinterestBoardSelecaoIds.add(pin.pin_id);
         }
         renderizarGradePinterestBoard();
     }
@@ -3882,14 +3887,9 @@
             const selecionado = pinterestBoardSelecaoIds.has(pin.pin_id);
             const quadrado = document.createElement("button");
             quadrado.type = "button";
-            quadrado.title = pin.has_video ? "" : "Este pin não tem vídeo";
             quadrado.className = "relative aspect-square rounded-xl overflow-hidden border-2 transition-colors " +
-                (!pin.has_video
-                    ? "border-slate-800 opacity-40 cursor-not-allowed"
-                    : selecionado
-                        ? "border-violet-400"
-                        : "border-slate-700 hover:border-violet-500/60");
-            if (pin.has_video) quadrado.onclick = () => alternarSelecaoPinterestPin(pin.pin_id);
+                (selecionado ? "border-violet-400" : "border-slate-700 hover:border-violet-500/60");
+            quadrado.onclick = () => alternarSelecaoPinterestPin(pin.pin_id);
 
             if (pin.thumbnail_url) {
                 const img = document.createElement("img");
@@ -3905,12 +3905,13 @@
                 quadrado.appendChild(semImagem);
             }
 
-            if (!pin.has_video) {
-                const selo = document.createElement("div");
-                selo.className = "absolute bottom-1 left-1 right-1 text-center text-[9px] font-bold uppercase tracking-wider bg-slate-950/80 text-slate-400 rounded px-1 py-0.5";
-                selo.textContent = "Sem vídeo";
-                quadrado.appendChild(selo);
-            } else if (selecionado) {
+            // Selo indicativo (não bloqueia mais seleção -- só identifica o tipo do pin).
+            const selo = document.createElement("div");
+            selo.className = "absolute bottom-1 left-1 right-1 text-center text-[9px] font-bold uppercase tracking-wider bg-slate-950/80 text-slate-400 rounded px-1 py-0.5";
+            selo.textContent = pin.has_video ? "Vídeo" : "Foto";
+            quadrado.appendChild(selo);
+
+            if (selecionado) {
                 const check = document.createElement("div");
                 check.className = "absolute top-1 right-1 w-6 h-6 rounded-full bg-violet-400 text-slate-950 flex items-center justify-center text-xs";
                 check.innerHTML = '<i class="fa-solid fa-check"></i>';
