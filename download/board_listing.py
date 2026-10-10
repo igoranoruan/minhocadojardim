@@ -22,15 +22,23 @@ SOBRE FILTRAR SÓ VÍDEO (pedido do CÉREBRO: a pasta tem foto E vídeo misturad
 vídeo): a leitura do código-fonte do extractor (`PinterestCollectionIE._real_extract`, 10/10/2026)
 mostra que CADA pin da pasta passa por `_extract_video(item)` (o MESMO método que extrai um pin
 individual) antes de entrar na lista -- ou seja, a pasta inteira já vem com `formats`/`duration`
-preenchidos por pin, igual a uma extração individual. Um pin SÓ DE IMAGEM entra com `formats: []`
-e `duration: None` (a checagem de vídeo do próprio Pinterest não achou stream nenhum); um pin COM
-vídeo entra com `formats` não-vazio. `_has_video` abaixo usa exatamente essa distinção. Isso
-TAMBÉM significa que `extract_flat` (que pediria pra pular esse trabalho) não muda nada aqui --
-o extractor de pasta do Pinterest já faz a extração completa de cada pin por dentro, então não
-setamos essa opção (setar não economizaria nada; não setar não piora nada -- ver módulo
-download/ytdlp_downloader.py para o uso real de extract_flat, que aqui simplesmente não se aplica).
-Ainda assim, PENDENTE DE CONFIRMAÇÃO EMPÍRICA (mesmo pedido acima) -- é leitura de código-fonte,
-não um teste rodado contra uma pasta de verdade.
+preenchidos por pin, igual a uma extração individual. `extract_flat` não muda nada aqui pelo mesmo
+motivo (o extractor de pasta já faz a extração completa por dentro -- ver download/ytdlp_downloader.py
+para o uso real de extract_flat, que aqui não se aplica).
+
+CONFIRMADO EMPIRICAMENTE (10/10/2026, pastas reais do Igor, via logs do Render em produção) --
+e isso corrigiu uma suposição errada que eu tinha antes de ter acesso a uma pasta real: um pin SÓ
+DE IMAGEM não entra silenciosamente com `formats: []`. O próprio yt-dlp (`YoutubeDL.process_video_result`,
+em `YoutubeDL.py`) trata "sem nenhum formato de vídeo" como ERRO ("No video formats found!") por
+padrão, porque o caso comum do yt-dlp é "isso deveria ser sempre um vídeo". Sem tratamento, isso
+aborta a EXTRAÇÃO DA PASTA INTEIRA assim que bate no primeiro pin que é só foto -- foi exatamente
+o que aconteceu nos testes reais do Igor (toda pasta com foto E vídeo misturados falhava).
+A correção é a opção `ignore_no_formats_error: True` em `_build_options()` abaixo: com ela, o
+yt-dlp rebaixa isso para um aviso (não gera exceção) e devolve o pin normalmente com
+`formats: []`/`duration: None` -- exatamente o que `_has_video` abaixo precisa para marcar o pin
+como "sem vídeo" em vez de derrubar a pasta toda. Confirmado lendo `raise_no_formats` em
+`extractor/common.py` e `YoutubeDL.raise_no_formats` em `YoutubeDL.py` do código-fonte real do
+yt-dlp (mesmo clone usado para confirmar o nome do extractor).
 """
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -85,6 +93,11 @@ def _build_options() -> dict:
         "nocheckcertificate": False,
         "socket_timeout": BOARD_LIST_TIMEOUT_SECONDS,
         "cookiefile": None,
+        # Confirmado em produção (10/10/2026, pastas reais): sem isso, um pin só de imagem faz o
+        # yt-dlp levantar "No video formats found!" e aborta a listagem DA PASTA INTEIRA no
+        # primeiro pin sem vídeo, em vez de devolver esse pin com formats=[] (ver docstring do
+        # módulo). Com True, vira só um aviso interno do yt-dlp -- nunca aparece para o usuário.
+        "ignore_no_formats_error": True,
     }
 
 
