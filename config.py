@@ -85,6 +85,30 @@ MAX_IMAGE_SIZE_BYTES = 25 * 1024 * 1024
 # evita um .zip anormalmente grande sem impedir nenhum carrossel real.
 MAX_CAROUSEL_IMAGES = 10
 MAX_IMAGE_ZIP_SIZE_BYTES = 60 * 1024 * 1024
+
+# Listagem de pasta/coleção do Pinterest (10/10/2026 -- aprovação do CÉREBRO, Etapa 3). Só LISTA
+# os pins da pasta (não baixa vídeo nenhum aqui) -- ver download/board_listing.py.
+# BOARD_LIST_TIMEOUT_SECONDS é BEM menor que DOWNLOAD_TIMEOUT_SECONDS de propósito: listar uma
+# pasta é uma chamada de metadados, nunca deveria demorar perto do que um download de vídeo demora;
+# um timeout curto falha rápido em vez de segurar o único worker do processo (ver render.yaml/
+# Dockerfile: 1 instância, 1 processo uvicorn, sem --workers) numa pasta lenta/grande.
+BOARD_LIST_TIMEOUT_SECONDS = 20
+# Teto de pins devolvidos por chamada (preço de performance -- yt-dlp processa CADA pin da pasta
+# antes de devolver, ver docstring de download/board_listing.py -- e de UX, uma grade com milhares
+# de miniaturas não seria usável de qualquer forma). Pedido do CÉREBRO (10/10/2026): "listagem
+# separada do download, com limite de itens listados e paginação se a pasta for grande" -- este é
+# o limite; paginação de verdade (passar de uma "página" de pins para a próxima) fica para uma
+# etapa futura, quando a tela do frontend existir.
+BOARD_LIST_MAX_ITEMS = 100
+# Rate limit por usuário (pedido do CÉREBRO, 10/10/2026): protege o IP COMPARTILHADO do Render de
+# um bloqueio do Pinterest por excesso de chamadas -- mesmo risco já materializado antes com o
+# YouTube (ver download/ytdlp_downloader.py::_apply_youtube_proxy). Em memória (não precisa de
+# tabela/migration nova): a aplicação roda em UMA única instância Render com UM único processo
+# uvicorn (sem --workers, confirmado via Render MCP em 10/10/2026) -- não há múltiplos processos
+# para coordenar, então um contador em memória do próprio processo já é correto e sobrevive
+# exatamente enquanto o processo vive (reinicia com um novo deploy, o que é aceitável para este
+# limite de proteção, diferente da cota de geração/plano, que é financeira e por isso vive no banco).
+BOARD_LIST_RATE_LIMIT_PER_HOUR = 10
 # URL do PO Token Provider (BGUTIL), se o companion estiver rodando no ambiente. Vazio = o
 # yt-dlp tenta o YouTube só com o player client mweb, sem PO Token (funciona para parte dos
 # vídeos; especificação do produto: PO Token NAO garante todos os vídeos).

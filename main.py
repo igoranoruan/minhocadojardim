@@ -25,11 +25,12 @@ from payments.errors import (
     PlanNotPurchasableError,
     UnknownPlanError,
 )
-from routes import auth, comments, generations, health, me, payments, stats, webhooks
+from routes import auth, comments, generations, health, me, payments, pinterest, stats, webhooks
 from services.auth import AuthError
 from services.comments import CommentError, CommentNotFoundError
 from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
+from services.pinterest_board import PinterestBoardError
 from services.referrals import AlreadyClaimedError, InvalidReferralCodeError, SelfReferralError
 from services.usage import BatchNotFoundError, GenerationDownloadNotFoundError, QuotaExceededError, UsageError
 from utils.anon_cookie import AnonymousCookieMiddleware
@@ -116,6 +117,10 @@ app.add_exception_handler(AlreadyClaimedError, me.already_claimed_handler)
 app.add_exception_handler(CommentError, comments.comment_error_handler)
 app.add_exception_handler(CommentNotFoundError, comments.comment_not_found_handler)
 
+# Listagem de pasta do Pinterest (Etapa 3, 10/10/2026): tradução para HTTP, sem nenhuma regra de
+# negócio aqui -- ver services/pinterest_board.py e routes/pinterest.py.
+app.add_exception_handler(PinterestBoardError, pinterest.pinterest_board_error_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -125,6 +130,7 @@ app.include_router(me.router)
 app.include_router(stats.router)
 app.include_router(webhooks.router)
 app.include_router(comments.router)
+app.include_router(pinterest.router)
 
 
 @app.get("/", include_in_schema=False)
