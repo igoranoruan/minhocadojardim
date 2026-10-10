@@ -14,6 +14,7 @@ from download.board_listing import (
     BoardNotFoundError,
     _best_thumbnail,
     _has_video,
+    _pin_title,
     list_board_pins,
 )
 from download.errors import DownloadTimeoutError, UnsupportedPlatformError
@@ -26,11 +27,14 @@ def _dns_publico(monkeypatch):
     monkeypatch.setattr(socket, "getaddrinfo", lambda host, port: [(2, 1, 6, "", ("93.184.216.34", 0))])
 
 
-def _entry(pin_id="123", webpage_url=None, formats=None, thumbnails=None):
+def _entry(pin_id="123", webpage_url=None, formats=None, thumbnails=None, title="não usado neste teste"):
     """`formats`/`thumbnails` usam `is None` (nunca `or`) -- um `[]` EXPLÍCITO precisa permanecer
-    vazio (ex.: simular um pin sem miniatura), não virar o valor padrão por engano."""
+    vazio (ex.: simular um pin sem miniatura), não virar o valor padrão por engano. `title` tem
+    um default não-vazio só para não afetar os testes que não são sobre título; passe
+    `title=None`/`title=""` explicitamente nos testes QUE SÃO sobre título."""
     return {
         "id": pin_id,
+        "title": title,
         "webpage_url": webpage_url or f"https://www.pinterest.com/pin/{pin_id}/",
         "formats": formats if formats is not None else [],
         "thumbnails": (
@@ -61,6 +65,31 @@ def test_best_thumbnail_usa_fallback_sem_lista():
     assert _best_thumbnail(entrada) == "unica.jpg"
 
 
+# ------------------------------------------------------------------ _pin_title
+def test_pin_title_devolve_o_titulo_quando_presente():
+    assert _pin_title(_entry(title="Receita de bolo de cenoura")) == "Receita de bolo de cenoura"
+
+
+def test_pin_title_remove_espacos_nas_pontas():
+    assert _pin_title(_entry(title="  Receita de bolo  ")) == "Receita de bolo"
+
+
+def test_pin_title_none_quando_campo_ausente():
+    entrada = _entry()
+    del entrada["title"]
+    assert _pin_title(entrada) is None
+
+
+def test_pin_title_none_quando_string_vazia_ou_so_espaco():
+    assert _pin_title(_entry(title="")) is None
+    assert _pin_title(_entry(title="   ")) is None
+
+
+def test_pin_title_none_quando_campo_nao_e_string():
+    # yt-dlp pode devolver None explicitamente para `title` em alguns casos -- nunca estoura.
+    assert _pin_title(_entry(title=None)) is None
+
+
 # ------------------------------------------------------------------ list_board_pins
 def test_url_que_nao_e_pinterest_e_rejeitada():
     with pytest.raises(UnsupportedPlatformError):
@@ -70,8 +99,8 @@ def test_url_que_nao_e_pinterest_e_rejeitada():
 def test_lista_pins_misturando_foto_e_video_com_flag_correta():
     info = {
         "entries": [
-            _entry(pin_id="1", formats=[{"url": "v.mp4"}]),  # tem vídeo
-            _entry(pin_id="2", formats=[]),  # só foto
+            _entry(pin_id="1", formats=[{"url": "v.mp4"}], title="Vídeo com título"),  # tem vídeo
+            _entry(pin_id="2", formats=[], title=""),  # só foto, sem título
         ]
     }
     with patch("download.board_listing._extract_with_timeout", return_value=info):
@@ -79,6 +108,8 @@ def test_lista_pins_misturando_foto_e_video_com_flag_correta():
 
     assert [p.pin_id for p in listing.pins] == ["1", "2"]
     assert listing.pins[0].has_video is True
+    assert listing.pins[0].title == "Vídeo com título"
+    assert listing.pins[1].title is None
     assert listing.pins[1].has_video is False
     assert listing.has_more is False
 

@@ -62,6 +62,9 @@ class BoardPinOut(BaseModel):
     pin_url: str
     thumbnail_url: str | None
     has_video: bool
+    title: str | None  # 10/10/2026: texto livre do Pinterest, NUNCA sanitizado aqui -- só
+    # sugestão de nome de arquivo para o frontend; a sanitização real acontece em
+    # services/batch_filenames.py quando o nome de fato vira filename de uma geração.
 
 
 class BoardListOut(BaseModel):
@@ -83,6 +86,7 @@ def board_list(
                 pin_url=pin.pin_url,
                 thumbnail_url=pin.thumbnail_url,
                 has_video=pin.has_video,
+                title=pin.title,
             )
             for pin in listing.pins
         ],

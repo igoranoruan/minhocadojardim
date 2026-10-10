@@ -74,6 +74,10 @@ class BoardPin:
     pin_url: str
     thumbnail_url: str | None
     has_video: bool
+    title: str | None  # 10/10/2026 (pedido do CÉREBRO): usado pelo frontend como sugestão de
+    # nome de arquivo no lote -- NUNCA sanitizado aqui (texto livre do Pinterest, pode ter
+    # qualquer caractere); a sanitização de verdade acontece em services/batch_filenames.py,
+    # no momento em que o nome realmente vira filename de uma geração.
 
 
 @dataclass(frozen=True)
@@ -124,6 +128,18 @@ def _best_thumbnail(entry: dict) -> str | None:
 def _has_video(entry: dict) -> bool:
     """Ver docstring do módulo: `formats` não-vazio é o sinal de que o pin tem vídeo."""
     return bool(entry.get("formats"))
+
+
+def _pin_title(entry: dict) -> str | None:
+    """`_extract_video` do yt-dlp já devolve `title` (campo `title`/`grid_title` do próprio
+    Pinterest -- ver _extract_video no código-fonte do yt-dlp) para TODO pin, foto ou vídeo; só
+    não é repassado adiante até aqui. Pinterest às vezes devolve string vazia (pin sem legenda)
+    em vez de omitir o campo -- `None` nesse caso, igual a não ter título nenhum."""
+    titulo = entry.get("title")
+    if not isinstance(titulo, str):
+        return None
+    titulo = titulo.strip()
+    return titulo or None
 
 
 def _run_extract(url: str, options: dict) -> dict:
@@ -186,6 +202,7 @@ def list_board_pins(url: str) -> BoardListing:
             pin_url=entry.get("webpage_url") or validated.url,
             thumbnail_url=_best_thumbnail(entry),
             has_video=_has_video(entry),
+            title=_pin_title(entry),
         )
         for entry in entries
         if entry.get("id") is not None

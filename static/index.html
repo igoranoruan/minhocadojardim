@@ -3753,7 +3753,7 @@
     // função), só o que a própria resposta trouxer.
     // ============================================================================================
 
-    let pinterestBoardPinsAtuais = [];      // [{pin_id, pin_url, thumbnail_url, has_video}, ...]
+    let pinterestBoardPinsAtuais = [];      // [{pin_id, pin_url, thumbnail_url, has_video, title}, ...]
     let pinterestBoardSelecaoIds = new Set(); // pin_id dos selecionados
     let pinterestBoardLimiteSelecao = 0;      // menor valor entre max_batch_size do plano e gerações restantes hoje
     let pinterestBoardMaxBatchSize = 0;       // só max_batch_size do plano (sem o corte por gerações restantes) --
@@ -3997,6 +3997,24 @@
         }
     }
 
+    // Pedido do CÉREBRO (10/10/2026): sugerir o título do pin como nome do arquivo em vez de
+    // deixar em branco (o que hoje cai no padrão "klango-{aleatório}"). O backend
+    // (services/batch_filenames.py) só VALIDA o nome (rejeita o lote inteiro se algum caractere
+    // não for letra/número/espaço/ponto/hífen/underscore) -- ele NÃO remove caractere nenhum, só
+    // recusa. Título de pin do Pinterest costuma ter emoji, vírgula, aspas etc., então a limpeza
+    // de verdade (trocar o que não é seguro por espaço, colapsar espaços, cortar em 80 -- mesmo
+    // limite do campo "Nome do arquivo" digitado à mão) precisa acontecer AQUI, antes de mandar,
+    // senão um único pin com título "ruim" quebraria o lote inteiro, não só aquele item. Se não
+    // sobrar nada depois de limpar (título só com emoji, só em outro alfabeto, etc.) ou não houver
+    // título, devolve "" -- o campo fica em branco e o nome aleatório de sempre assume, igual ao
+    // comportamento já existente quando o campo "Nome do arquivo" não é preenchido à mão.
+    function sugerirNomeArquivoPinterest(titulo) {
+        if (!titulo) return "";
+        const semAcento = titulo.normalize("NFKD").replace(/[̀-ͯ]/g, "");
+        const seguro = semAcento.replace(/[^A-Za-z0-9 ._-]/g, " ").replace(/\s+/g, " ").trim();
+        return seguro.slice(0, 80);
+    }
+
     // Ao confirmar a seleção: os pins marcados viram linhas do MESMO #batchItems do processamento
     // em lote (criarCampoLote, já existente), e o MESMO processarLote() já existente/testado é
     // quem efetivamente baixa -- nenhuma rota ou motor de download novo (reaproveita
@@ -4014,6 +4032,8 @@
             const campo = criarCampoLote(indice + 1);
             const urlField = campo.querySelector(".batch-url");
             if (urlField) urlField.value = pin.pin_url;
+            const nameField = campo.querySelector(".batch-name");
+            if (nameField) nameField.value = sugerirNomeArquivoPinterest(pin.title);
             container.appendChild(campo);
         });
 

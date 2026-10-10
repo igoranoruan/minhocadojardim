@@ -29,7 +29,10 @@ def _limpar_rate_limit():
 
 def _listing(n=1):
     return BoardListing(
-        pins=[BoardPin(pin_id=str(i), pin_url=f"https://x/{i}", thumbnail_url=None, has_video=True) for i in range(n)],
+        pins=[
+            BoardPin(pin_id=str(i), pin_url=f"https://x/{i}", thumbnail_url=None, has_video=True, title=None)
+            for i in range(n)
+        ],
         has_more=False,
     )
 
