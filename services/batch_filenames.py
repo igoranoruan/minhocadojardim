@@ -21,6 +21,13 @@ depois disso a regra de segurança (path traversal, caracteres fora do
 conjunto seguro) continua rodando exatamente como antes; um emoji, um
 caractere de outro alfabeto (ex.: chinês) ou qualquer coisa que não seja
 letra latina acentuada ainda é rejeitado, nunca descartado em silêncio.
+
+11/10/2026 (extração de áudio, autorização do CÉREBRO): `sanitize_batch_filename`/
+`sanitize_batch_filenames` ganharam um parâmetro OPCIONAL `suffix` (default ".mp4",
+IDÊNTICO ao comportamento de antes desta mudança para todo chamador existente, que
+nunca o informa) -- services/audio_flow.py chama com `suffix=".mp3"` para reaproveitar
+EXATAMENTE a mesma sanitização (acentos, path traversal, caracteres permitidos) em vez
+de duplicar a função só para trocar a extensão forçada.
 """
 
 import re
@@ -49,7 +56,7 @@ def _remover_acentos(texto: str) -> str:
     return "".join(c for c in decomposto if not unicodedata.combining(c))
 
 
-def sanitize_batch_filename(raw: str | None) -> str | None:
+def sanitize_batch_filename(raw: str | None, *, suffix: str = _MP4_SUFFIX) -> str | None:
     """Valida e normaliza um filename opcional.
 
     `None` ou string vazia após normalização retornam `None`.
@@ -57,7 +64,8 @@ def sanitize_batch_filename(raw: str | None) -> str | None:
     Acentos/diacríticos são removidos automaticamente (ver _remover_acentos) antes de qualquer
     validação -- um nome com acento nunca mais é rejeitado só por causa do acento.
 
-    Nomes válidos recebem `.mp4` quando necessário.
+    Nomes válidos recebem `suffix` quando necessário (default ".mp4" -- mesmo comportamento de
+    sempre; a extração de áudio passa `suffix=".mp3"`, ver docstring do módulo).
 
     Tentativas de path traversal ou caracteres fora do conjunto permitido (depois de acentos já
     removidos) levantam `InvalidFilenameError`.
@@ -83,18 +91,18 @@ def sanitize_batch_filename(raw: str | None) -> str | None:
             "Nome de arquivo contém caracteres não permitidos."
         )
 
-    if not nome.lower().endswith(_MP4_SUFFIX):
-        nome = f"{nome.rstrip('.')}{_MP4_SUFFIX}"
+    if not nome.lower().endswith(suffix):
+        nome = f"{nome.rstrip('.')}{suffix}"
 
-        # Nome formado apenas por pontos não pode virar somente ".mp4".
-        if nome == _MP4_SUFFIX:
+        # Nome formado apenas por pontos não pode virar somente o sufixo (ex.: ".mp4"/".mp3").
+        if nome == suffix:
             raise InvalidFilenameError("Nome de arquivo inválido.")
 
     return nome
 
 
 def sanitize_batch_filenames(
-    raw_filenames: list[str | None],
+    raw_filenames: list[str | None], *, suffix: str = _MP4_SUFFIX,
 ) -> list[str | None]:
     """Sanitiza todos os filenames na ordem recebida.
 
@@ -103,5 +111,8 @@ def sanitize_batch_filenames(
 
     A deduplicação para nomes repetidos no ZIP é feita posteriormente pela
     camada responsável pela criação do arquivo ZIP.
+
+    `suffix` (default ".mp4") é repassado para cada chamada de
+    `sanitize_batch_filename` -- ver aquela função.
     """
-    return [sanitize_batch_filename(raw) for raw in raw_filenames]
+    return [sanitize_batch_filename(raw, suffix=suffix) for raw in raw_filenames]

@@ -190,3 +190,15 @@ def test_result_storage_interface_e_minima():
 def test_result_storage_nunca_usa_shell_ou_os_system():
     fonte = RESULT_STORAGE_FILE.read_text(encoding="utf-8")
     assert "shell=True" not in fonte and "os.system(" not in fonte
+
+
+# ============================================================================ extensão "mp3" (11/10/2026, extração de áudio -- autorização do CÉREBRO)
+def test_save_e_resolve_path_aceitam_extensao_mp3(tmp_path):
+    """services/audio_flow.py salva o MP3 final com extension="mp3" -- mesmo padrão já usado para
+    "jpg" (imagem, Etapa 03/10/2026); sem isso, save() levantaria ValueError para todo áudio."""
+    origem = _arquivo(tmp_path, nome="origem.mp3", conteudo=b"bytes do mp3 processado")
+    chave = result_storage.save(origem, size_bytes=1, extension="mp3")
+    assert result_storage.exists(chave, extension="mp3") is True
+    caminho = result_storage.resolve_path(chave, extension="mp3")
+    assert caminho.name == f"{chave}.mp3"
+    assert caminho.read_bytes() == b"bytes do mp3 processado"

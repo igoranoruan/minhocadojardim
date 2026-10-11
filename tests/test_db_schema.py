@@ -20,6 +20,8 @@ EXPECTED_TABLES = {
     "anonymous_identities",  # Free anônimo -- aprovação do CÉREBRO, migration 0006
     "referrals",  # programa de indicação -- aprovação do CÉREBRO, migration 0008
     "comments",  # área de comentários públicos -- aprovação do CÉREBRO, migration 0009
+    "audio_batches",  # extração de áudio em lote -- autorização do CÉREBRO, migration 0012
+    "audio_extractions",  # extração de áudio -- autorização do CÉREBRO, migration 0012
 }
 
 

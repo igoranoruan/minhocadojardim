@@ -207,12 +207,40 @@
                                     class="input-focus w-full h-11 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-xs transition-all focus:border-[#19D3AE]/70">
                             </div>
 
-                            <button id="downloadButton" onclick="baixarVideo()"
+                            <button id="downloadButton" onclick="processarIndividual()"
                                 class="order-3 sm:order-2 h-14 px-7 sm:px-9 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] flex items-center justify-center gap-2 text-sm whitespace-nowrap shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
                                 <i class="fa-solid fa-download"></i>
                                 Processar e baixar
                             </button>
                         </div>
+
+                        <!-- EXTRAÇÃO DE ÁUDIO -- Parte A (individual), autorização do CÉREBRO, 11/10/2026.
+                             Bloco ISOLADO: só a alternância Vídeo (MP4) / Só áudio (MP3) -- nada da
+                             mecânica de "Processar e baixar" acima foi tocado (processarIndividual()
+                             chama baixarVideo() sem nenhuma mudança quando o formato é "video", que é
+                             o padrão inicial e continua sendo depois de qualquer F5). Free/deslogado
+                             SEMPRE vê os dois botões (pedido EXATO do CÉREBRO: nunca escondido) --
+                             escolher "Só áudio" sem plano pago mostra o cadeado (#audioBloqueadoIndividual)
+                             em vez de liberar a extração; mesmo padrão visual/texto/link de
+                             "Ver planos" já usado em #comentarioFormBloqueado. -->
+                        <div class="mt-3 flex items-center justify-center gap-2">
+                            <button type="button" id="formatoVideoBtn" onclick="selecionarFormatoIndividual('video')"
+                                class="px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#19D3AE]/15 text-[#19D3AE] border border-[#19D3AE]/40">
+                                <i class="fa-solid fa-film mr-1.5"></i>Vídeo (MP4)
+                            </button>
+                            <button type="button" id="formatoAudioBtn" onclick="selecionarFormatoIndividual('audio')"
+                                class="px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#060b14] text-slate-400 border border-slate-800 hover:text-slate-200">
+                                <i class="fa-solid fa-music mr-1.5"></i>Só áudio (MP3)
+                            </button>
+                        </div>
+
+                        <div id="audioBloqueadoIndividual" class="hidden mt-3 text-center">
+                            <i class="fa-solid fa-lock text-slate-600 mb-1"></i>
+                            <p class="text-xs text-slate-400">Extrair áudio é exclusivo dos planos pagos.</p>
+                            <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-1 text-xs font-bold text-[#19D3AE] hover:underline">Ver planos</a>
+                        </div>
+
+                        <p id="audioContadorIndividual" class="hidden mt-2 text-center text-xs text-slate-500"></p>
 
                         <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
                     </div>
@@ -1850,6 +1878,12 @@
     // sem sessão; tratado como Free em exibirErroDaGeracao.
     let planoAtualCode = null;
 
+    // EXTRAÇÃO DE ÁUDIO -- Parte A (individual), autorização do CÉREBRO, 11/10/2026. "video" é o
+    // padrão (nunca muda sozinho) -- só vira "audio" quando a própria pessoa clica no botão
+    // "Só áudio (MP3)" (selecionarFormatoIndividual, mais abaixo). Nenhum outro fluxo (vídeo
+    // avulso, lote, histórico) lê ou altera esta variável.
+    let formatoIndividual = "video";
+
     async function chamarAuth(caminho, opcoes = {}) {
         const res = await fetch(`/api/auth/${caminho}`, {
             credentials: "same-origin",
@@ -1999,6 +2033,10 @@
         esconderBatch();
         esconderHistorico();
         esconderIndicacao();
+        // Mesmo raciocínio de esconderBatch() acima, para o bloco de áudio individual: sessaoEmail
+        // já é null nesta linha, então o cadeado aparece JÁ NO LOGOUT, sem esperar a resposta
+        // assíncrona de carregarStatusConta() mais abaixo (que ainda confirmaria o mesmo resultado).
+        atualizarVisibilidadeAudioIndividual();
         // Sem sessão: nunca mostrar "Meu acesso" de um plano que não é mais confirmado -- volta a
         // mostrar a vitrine de Planos normalmente (mesmo comportamento de um visitante Free).
         atualizarVisibilidadeSecaoPlanos("free");
@@ -2261,6 +2299,11 @@
 
         atualizarVisibilidadeBatch(plano);
         atualizarVisibilidadeFormComentario(plano);
+        // Extração de áudio individual (autorização do CÉREBRO, 11/10/2026): se a pessoa já tinha
+        // escolhido "Só áudio" antes do login/troca de plano responder, o cadeado/contador
+        // precisam se atualizar agora que o plano REAL chegou -- nunca decidido por um estado
+        // antigo (mesma disciplina de atualizarVisibilidadeBatch acima).
+        atualizarVisibilidadeAudioIndividual();
     }
 
     // Mostra/esconde a seção de lote conforme o plano REAL confirmado por /api/me/status --
@@ -3296,6 +3339,215 @@
         }
         // Nunca stderr cru: dados.detail já vem sempre com a mensagem amigável do backend.
         setStatusBox(escapeHtml(dados.detail || "Não foi possível processar o vídeo."), "error");
+    }
+
+    // ============================================================================================
+    // EXTRAÇÃO DE ÁUDIO -- Parte A (individual), autorização do CÉREBRO, 11/10/2026.
+    //
+    // Bloco inteiramente NOVO e ISOLADO: nenhuma função do vídeo (baixarVideo/lerStreamDeGeracao/
+    // processarEventoSSE/exibir*DaGeracao acima) foi alterada. O botão "Processar e baixar" passou
+    // a chamar processarIndividual() (único ponto de contato com o bloco de vídeo), que decide
+    // entre baixarVideo() -- comportamento de sempre, formato "video" é o padrão -- e baixarAudio()
+    // só quando a pessoa escolheu "Só áudio (MP3)" no toggle (ver HTML do Hero).
+    //
+    // Diferente do vídeo, POST /api/audio/extract é SÍNCRONO (sem SSE) -- routes/audio.py decidiu
+    // assim de propósito (ver docstring daquele arquivo): o status HTTP real (403/429/409) já
+    // chega na resposta, sem precisar decodificar um evento "error" dentro de um stream. Por isso
+    // este bloco nunca usa lerStreamDeGeracao/processarEventoSSE -- só fetch + await response.json().
+    // ============================================================================================
+
+    // "Free/deslogado SEMPRE vê a opção, só não pode USAR sem assinar" (pedido EXATO do CÉREBRO) --
+    // mesma expressão booleana já usada em atualizarVisibilidadeFunilFrio, só extraída pra função
+    // nomeada (reaproveitada em 3 lugares abaixo). Nunca decide se a extração É PERMITIDA de
+    // verdade -- isso continua 100% no backend (services/audio_usage.py); aqui só decide o que
+    // MOSTRAR antes de qualquer chamada à API.
+    function usuarioTemPlanoPagoAtivo() {
+        return !!sessaoEmail && !!planoAtualCode && !!PLANOS[planoAtualCode];
+    }
+
+    function selecionarFormatoIndividual(formato) {
+        formatoIndividual = formato;
+
+        const ativo = "px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#19D3AE]/15 text-[#19D3AE] border border-[#19D3AE]/40";
+        const inativo = "px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#060b14] text-slate-400 border border-slate-800 hover:text-slate-200";
+        document.getElementById("formatoVideoBtn").className = formato === "video" ? ativo : inativo;
+        document.getElementById("formatoAudioBtn").className = formato === "audio" ? ativo : inativo;
+
+        const filenameInput = document.getElementById("filenameInput");
+        const downloadButton = document.getElementById("downloadButton");
+        if (formato === "audio") {
+            filenameInput.placeholder = "Nome do arquivo (opcional) — ex.: audio_oferta";
+            downloadButton.innerHTML = '<i class="fa-solid fa-music"></i> Extrair áudio';
+        } else {
+            filenameInput.placeholder = "Nome do arquivo (opcional) — ex.: video_oferta";
+            downloadButton.innerHTML = '<i class="fa-solid fa-download"></i> Processar e baixar';
+        }
+
+        atualizarVisibilidadeAudioIndividual();
+    }
+
+    // Decide cadeado vs. contador "X de 15 hoje" -- chamada toda vez que algo que afeta a decisão
+    // muda: o próprio toggle (selecionarFormatoIndividual), a confirmação real do plano
+    // (atualizarStatusContaVisual) e o logout (aplicarSemSessao). Nunca escondida/removida do DOM:
+    // só os blocos internos (#audioBloqueadoIndividual/#audioContadorIndividual) são
+    // mostrados/escondidos, e só quando formatoIndividual === "audio".
+    function atualizarVisibilidadeAudioIndividual() {
+        const bloqueado = document.getElementById("audioBloqueadoIndividual");
+        const contador = document.getElementById("audioContadorIndividual");
+        if (!bloqueado || !contador) return;
+
+        if (formatoIndividual !== "audio") {
+            bloqueado.classList.add("hidden");
+            contador.classList.add("hidden");
+            return;
+        }
+        if (!usuarioTemPlanoPagoAtivo()) {
+            bloqueado.classList.remove("hidden");
+            contador.classList.add("hidden");
+            return;
+        }
+        bloqueado.classList.add("hidden");
+        carregarContadorAudioIndividual();
+    }
+
+    // GET /api/audio/allowance (services/audio_usage.py::get_audio_allowance) -- única fonte do
+    // "X de 15 hoje"; nunca calculado aqui. Falha silenciosa (esconde o contador): o cadeado/
+    // contador são só UX, a extração em si é sempre validada de novo pelo backend em
+    // POST /api/audio/extract.
+    async function carregarContadorAudioIndividual() {
+        const contador = document.getElementById("audioContadorIndividual");
+        if (!contador) return;
+        try {
+            const res = await fetch("/api/audio/allowance", { credentials: "same-origin" });
+            if (!res.ok) {
+                contador.classList.add("hidden");
+                return;
+            }
+            const dados = await res.json();
+            contador.textContent = `${dados.used} de ${dados.limit} hoje`;
+            contador.classList.remove("hidden");
+        } catch (err) {
+            contador.classList.add("hidden");
+        }
+    }
+
+    // Único ponto de contato do botão "Processar e baixar" com o fluxo de vídeo já existente --
+    // baixarVideo() continua EXATAMENTE como antes (nenhuma linha alterada), chamada sem nenhuma
+    // mudança quando formatoIndividual é "video" (o padrão, antes e depois desta etapa).
+    function processarIndividual() {
+        if (formatoIndividual === "audio") {
+            baixarAudio();
+        } else {
+            baixarVideo();
+        }
+    }
+
+    async function baixarAudio() {
+        const urlInput = document.getElementById("url").value.trim();
+        const filenameInput = document.getElementById("filenameInput").value.trim() || null;
+        const button = document.getElementById("downloadButton");
+
+        if (!urlInput) {
+            setStatusBox("Insira uma URL para continuar.", "error");
+            return;
+        }
+
+        // Defesa: o toggle já deveria estar mostrando o cadeado pra quem não tem plano pago (ver
+        // atualizarVisibilidadeAudioIndividual) -- isto evita uma chamada à API inútil se, por
+        // qualquer motivo (sessão expirou entre o toggle e o clique, etc.), esta função for
+        // chamada mesmo assim. O backend recusaria igual (403) -- aqui só poupamos a ida e volta.
+        if (!usuarioTemPlanoPagoAtivo()) {
+            setStatusBox(
+                '<p class="font-bold mb-1">Extrair áudio é exclusivo dos planos pagos.</p>' +
+                '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
+                'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                "warning"
+            );
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add("opacity-60", "cursor-not-allowed");
+        exibirProgressoIndeterminado("Extraindo áudio...");
+
+        try {
+            const response = await fetch("/api/audio/extract", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ url: urlInput, filename: filenameInput })
+            });
+
+            let dados = {};
+            try { dados = await response.json(); } catch (err) { /* corpo pode não ser JSON */ }
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    setStatusBox("Faça login para continuar.", "error");
+                    abrirAcesso();
+                } else if (response.status === 403) {
+                    setStatusBox(
+                        '<p class="font-bold mb-1">' + escapeHtml(dados.detail || "Extrair áudio é exclusivo dos planos pagos.") + '</p>' +
+                        '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
+                        'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                        "warning"
+                    );
+                } else if (response.status === 429 || response.status === 409) {
+                    // 429 (limite diário) e 409 (já há uma extração em andamento) chegam com a
+                    // mensagem exata do backend em dados.detail -- nunca reescrita aqui.
+                    setStatusBox(escapeHtml(dados.detail || "Não foi possível extrair o áudio agora."), "warning");
+                } else {
+                    setStatusBox(escapeHtml(dados.detail || "Não foi possível extrair o áudio."), "error");
+                }
+                return;
+            }
+
+            exibirSucessoDaExtracaoAudio(dados);
+            carregarContadorAudioIndividual(); // "X de 15 hoje" reflete a extração que acabou de contar
+        } catch (err) {
+            setStatusBox("Erro ao se conectar ao servidor.", "error");
+        } finally {
+            button.disabled = false;
+            button.classList.remove("opacity-60", "cursor-not-allowed");
+        }
+    }
+
+    function exibirSucessoDaExtracaoAudio(dados) {
+        // Mesmo padrão visual de exibirSucessoDaGeracao (vídeo) -- só o endpoint de download e o
+        // texto mudam. GET /api/audio/{id}/download já decide ownership/expiração/existência do
+        // arquivo (services/audio_usage.py::get_downloadable_audio_extraction) -- nunca checado
+        // aqui, o link só aponta pra lá.
+        const link = document.createElement("a");
+        link.href = `/api/audio/${dados.extraction_id}/download`;
+        link.target = "_blank";
+        link.rel = "noopener";
+
+        const wrapper = document.createElement("div");
+        wrapper.className =
+            "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-xl flex flex-col items-center gap-3 animate-fade";
+
+        const message = document.createElement("span");
+        message.className =
+            "text-[#19D3AE] font-bold flex items-center gap-2 text-xs sm:text-sm";
+        message.innerHTML =
+            '<i class="fa-solid fa-circle-check"></i> Áudio extraído com sucesso.';
+
+        const downloadButton = document.createElement("button");
+        downloadButton.className =
+            "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
+        downloadButton.innerHTML =
+            '<i class="fa-solid fa-file-arrow-down"></i> Baixar MP3';
+
+        downloadButton.addEventListener("click", () => {
+            link.click();
+        });
+
+        wrapper.appendChild(message);
+        wrapper.appendChild(downloadButton);
+
+        const status = document.getElementById("status");
+        status.innerHTML = "";
+        status.appendChild(wrapper);
     }
 
     function atualizarContagemLote() {

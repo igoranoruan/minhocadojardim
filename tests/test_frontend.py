@@ -88,6 +88,41 @@ def test_campo_de_nome_de_arquivo_foi_removido():
     html = _html()
     assert 'id="filename"' not in html
     assert "Se deixar vazio, usamos um nome automático." not in html
+
+
+# ============================================================================ extração de áudio individual (Parte A, autorização do CÉREBRO, 11/10/2026)
+def test_toggle_de_formato_individual_existe_e_video_e_o_padrao():
+    """O botão "Processar e baixar" passa a chamar processarIndividual() (dispatcher novo) em vez
+    de baixarVideo() direto -- mas baixarVideo() continua existindo intacta (chamada pelo
+    dispatcher quando o formato é "video", o padrão)."""
+    html = _html()
+    assert 'onclick="processarIndividual()"' in html
+    assert "async function baixarVideo" in html  # função de vídeo nunca foi removida/renomeada
+    assert "async function baixarAudio" in html
+    assert 'let formatoIndividual = "video";' in html  # padrão inicial
+
+
+def test_free_sempre_ve_os_dois_botoes_de_formato():
+    """Pedido EXATO do CÉREBRO: a opção de áudio nunca é escondida do Free/deslogado -- só fica
+    bloqueada (cadeado) quando selecionada sem plano pago."""
+    html = _html()
+    assert 'id="formatoVideoBtn"' in html
+    assert 'id="formatoAudioBtn"' in html
+    assert "Vídeo (MP4)" in html
+    assert "Só áudio (MP3)" in html
+
+
+def test_bloco_de_cadeado_do_audio_individual_usa_a_mensagem_exata():
+    html = _html()
+    assert 'id="audioBloqueadoIndividual"' in html
+    assert "Extrair áudio é exclusivo dos planos pagos." in html
+
+
+def test_extracao_de_audio_usa_a_rota_sincrona_nova_sem_sse():
+    html = _html()
+    assert '"/api/audio/extract"' in html
+    assert '"/api/audio/allowance"' in html
+    assert "/api/audio/${dados.extraction_id}/download" in html
     assert 'placeholder="Nome do arquivo (opcional)"' not in html
 
 

@@ -38,9 +38,10 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
             # (referrals/users.referral_code/referred_by_user_id), programa de indicação --
             # aprovação do CÉREBRO; 0009/0010 (área de comentários públicos + revisão de copy dos
             # exemplos) e 0011 (comments.approved, moderação prévia -- aprovação do CÉREBRO,
-            # 06/10/2026) -- teste atualizado nesta data só pra acompanhar o head real, sem
-            # nenhuma mudança de regra de negócio.
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0011"
+            # 06/10/2026); 0012 (audio_batches/audio_extractions, extração de áudio -- autorização
+            # do CÉREBRO, 11/10/2026) -- teste atualizado nesta data só pra acompanhar o head real,
+            # sem nenhuma mudança de regra de negócio.
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0012"
     finally:
         eng.dispose()
 

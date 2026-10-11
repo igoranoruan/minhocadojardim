@@ -171,6 +171,22 @@ REFERRAL_MILESTONE_EVERY = 3
 REFERRAL_MILESTONE_REWARD_DAYS = 30
 REFERRAL_MILESTONE_PLAN_CODE = "vip_batch"
 
+# ----------------------------------------------------------------------------- extração de áudio (11/10/2026)
+# Autorização do CÉREBRO (11/10/2026): extrair só o áudio (MP3) de um link, individual ou em lote.
+# Só planos PAGOS (Semanal, Mensal, VIP Batch) -- Free/deslogado nunca passa da checagem (ver
+# services/audio_usage.py::_require_paid_plan e routes/audio.py). NÃO consome geração (nunca toca
+# `generations`) nem conta na cota semanal de operações de lote dos planos (nunca toca `batches`) --
+# ledger PRÓPRIO (database/models/audio_extraction.py, database/models/audio_batch.py, migration
+# 0012). AUDIO_EXTRACTIONS_PER_DAY soma individual + lote no MESMO contador, por dia de São Paulo
+# (utils/time_sp.py) -- "configurável em config.py" (pedido do CÉREBRO): basta editar este valor,
+# mesmo padrão de todo outro limite deste arquivo (nenhum é lido de variável de ambiente).
+AUDIO_EXTRACTIONS_PER_DAY = 15
+
+# Bitrate fixo (CBR) do MP3 de saída -- 192 kbps, valor pedido pelo CÉREBRO (11/10/2026). libmp3lame
+# (o encoder usado em processor/ffmpeg_audio.py) já vem compilado no FFmpeg oficial (confirmado
+# neste ambiente de desenvolvimento: /usr/bin/ffmpeg) -- nenhuma dependência nova.
+AUDIO_OUTPUT_BITRATE = "192k"
+
 # ----------------------------------------------------------------------------- comentários (05/10/2026)
 # Único "admin" do produto hoje é o próprio CÉREBRO -- sem cargo/permissão no banco, só um e-mail
 # configurado por variável de ambiente (nunca hardcoded no código). Usado apenas para remover

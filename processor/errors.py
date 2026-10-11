@@ -75,3 +75,11 @@ class InvalidOutputFileError(ProcessorError):
 
 class OutputTooLargeError(ProcessorError):
     user_message = "O resultado do processamento ficou maior do que o permitido."
+
+
+class NoAudioStreamError(ProcessorError):
+    """A fonte baixada não tem nenhum stream de áudio (vídeo mudo) -- EXTRAÇÃO DE ÁUDIO (Parte A/B,
+    autorização do CÉREBRO, 11/10/2026). Mensagem exata pedida pelo CÉREBRO: "Esse vídeo não tem
+    áudio" -- nunca contada no limite diário (ver services/audio_usage.py: só `completed` conta)."""
+
+    user_message = "Esse vídeo não tem áudio."

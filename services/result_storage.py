@@ -40,7 +40,9 @@ _KEY_RE = re.compile(r"^[0-9a-f]{32}$")
 # validação de allow-list antes de virar parte de um caminho de arquivo -- mesma defesa que já
 # existia para storage_key, agora também para extension.
 _ALLOWED_EXTENSIONS = frozenset(
-    {"mp4", "mkv", "webm", "mov", "m4v", "jpg", "jpeg", "png", "webp", "zip"}
+    {"mp4", "mkv", "webm", "mov", "m4v", "jpg", "jpeg", "png", "webp", "zip", "mp3"}
+    # "mp3" (11/10/2026, extração de áudio -- autorização do CÉREBRO): services/audio_flow.py salva
+    # o MP3 final aqui com extension="mp3", mesmo padrão já usado para "jpg" (imagem).
 )
 
 

@@ -133,3 +133,50 @@ def test_duplicata_e_permitida_mesmo_com_espacos_diferentes_nas_pontas():
     assert sanitize_batch_filenames(
         ["a.mp4", " a.mp4 "]
     ) == ["a.mp4", "a.mp4"]
+
+
+# ============================================================================ suffix (11/10/2026 -- extração de áudio, autorização do CÉREBRO)
+def test_suffix_default_continua_mp4_para_quem_nunca_passa_o_parametro():
+    """Nenhum chamador existente (vídeo) precisa mudar: omitir `suffix` continua se comportando
+    EXATAMENTE como antes desta mudança."""
+
+    assert sanitize_batch_filename("meu-video") == "meu-video.mp4"
+
+
+def test_suffix_mp3_e_adicionado_quando_ausente():
+
+    assert sanitize_batch_filename("minha-musica", suffix=".mp3") == "minha-musica.mp3"
+
+
+def test_suffix_mp3_existente_nao_e_duplicada_preservando_maiusculas():
+
+    assert sanitize_batch_filename("MINHA-MUSICA.MP3", suffix=".mp3") == "MINHA-MUSICA.MP3"
+
+
+def test_suffix_mp3_nao_adiciona_mp4_mesmo_que_o_nome_ja_termine_em_mp4():
+    """Um nome literalmente digitado como "nome.mp4" ao extrair ÁUDIO (suffix=".mp3") não deve
+    ser tratado como já tendo a extensão certa -- vira "nome.mp4.mp3", nunca "nome.mp4" puro."""
+
+    assert sanitize_batch_filename("audio.mp4", suffix=".mp3") == "audio.mp4.mp3"
+
+
+def test_suffix_mp3_nome_composto_so_de_pontos_e_rejeitado():
+
+    with pytest.raises(InvalidFilenameError):
+        sanitize_batch_filename(".", suffix=".mp3")
+
+
+def test_suffix_mp3_acentos_continuam_sendo_removidos_antes_da_validacao():
+
+    assert sanitize_batch_filename("não", suffix=".mp3") == "nao.mp3"
+
+
+def test_suffix_mp3_path_traversal_continua_rejeitado():
+
+    with pytest.raises(InvalidFilenameError):
+        sanitize_batch_filename("../arquivo", suffix=".mp3")
+
+
+def test_sanitize_batch_filenames_repassa_o_suffix_para_cada_item():
+
+    assert sanitize_batch_filenames(["a", "b", None], suffix=".mp3") == ["a.mp3", "b.mp3", None]

@@ -25,7 +25,10 @@ from payments.errors import (
     PlanNotPurchasableError,
     UnknownPlanError,
 )
-from routes import auth, comments, generations, health, me, payments, pinterest, stats, webhooks
+from routes import audio, auth, comments, generations, health, me, payments, pinterest, stats, webhooks
+from services.audio_flow import AudioPersistenceError
+from services.audio_usage import AudioDownloadNotFoundError, AudioUsageError
+from services.batch_filenames import InvalidFilenameError
 from services.auth import AuthError
 from services.comments import CommentError, CommentNotFoundError
 from services.entitlements import EntitlementInconsistencyError
@@ -121,6 +124,15 @@ app.add_exception_handler(CommentNotFoundError, comments.comment_not_found_handl
 # negócio aqui -- ver services/pinterest_board.py e routes/pinterest.py.
 app.add_exception_handler(PinterestBoardError, pinterest.pinterest_board_error_handler)
 
+# Extração de áudio (11/10/2026, autorização do CÉREBRO): tradução para HTTP, sem nenhuma regra de
+# negócio aqui -- ver services/audio_usage.py, services/audio_flow.py e routes/audio.py. Rotas
+# SÍNCRONAS (sem SSE, ver routes/audio.py) -- os handlers abaixo tratam exceções levantadas direto
+# na rota, nunca dentro de uma thread de streaming (diferente de generations.py).
+app.add_exception_handler(AudioUsageError, audio.audio_usage_error_handler)
+app.add_exception_handler(AudioDownloadNotFoundError, audio.audio_download_not_found_handler)
+app.add_exception_handler(AudioPersistenceError, audio.audio_persistence_error_handler)
+app.add_exception_handler(InvalidFilenameError, audio.audio_invalid_filename_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -131,6 +143,7 @@ app.include_router(stats.router)
 app.include_router(webhooks.router)
 app.include_router(comments.router)
 app.include_router(pinterest.router)
+app.include_router(audio.router)
 
 
 @app.get("/", include_in_schema=False)
