@@ -27,7 +27,7 @@ from payments.errors import (
 )
 from routes import audio, auth, comments, generations, health, me, payments, pinterest, stats, webhooks
 from services.audio_flow import AudioPersistenceError
-from services.audio_usage import AudioDownloadNotFoundError, AudioUsageError
+from services.audio_usage import AudioBatchNotFoundError, AudioDownloadNotFoundError, AudioUsageError
 from services.batch_filenames import InvalidFilenameError
 from services.auth import AuthError
 from services.comments import CommentError, CommentNotFoundError
@@ -132,6 +132,11 @@ app.add_exception_handler(AudioUsageError, audio.audio_usage_error_handler)
 app.add_exception_handler(AudioDownloadNotFoundError, audio.audio_download_not_found_handler)
 app.add_exception_handler(AudioPersistenceError, audio.audio_persistence_error_handler)
 app.add_exception_handler(InvalidFilenameError, audio.audio_invalid_filename_handler)
+# Lote de áudio (Parte B, SSE): o 404 do ZIP (GET /api/audio/batches/{id}/download) é levantado
+# fora do stream (na própria rota, antes de montar o ZIP) -- por isso precisa de handler HTTP
+# global, diferente dos demais erros do lote (que viram eventos `error` dentro do SSE, nunca
+# chegam até aqui -- ver routes/audio.py::_error_payload_for_audio).
+app.add_exception_handler(AudioBatchNotFoundError, audio.audio_batch_not_found_handler)
 
 # Rotas da API.
 app.include_router(health.router)

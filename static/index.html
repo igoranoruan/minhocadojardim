@@ -671,6 +671,26 @@
                         </div>
                     </div>
 
+                    <!-- Toggle de formato do LOTE (Parte B, extração de áudio -- autorização do
+                         CÉREBRO, 11/10/2026): mesmo padrão do toggle individual
+                         (formatoVideoBtn/formatoAudioBtn), "Vídeo (MP4)" sempre como padrão --
+                         quem nunca tocar aqui nunca muda de fluxo. Esta seção (#secaoBatch) já só
+                         aparece pra quem tem plano pago com lote habilitado (gate pré-existente,
+                         não alterado por esta etapa) -- por isso a regra "nunca esconder a opção
+                         de áudio do Free" já está satisfeita: não existe Free vendo esta seção
+                         para esconder algo dele. -->
+                    <div class="flex gap-2 mb-4">
+                        <button type="button" id="formatoVideoBtnLote" onclick="selecionarFormatoLote('video')"
+                            class="flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-violet-400 text-slate-950 border-violet-400">
+                            <i class="fa-solid fa-film mr-1"></i>Vídeo (MP4)
+                        </button>
+                        <button type="button" id="formatoAudioBtnLote" onclick="selecionarFormatoLote('audio')"
+                            class="flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700">
+                            <i class="fa-solid fa-music mr-1"></i>Só áudio (MP3)
+                        </button>
+                    </div>
+                    <p id="audioContadorLote" class="hidden mb-3 text-center text-xs text-slate-500"></p>
+
                     <div class="flex items-center justify-between gap-3 mb-3">
                         <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeos</span>
                         <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-violet-500/80">—</span>
@@ -682,7 +702,7 @@
                         <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
                     </button>
 
-                    <button id="batchButton" onclick="processarLote()" class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
+                    <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
                     <div id="batchStatus" class="mt-4 text-sm"></div>
                 </div>
             </section>
@@ -1884,6 +1904,15 @@
     // avulso, lote, histórico) lê ou altera esta variável.
     let formatoIndividual = "video";
 
+    // EXTRAÇÃO DE ÁUDIO -- Parte B (lote), autorização do CÉREBRO, 11/10/2026. Mesmo papel de
+    // formatoIndividual, mas pro bloco de lote (#secaoBatch) -- "video" é o padrão, só vira
+    // "audio" por selecionarFormatoLote(). loteAudioRestanteHoje guarda o ÚLTIMO saldo diário
+    // confirmado pelo backend (GET /api/audio/allowance) -- só pra texto/UX ("Você tem Y
+    // restantes hoje" e desabilitar o botão quando Y=0); a checagem REAL continua inteiramente
+    // em services/audio_usage.py::reserve_audio_batch, nunca decidida aqui.
+    let formatoLote = "video";
+    let loteAudioRestanteHoje = 0;
+
     async function chamarAuth(caminho, opcoes = {}) {
         const res = await fetch(`/api/auth/${caminho}`, {
             credentials: "same-origin",
@@ -2318,11 +2347,16 @@
         if (tag) tag.textContent = plano.name || "—";
 
         const limiteTexto = document.getElementById("batchLimiteTexto");
-        if (limiteTexto && limiteLoteAtual > 0) {
+        if (limiteTexto && limiteLoteAtual > 0 && formatoLote !== "audio") {
             limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
         }
 
         if (limiteLoteAtual > 0) atualizarContagemLote();
+        // Extração de áudio em lote (autorização do CÉREBRO, 11/10/2026): se a pessoa já tinha
+        // escolhido "Só áudio" antes do plano/status atual responder, o contador/texto do lote
+        // precisam refletir o plano REAL agora confirmado -- mesma disciplina de
+        // atualizarVisibilidadeAudioIndividual() para a extração avulsa.
+        atualizarVisibilidadeAudioLote();
     }
 
     function esconderBatch() {
@@ -3562,6 +3596,12 @@
         addButton.innerHTML = count >= max
             ? '<i class="fa-solid fa-check mr-1"></i> Limite de vídeos por lote atingido'
             : '<i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo';
+        // Extração de áudio em lote (autorização do CÉREBRO, 11/10/2026): só recalcula o TEXTO
+        // ("Isso vai usar X extrações...") a partir do saldo já conhecido (loteAudioRestanteHoje)
+        // -- nunca bate na API aqui (isso é papel exclusivo de atualizarVisibilidadeAudioLote,
+        // chamada só na troca de formato/plano), senão cada clique em "Adicionar vídeo" geraria
+        // uma chamada de rede inútil.
+        atualizarContadorAudioLoteTexto();
     }
 
     function criarCampoLote(index) {
@@ -3960,6 +4000,303 @@
             button.classList.remove("opacity-60", "cursor-not-allowed");
             button.innerHTML = '<i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote';
             atualizarContagemLote();
+        }
+    }
+
+    // ================================================================================================
+    // EXTRAÇÃO DE ÁUDIO EM LOTE -- Parte B, autorização do CÉREBRO, 11/10/2026.
+    //
+    // Bloco ISOLADO: nenhuma linha de processarLote()/atualizarContagemLote() acima foi alterada
+    // para o caminho de VÍDEO -- só foram acrescentadas duas chamadas inofensivas (que viram
+    // no-op quando formatoLote === "video") em atualizarContagemLote() e atualizarVisibilidadeBatch().
+    // O botão único (#batchButton) agora chama processarLoteFormato() (dispatcher), que decide
+    // entre processarLote() -- comportamento de sempre, intacto -- e processarLoteAudio() (novo),
+    // exatamente o mesmo desenho já usado na extração avulsa (processarIndividual/baixarVideo/
+    // baixarAudio).
+    // ================================================================================================
+    function selecionarFormatoLote(formato) {
+        formatoLote = formato;
+        const ativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-violet-400 text-slate-950 border-violet-400";
+        const inativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700";
+        const btnVideo = document.getElementById("formatoVideoBtnLote");
+        const btnAudio = document.getElementById("formatoAudioBtnLote");
+        if (btnVideo) btnVideo.className = formato === "video" ? ativo : inativo;
+        if (btnAudio) btnAudio.className = formato === "audio" ? ativo : inativo;
+        atualizarVisibilidadeAudioLote();
+    }
+
+    // Só recalcula o TEXTO do contador a partir do saldo já conhecido (loteAudioRestanteHoje) --
+    // nunca bate na API (ver comentário em atualizarContagemLote()). No-op quando formatoLote
+    // não é "audio".
+    function atualizarContadorAudioLoteTexto() {
+        if (formatoLote !== "audio") return;
+        const contador = document.getElementById("audioContadorLote");
+        if (!contador) return;
+        const count = document.querySelectorAll(".batch-item").length;
+        contador.textContent = loteAudioRestanteHoje > 0
+            ? `Isso vai usar ${Math.min(count, loteAudioRestanteHoje)} extrações. Você tem ${loteAudioRestanteHoje} restantes hoje.`
+            : "Você usou suas 15 extrações de hoje. Amanhã libera de novo.";
+    }
+
+    // Chamada sempre que o formato muda (selecionarFormatoLote) ou o plano/status é confirmado de
+    // novo (atualizarVisibilidadeBatch) -- busca o saldo diário REAL (GET /api/audio/allowance,
+    // mesma rota da extração avulsa) e atualiza texto/botão. Para "video" é um reset simples
+    // (texto/botão padrão do lote de sempre), sem nenhuma chamada de rede.
+    async function atualizarVisibilidadeAudioLote() {
+        const contador = document.getElementById("audioContadorLote");
+        const limiteTexto = document.getElementById("batchLimiteTexto");
+        const button = document.getElementById("batchButton");
+        if (formatoLote !== "audio") {
+            if (contador) contador.classList.add("hidden");
+            if (limiteTexto && limiteLoteAtual > 0) {
+                limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
+            }
+            if (button) {
+                button.disabled = false;
+                button.classList.remove("opacity-40", "cursor-not-allowed");
+                button.innerHTML = '<i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote';
+            }
+            return;
+        }
+        if (limiteLoteAtual > 0 && limiteTexto) {
+            limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação -- cada um gera um arquivo MP3.`;
+        }
+        if (contador) {
+            contador.classList.remove("hidden");
+            contador.textContent = "Carregando saldo de hoje...";
+        }
+        try {
+            const resp = await fetch("/api/audio/allowance", { credentials: "same-origin" });
+            if (!resp.ok) {
+                if (contador) contador.classList.add("hidden");
+                return;
+            }
+            const dados = await resp.json();
+            loteAudioRestanteHoje = dados.remaining;
+            atualizarContadorAudioLoteTexto();
+            if (button) {
+                button.innerHTML = '<i class="fa-solid fa-music mr-1"></i>Processar e extrair áudio do lote';
+                const semSaldo = loteAudioRestanteHoje <= 0;
+                button.disabled = semSaldo;
+                button.classList.toggle("opacity-40", semSaldo);
+                button.classList.toggle("cursor-not-allowed", semSaldo);
+            }
+        } catch (err) {
+            if (contador) contador.classList.add("hidden");
+        }
+    }
+
+    // Dispatcher do botão único do lote -- "video" (padrão) chama processarLote() SEM NENHUMA
+    // alteração; "audio" chama processarLoteAudio() (abaixo).
+    function processarLoteFormato() {
+        if (formatoLote === "audio") {
+            processarLoteAudio();
+        } else {
+            processarLote();
+        }
+    }
+
+    // Mesma estrutura de processarLote() (coleta de itens, barra de progresso por item via SSE,
+    // ZIP final) -- só o endpoint, os campos do payload de cada evento e o nome final do ZIP
+    // mudam (pedido EXATO do CÉREBRO: "klango_audios.zip", nome FIXO, nunca com token). Cada item
+    // concluído também pode ser baixado individualmente, reaproveitando a MESMA rota de download
+    // da extração avulsa (GET /api/audio/{extraction_id}/download) -- nenhuma rota nova para
+    // download de item único.
+    async function processarLoteAudio() {
+        const items = Array.from(document.querySelectorAll(".batch-item"));
+        const button = document.getElementById("batchButton");
+        const status = document.getElementById("batchStatus");
+
+        const entries = items.map(item => ({
+            url: item.querySelector(".batch-url").value.trim(),
+            filename: item.querySelector(".batch-name").value.trim() || null
+        })).filter(item => item.url);
+
+        if (!entries.length) {
+            status.textContent = "Adicione pelo menos um link de vídeo.";
+            status.className = "mt-4 text-xs text-red-400";
+            return;
+        }
+
+        button.disabled = true;
+        button.classList.add("opacity-60", "cursor-not-allowed");
+        button.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-1"></i> Extraindo áudio...';
+        status.className = "mt-4 text-sm";
+        status.innerHTML = "";
+
+        const aviso = document.createElement("div");
+        aviso.className = "p-4 bg-violet-950/30 border border-violet-800/50 text-violet-400 rounded-xl mb-3";
+        aviso.textContent = "O KLANGO.MP4 está extraindo o áudio um por um. Isso pode levar alguns minutos.";
+        status.appendChild(aviso);
+
+        const lista = document.createElement("div");
+        lista.className = "space-y-2";
+        const linhas = new Map();
+        entries.forEach((entry, index) => {
+            const position = index + 1;
+            const row = document.createElement("div");
+            row.className = "p-3 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between";
+
+            const info = document.createElement("div");
+            info.className = "min-w-0";
+
+            const nomeExibido = document.createElement("div");
+            nomeExibido.className = "text-slate-300 break-all text-xs font-semibold";
+            nomeExibido.textContent = `${position}. ${entry.filename || entry.url}`;
+            info.appendChild(nomeExibido);
+
+            const statusTexto = document.createElement("div");
+            statusTexto.className = "text-[11px] text-slate-500 mt-1";
+            statusTexto.textContent = "Na fila...";
+            info.appendChild(statusTexto);
+
+            row.appendChild(info);
+
+            const acao = document.createElement("div");
+            acao.className = "shrink-0";
+            row.appendChild(acao);
+
+            lista.appendChild(row);
+            linhas.set(position, { statusTexto, acao });
+        });
+        status.appendChild(lista);
+
+        const rodape = document.createElement("div");
+        rodape.className = "mt-3";
+        status.appendChild(rodape);
+
+        let batchIdAtual = null;
+
+        function atualizarLinha(position, texto, tipo) {
+            const linha = linhas.get(position);
+            if (!linha) return;
+            linha.statusTexto.textContent = texto;
+            linha.statusTexto.className = "text-[11px] mt-1 " +
+                (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-[#19D3AE]" : "text-slate-500");
+        }
+
+        function processarEventoSSELoteAudio(bloco) {
+            let tipo = "message";
+            let dadosTexto = "";
+            for (const linha of bloco.split("\n")) {
+                if (linha.startsWith("event: ")) tipo = linha.slice(7);
+                else if (linha.startsWith("data: ")) dadosTexto += linha.slice(6);
+            }
+            if (!dadosTexto) return;
+            let dados;
+            try { dados = JSON.parse(dadosTexto); } catch (err) { return; }
+
+            if (tipo === "batch_reserved") {
+                batchIdAtual = dados.batch_id;
+            } else if (tipo === "item_status" || tipo === "item_progress") {
+                const mensagem = typeof dados.percent === "number"
+                    ? `${dados.message} (${Math.round(dados.percent)}%)`
+                    : (dados.message || "Processando...");
+                atualizarLinha(dados.position, mensagem, "normal");
+            } else if (tipo === "item_complete") {
+                if (dados.status === "completed") {
+                    atualizarLinha(dados.position, "Pronto.", "sucesso");
+                    const linha = linhas.get(dados.position);
+                    if (linha) {
+                        const link = document.createElement("a");
+                        link.href = `/api/audio/${dados.extraction_id}/download`;
+                        link.target = "_blank";
+                        link.rel = "noopener";
+                        link.download = dados.filename || "audio_klango.mp3";
+                        link.className = "text-[#19D3AE] font-bold whitespace-nowrap text-xs";
+                        link.innerHTML = '<i class="fa-solid fa-file-arrow-down mr-1"></i>Baixar';
+                        linha.acao.innerHTML = "";
+                        linha.acao.appendChild(link);
+                    }
+                } else {
+                    atualizarLinha(dados.position, "Não foi possível extrair o áudio deste vídeo.", "erro");
+                }
+            } else if (tipo === "batch_progress") {
+                aviso.textContent = `${dados.completed + dados.failed} de ${dados.total} áudios processados (${dados.completed} prontos, ${dados.failed} com erro).`;
+            } else if (tipo === "complete") {
+                aviso.remove();
+                rodape.innerHTML = "";
+                const resumo = document.createElement("div");
+                resumo.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-xl";
+                const resumoTexto = document.createElement("div");
+                resumoTexto.className = "text-[#19D3AE] font-bold text-sm";
+                resumoTexto.textContent = `${dados.completed} de ${dados.item_count} áudios extraídos.`;
+                resumo.appendChild(resumoTexto);
+                if (dados.completed > 0 && batchIdAtual) {
+                    const zipLink = document.createElement("a");
+                    zipLink.href = `/api/audio/batches/${batchIdAtual}/download`;
+                    zipLink.download = "klango_audios.zip";
+                    zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
+                    zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
+                    resumo.appendChild(zipLink);
+                }
+                rodape.appendChild(resumo);
+            } else if (tipo === "error") {
+                aviso.remove();
+                rodape.innerHTML = "";
+                const erro = document.createElement("div");
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                erro.textContent = dados.detail || "Não foi possível processar o lote de áudio.";
+                rodape.appendChild(erro);
+            }
+        }
+
+        async function lerStreamDeLoteAudio(response) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                let indiceFim;
+                while ((indiceFim = buffer.indexOf("\n\n")) !== -1) {
+                    const bloco = buffer.slice(0, indiceFim);
+                    buffer = buffer.slice(indiceFim + 2);
+                    processarEventoSSELoteAudio(bloco);
+                }
+            }
+        }
+
+        try {
+            const response = await fetch("/api/audio/batch", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    request_id: gerarRequestIdLote(),
+                    items: entries.map(item => ({ url: item.url, filename: item.filename }))
+                })
+            });
+
+            if (!response.ok) {
+                let data = {};
+                try { data = await response.json(); } catch (err) { /* corpo pode não ser JSON */ }
+                aviso.remove();
+                const erro = document.createElement("div");
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                if (response.status === 401) {
+                    erro.textContent = mensagemSessaoExpiradaCheckout();
+                    abrirAcesso();
+                } else {
+                    erro.textContent = data.detail || "Não foi possível processar o lote de áudio.";
+                }
+                rodape.appendChild(erro);
+                return;
+            }
+
+            await lerStreamDeLoteAudio(response);
+        } catch (err) {
+            aviso.remove();
+            const erro = document.createElement("div");
+            erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+            erro.textContent = "Erro ao se conectar ao servidor.";
+            rodape.appendChild(erro);
+        } finally {
+            atualizarContagemLote();
+            // Reconsulta o saldo diário REAL (a extração que acabou de rodar já pode ter mudado
+            // o "restam hoje") -- também restaura o rótulo/estado do botão para o formato "audio".
+            atualizarVisibilidadeAudioLote();
         }
     }
 

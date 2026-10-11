@@ -146,3 +146,39 @@ def test_barra_de_progresso_nao_recria_o_dom_a_cada_evento():
     # quando o bloco já existe, a atualização é só textContent/style.width -- nunca innerHTML
     assert ".textContent = `${mensagem" in html or ".textContent = mensagem" in html
     assert "barraExistente.style.width" in html
+
+
+# ============================================================================ extração de áudio em LOTE (Parte B, autorização do CÉREBRO, 11/10/2026)
+def test_toggle_de_formato_do_lote_existe_e_video_e_o_padrao():
+    """O botão único do lote (#batchButton) passa a chamar processarLoteFormato() (dispatcher) em
+    vez de processarLote() direto -- mas processarLote() continua existindo intacta (chamada pelo
+    dispatcher quando o formato é "video", o padrão)."""
+    html = _html()
+    assert 'onclick="processarLoteFormato()"' in html
+    assert "async function processarLote(" in html  # função de vídeo nunca foi removida/renomeada
+    assert "async function processarLoteAudio" in html
+    assert 'let formatoLote = "video";' in html  # padrão inicial
+
+
+def test_toggle_do_lote_tem_os_dois_botoes_de_formato():
+    html = _html()
+    assert 'id="formatoVideoBtnLote"' in html
+    assert 'id="formatoAudioBtnLote"' in html
+
+
+def test_lote_de_audio_usa_a_rota_sse_nova_e_o_zip_com_nome_fixo():
+    html = _html()
+    assert '"/api/audio/batch"' in html
+    assert '"/api/audio/allowance"' in html
+    assert "/api/audio/${dados.extraction_id}/download" in html
+    assert "/api/audio/batches/${batchIdAtual}/download" in html
+    assert 'zipLink.download = "klango_audios.zip"' in html  # nome FIXO, pedido exato do CÉREBRO
+
+
+def test_lote_de_video_continua_usando_as_rotas_de_sempre():
+    """Regressão: nenhuma chamada do caminho de vídeo do lote foi redirecionada para as rotas de
+    áudio."""
+    html = _html()
+    assert '"/api/download-batch"' in html
+    assert "/api/batches/${batchIdAtual}/download" in html
+    assert 'zipLink.download = "klango_lote.zip"' in html

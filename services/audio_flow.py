@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from config import RESULT_TTL_SECONDS
 from database.models import User
+from database.models.audio_extraction import AudioExtraction
 from download.audio_service import download_audio_source
 from download.errors import DownloadError
 from download.platform import Platform, detect_platform
@@ -232,3 +233,80 @@ def extract_audio_from_url(
         outcome.extraction_id, user.id, outcome.platform, outcome.size_bytes,
     )
     return outcome
+
+
+# ------------------------------------------------------------------------------ orquestração de lote (Parte B)
+@dataclass(frozen=True)
+class AudioBatchItemOutcome:
+    """Resultado de UM item de lote de áudio depois de run_audio_batch -- mesma forma de
+    services.generation_flow.BatchItemOutcome. `outcome` é None quando `ok` é False; `error_code`
+    é None quando `ok` é True."""
+
+    position: int
+    extraction_id: int
+    ok: bool
+    outcome: AudioOutcome | None
+    error_code: str | None
+
+
+def run_audio_batch(
+    db: Session,
+    *,
+    items: list[tuple[int, str]],
+    on_item_progress=None,
+) -> list[AudioBatchItemOutcome]:
+    """Processa, SEQUENCIALMENTE (mesma postura de services.generation_flow.run_batch -- download/
+    FFmpeg são pesados, nenhum paralelismo), cada item `(extraction_id, url)` de um lote de áudio
+    JÁ RESERVADO por services.audio_usage.reserve_audio_batch -- não reserva nada, não cria
+    nenhuma AudioExtraction.
+
+    Reaproveita execute_reserved_audio_extraction (o MESMO núcleo da extração avulsa) para cada
+    item -- não duplica download, processamento, storage nem a lógica de marcar sucesso/falha.
+
+    Isolamento de falhas (mesma regra de run_batch): uma falha de ITEM nunca interrompe os
+    demais -- execute_reserved_audio_extraction já marcou a AudioExtraction como failed e liberou
+    o limite diário só daquele item; a orquestração segue para o próximo. AudioPersistenceError
+    (falha ao GRAVAR no banco, depois do áudio já processado) é propagada (relançada), abortando o
+    restante do lote -- é falha de infraestrutura, não do áudio, mesma distinção de run_batch.
+
+    Reexecução idempotente: para um item cuja AudioExtraction já não está mais "reserved"
+    (completed/failed de uma tentativa anterior), NÃO reprocessa -- só relata o estado já
+    gravado, mesmo contrato de run_batch."""
+    resultados: list[AudioBatchItemOutcome] = []
+    total = len(items)
+    for position, (extraction_id, url) in enumerate(items, start=1):
+        extraction = db.get(AudioExtraction, extraction_id)
+        if extraction is not None and extraction.status != "reserved":
+            if extraction.status == "completed":
+                outcome = AudioOutcome(
+                    extraction_id=extraction.id,
+                    status="completed",
+                    platform=extraction.platform or "",
+                    size_bytes=extraction.output_size_bytes or 0,
+                    duration_seconds=(extraction.duration_ms or 0) / 1000,
+                    output_sha256=extraction.output_sha256 or "",
+                )
+                resultados.append(AudioBatchItemOutcome(position, extraction_id, True, outcome, None))
+            else:  # "failed"
+                resultados.append(AudioBatchItemOutcome(position, extraction_id, False, None, extraction.error_code))
+            continue
+
+        def _progress(
+            stage: str, percent: float | None, platform: str,
+            _position=position, _eid=extraction_id,
+        ) -> None:
+            if on_item_progress is not None:
+                on_item_progress(_position, _eid, stage, percent, platform)
+
+        try:
+            outcome = execute_reserved_audio_extraction(db, extraction_id=extraction_id, url=url, on_progress=_progress)
+            resultados.append(AudioBatchItemOutcome(position, extraction_id, True, outcome, None))
+        except AudioPersistenceError:
+            raise
+        except Exception as exc:
+            logger.error(
+                "[AUDIO] item %s/%s do lote (extração %s) falhou: %s",
+                position, total, extraction_id, exc.__class__.__name__, exc_info=True,
+            )
+            resultados.append(AudioBatchItemOutcome(position, extraction_id, False, None, _error_code_for(exc)))
+    return resultados

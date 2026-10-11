@@ -1,4 +1,4 @@
-"""Uso e limite da EXTRAÇÃO DE ÁUDIO (Parte A: avulsa -- autorização do CÉREBRO, 11/10/2026).
+"""Uso e limite da EXTRAÇÃO DE ÁUDIO (Parte A: avulsa; Parte B: lote -- autorização do CÉREBRO, 11/10/2026).
 
 Regras de negócio (ver a autorização completa):
 - Só plano PAGO ativo (Semanal, Mensal, VIP Batch) -- Free/deslogado é recusado aqui
@@ -15,9 +15,15 @@ Regras de negócio (ver a autorização completa):
   (não expirada) deste usuário, uma nova reserva é recusada com AudioConcurrentOperationError
   (409) -- nunca duas extrações simultâneas do mesmo usuário.
 
-A Parte B (lote) estende este módulo com reserve_audio_batch/run_audio_batch (ver o pedido do
-CÉREBRO) -- este arquivo, nesta etapa, cobre só a extração AVULSA.
-"""
+Parte B (lote, 11/10/2026): reserve_audio_batch/get_owned_audio_batch/
+get_downloadable_audio_batch_extractions, abaixo. Mesmo ledger `audio_extractions` (cada item do
+lote é uma linha com `batch_id`/`position`, nunca `request_id` -- ver
+database/models/audio_extraction.py::ck_audio_extractions_avulsa_ou_lote), tabela PRÓPRIA
+`audio_batches` (nunca `batches`, que é a de vídeo -- por isso o lote de áudio nunca conta na cota
+semanal de OPERAÇÕES de lote dos planos pagos, pedido explícito do CÉREBRO). O teto de itens por
+operação usa `Plan.max_batch_size` (o mesmo "até 5"/"até 15" já documentado em services/plans.py),
+mas o teto REAL também é limitado pelo saldo diário de 15 extrações (avulsa + lote somadas) --
+`min(plan.max_batch_size, saldo.remaining)`, nunca só um dos dois."""
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -27,7 +33,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from config import AUDIO_EXTRACTIONS_PER_DAY, GENERATION_RESERVATION_TTL_SECONDS
+from database.models.audio_batch import AudioBatch
 from database.models.audio_extraction import AudioExtraction
+from services import result_storage
 from services.entitlements import get_current_entitlement
 from services.locks import lock_user_row
 from services.plans import FREE_PLAN, Plan, get_plan
@@ -100,6 +108,29 @@ class AudioDownloadNotFoundError(Exception):
     próprio, 404, registrado em main.py)."""
 
 
+# ------------------------------------------------------------------------------ erros -- Parte B (lote)
+class InvalidAudioBatchSizeError(AudioUsageError):
+    """`size` inválido (não-inteiro, < 1) ou maior que o teto da PLATAFORMA para o plano
+    (Plan.max_batch_size) -- mesma categoria de services.usage.InvalidBatchSizeError, nome
+    próprio porque é um erro desta camada (nunca reaproveita a classe de vídeo)."""
+
+    status_code = 400
+
+
+class AudioBatchRequestConflictError(AudioUsageError):
+    """Mesmo request_id de lote de áudio reutilizado com tamanho ou conteúdo diferente -- mesma
+    categoria de services.usage.BatchRequestConflictError."""
+
+    status_code = 409
+
+
+class AudioBatchNotFoundError(Exception):
+    """404 genérico para o lote de áudio (ZIP) -- mesma filosofia de
+    services.usage.BatchNotFoundError: nunca diferencia "lote não existe" de "é de outro usuário"
+    de "nenhum item disponível para download". Deliberadamente NÃO é AudioUsageError (handler
+    HTTP próprio, 404, registrado em main.py -- mesmo padrão de AudioDownloadNotFoundError)."""
+
+
 # ------------------------------------------------------------------------------ resultados
 @dataclass(frozen=True)
 class AudioAllowance:
@@ -117,6 +148,18 @@ class AudioReservation:
     status: str
     period_day: date
     created: bool  # False = repetição idempotente de uma reserva que já existia
+
+
+@dataclass(frozen=True)
+class AudioBatchReservation:
+    """Resultado de reserve_audio_batch -- mesma forma de services.usage.BatchReservation, campos
+    próprios desta camada (extraction_ids em vez de generation_ids)."""
+
+    batch_id: int
+    request_id: str
+    item_count: int
+    extraction_ids: tuple[int, ...]
+    created: bool  # False = repetição idempotente de um lote que já existia
 
 
 # ------------------------------------------------------------------------------ plano efetivo
@@ -388,3 +431,192 @@ def get_downloadable_audio_extraction(
     ):
         raise AudioDownloadNotFoundError()
     return extraction
+
+
+# ------------------------------------------------------------------------------ reserva de lote (Parte B)
+def _validate_audio_batch_size(size) -> int:
+    """Mesma validação ESTRUTURAL de services.usage._validate_batch_size (>= 1, inteiro de
+    verdade -- bool é subclasse de int em Python, por isso a checagem explícita). O teto por
+    PLANO/saldo diário é checado depois, dentro de reserve_audio_batch (precisa do plano
+    resolvido, que esta função não conhece)."""
+    if isinstance(size, bool) or not isinstance(size, int) or size < 1:
+        raise InvalidAudioBatchSizeError("O lote de áudio deve ter pelo menos 1 item.")
+    return size
+
+
+def _new_batch_extraction(
+    *, user_id: int, batch_id: int, position: int, period_day: date, platform: str | None,
+    now: datetime, display_filename: str | None = None,
+) -> AudioExtraction:
+    """Uma AudioExtraction de item de lote -- mesmo papel de
+    services.usage._new_generation, para a tabela de áudio."""
+    return AudioExtraction(
+        user_id=user_id, batch_id=batch_id, position=position, request_id=None,
+        status="reserved", period_day=period_day, platform=platform,
+        display_filename=display_filename, created_at=_utc(now),
+    )
+
+
+def _audio_batch_replay(
+    db: Session, batch: AudioBatch, size: int, content_fingerprint: str | None = None,
+) -> AudioBatchReservation:
+    """Repetição idempotente de um request_id de lote de áudio -- mesma lógica de
+    services.usage._batch_replay (mesmo tamanho E, quando os dois lados fornecem, mesmo
+    fingerprint de conteúdo; qualquer divergência é AudioBatchRequestConflictError, nunca um
+    replay silencioso de conteúdo diferente)."""
+    if batch.item_count != size:
+        raise AudioBatchRequestConflictError("Este request_id de lote de áudio já foi usado com outro tamanho.")
+    if (
+        content_fingerprint is not None
+        and batch.request_fingerprint is not None
+        and batch.request_fingerprint != content_fingerprint
+    ):
+        raise AudioBatchRequestConflictError("Este request_id de lote de áudio já foi usado com um conteúdo diferente.")
+    rows = db.execute(
+        select(AudioExtraction.id)
+        .where(AudioExtraction.batch_id == batch.id)
+        .order_by(AudioExtraction.position)
+    ).all()
+    return AudioBatchReservation(
+        batch_id=batch.id, request_id=batch.request_id, item_count=batch.item_count,
+        extraction_ids=tuple(row.id for row in rows), created=False,
+    )
+
+
+def reserve_audio_batch(
+    db: Session,
+    *,
+    user_id: int,
+    request_id: str,
+    size: int,
+    platform: str | None = None,
+    now: datetime | None = None,
+    content_fingerprint: str | None = None,
+    display_filenames: list[str | None] | None = None,
+) -> AudioBatchReservation:
+    """Reserva um lote de `size` extrações de áudio, TUDO OU NADA -- mesmo desenho de
+    services.usage.reserve_batch, para a tabela PRÓPRIA `audio_batches`/`audio_extractions`
+    (nunca toca `batches`/`generations`: o lote de áudio NUNCA consome geração nem conta na cota
+    semanal de operações de lote, pedido explícito do CÉREBRO).
+
+    Regras combinadas (as duas precisam valer, a reserva inteira falha senão):
+    - `size` não pode passar de `Plan.max_batch_size` do plano efetivo (mesmo teto "até 5"/
+      "até 15" já documentado em services/plans.py) -- InvalidAudioBatchSizeError senão.
+    - `size` não pode passar do saldo diário RESTANTE (15/dia, avulsa + lote somadas) --
+      AudioQuotaExceededError senão (mesma mensagem exata do CÉREBRO, reaproveitada: o lote
+      também é, no fim, "você excedeu as 15 extrações de hoje").
+
+    Uma operação de áudio por vez (mesma regra da avulsa): com qualquer AudioExtraction
+    "reserved" não expirada já existente para este usuário (avulsa OU de outro lote),
+    AudioConcurrentOperationError -- nunca duas operações de áudio simultâneas, nem lote
+    simultâneo a uma avulsa.
+
+    Idempotente por request_id: repetir a mesma requisição (mesmo tamanho e, quando fornecido,
+    mesmo fingerprint de conteúdo) devolve a MESMA reserva, sem consumir de novo."""
+    request_id = _validate_request_id(request_id)
+    size = _validate_audio_batch_size(size)
+    if display_filenames is not None and len(display_filenames) != size:
+        raise InvalidAudioBatchSizeError("display_filenames deve ter exatamente `size` posições.")
+    now = resolve_now(now)
+    _sweep_stale_best_effort(db, now)
+    try:
+        lock_user_row(db, user_id)
+
+        existing = db.execute(
+            select(AudioBatch).where(AudioBatch.user_id == user_id, AudioBatch.request_id == request_id)
+        ).scalar_one_or_none()
+        if existing is not None:
+            result = _audio_batch_replay(db, existing, size, content_fingerprint)
+            db.commit()
+            return result
+
+        plan = _effective_plan(db, user_id, now)
+        _require_paid_plan(plan)  # Free nunca tem lote (max_batch_size=0) -- mesma recusa de sempre
+
+        if _has_active_reservation(db, user_id, now):
+            raise AudioConcurrentOperationError()
+
+        if size > plan.max_batch_size:
+            raise InvalidAudioBatchSizeError(f"O lote de áudio pode ter no máximo {plan.max_batch_size} itens.")
+
+        allowance = _compute_allowance(db, user_id, now, plan)
+        if size > allowance.remaining:
+            raise AudioQuotaExceededError(allowance, requested=size)
+
+        batch = AudioBatch(
+            user_id=user_id, request_id=request_id, item_count=size,
+            request_fingerprint=content_fingerprint, created_at=_utc(now),
+        )
+        db.add(batch)
+        db.flush()
+        extractions = [
+            _new_batch_extraction(
+                user_id=user_id, batch_id=batch.id, position=position,
+                period_day=allowance.period_day, platform=platform, now=now,
+                display_filename=None if display_filenames is None else display_filenames[position - 1],
+            )
+            for position in range(1, size + 1)
+        ]
+        db.add_all(extractions)
+        db.flush()
+        result = AudioBatchReservation(
+            batch_id=batch.id, request_id=request_id, item_count=size,
+            extraction_ids=tuple(e.id for e in extractions), created=True,
+        )
+        db.commit()
+        logger.info(
+            "[AUDIO] lote user_id=%s batch=%s itens=%s restam=%s",
+            user_id, batch.id, size, allowance.remaining - size,
+        )
+        return result
+    except IntegrityError:
+        db.rollback()
+        existing = db.execute(
+            select(AudioBatch).where(AudioBatch.user_id == user_id, AudioBatch.request_id == request_id)
+        ).scalar_one_or_none()
+        if existing is None:
+            raise
+        result = _audio_batch_replay(db, existing, size, content_fingerprint)
+        db.commit()
+        return result
+    except Exception:
+        db.rollback()
+        raise
+
+
+def get_owned_audio_batch(db: Session, batch_id: int, user_id: int) -> AudioBatch:
+    """A ÚNICA fonte de verdade para "este lote de áudio pode ser acessado (ZIP) por este
+    usuário?" -- mesma filosofia de services.usage.get_owned_batch."""
+    batch = db.get(AudioBatch, batch_id)
+    if batch is None or batch.user_id != user_id:
+        raise AudioBatchNotFoundError()
+    return batch
+
+
+def get_downloadable_audio_batch_extractions(
+    db: Session, batch_id: int, user_id: int, now: datetime | None = None,
+) -> list[AudioExtraction]:
+    """A ÚNICA fonte de verdade para "quais itens deste lote de áudio podem entrar no ZIP de
+    download, para este usuário, agora?" -- mesma filosofia (e mesmos critérios de
+    elegibilidade: completed, storage_key presente, não expirado, arquivo físico existente) de
+    services.usage.get_downloadable_batch_generations. Itens com erro (failed) são simplesmente
+    omitidos -- nunca incluídos como entrada vazia/corrompida. AudioBatchNotFoundError (404
+    genérico) quando NENHUM item é elegível -- nunca diferencia "lote não existe" de "lote vazio/
+    tudo expirou/tudo falhou"."""
+    batch = get_owned_audio_batch(db, batch_id, user_id)
+    now = resolve_now(now)
+    extractions = db.execute(
+        select(AudioExtraction)
+        .where(AudioExtraction.batch_id == batch.id, AudioExtraction.status == "completed")
+        .order_by(AudioExtraction.position)
+    ).scalars().all()
+    disponiveis = [
+        e for e in extractions
+        if e.output_storage_key
+        and e.output_expires_at is not None
+        and now < e.output_expires_at
+        and result_storage.exists(e.output_storage_key, "mp3")
+    ]
+    if not disponiveis:
+        raise AudioBatchNotFoundError()
+    return disponiveis
