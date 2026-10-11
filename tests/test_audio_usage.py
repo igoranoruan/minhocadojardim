@@ -171,3 +171,107 @@ def test_extracao_de_audio_nunca_cria_linha_em_generations(factory, session):
     _completar(session, usuario.id, "r-sem-geracao", now=NOW)
 
     assert session.execute(select(func.count()).select_from(Generation)).scalar_one() == 0
+
+
+# ============================================================================ isenção de admin (Tarefa 2, pedido do CÉREBRO, 11/10/2026)
+# settings.admin_email é a MESMA fonte de verdade já usada em routes/deps.py::require_admin
+# (moderação de comentários) -- reaproveitada aqui, nunca um e-mail hardcoded. use_settings
+# (tests/conftest.py) troca config.settings só para o teste (monkeypatch), mesmo padrão já usado
+# pelos testes de autenticação/comentários.
+def test_admin_consegue_extrair_a_16a_vez_sem_bloquear(factory, session, use_settings):
+    use_settings(admin_email="igoranoruan@gmail.com")
+    admin = factory.user(email="igoranoruan@gmail.com")
+    give(factory, session, admin, "vip_batch", now=NOW)
+
+    for i in range(AUDIO_EXTRACTIONS_PER_DAY):
+        _completar(session, admin.id, f"admin-{i}", now=NOW)
+
+    # a 16a (e a 17a) NUNCA levanta AudioQuotaExceededError para o admin
+    reserva_16 = reserve_audio_extraction(session, user_id=admin.id, request_id="admin-15", now=NOW)
+    assert reserva_16.created is True
+    complete_audio_extraction(session, reserva_16.extraction_id, now=NOW)
+
+    reserva_17 = reserve_audio_extraction(session, user_id=admin.id, request_id="admin-16", now=NOW)
+    assert reserva_17.created is True
+    complete_audio_extraction(session, reserva_17.extraction_id, now=NOW)
+
+    # a extração do admin é GRAVADA NORMALMENTE no ledger -- "usado" reflete a realidade (17),
+    # nunca congela em 15; "remaining" fica em 0 (nunca negativo, max(0, ...) já existente).
+    session.expire_all()
+    total = session.execute(
+        select(func.count()).select_from(AudioExtraction).where(AudioExtraction.user_id == admin.id)
+    ).scalar_one()
+    assert total == 17
+    saldo = get_audio_allowance(session, admin.id, now=NOW)
+    assert saldo.used == 17 and saldo.remaining == 0
+
+
+def test_usuario_comum_continua_bloqueado_na_16a_mesmo_com_admin_email_configurado(factory, session, use_settings):
+    """Mesmo teste de test_limite_diario_esgota_em_15_e_o_16o_e_recusado, mas com ADMIN_EMAIL
+    configurado para OUTRO e-mail -- confirma que a isenção nunca vaza para quem não é o admin."""
+    use_settings(admin_email="igoranoruan@gmail.com")
+    usuario = factory.user(email="outro.usuario@example.com")
+    give(factory, session, usuario, "vip_batch", now=NOW)
+
+    for i in range(AUDIO_EXTRACTIONS_PER_DAY):
+        _completar(session, usuario.id, f"r-{i}", now=NOW)
+
+    with pytest.raises(AudioQuotaExceededError) as exc_info:
+        reserve_audio_extraction(session, user_id=usuario.id, request_id="r-16", now=NOW)
+    assert exc_info.value.status_code == 429
+    assert exc_info.value.detail == "Você usou suas 15 extrações de hoje. Amanhã libera de novo."
+
+
+def test_sem_admin_email_configurado_ninguem_fica_isento(factory, session, use_settings):
+    """ADMIN_EMAIL vazio (não configurado) -- mesmo um usuário com ESSE e-mail nunca fica isento
+    (User.email nunca é vazio, então uma comparação contra "" nunca bateria mesmo sem a checagem
+    explícita em _is_admin -- este teste documenta a intenção, não é só uma coincidência)."""
+    use_settings(admin_email="")
+    usuario = factory.user(email="igoranoruan@gmail.com")
+    give(factory, session, usuario, "vip_batch", now=NOW)
+
+    for i in range(AUDIO_EXTRACTIONS_PER_DAY):
+        _completar(session, usuario.id, f"r-{i}", now=NOW)
+
+    with pytest.raises(AudioQuotaExceededError):
+        reserve_audio_extraction(session, user_id=usuario.id, request_id="r-16", now=NOW)
+
+
+def test_admin_continua_sujeito_a_uma_operacao_por_vez(factory, session, use_settings):
+    """A ÚNICA isenção é o teto diário -- "uma operação de áudio por vez" continua valendo
+    normalmente para o admin."""
+    use_settings(admin_email="igoranoruan@gmail.com")
+    admin = factory.user(email="igoranoruan@gmail.com")
+    give(factory, session, admin, "vip_batch", now=NOW)
+
+    reserve_audio_extraction(session, user_id=admin.id, request_id="admin-em-andamento", now=NOW)
+    with pytest.raises(AudioConcurrentOperationError):
+        reserve_audio_extraction(session, user_id=admin.id, request_id="admin-outra", now=NOW)
+
+
+def test_admin_consegue_reservar_lote_alem_do_saldo_diario_mas_nao_alem_do_teto_do_plano(
+    factory, session, use_settings,
+):
+    """Lote (Parte B): a isenção também vale para reserve_audio_batch -- o admin consegue reservar
+    um lote MAIOR que o saldo diário restante, mas o teto de itens por lote (Plan.max_batch_size)
+    continua valendo igual para ele (não faz parte da isenção)."""
+    from services.audio_usage import InvalidAudioBatchSizeError, reserve_audio_batch
+
+    use_settings(admin_email="igoranoruan@gmail.com")
+    admin = factory.user(email="igoranoruan@gmail.com")
+    give(factory, session, admin, "vip_batch", now=NOW)  # vip_batch: max_batch_size=15
+
+    for i in range(AUDIO_EXTRACTIONS_PER_DAY - 1):
+        _completar(session, admin.id, f"admin-pre-{i}", now=NOW)
+    saldo = get_audio_allowance(session, admin.id, now=NOW)
+    assert saldo.remaining == 1
+
+    # pede 5 (> saldo restante de 1, <= teto do plano de 15) -- não bloqueia
+    reserva = reserve_audio_batch(session, user_id=admin.id, request_id="admin-lote-r1", size=5, now=NOW)
+    assert reserva.item_count == 5
+    for eid in reserva.extraction_ids:
+        complete_audio_extraction(session, eid, now=NOW)
+
+    # mas 16 itens (> max_batch_size=15 do vip_batch) continua recusado -- teto de PLANO, não de cota
+    with pytest.raises(InvalidAudioBatchSizeError):
+        reserve_audio_batch(session, user_id=admin.id, request_id="admin-lote-r2", size=16, now=NOW)

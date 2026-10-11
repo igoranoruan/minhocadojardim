@@ -23,7 +23,13 @@ database/models/audio_extraction.py::ck_audio_extractions_avulsa_ou_lote), tabel
 semanal de OPERAÇÕES de lote dos planos pagos, pedido explícito do CÉREBRO). O teto de itens por
 operação usa `Plan.max_batch_size` (o mesmo "até 5"/"até 15" já documentado em services/plans.py),
 mas o teto REAL também é limitado pelo saldo diário de 15 extrações (avulsa + lote somadas) --
-`min(plan.max_batch_size, saldo.remaining)`, nunca só um dos dois."""
+`min(plan.max_batch_size, saldo.remaining)`, nunca só um dos dois.
+
+Isenção de admin (pedido do CÉREBRO, 11/10/2026): o usuário cujo e-mail é `settings.admin_email`
+(mesma fonte de verdade já usada em routes/deps.py::require_admin, nunca um e-mail novo) nunca é
+bloqueado pelo teto diário de 15/dia -- a ÚNICA isenção (plano pago, "uma operação por vez" e o
+teto de itens por lote continuam valendo igual). A extração do admin é gravada NORMALMENTE no
+ledger (só não BLOQUEIA) -- ver _is_admin, abaixo."""
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -32,7 +38,8 @@ from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from config import AUDIO_EXTRACTIONS_PER_DAY, GENERATION_RESERVATION_TTL_SECONDS
+from config import AUDIO_EXTRACTIONS_PER_DAY, GENERATION_RESERVATION_TTL_SECONDS, get_settings
+from database.models import User
 from database.models.audio_batch import AudioBatch
 from database.models.audio_extraction import AudioExtraction
 from services import result_storage
@@ -175,6 +182,26 @@ def _effective_plan(db: Session, user_id: int, now: datetime) -> Plan:
 def _require_paid_plan(plan: Plan) -> None:
     if not plan.paid:
         raise AudioNotAllowedError()
+
+
+# ------------------------------------------------------------------------------ isenção de admin (11/10/2026)
+def _is_admin(db: Session, user_id: int) -> bool:
+    """Isenção do TETO DIÁRIO de 15 extrações de áudio (pedido do CÉREBRO, 11/10/2026) -- a ÚNICA
+    isenção: plano pago, "uma operação por vez" e o teto de itens por lote (Plan.max_batch_size)
+    continuam valendo normalmente para o admin, exatamente como para qualquer outro usuário (ver
+    reserve_audio_extraction/reserve_audio_batch, abaixo -- esta função só é consultada no ponto
+    exato que decide "estourou os 15/dia").
+
+    Reaproveita settings.admin_email -- a MESMA fonte de verdade de "quem é admin" já usada em
+    routes/deps.py::require_admin (moderação de comentários), nunca um e-mail novo hardcoded
+    aqui. ADMIN_EMAIL vazio (não configurado) nunca bate com e-mail nenhum (User.email nunca é
+    vazio -- database/models/user.py::normalize_email), então ninguém fica isento por engano se a
+    variável de ambiente não estiver configurada."""
+    settings = get_settings()
+    if not settings.admin_email:
+        return False
+    user = db.get(User, user_id)
+    return user is not None and user.email == settings.admin_email
 
 
 # ------------------------------------------------------------------------------ cálculo do saldo
@@ -322,7 +349,10 @@ def reserve_audio_extraction(
             raise AudioConcurrentOperationError()
 
         allowance = _compute_allowance(db, user_id, now, plan)
-        if allowance.remaining < 1:
+        # Isenção do admin (pedido do CÉREBRO, 11/10/2026): settings.admin_email continua
+        # extraindo além dos 15/dia -- a extração é gravada NORMALMENTE logo abaixo (ledger
+        # coerente), só não BLOQUEIA. Ver _is_admin.
+        if allowance.remaining < 1 and not _is_admin(db, user_id):
             raise AudioQuotaExceededError(allowance, requested=1)
 
         extraction = AudioExtraction(
@@ -540,7 +570,10 @@ def reserve_audio_batch(
             raise InvalidAudioBatchSizeError(f"O lote de áudio pode ter no máximo {plan.max_batch_size} itens.")
 
         allowance = _compute_allowance(db, user_id, now, plan)
-        if size > allowance.remaining:
+        # Mesma isenção de admin da reserva avulsa (ver _is_admin) -- a ÚNICA isenção é o teto
+        # diário: o teto de itens por lote (plan.max_batch_size, já checado acima) continua
+        # valendo igual para o admin.
+        if size > allowance.remaining and not _is_admin(db, user_id):
             raise AudioQuotaExceededError(allowance, requested=size)
 
         batch = AudioBatch(
