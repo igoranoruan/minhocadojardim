@@ -4172,7 +4172,8 @@
             if (!linha) return;
             linha.statusTexto.textContent = texto;
             linha.statusTexto.className = "text-[11px] mt-1 " +
-                (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-[#19D3AE]" : "text-slate-500");
+                (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-[#19D3AE]" :
+                    tipo === "aviso" ? "text-amber-400" : "text-slate-500");
         }
 
         function processarEventoSSELoteAudio(bloco) {
@@ -4208,6 +4209,10 @@
                         linha.acao.innerHTML = "";
                         linha.acao.appendChild(link);
                     }
+                } else if (dados.status === "audio_page_link") {
+                    // Parte 1 (autorização do CÉREBRO, 11/10/2026): link da página do SOM/áudio,
+                    // não de um vídeo/post -- nunca consumiu extração nenhuma (ver routes/audio.py).
+                    atualizarLinha(dados.position, dados.detail || "Esse é o link da página do áudio.", "aviso");
                 } else {
                     atualizarLinha(dados.position, "Não foi possível extrair o áudio deste vídeo.", "erro");
                 }

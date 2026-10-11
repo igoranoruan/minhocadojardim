@@ -213,3 +213,78 @@ def test_download_de_extracao_inexistente_devolve_404(auth_client, factory, sess
     _entitlement_pago(factory, usuario)
     resposta = auth_client.get("/api/audio/999999/download")
     assert resposta.status_code == 404
+
+
+# ============================================================================ Parte 1 -- link de página de áudio (autorização do CÉREBRO, 11/10/2026)
+def test_link_de_pagina_de_audio_do_tiktok_devolve_mensagem_amigavel_sem_consumir_nada(
+    auth_client, factory, session,
+):
+    """TikTok `/music/...` -- mensagem EXATA pedida pelo CÉREBRO, 422 (mesmo handler de
+    DownloadError já existente, nenhum handler novo), NENHUMA extração gravada, download_audio_source
+    NUNCA chamado (a checagem é a primeira coisa do fluxo, antes de qualquer reserva)."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+    _entitlement_pago(factory, usuario)
+
+    with patch("services.audio_flow.download_audio_source") as download_mock:
+        resposta = auth_client.post(
+            "/api/audio/extract",
+            json={"url": "https://www.tiktok.com/music/Build-a-Btch-6956990112127585029"},
+        )
+
+    assert resposta.status_code == 422
+    assert resposta.json()["detail"] == (
+        "Esse é o link da página do áudio. Abra um dos vídeos que usam esse som, "
+        "toque em Compartilhar → Copiar link e cole aqui."
+    )
+    download_mock.assert_not_called()
+    session.expire_all()
+    assert session.query(AudioExtraction).count() == 0
+    saldo = auth_client.get("/api/audio/allowance").json()
+    assert saldo == {"used": 0, "limit": 15, "remaining": 15}
+
+
+def test_link_de_pagina_de_audio_do_instagram_devolve_mensagem_amigavel(auth_client, factory, session):
+    """Instagram `/reels/audio/...` e `/audio/...` -- mesmo comportamento do TikTok acima."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+    _entitlement_pago(factory, usuario)
+
+    for url in (
+        "https://www.instagram.com/reels/audio/123456789/",
+        "https://www.instagram.com/audio/123456789/",
+    ):
+        with patch("services.audio_flow.download_audio_source") as download_mock:
+            resposta = auth_client.post("/api/audio/extract", json={"url": url})
+        assert resposta.status_code == 422
+        assert resposta.json()["detail"] == (
+            "Esse é o link da página do áudio. Abra um dos vídeos que usam esse som, "
+            "toque em Compartilhar → Copiar link e cole aqui."
+        )
+        download_mock.assert_not_called()
+
+    session.expire_all()
+    assert session.query(AudioExtraction).count() == 0
+
+
+def test_link_de_pagina_de_audio_e_bloqueado_mesmo_para_free(auth_client, factory, session):
+    """A checagem de link de página de áudio vem ANTES da checagem de plano pago -- mas, como o
+    Free já é recusado de qualquer forma (403), o que importa aqui é que NENHUM dos dois caminhos
+    grava linha nenhuma. Documentado por clareza (não é um requisito nomeado, mas evita um
+    comportamento surpreendente: um Free vendo 422 'página do áudio' em vez de 403 'plano pago').
+    """
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)  # sem entitlement -> plano efetivo Free
+
+    resposta = auth_client.post(
+        "/api/audio/extract",
+        json={"url": "https://www.tiktok.com/music/Build-a-Btch-6956990112127585029"},
+    )
+    # A mensagem amigável é devolvida ANTES da checagem de plano (nunca precisa de plano pago para
+    # saber que um link de página de áudio não serve pra nada) -- 422, nunca 403, mesma mensagem
+    # exata de sempre.
+    assert resposta.status_code == 422
+    assert resposta.json()["detail"] == (
+        "Esse é o link da página do áudio. Abra um dos vídeos que usam esse som, "
+        "toque em Compartilhar → Copiar link e cole aqui."
+    )

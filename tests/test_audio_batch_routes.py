@@ -327,6 +327,68 @@ def test_zip_sem_nenhum_item_concluido_404(auth_client, factory, session):
     assert resposta.status_code == 404
 
 
+# ============================================================================ Parte 1 -- link de página de áudio no lote (autorização do CÉREBRO, 11/10/2026)
+def test_lote_com_um_link_de_pagina_de_audio_nao_conta_na_cota_e_nao_bloqueia_os_demais(
+    auth_client, factory, session, tmp_path,
+):
+    """Mistura de 1 link de página de áudio (posição 2) com 2 links normais (posições 1 e 3) -- o
+    pulado recebe seu próprio item_complete com a mensagem amigável, NA POSIÇÃO ORIGINAL (2), sem
+    nunca entrar na reserva (size enviado a reserve_audio_batch é 2, não 3) -- os outros dois
+    continuam funcionando normalmente, cada um também na sua posição ORIGINAL (1 e 3, não 1 e 2)."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+    give(factory, session, usuario, "weekly", now=resolve_now())
+    pares_arquivo = _arquivos(tmp_path, 2)
+    urls = [
+        "https://www.tiktok.com/@a/1",
+        "https://www.tiktok.com/music/som-que-nao-serve-123",
+        "https://www.tiktok.com/@a/2",
+    ]
+
+    with patch("services.audio_flow.download_audio_source", side_effect=[fake_audio_download_result(d) for d, _ in pares_arquivo]), \
+         patch("services.audio_flow.process_audio", side_effect=[fake_audio_processing_result(o) for _, o in pares_arquivo]):
+        resposta = auth_client.post("/api/audio/batch", json=_body("r-misto", urls))
+
+    eventos = _eventos(resposta)
+    item_completes = {d["position"]: d for t, d in eventos if t == "item_complete"}
+    assert set(item_completes) == {1, 2, 3}
+    assert item_completes[2]["status"] == "audio_page_link"
+    assert item_completes[2]["detail"] == (
+        "Esse é o link da página do áudio. Abra um dos vídeos que usam esse som, "
+        "toque em Compartilhar → Copiar link e cole aqui."
+    )
+    assert item_completes[1]["status"] == "completed"
+    assert item_completes[3]["status"] == "completed"
+
+    resumo = eventos[-1][1]
+    assert resumo["completed"] == 2 and resumo["failed"] == 0
+    assert resumo["item_count"] == 2  # o pulado NUNCA conta no tamanho da reserva
+
+    # a cota diária só contou os 2 itens REAIS, nunca o link de página de áudio
+    assert get_audio_allowance(session, usuario.id).used == 2
+
+
+def test_lote_100_por_cento_de_links_de_pagina_de_audio_nunca_reserva_nada(auth_client, factory, session):
+    """Nenhum item real -- nenhuma chamada a reserve_audio_batch, nenhum AudioBatch criado, cota
+    diária intacta. Cada posição ainda recebe seu item_complete com a mensagem amigável."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+    give(factory, session, usuario, "weekly", now=resolve_now())
+
+    resposta = auth_client.post("/api/audio/batch", json=_body("r-so-audio", [
+        "https://www.tiktok.com/music/som-1",
+        "https://www.instagram.com/reels/audio/999/",
+    ]))
+
+    eventos = _eventos(resposta)
+    assert [t for t, _ in eventos] == ["item_complete", "item_complete"]
+    assert all(d["status"] == "audio_page_link" for _, d in eventos)
+    assert [d["position"] for _, d in eventos] == [1, 2]
+
+    assert session.query(AudioBatch).count() == 0
+    assert get_audio_allowance(session, usuario.id).used == 0
+
+
 def test_zip_com_sucesso_contem_so_os_itens_concluidos_e_se_chama_klango_audios(auth_client, factory, session, tmp_path):
     from datetime import date
 

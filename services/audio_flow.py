@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 from config import RESULT_TTL_SECONDS
 from database.models import User
 from database.models.audio_extraction import AudioExtraction
+from download.audio_page_links import AudioPageLinkError, is_audio_page_link
 from download.audio_service import download_audio_source
 from download.errors import DownloadError
 from download.platform import Platform, detect_platform
@@ -213,7 +214,19 @@ def extract_audio_from_url(
       no processamento, depois da reserva -- a extração já foi marcada FAILED antes de relançar.
     - AudioPersistenceError: falha ao gravar o resultado (sucesso OU falha) no banco.
     - InvalidFilenameError (services.batch_filenames): `filename` inválido -- levantada ANTES de
-      qualquer reserva, nenhum limite diário é tocado."""
+      qualquer reserva, nenhum limite diário é tocado.
+    - AudioPageLinkError (download.audio_page_links, Parte 1 -- autorização do CÉREBRO,
+      11/10/2026): `url` é a página do SOM/música (TikTok `/music/...`) ou a página de áudio do
+      Instagram (`/reels/audio/...`/`/audio/...`), nunca um vídeo/post individual -- levantada
+      ANTES de validate_url/qualquer reserva (nenhuma chamada de rede é feita, nenhum limite
+      diário é tocado). Ver download/audio_page_links.py para a investigação completa que levou a
+      só responder com mensagem amigável aqui, sem tentar extrair nada."""
+    # Parte 1 (autorização do CÉREBRO, 11/10/2026): checagem SÓ DE STRING, sempre a primeira coisa
+    # do fluxo -- nunca depois de validate_url (que já faria uma resolução DNS desnecessária para
+    # um link que não vamos tentar baixar de jeito nenhum).
+    if is_audio_page_link(url):
+        raise AudioPageLinkError()
+
     validated = validate_url(url)
     platform: Platform = detect_platform(validated.url)
     display_filename = sanitize_batch_filename(filename, suffix=AUDIO_FILENAME_SUFFIX)

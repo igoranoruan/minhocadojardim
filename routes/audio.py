@@ -45,6 +45,7 @@ from starlette.background import BackgroundTask
 
 from database.models import User
 from database.session import get_session
+from download.audio_page_links import AUDIO_PAGE_LINK_MESSAGE, partition_audio_batch_items
 from download.errors import DownloadError
 from processor.errors import ProcessorError
 from routes.deps import get_current_user
@@ -253,16 +254,42 @@ def _run_audio_batch_in_background(
 ) -> None:
     """Mesmo padrão de routes/generations.py::_run_batch_in_background -- ver aquele comentário
     (Session própria da thread, `items` é uma lista de dicts {"url", "filename"} NA ORDEM
-    submetida, vínculo por posição com AudioBatchReservation.extraction_ids)."""
+    submetida, vínculo por posição com AudioBatchReservation.extraction_ids).
+
+    Parte 1 (links de página de áudio, autorização do CÉREBRO, 11/10/2026): ANTES de qualquer
+    reserva, `items` é separado em "pulados" (URL é página de áudio -- TikTok `/music/...`,
+    Instagram `/reels/audio/...`/`/audio/...`) e "reais" (o resto) por
+    download.audio_page_links.partition_audio_batch_items. Os pulados nunca entram em
+    reserve_audio_batch (nunca contam no `size` nem no limite diário) -- cada um recebe seu próprio
+    `item_complete` com status "audio_page_link" e a mensagem amigável, na POSIÇÃO ORIGINAL que o
+    usuário viu no formulário. Os reais seguem o fluxo de sempre, sem nenhuma mudança de
+    comportamento -- só a numeração 1..M interna (M = quantidade de itens reais) é traduzida de
+    volta para a posição original em CADA evento, via `posicoes_originais` (ver abaixo)."""
     session = sessionmaker(bind=engine_bind, expire_on_commit=False)()
     try:
-        sanitizados = sanitize_batch_filenames([item["filename"] for item in items], suffix=".mp3")
+        pulados, posicoes_originais, itens_reais = partition_audio_batch_items(items)
+        for posicao_original, item in pulados:
+            event_queue.put(("item_complete", {
+                "position": posicao_original,
+                "status": "audio_page_link",
+                "detail": AUDIO_PAGE_LINK_MESSAGE,
+                "filename": item["filename"],
+            }))
+
+        if not itens_reais:
+            # Lote inteiro era link(s) de página de áudio -- nunca chama reserve_audio_batch (que
+            # exige size >= 1) nem toca o limite diário. Cada posição já recebeu seu item_complete
+            # acima; não há reserva/resumo para fechar (o frontend só mostra as linhas já
+            # respondidas, sem nenhum botão de ZIP -- não havendo nada a baixar, é o esperado).
+            return
+
+        sanitizados = sanitize_batch_filenames([item["filename"] for item in itens_reais], suffix=".mp3")
         fingerprint = compute_batch_fingerprint(
-            [(item["url"], nome) for item, nome in zip(items, sanitizados)]
+            [(item["url"], nome) for item, nome in zip(itens_reais, sanitizados)]
         )
 
         reservation = reserve_audio_batch(
-            session, user_id=user_id, request_id=request_id, size=len(items),
+            session, user_id=user_id, request_id=request_id, size=len(itens_reais),
             content_fingerprint=fingerprint, display_filenames=sanitizados,
         )
         event_queue.put((
@@ -270,7 +297,7 @@ def _run_audio_batch_in_background(
             {"batch_id": reservation.batch_id, "item_count": reservation.item_count, "created": reservation.created},
         ))
 
-        pares = list(zip(reservation.extraction_ids, (item["url"] for item in items), strict=True))
+        pares = list(zip(reservation.extraction_ids, (item["url"] for item in itens_reais), strict=True))
 
         def on_item_progress(
             position: int, extraction_id: int, stage: str, percent: float | None, platform: str,
@@ -283,7 +310,7 @@ def _run_audio_batch_in_background(
                 mensagem = "Extraindo o áudio..."
             tipo_evento = "item_progress" if stage == "processing" else "item_status"
             event_queue.put((tipo_evento, {
-                "position": position, "extraction_id": extraction_id,
+                "position": posicoes_originais[position - 1], "extraction_id": extraction_id,
                 "stage": stage, "percent": percent, "message": mensagem,
             }))
 
@@ -292,10 +319,11 @@ def _run_audio_batch_in_background(
         concluidos = falhados = 0
         for resultado in resultados:
             nome = sanitizados[resultado.position - 1]
+            posicao_exibida = posicoes_originais[resultado.position - 1]
             if resultado.ok:
                 concluidos += 1
                 payload = {
-                    "position": resultado.position,
+                    "position": posicao_exibida,
                     "extraction_id": resultado.extraction_id,
                     "status": "completed",
                     "platform": resultado.outcome.platform,
@@ -307,7 +335,7 @@ def _run_audio_batch_in_background(
             else:
                 falhados += 1
                 payload = {
-                    "position": resultado.position,
+                    "position": posicao_exibida,
                     "extraction_id": resultado.extraction_id,
                     "status": "failed",
                     "error_code": resultado.error_code,
