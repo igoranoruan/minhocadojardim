@@ -1982,6 +1982,14 @@
         carregarHistoricoGeracoes();
         tentarReivindicarIndicacao();
         carregarIndicacao();
+        // 11/10/2026 (correção pedida pelo CÉREBRO): a seção "Importar pasta do Pinterest" busca
+        // seu PRÓPRIO status (ver comentário acima de #secaoPinterestBoard) -- sem esta chamada
+        // aqui, ela só atualizava no DOMContentLoaded da página, ficando presa no estado de antes
+        // do login (bloqueado) até a pessoa dar F5. A seção de lote já não tinha esse problema
+        // porque sua atualização mora dentro de carregarStatusConta() (chamada acima), que roda
+        // na hora; esta seção tem a busca separada de propósito (ver comentário da seção), então
+        // precisa ser chamada aqui também.
+        carregarStatusPinterestBoard();
     }
 
     function aplicarSemSessao() {
@@ -2008,6 +2016,12 @@
         // sobrescreve os valores padrão acima com os reais assim que a resposta chega -- mesmo
         // padrão já usado em aplicarSessao(), sem nenhum estado novo.
         carregarStatusConta();
+        // 11/10/2026 (mesma correção de aplicarSessao(), lado oposto -- logout): sem isso, a seção
+        // "Importar pasta do Pinterest" ficava com o estado LIBERADO da sessão anterior até a
+        // próxima vez que a página fosse recarregada. A própria função já busca /api/me/status de
+        // novo (agora sem sessão) e decide bloqueado/escondido a partir da resposta real -- nenhum
+        // estado novo criado aqui, só reaproveitando a mesma função de sempre.
+        carregarStatusPinterestBoard();
     }
 
     // ---- Status real da conta (UX-2): GET /api/me/status -- só apresenta o que o backend já
