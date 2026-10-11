@@ -38,6 +38,18 @@ lote sempre conta como 1 operação usada, para sempre (nunca é devolvido por u
 depois -- só a geração individual que falhou libera SUA própria vaga de vídeo, nunca a operação de
 lote em si). VIP Batch tem `batch_limit=None`: nenhuma contagem é feita (nunca levanta
 BatchQuotaExceededError); o único teto que continua valendo para o VIP é o de vídeos/dia.
+
+Isenção de admin (pedido do CÉREBRO, 11/10/2026 -- extensão da mesma isenção já aplicada à cota de
+áudio em services/audio_usage.py para a cota de VÍDEOS, a pedido explícito do Igor, que precisa
+baixar sem teto diário/semanal para produzir conteúdo do próprio projeto): o usuário cujo e-mail é
+`settings.admin_email` nunca é bloqueado por "estourou a cota" -- nem a de vídeos/dia (avulsa ou
+lote) nem a de OPERAÇÕES de lote/semana. A ÚNICA isenção é o teto numérico: "uma operação por vez"
+(lock_user_row, idempotência por request_id), `BatchNotAllowedError` (plano sem lote habilitado) e
+o teto de itens POR lote (`Plan.max_batch_size`) continuam valendo normalmente para o admin, exatamente
+como para qualquer outro usuário -- ver reserve_generation/reserve_batch, abaixo, onde `_is_admin`
+é consultado nos dois pontos exatos que decidem "estourou a cota" (nunca antes). A geração/lote
+ainda é GRAVADA no ledger normalmente (continua contando no `used` de todo mundo, inclusive do
+próprio admin -- o histórico e o painel seguem corretos), só não BLOQUEIA. Ver _is_admin, abaixo.
 """
 import logging
 from dataclasses import dataclass
@@ -47,8 +59,8 @@ from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from config import GENERATION_RESERVATION_TTL_SECONDS
-from database.models import Batch, Generation
+from config import GENERATION_RESERVATION_TTL_SECONDS, get_settings
+from database.models import Batch, Generation, User
 from services import result_storage
 from services.entitlements import get_current_entitlement
 from services.locks import UserNotFoundError, lock_user_row  # noqa: F401  (UserNotFoundError reexportado)
@@ -278,6 +290,26 @@ def get_batch_allowance(db: Session, user_id: int, now: datetime | None = None) 
     return _compute_batch_allowance(db, user_id, plan, now)
 
 
+# ------------------------------------------------------------------------------ isenção de admin
+def _is_admin(db: Session, user_id: int) -> bool:
+    """Isenção do TETO de cota (de vídeos/dia e de operações de lote/semana) -- a ÚNICA isenção:
+    "uma operação por vez", `BatchNotAllowedError` e o teto de itens por lote (Plan.max_batch_size)
+    continuam valendo normalmente para o admin, exatamente como para qualquer outro usuário (ver
+    reserve_generation/reserve_batch, abaixo -- esta função só é consultada nos pontos exatos que
+    decidem "estourou a cota").
+
+    Reaproveita settings.admin_email -- a MESMA fonte de verdade de "quem é admin" já usada em
+    routes/deps.py::require_admin (moderação de comentários) e em services/audio_usage.py (cota de
+    áudio), nunca um e-mail novo hardcoded aqui. ADMIN_EMAIL vazio (não configurado) nunca bate com
+    e-mail nenhum (User.email nunca é vazio -- database/models/user.py::normalize_email), então
+    ninguém fica isento por engano se a variável de ambiente não estiver configurada."""
+    settings = get_settings()
+    if not settings.admin_email:
+        return False
+    user = db.get(User, user_id)
+    return user is not None and user.email == settings.admin_email
+
+
 # ------------------------------------------------------------------------------ validações
 def _validate_request_id(request_id) -> str:
     if not isinstance(request_id, str) or not request_id.strip() or len(request_id) > MAX_REQUEST_ID_LENGTH:
@@ -341,7 +373,9 @@ def reserve_generation(
             return result
 
         allowance = _compute_allowance(db, user_id, now)
-        if allowance.remaining < 1:
+        # Isenção do admin (ver _is_admin): settings.admin_email continua contando normalmente no
+        # ledger (allowance/used/remaining seguem corretos), só não BLOQUEIA.
+        if allowance.remaining < 1 and not _is_admin(db, user_id):
             raise QuotaExceededError(allowance, requested=1)
 
         generation = Generation(
@@ -504,11 +538,15 @@ def reserve_batch(
         # lock_user_row/transação, então nenhuma outra chamada consegue "ver" a mesma vaga livre
         # (o UPDATE de lock_user_row já serializou este usuário -- mesmo mecanismo que protege a
         # cota de vídeos, nenhum novo lock foi criado). batch_limit=None (VIP) nunca cai aqui.
+        # Isenção do admin (ver _is_admin), nos DOIS tetos do lote -- operações/semana e
+        # vídeos/dia -- igual à reserva avulsa acima: o ledger continua gravando normalmente, só
+        # não BLOQUEIA.
+        is_admin = _is_admin(db, user_id)
         batch_allowance = _compute_batch_allowance(db, user_id, allowance.plan, now)
-        if batch_allowance.limit is not None and batch_allowance.remaining < 1:
+        if batch_allowance.limit is not None and batch_allowance.remaining < 1 and not is_admin:
             raise BatchQuotaExceededError(batch_allowance)
 
-        if allowance.remaining < size:
+        if allowance.remaining < size and not is_admin:
             raise QuotaExceededError(allowance, requested=size)
 
         batch = Batch(
