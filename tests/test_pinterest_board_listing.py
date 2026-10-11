@@ -146,6 +146,16 @@ def test_timeout_propaga_como_download_timeout_error():
             list_board_pins("https://www.pinterest.com/alguem/pasta/")
 
 
+def test_info_none_vira_board_not_found_error():
+    """Confirmado em produção (11/10/2026): com `ignoreerrors: True` ligado, uma falha ao buscar
+    os metadados da PRÓPRIA pasta (ex.: 404 de board inexistente/renomeada) faz o yt-dlp devolver
+    `None` em vez de levantar exceção (ver `trouble()` no código-fonte do yt-dlp) -- sem esse
+    tratamento, `info.get("entries")` quebrava com AttributeError (500 em produção)."""
+    with patch("download.board_listing._extract_with_timeout", return_value=None):
+        with pytest.raises(BoardNotFoundError):
+            list_board_pins("https://www.pinterest.com/alguem/pasta-inexistente/")
+
+
 def test_opcoes_nunca_usam_extractor_generico():
     from download.board_listing import _build_options
 

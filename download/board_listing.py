@@ -189,6 +189,20 @@ def list_board_pins(url: str) -> BoardListing:
         logger.error("[PINTEREST_BOARD] falha inesperada ao listar pasta", exc_info=True)
         raise BoardNotFoundError() from None
 
+    # CONFIRMADO EM PRODUÇÃO (11/10/2026, link https://pin.it/6mxtvQOV3 do Igor -- 500 Internal
+    # Server Error) e reproduzido localmente com o yt-dlp real: quando a extração de metadados da
+    # PRÓPRIA pasta (não de um pin dentro dela) falha com HTTP 404/ExtractorError, o yt-dlp trata
+    # isso em `trouble()` (YoutubeDL.py) -- e como `ignoreerrors: True` está ligado (necessário
+    # para a correção do GIF, acima), esse método NÃO levanta exceção nenhuma: só registra o erro
+    # no log e devolve `None` normalmente. Ou seja, `_extract_with_timeout` acima retorna com
+    # sucesso, `info` vem `None`, e o `.get("entries")` logo abaixo quebrava com
+    # "AttributeError: 'NoneType' object has no attribute 'get'" -- sem cair em nenhum `except`
+    # daqui de cima, porque nenhuma exceção foi de fato levantada. Antes da correção do GIF
+    # (ignoreerrors: True), esse mesmo caso já teria caído certinho no `except DownloadError`
+    # acima; esse `None` é o efeito colateral daquela correção que faltava cobrir.
+    if info is None:
+        raise BoardNotFoundError()
+
     entries = [e for e in (info.get("entries") or []) if isinstance(e, dict)]
     if not entries:
         raise BoardNotFoundError()
