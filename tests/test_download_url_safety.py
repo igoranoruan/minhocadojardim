@@ -8,7 +8,12 @@ import ipaddress
 import pytest
 
 from download.errors import InvalidUrlError, SsrfBlockedError, TooManyRedirectsError
-from download.url_safety import resolve_redirect_chain, resolve_host_ips, validate_url
+from download.url_safety import (
+    _decode_non_ascii_percent_encoding,
+    resolve_redirect_chain,
+    resolve_host_ips,
+    validate_url,
+)
 from helpers_download import LocalHttpServer
 
 
@@ -164,6 +169,41 @@ def test_redirect_para_ip_privado_e_bloqueado_sem_nenhum_bypass(monkeypatch):
     with LocalHttpServer({"/mal": (302, {"Location": "http://10.0.0.1/interno"})}) as server:
         with pytest.raises(SsrfBlockedError):
             resolve_redirect_chain(server.url("/mal"))
+
+
+def test_redirect_com_acento_percent_encoded_no_location_e_decodificado(monkeypatch):
+    """Caso real de produção (11/10/2026, board "Vídeos" do Igor no Pinterest): o header
+    Location de um redirecionamento sempre chega com texto não-ASCII percent-encoded (RFC 3986)
+    -- sem decodificar, essa string crua ("v%C3%ADdeos") seguia pro yt-dlp, que a usava como
+    parâmetro de API sem decodificar também, causando 404 no Pinterest. resolve_redirect_chain
+    precisa devolver a URL já decodificada (legível), igual um navegador mostraria."""
+    with LocalHttpServer({"/inicio": (302, {})}) as server:
+        _allow_only_local_test_server(monkeypatch)
+        destino_codificado = server.url("/alguem/v%C3%ADdeos/")
+        server._httpd.RequestHandlerClass.routes["/inicio"] = (302, {"Location": destino_codificado})
+        resultado = resolve_redirect_chain(server.url("/inicio"))
+    assert resultado.url == server.url("/alguem/vídeos/")
+
+
+def test_decode_non_ascii_nunca_mexe_em_percent_encoding_ascii_reservado():
+    # %2F (/), %3F (?), %26 (&), %3D (=), %20 (espaço): significado ESTRUTURAL na URL -- jamais
+    # decodificados (decodificar mudaria o que a URL de fato aponta, ex.: um "/" dentro de um
+    # nome de arquivo virando separador de path de verdade).
+    bruta = "https://x.test/a?b=c%2Fd%26e%3Df%20g"
+    assert _decode_non_ascii_percent_encoding(bruta) == bruta
+
+
+def test_decode_non_ascii_decodifica_apenas_bytes_nao_ascii():
+    assert (
+        _decode_non_ascii_percent_encoding("https://x.test/ol%C3%A1-mundo")
+        == "https://x.test/olá-mundo"
+    )
+
+
+def test_decode_non_ascii_preserva_sequencia_invalida_em_utf8():
+    # %FF sozinho não é um byte UTF-8 válido -- preserva como veio, nunca inventa decodificação.
+    bruta = "https://x.test/a%FFb"
+    assert _decode_non_ascii_percent_encoding(bruta) == bruta
 
 
 def test_falha_no_head_nao_e_tratada_como_ssrf(monkeypatch):

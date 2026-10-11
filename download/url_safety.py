@@ -33,10 +33,11 @@ Assim, `resolve_redirect_chain` é defesa em profundidade sobre a URL de ENTRADA
 colou), não uma garantia sobre tudo que o yt-dlp faz depois.
 """
 import ipaddress
+import re
 import socket
 from dataclasses import dataclass
 from urllib.error import HTTPError
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from config import MAX_REDIRECTS
@@ -129,6 +130,30 @@ class _NoAutoRedirect(HTTPRedirectHandler):
 
 _OPENER = build_opener(_NoAutoRedirect)
 
+# CONFIRMADO EM PRODUÇÃO (11/10/2026, board "Vídeos" do Igor no Pinterest): o cabeçalho HTTP
+# `Location` de um redirecionamento sempre chega com texto não-ASCII percent-encoded em UTF-8
+# (RFC 3986 -- é assim que o protocolo transmite acentos/etc., um navegador decodifica isso antes
+# de MOSTRAR a URL, mas o valor "de fio" continua codificado). Sem decodificar aqui, essa string
+# ainda codificada (ex.: "v%C3%ADdeos") seguia direto pro yt-dlp, que a usa CRUA -- tanto como
+# parte da URL extraída (regex, sem decodificar nada) quanto, no caso do extrator de pasta do
+# Pinterest, como PARÂMETRO de uma chamada de API (`slug`) -- e a API do Pinterest não reconhece
+# um slug ainda percent-encoded, devolvendo 404 (reproduzido e confirmado contra o código-fonte
+# real do yt-dlp e do extrator do Pinterest). Decodifica só as sequências %XX que representam
+# BYTES NÃO-ASCII (0x80-0xFF) -- nunca os %XX de caracteres ASCII reservados (%2F, %3F, %23, %26,
+# %3D, %20 etc.), que têm significado ESTRUTURAL na URL (separador de path/query/fragmento) e não
+# podem ser alterados sem risco de mudar o que a URL realmente aponta.
+_NON_ASCII_PERCENT_RE = re.compile(r"(?:%[89A-Fa-f][0-9A-Fa-f])+")
+
+
+def _decode_non_ascii_percent_encoding(url: str) -> str:
+    def _replace(match: re.Match) -> str:
+        raw = match.group(0)
+        try:
+            return unquote(raw, encoding="utf-8", errors="strict")
+        except UnicodeDecodeError:
+            return raw  # não era UTF-8 válido -- preserva como veio, nunca inventa decodificação
+    return _NON_ASCII_PERCENT_RE.sub(_replace, url)
+
 
 def resolve_redirect_chain(url: str, *, max_redirects: int = MAX_REDIRECTS) -> ValidatedUrl:
     """Segue redirecionamentos MANUALMENTE (nunca automático — ver _NoAutoRedirect acima),
@@ -152,7 +177,7 @@ def resolve_redirect_chain(url: str, *, max_redirects: int = MAX_REDIRECTS) -> V
         location = headers.get("Location") if headers else None
         if status not in (301, 302, 303, 307, 308) or not location:
             return current
-        next_validated = validate_url(location)
+        next_validated = validate_url(_decode_non_ascii_percent_encoding(location))
         if next_validated.url in seen:
             raise TooManyRedirectsError("redirecionamento cíclico detectado.")
         seen.add(next_validated.url)
