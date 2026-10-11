@@ -4072,7 +4072,11 @@
                 return;
             }
             const dados = await resp.json();
-            loteAudioRestanteHoje = dados.remaining;
+            // Conta admin (dados.unlimited, 11/10/2026): "remaining" chegando em 0 não deve travar
+            // o botão desta conta -- o backend já não bloqueia mais pra ela -- então o saldo usado
+            // aqui vira o teto de itens por lote do plano (mesma técnica da importação de pasta do
+            // Pinterest, acima).
+            loteAudioRestanteHoje = dados.unlimited ? limiteLoteAtual : dados.remaining;
             atualizarContadorAudioLoteTexto();
             if (button) {
                 button.innerHTML = '<i class="fa-solid fa-music mr-1"></i>Processar e extrair áudio do lote';
@@ -4407,10 +4411,15 @@
         // Ajuste 1 do CÉREBRO (Etapa 4): a trava da seleção é o MENOR valor entre o limite de
         // lote do plano e as gerações restantes de HOJE (uso.remaining, quando period === "day" --
         // os 3 planos com lote são todos diários, nunca semanais -- ver services/plans.py).
+        // Conta admin (uso.unlimited, 11/10/2026): "remaining" chegando em 0 não deve travar esta
+        // conta -- o backend já não bloqueia mais pra ela -- então a trava vira só o teto de itens
+        // por lote do plano (maxBatchSize), igual a quando não há dado de uso nenhum.
         const uso = data.usage;
-        const restantesHoje = (uso && uso.period === "day" && typeof uso.remaining === "number")
-            ? uso.remaining
-            : maxBatchSize; // sem dado de uso (nunca deveria acontecer pra quem tem lote): não trava artificialmente
+        const restantesHoje = (uso && uso.unlimited)
+            ? maxBatchSize
+            : (uso && uso.period === "day" && typeof uso.remaining === "number")
+                ? uso.remaining
+                : maxBatchSize; // sem dado de uso (nunca deveria acontecer pra quem tem lote): não trava artificialmente
         pinterestBoardMaxBatchSize = maxBatchSize;
         pinterestBoardLimiteSelecao = Math.min(maxBatchSize, restantesHoje);
 

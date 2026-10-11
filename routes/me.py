@@ -67,6 +67,10 @@ class UsageOut(BaseModel):
     limit: int
     remaining: int
     period: str
+    unlimited: bool = False
+    """Admin (ver services/usage.py::Allowance.unlimited): `remaining` chegando em 0 não deve
+    travar nada no frontend desta conta -- a reserva real já não bloqueia mais pra ela. Default
+    False preserva 100% o contrato anterior pra qualquer cliente que ainda não leia este campo."""
 
 
 class EntitlementOut(BaseModel):
@@ -103,6 +107,7 @@ def get_status(
             limit=status.limit,
             remaining=status.remaining,
             period=status.plan.period,
+            unlimited=status.unlimited,
         ),
         entitlement=entitlement_out,
     )

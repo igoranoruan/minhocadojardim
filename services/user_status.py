@@ -39,6 +39,7 @@ class UserStatus:
     limit: int
     remaining: int
     expires_at: datetime | None
+    unlimited: bool
 
 
 def get_user_status(db: Session, user_id: int) -> UserStatus:
@@ -58,4 +59,5 @@ def get_user_status(db: Session, user_id: int) -> UserStatus:
         limit=allowance.limit,
         remaining=allowance.remaining,
         expires_at=expires_at,
+        unlimited=allowance.unlimited,
     )

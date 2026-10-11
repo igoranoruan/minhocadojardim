@@ -204,6 +204,11 @@ def test_admin_consegue_extrair_a_16a_vez_sem_bloquear(factory, session, use_set
     assert total == 17
     saldo = get_audio_allowance(session, admin.id, now=NOW)
     assert saldo.used == 17 and saldo.remaining == 0
+    # unlimited=True (11/10/2026, Tarefa 3): avisa quem LÊ este AudioAllowance
+    # (GET /api/audio/allowance -> routes/audio.py::AllowanceOut.unlimited) que remaining==0 não
+    # deve travar o botão do lote de áudio no frontend desta conta -- used/limit/remaining
+    # continuam os REAIS do ledger, só o aviso muda.
+    assert saldo.unlimited is True
 
 
 def test_usuario_comum_continua_bloqueado_na_16a_mesmo_com_admin_email_configurado(factory, session, use_settings):
@@ -216,6 +221,7 @@ def test_usuario_comum_continua_bloqueado_na_16a_mesmo_com_admin_email_configura
     for i in range(AUDIO_EXTRACTIONS_PER_DAY):
         _completar(session, usuario.id, f"r-{i}", now=NOW)
 
+    assert get_audio_allowance(session, usuario.id, now=NOW).unlimited is False
     with pytest.raises(AudioQuotaExceededError) as exc_info:
         reserve_audio_extraction(session, user_id=usuario.id, request_id="r-16", now=NOW)
     assert exc_info.value.status_code == 429

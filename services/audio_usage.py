@@ -146,6 +146,13 @@ class AudioAllowance:
     used: int
     remaining: int
     period_day: date
+    unlimited: bool = False
+    """Admin (ver _is_admin, abaixo): mesmo campo de aviso de services/usage.py::Allowance.unlimited
+    -- `used`/`limit`/`remaining` continuam os números REAIS do ledger, só sinaliza a quem LÊ este
+    AudioAllowance (reportado via GET /api/audio/allowance) que `remaining` chegando em 0 não deve
+    travar nada nesta conta: reserve_audio_extraction/reserve_audio_batch já não bloqueiam mais pra
+    ela. Sem isso, o botão do lote de áudio no frontend (trava client-side em `remaining <= 0`)
+    continuava desabilitado pro admin mesmo com o backend já aceitando a reserva."""
 
 
 @dataclass(frozen=True)
@@ -226,6 +233,7 @@ def _compute_allowance(db: Session, user_id: int, now: datetime, plan: Plan) -> 
         used=used,
         remaining=max(0, AUDIO_EXTRACTIONS_PER_DAY - used),
         period_day=today,
+        unlimited=_is_admin(db, user_id),
     )
 
 

@@ -72,7 +72,7 @@ def test_sem_sessao_devolve_status_do_visitante_anonimo(auth_client):
     assert resposta.headers["set-cookie"].startswith("minhoca_anon=")
     assert resposta.json() == {
         "plan": {"code": "free", "name": "Free"},
-        "usage": {"used": 0, "limit": 5, "remaining": 5, "period": "week"},
+        "usage": {"used": 0, "limit": 5, "remaining": 5, "period": "week", "unlimited": False},
         "entitlement": None,
     }
 
@@ -89,7 +89,7 @@ def test_free_sem_entitlement(auth_client, factory, session):
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "free", "name": "Free"}
-    assert corpo["usage"] == {"used": 2, "limit": 5, "remaining": 3, "period": "week"}
+    assert corpo["usage"] == {"used": 2, "limit": 5, "remaining": 3, "period": "week", "unlimited": False}
     assert corpo["entitlement"] is None
 
 
@@ -108,7 +108,7 @@ def test_weekly_com_entitlement_vigente(auth_client, factory, session):
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "weekly", "name": "Semanal"}
-    assert corpo["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "day"}
+    assert corpo["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "day", "unlimited": False}
     assert corpo["entitlement"] is not None
     from datetime import datetime
 
@@ -131,7 +131,7 @@ def test_monthly_com_entitlement_vigente_usa_o_exemplo_do_contrato(auth_client, 
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "monthly", "name": "Mensal"}
-    assert corpo["usage"] == {"used": 4, "limit": 10, "remaining": 6, "period": "day"}
+    assert corpo["usage"] == {"used": 4, "limit": 10, "remaining": 6, "period": "day", "unlimited": False}
     from datetime import datetime
 
     devolvido = datetime.fromisoformat(corpo["entitlement"]["expires_at"])
@@ -150,7 +150,7 @@ def test_vip_batch_com_entitlement_vigente(auth_client, factory, session):
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "vip_batch", "name": "VIP Batch"}
-    assert corpo["usage"] == {"used": 0, "limit": 15, "remaining": 15, "period": "day"}
+    assert corpo["usage"] == {"used": 0, "limit": 15, "remaining": 15, "period": "day", "unlimited": False}
     assert corpo["entitlement"] is not None
 
 
@@ -170,7 +170,7 @@ def test_entitlement_expirado_volta_ao_free(auth_client, factory, session):
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "free", "name": "Free"}
-    assert corpo["usage"] == {"used": 1, "limit": 5, "remaining": 4, "period": "week"}
+    assert corpo["usage"] == {"used": 1, "limit": 5, "remaining": 4, "period": "week", "unlimited": False}
     assert corpo["entitlement"] is None
 
 

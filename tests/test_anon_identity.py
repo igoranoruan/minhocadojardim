@@ -74,7 +74,7 @@ def test_mesma_identidade_em_multiplas_requisicoes_e_a_mesma_conta_para_cota(aut
 
     status = auth_client.get("/api/me/status")
     assert status.status_code == 200
-    assert status.json()["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "week"}
+    assert status.json()["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "week", "unlimited": False}
 
 
 def _completed_free_generation(usuario, indice: int):
@@ -132,7 +132,7 @@ def test_quota_free_5_por_semana_e_6a_tentativa_bloqueada(auth_client, session):
     session.commit()
 
     status = auth_client.get("/api/me/status")
-    assert status.json()["usage"] == {"used": 5, "limit": 5, "remaining": 0, "period": "week"}
+    assert status.json()["usage"] == {"used": 5, "limit": 5, "remaining": 0, "period": "week", "unlimited": False}
 
     sexta = auth_client.post("/api/generations", json={"url": "https://www.tiktok.com/@a/video/1"})
     assert sexta.status_code == 200  # o stream sempre abre -- o erro vem como evento SSE
@@ -272,7 +272,7 @@ def test_login_sem_plano_pago_usa_a_mesma_identidade_free_do_dispositivo(auth_cl
 
     status = auth_client.get("/api/me/status")
     assert status.json()["plan"]["code"] == "free"
-    assert status.json()["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "week"}
+    assert status.json()["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "week", "unlimited": False}
 
 
 def test_logout_retorna_para_a_mesma_identidade_free_do_dispositivo(auth_client, fake_sender, session):
@@ -292,7 +292,7 @@ def test_logout_retorna_para_a_mesma_identidade_free_do_dispositivo(auth_client,
     assert auth_client.get("/api/auth/me").status_code == 401
 
     status = auth_client.get("/api/me/status")  # sem sessão de novo -- mesmo navegador/dispositivo
-    assert status.json()["usage"] == {"used": 2, "limit": 5, "remaining": 3, "period": "week"}
+    assert status.json()["usage"] == {"used": 2, "limit": 5, "remaining": 3, "period": "week", "unlimited": False}
     # nenhuma identidade nova foi criada: o cookie Free continua o mesmo de antes do login
     assert auth_client.cookies.get("minhoca_anon") == anon_token
 

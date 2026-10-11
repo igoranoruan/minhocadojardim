@@ -52,6 +52,10 @@ def test_admin_consegue_gerar_a_16a_vez_sem_bloquear(factory, session, use_setti
     assert total == 17
     saldo = get_allowance(session, admin.id, now=NOW)
     assert saldo.used == 17 and saldo.remaining == 0
+    # unlimited=True (11/10/2026): avisa quem LÊ este Allowance (routes/me.py::UsageOut.unlimited)
+    # que remaining==0 não deve travar nada no frontend desta conta -- números de used/limit/
+    # remaining continuam os REAIS do ledger, só o aviso muda.
+    assert saldo.unlimited is True
 
 
 def test_usuario_comum_continua_bloqueado_na_16a_mesmo_com_admin_email_configurado(
@@ -65,6 +69,7 @@ def test_usuario_comum_continua_bloqueado_na_16a_mesmo_com_admin_email_configura
 
     consume(session, usuario, 15, now=NOW, prefix="u")
 
+    assert get_allowance(session, usuario.id, now=NOW).unlimited is False
     try:
         reserve_generation(session, user_id=usuario.id, request_id="u-15", now=NOW)
         assert False, "deveria ter levantado QuotaExceededError"

@@ -131,6 +131,11 @@ class AllowanceOut(BaseModel):
     used: int
     limit: int
     remaining: int
+    unlimited: bool = False
+    """Admin (ver services/audio_usage.py::AudioAllowance.unlimited): `remaining` chegando em 0
+    não deve travar o botão do lote de áudio nesta conta -- a reserva real já não bloqueia mais
+    pra ela. Default False preserva 100% o contrato anterior pra qualquer cliente que ainda não
+    leia este campo."""
 
 
 class ExtractAudioBody(BaseModel):
@@ -156,7 +161,9 @@ def allowance(user: User = Depends(get_current_user), db: Session = Depends(get_
     for pago. O frontend só chama esta rota quando o usuário escolhe "Só áudio" com sessão (Free/
     deslogado mostra o cadeado localmente, sem bater na API -- ver static/index.html)."""
     result = get_audio_allowance(db, user.id)
-    return AllowanceOut(used=result.used, limit=result.limit, remaining=result.remaining)
+    return AllowanceOut(
+        used=result.used, limit=result.limit, remaining=result.remaining, unlimited=result.unlimited,
+    )
 
 
 @router.post("/extract", response_model=ExtractAudioOut)

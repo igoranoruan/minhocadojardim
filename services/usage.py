@@ -152,6 +152,15 @@ class Allowance:
     remaining: int
     period_day: date
     period_week: date
+    unlimited: bool = False
+    """Admin (ver _is_admin, abaixo): `used`/`limit`/`remaining` continuam os números REAIS do
+    ledger (nunca inflados/forjados) -- é só um aviso pra quem LÊ este Allowance (reportado ao
+    frontend via services/user_status.py -> routes/me.py::UsageOut.unlimited) de que `remaining`
+    chegando em 0 NÃO deve travar nada nesta conta, porque reserve_generation/reserve_batch já não
+    bloqueiam mais pra ela. Sem isso, qualquer trava CLIENTE (ex.: desabilitar um botão quando
+    `remaining <= 0`, como a importação de pasta do Pinterest) continuava travando o admin mesmo
+    depois do backend já aceitar a reserva -- o default (sem admin) é sempre False, então nenhum
+    outro usuário muda de comportamento."""
 
     @property
     def can_batch(self) -> bool:
@@ -226,6 +235,7 @@ def _compute_allowance(db: Session, user_id: int, now: datetime) -> Allowance:
         remaining=max(0, plan.limit - used),
         period_day=today,
         period_week=week,
+        unlimited=_is_admin(db, user_id),
     )
 
 

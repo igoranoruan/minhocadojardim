@@ -105,7 +105,7 @@ def test_saldo_via_allowance_reflete_extracoes_ja_feitas(auth_client, factory, s
 
     resposta = auth_client.get("/api/audio/allowance")
     assert resposta.status_code == 200
-    assert resposta.json() == {"used": 1, "limit": 15, "remaining": 14}
+    assert resposta.json() == {"used": 1, "limit": 15, "remaining": 14, "unlimited": False}
 
 
 # ============================================================================ limite diário / concorrência (HTTP real, nunca SSE)
@@ -152,7 +152,7 @@ def test_video_sem_audio_devolve_mensagem_exata_e_nao_consome_o_limite(auth_clie
     assert resposta.json()["detail"] == "Esse vídeo não tem áudio."
 
     saldo = auth_client.get("/api/audio/allowance").json()
-    assert saldo == {"used": 0, "limit": 15, "remaining": 15}  # falha não conta
+    assert saldo == {"used": 0, "limit": 15, "remaining": 15, "unlimited": False}  # falha não conta
 
 
 def test_erro_de_download_nao_vaza_detalhe_tecnico(auth_client, factory, session):
@@ -241,7 +241,7 @@ def test_link_de_pagina_de_audio_do_tiktok_devolve_mensagem_amigavel_sem_consumi
     session.expire_all()
     assert session.query(AudioExtraction).count() == 0
     saldo = auth_client.get("/api/audio/allowance").json()
-    assert saldo == {"used": 0, "limit": 15, "remaining": 15}
+    assert saldo == {"used": 0, "limit": 15, "remaining": 15, "unlimited": False}
 
 
 def test_link_de_pagina_de_audio_do_instagram_devolve_mensagem_amigavel(auth_client, factory, session):
