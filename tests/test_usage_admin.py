@@ -94,14 +94,10 @@ def test_sem_admin_email_configurado_ninguem_fica_isento(factory, session, use_s
         pass
 
 
-# ============================================================================ lote (vídeos/dia + operações/semana)
-def test_admin_consegue_reservar_lote_alem_do_saldo_diario_mas_nao_alem_do_teto_do_plano(
-    factory, session, use_settings,
-):
+# ============================================================================ lote (vídeos/dia + operações/semana + itens/lote)
+def test_admin_consegue_reservar_lote_alem_do_saldo_diario(factory, session, use_settings):
     """A isenção também vale para reserve_batch -- o admin consegue reservar um lote mesmo com o
-    saldo DIÁRIO de vídeos já quase esgotado, mas o teto de itens POR lote (`max_batch_size`)
-    continua recusando normalmente (InvalidBatchSizeError, levantada ANTES da checagem de cota --
-    nunca isenta)."""
+    saldo DIÁRIO de vídeos já quase esgotado."""
     use_settings(admin_email="igoranoruan@gmail.com")
     admin = factory.user(email="igoranoruan@gmail.com")
     give(factory, session, admin, "vip_batch", now=NOW)  # vip_batch: max_batch_size=15
@@ -114,9 +110,34 @@ def test_admin_consegue_reservar_lote_alem_do_saldo_diario_mas_nao_alem_do_teto_
     reserva = reserve_batch(session, user_id=admin.id, request_id="admin-lote-r1", size=5, now=NOW)
     assert reserva.created is True and reserva.item_count == 5
 
-    # pede 16 (além do TETO do plano, 15) -- continua recusado, mesmo para o admin
+
+def test_admin_consegue_reservar_lote_alem_do_teto_de_itens_do_plano(factory, session, use_settings):
+    """11/10/2026, pedido explícito do Igor (importação de pasta do Pinterest maior que o teto de
+    qualquer plano): o teto de itens POR lote (`Plan.max_batch_size`) também passou a ser isento
+    pro admin -- antes desta mudança era a única trava numérica que ainda bloqueava o admin."""
+    use_settings(admin_email="igoranoruan@gmail.com")
+    admin = factory.user(email="igoranoruan@gmail.com")
+    give(factory, session, admin, "vip_batch", now=NOW)  # vip_batch: max_batch_size=15
+
+    # pede 40 (muito além do teto do plano, 15) -- NUNCA levanta InvalidBatchSizeError para o admin
+    reserva = reserve_batch(session, user_id=admin.id, request_id="admin-lote-gigante", size=40, now=NOW)
+    assert reserva.created is True and reserva.item_count == 40
+
+    saldo = get_allowance(session, admin.id, now=NOW)
+    assert saldo.used == 40  # gravado normalmente no ledger, sem nenhum número forjado
+
+
+def test_usuario_comum_continua_bloqueado_pelo_teto_de_itens_do_plano_mesmo_com_admin_email_configurado(
+    factory, session, use_settings,
+):
+    """Mesmo teste acima, mas com ADMIN_EMAIL configurado para OUTRO e-mail -- confirma que a
+    isenção do teto de itens por lote nunca vaza para quem não é o admin."""
+    use_settings(admin_email="igoranoruan@gmail.com")
+    usuario = factory.user(email="outra-pessoa@exemplo.com")
+    give(factory, session, usuario, "vip_batch", now=NOW)
+
     try:
-        reserve_batch(session, user_id=admin.id, request_id="admin-lote-r2", size=16, now=NOW)
+        reserve_batch(session, user_id=usuario.id, request_id="u-lote-gigante", size=16, now=NOW)
         assert False, "deveria ter levantado InvalidBatchSizeError"
     except Exception as exc:
         from services.usage import InvalidBatchSizeError

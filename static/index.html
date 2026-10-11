@@ -1463,6 +1463,18 @@
     // estivesse desatualizado.
     const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15 };
     let limiteLoteAtual = 0; // 0 = lote indisponível (sem sessão, Free, ou status ainda não carregado)
+    let loteIlimitado = false; // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO exibido
+                                // (limiteLoteAtual já vira Number.MAX_SAFE_INTEGER -- isto evita
+                                // mostrar esse número gigante pro usuário no contador do lote).
+    let limiteLotePlano = 0; // SEMPRE o teto real do plano (LIMITE_LOTE_POR_PLANO), nunca inflado pra
+                              // admin -- diferente de limiteLoteAtual, que vira "sem limite" pro
+                              // admin só pro lote de VÍDEO (reserve_batch, isento em 11/10/2026). O
+                              // lote de ÁUDIO (reserve_audio_batch, services/audio_usage.py) NUNCA
+                              // teve o teto de itens por operação isento -- continua em min(teto do
+                              // plano, saldo) mesmo pro admin -- então atualizarVisibilidadeAudioLote()
+                              // usa ESTA variável (nunca limiteLoteAtual) como saldo de reposição
+                              // quando a extração diária é ilimitada, pra não deixar a tela de áudio
+                              // sugerir um lote maior do que o backend de áudio realmente aceita.
 
     // Estado do checkout Mercado Pago (Etapa 10.2) -- nada disto substitui o Payment do backend,
     // que continua sendo a única fonte de verdade sobre preço/status.
@@ -2326,7 +2338,7 @@
             }
         }
 
-        atualizarVisibilidadeBatch(plano);
+        atualizarVisibilidadeBatch(plano, uso);
         atualizarVisibilidadeFormComentario(plano);
         // Extração de áudio individual (autorização do CÉREBRO, 11/10/2026): se a pessoa já tinha
         // escolhido "Só áudio" antes do login/troca de plano responder, o cadeado/contador
@@ -2338,8 +2350,15 @@
     // Mostra/esconde a seção de lote conforme o plano REAL confirmado por /api/me/status --
     // nunca antes disso (limiteLoteAtual começa em 0 -- lote escondido por padrão, mesmo estado
     // inicial de sempre). LIMITE_LOTE_POR_PLANO é só de exibição (ver comentário acima da const).
-    function atualizarVisibilidadeBatch(plano) {
-        limiteLoteAtual = LIMITE_LOTE_POR_PLANO[plano.code] ?? 0;
+    function atualizarVisibilidadeBatch(plano, uso) {
+        // Conta admin (uso.unlimited, 11/10/2026): o teto de itens por operação também passou a
+        // ser isento (pedido explícito do Igor, importação de pasta do Pinterest maior que o teto
+        // de qualquer plano) -- limiteLoteAtual vira um valor alto o bastante pra nunca travar
+        // "addButton"/processarLote() na prática, mesma técnica já usada no resto desta tela.
+        const ilimitado = !!(uso && uso.unlimited);
+        loteIlimitado = ilimitado;
+        limiteLotePlano = LIMITE_LOTE_POR_PLANO[plano.code] ?? 0;
+        limiteLoteAtual = ilimitado ? Number.MAX_SAFE_INTEGER : limiteLotePlano;
         const secao = document.getElementById("secaoBatch");
         if (secao) secao.classList.toggle("hidden", limiteLoteAtual <= 0);
 
@@ -2348,7 +2367,9 @@
 
         const limiteTexto = document.getElementById("batchLimiteTexto");
         if (limiteTexto && limiteLoteAtual > 0 && formatoLote !== "audio") {
-            limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
+            limiteTexto.textContent = ilimitado
+                ? "Sem limite de itens por operação nesta conta. Você pode dar um nome diferente para cada arquivo."
+                : `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
         }
 
         if (limiteLoteAtual > 0) atualizarContagemLote();
@@ -3588,7 +3609,9 @@
         const items = document.querySelectorAll(".batch-item");
         const count = items.length;
         const max = limiteLoteAtual || 1;
-        document.getElementById("batchCount").textContent = `${count} de ${max} vídeos`;
+        document.getElementById("batchCount").textContent = loteIlimitado
+            ? `${count} vídeos (sem limite nesta conta)`
+            : `${count} de ${max} vídeos`;
         const addButton = document.getElementById("batchAddButton");
         addButton.disabled = count >= max;
         addButton.classList.toggle("opacity-40", count >= max);
@@ -4048,8 +4071,13 @@
         const button = document.getElementById("batchButton");
         if (formatoLote !== "audio") {
             if (contador) contador.classList.add("hidden");
+            // Conta admin (loteIlimitado, 11/10/2026): mesmo texto de atualizarVisibilidadeBatch()
+            // -- este reset roda de novo ao trocar de "Só áudio" pra "Vídeo" e não pode sobrescrever
+            // com o número antigo.
             if (limiteTexto && limiteLoteAtual > 0) {
-                limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
+                limiteTexto.textContent = loteIlimitado
+                    ? "Sem limite de itens por operação nesta conta. Você pode dar um nome diferente para cada arquivo."
+                    : `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
             }
             if (button) {
                 button.disabled = false;
@@ -4058,8 +4086,10 @@
             }
             return;
         }
-        if (limiteLoteAtual > 0 && limiteTexto) {
-            limiteTexto.textContent = `Adicione até ${limiteLoteAtual} vídeos por operação -- cada um gera um arquivo MP3.`;
+        // SEMPRE limiteLotePlano aqui (nunca limiteLoteAtual, que vira "sem limite" pro admin só
+        // pro lote de VÍDEO) -- o lote de ÁUDIO nunca teve o teto de itens por operação isento.
+        if (limiteLotePlano > 0 && limiteTexto) {
+            limiteTexto.textContent = `Adicione até ${limiteLotePlano} vídeos por operação -- cada um gera um arquivo MP3.`;
         }
         if (contador) {
             contador.classList.remove("hidden");
@@ -4074,9 +4104,12 @@
             const dados = await resp.json();
             // Conta admin (dados.unlimited, 11/10/2026): "remaining" chegando em 0 não deve travar
             // o botão desta conta -- o backend já não bloqueia mais pra ela -- então o saldo usado
-            // aqui vira o teto de itens por lote do plano (mesma técnica da importação de pasta do
-            // Pinterest, acima).
-            loteAudioRestanteHoje = dados.unlimited ? limiteLoteAtual : dados.remaining;
+            // aqui vira o teto de itens por lote do plano. SEMPRE limiteLotePlano (nunca
+            // limiteLoteAtual): o lote de ÁUDIO nunca teve o teto de itens por operação isento
+            // (reserve_audio_batch continua recusando acima de Plan.max_batch_size pra qualquer
+            // conta, inclusive admin -- só a cota diária de 15 extrações foi isenta) -- diferente
+            // do lote de VÍDEO, onde limiteLoteAtual vira "sem limite" pro admin.
+            loteAudioRestanteHoje = dados.unlimited ? limiteLotePlano : dados.remaining;
             atualizarContadorAudioLoteTexto();
             if (button) {
                 button.innerHTML = '<i class="fa-solid fa-music mr-1"></i>Processar e extrair áudio do lote';
@@ -4368,6 +4401,10 @@
     let pinterestBoardPinsAtuais = [];      // [{pin_id, pin_url, thumbnail_url, has_video, title}, ...]
     let pinterestBoardSelecaoIds = new Set(); // pin_id dos selecionados
     let pinterestBoardLimiteSelecao = 0;      // menor valor entre max_batch_size do plano e gerações restantes hoje
+    let pinterestBoardIlimitado = false;      // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO
+                                               // exibido (nunca o limite real, que já é pinterestBoardLimiteSelecao
+                                               // == Number.MAX_SAFE_INTEGER) -- evita mostrar esse número gigante
+                                               // pro usuário.
     let pinterestBoardMaxBatchSize = 0;       // só max_batch_size do plano (sem o corte por gerações restantes) --
                                                // usado em baixarSelecaoPinterest() como rede de segurança contra uma
                                                // corrida de carregamento com a busca de status ANTIGA e independente
@@ -4411,17 +4448,21 @@
         // Ajuste 1 do CÉREBRO (Etapa 4): a trava da seleção é o MENOR valor entre o limite de
         // lote do plano e as gerações restantes de HOJE (uso.remaining, quando period === "day" --
         // os 3 planos com lote são todos diários, nunca semanais -- ver services/plans.py).
-        // Conta admin (uso.unlimited, 11/10/2026): "remaining" chegando em 0 não deve travar esta
-        // conta -- o backend já não bloqueia mais pra ela -- então a trava vira só o teto de itens
-        // por lote do plano (maxBatchSize), igual a quando não há dado de uso nenhum.
+        // Conta admin (uso.unlimited, 11/10/2026): tanto "remaining" chegando em 0 quanto o teto
+        // de itens por lote do plano deixam de travar esta conta -- o backend já não bloqueia mais
+        // pra ela em nenhum dos dois (pedido explícito do Igor: selecionar/baixar a pasta inteira
+        // do Pinterest, além do teto de qualquer plano) -- a seleção vira limitada só pela
+        // quantidade de pins que a própria pasta tem.
         const uso = data.usage;
-        const restantesHoje = (uso && uso.unlimited)
-            ? maxBatchSize
+        const ilimitado = !!(uso && uso.unlimited);
+        pinterestBoardIlimitado = ilimitado;
+        pinterestBoardMaxBatchSize = ilimitado ? Number.MAX_SAFE_INTEGER : maxBatchSize;
+        const restantesHoje = ilimitado
+            ? pinterestBoardMaxBatchSize
             : (uso && uso.period === "day" && typeof uso.remaining === "number")
                 ? uso.remaining
                 : maxBatchSize; // sem dado de uso (nunca deveria acontecer pra quem tem lote): não trava artificialmente
-        pinterestBoardMaxBatchSize = maxBatchSize;
-        pinterestBoardLimiteSelecao = Math.min(maxBatchSize, restantesHoje);
+        pinterestBoardLimiteSelecao = Math.min(pinterestBoardMaxBatchSize, restantesHoje);
 
         atualizarCotaPinterestBoard();
     }
@@ -4434,13 +4475,17 @@
 
         // Ajuste 3 do CÉREBRO (Etapa 4): o texto do botão já mostra o número X do limite atual
         // ("até Y gerações restantes" muda esse X -- nunca fica "Selecionar os primeiros" genérico).
+        // Conta admin (pinterestBoardIlimitado, 11/10/2026): mostra "todos" em vez do número
+        // gigante interno (Number.MAX_SAFE_INTEGER) usado só como teto técnico.
         if (selecionarPrimeirosBtn) {
-            selecionarPrimeirosBtn.textContent = `Selecionar os primeiros ${Math.max(0, pinterestBoardLimiteSelecao)}`;
+            selecionarPrimeirosBtn.textContent = pinterestBoardIlimitado
+                ? "Selecionar todos"
+                : `Selecionar os primeiros ${Math.max(0, pinterestBoardLimiteSelecao)}`;
         }
 
         const selecionados = pinterestBoardSelecaoIds.size;
 
-        if (pinterestBoardLimiteSelecao <= 0) {
+        if (!pinterestBoardIlimitado && pinterestBoardLimiteSelecao <= 0) {
             cotaEl.textContent = "Você atingiu seu limite diário de gerações. Volte amanhã para importar desta pasta.";
             cotaEl.className = "text-xs text-amber-400 mt-4";
             baixarBtn.disabled = true;
@@ -4448,9 +4493,11 @@
         }
 
         cotaEl.className = "text-xs text-slate-400 mt-4";
-        cotaEl.textContent = selecionados > 0
-            ? `Isso vai usar ${selecionados} gerações. Você tem ${pinterestBoardLimiteSelecao} restantes hoje.`
-            : `Você tem ${pinterestBoardLimiteSelecao} gerações restantes hoje para usar nesta importação.`;
+        cotaEl.textContent = pinterestBoardIlimitado
+            ? (selecionados > 0 ? `Isso vai usar ${selecionados} gerações. Sem limite nesta conta.` : "Sem limite nesta conta para esta importação.")
+            : selecionados > 0
+                ? `Isso vai usar ${selecionados} gerações. Você tem ${pinterestBoardLimiteSelecao} restantes hoje.`
+                : `Você tem ${pinterestBoardLimiteSelecao} gerações restantes hoje para usar nesta importação.`;
         baixarBtn.disabled = selecionados === 0;
     }
 

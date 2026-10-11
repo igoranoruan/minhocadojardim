@@ -41,15 +41,19 @@ BatchQuotaExceededError); o único teto que continua valendo para o VIP é o de 
 
 Isenção de admin (pedido do CÉREBRO, 11/10/2026 -- extensão da mesma isenção já aplicada à cota de
 áudio em services/audio_usage.py para a cota de VÍDEOS, a pedido explícito do Igor, que precisa
-baixar sem teto diário/semanal para produzir conteúdo do próprio projeto): o usuário cujo e-mail é
-`settings.admin_email` nunca é bloqueado por "estourou a cota" -- nem a de vídeos/dia (avulsa ou
-lote) nem a de OPERAÇÕES de lote/semana. A ÚNICA isenção é o teto numérico: "uma operação por vez"
-(lock_user_row, idempotência por request_id), `BatchNotAllowedError` (plano sem lote habilitado) e
-o teto de itens POR lote (`Plan.max_batch_size`) continuam valendo normalmente para o admin, exatamente
-como para qualquer outro usuário -- ver reserve_generation/reserve_batch, abaixo, onde `_is_admin`
-é consultado nos dois pontos exatos que decidem "estourou a cota" (nunca antes). A geração/lote
-ainda é GRAVADA no ledger normalmente (continua contando no `used` de todo mundo, inclusive do
-próprio admin -- o histórico e o painel seguem corretos), só não BLOQUEIA. Ver _is_admin, abaixo.
+baixar sem teto para produzir conteúdo do próprio projeto, inclusive importando pastas inteiras do
+Pinterest maiores que o teto de qualquer plano): o usuário cujo e-mail é `settings.admin_email`
+nunca é bloqueado por "estourou a cota" -- nem a de vídeos/dia (avulsa ou lote), nem a de
+OPERAÇÕES de lote/semana, nem o teto de ITENS por lote (`Plan.max_batch_size`, isenção adicionada
+em 11/10/2026 a pedido explícito do Igor -- antes disso era a única trava numérica que ainda
+valia pro admin). A ÚNICA isenção que NÃO existe: "uma operação por vez" (lock_user_row,
+idempotência por request_id) e `BatchNotAllowedError` (plano sem lote habilitado -- não é um teto
+numérico, é o plano não ter lote estruturalmente) continuam valendo normalmente para o admin,
+exatamente como para qualquer outro usuário -- ver reserve_generation/reserve_batch, abaixo, onde
+`_is_admin` é consultado em cada ponto exato que decide "estourou a cota" (nunca antes). A
+geração/lote ainda é GRAVADA no ledger normalmente (continua contando no `used` de todo mundo,
+inclusive do próprio admin -- o histórico e o painel seguem corretos), só não BLOQUEIA. Ver
+_is_admin, abaixo.
 """
 import logging
 from dataclasses import dataclass
@@ -541,17 +545,20 @@ def reserve_batch(
         allowance = _compute_allowance(db, user_id, now)
         if not allowance.plan.batch_enabled:
             raise BatchNotAllowedError(f"O plano {allowance.plan.code} não permite processamento em lote.")
-        if size > allowance.plan.max_batch_size:
+
+        # Isenção do admin (ver _is_admin), nos TRÊS tetos do lote -- itens por operação
+        # (Plan.max_batch_size, isenção de 11/10/2026 a pedido do Igor para a importação de pasta
+        # do Pinterest), operações/semana e vídeos/dia -- igual à reserva avulsa acima: o ledger
+        # continua gravando normalmente, só não BLOQUEIA. batch_enabled (linha acima) NUNCA é
+        # isento -- não é um teto numérico, é o plano não ter lote estruturalmente.
+        is_admin = _is_admin(db, user_id)
+        if size > allowance.plan.max_batch_size and not is_admin:
             raise InvalidBatchSizeError(f"O lote pode ter no máximo {allowance.plan.max_batch_size} vídeos.")
 
         # Cota de OPERAÇÕES de lote (independente da cota de vídeos abaixo): ainda dentro do MESMO
         # lock_user_row/transação, então nenhuma outra chamada consegue "ver" a mesma vaga livre
         # (o UPDATE de lock_user_row já serializou este usuário -- mesmo mecanismo que protege a
         # cota de vídeos, nenhum novo lock foi criado). batch_limit=None (VIP) nunca cai aqui.
-        # Isenção do admin (ver _is_admin), nos DOIS tetos do lote -- operações/semana e
-        # vídeos/dia -- igual à reserva avulsa acima: o ledger continua gravando normalmente, só
-        # não BLOQUEIA.
-        is_admin = _is_admin(db, user_id)
         batch_allowance = _compute_batch_allowance(db, user_id, allowance.plan, now)
         if batch_allowance.limit is not None and batch_allowance.remaining < 1 and not is_admin:
             raise BatchQuotaExceededError(batch_allowance)
