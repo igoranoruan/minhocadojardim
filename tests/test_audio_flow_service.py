@@ -11,11 +11,12 @@ from database.models import AudioExtraction, Generation
 from download.errors import DownloadFailedError, InvalidUrlError, UnsupportedPlatformError
 from download.platform import Platform
 from helpers_audio import fake_audio_download_result, fake_audio_processing_result
-from helpers_usage import NOW, give
+from helpers_usage import give
 from processor.errors import FfmpegFailedError, NoAudioStreamError
 from services import result_storage
 from services.audio_flow import AudioPersistenceError, extract_audio_from_url
 from services.audio_usage import AudioNotAllowedError, AudioQuotaExceededError, get_audio_allowance
+from utils.time_sp import now_sp
 
 
 @pytest.fixture(autouse=True)
@@ -24,8 +25,13 @@ def diretorio_de_storage(tmp_path, monkeypatch):
 
 
 def _usuario_pago(factory, session, plan_code="weekly"):
+    """Concede o plano com o relógio REAL (now_sp()), nunca o NOW congelado de helpers_usage --
+    extract_audio_from_url (services/audio_flow.py) não recebe `now` injetado (não existe esse
+    parâmetro na API), então sempre confere contra a hora real; um entitlement concedido numa
+    data passada fixa ficaria expirado de verdade assim que o relógio real passasse da janela do
+    plano (ex.: 7 dias do Semanal), quebrando o teste sem nenhuma mudança de comportamento real."""
     usuario = factory.user()
-    give(factory, session, usuario, plan_code, now=NOW)
+    give(factory, session, usuario, plan_code, now=now_sp())
     return usuario
 
 
@@ -114,8 +120,8 @@ def test_limite_diario_esgotado_nao_chama_download(factory, session):
     for i in range(15):
         from services.audio_usage import complete_audio_extraction, reserve_audio_extraction
 
-        reserva = reserve_audio_extraction(session, user_id=usuario.id, request_id=f"pre-{i}", now=NOW)
-        complete_audio_extraction(session, reserva.extraction_id, now=NOW)
+        reserva = reserve_audio_extraction(session, user_id=usuario.id, request_id=f"pre-{i}", now=now_sp())
+        complete_audio_extraction(session, reserva.extraction_id, now=now_sp())
 
     with patch("services.audio_flow.download_audio_source") as mock_download:
         with pytest.raises(AudioQuotaExceededError):

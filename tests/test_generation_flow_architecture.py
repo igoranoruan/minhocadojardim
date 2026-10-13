@@ -78,8 +78,9 @@ def test_generation_flow_nao_cria_nenhuma_migration_nova():
     request_fingerprint, 0006 anonymous_identities -- Free anônimo, aprovação do CÉREBRO; 0008
     referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
     públicos, aprovação do CÉREBRO, 05/10/2026; 0010 só atualiza o texto dos exemplos, sem mudar
-    schema) -- nenhuma delas foi criada por esta camada; uma
-    12ª entrada aqui ainda quebraria este teste."""
+    schema; 0012 audio_batches/audio_extractions -- extração de áudio, 11/10/2026) -- nenhuma
+    delas foi criada por esta camada; uma
+    13ª entrada aqui ainda quebraria este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -93,6 +94,7 @@ def test_generation_flow_nao_cria_nenhuma_migration_nova():
         "0009_comments.py",
         "0010_comments_exemplo_natural.py",
         "0011_comments_moderacao.py",
+        "0012_audio_extraction.py",
     ]
 
 

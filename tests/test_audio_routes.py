@@ -148,7 +148,12 @@ def test_video_sem_audio_devolve_mensagem_exata_e_nao_consome_o_limite(auth_clie
          patch("services.audio_flow.process_audio", side_effect=NoAudioStreamError("sem stream de áudio")):
         resposta = auth_client.post("/api/audio/extract", json={"url": "https://www.tiktok.com/@a/video/1"})
 
-    assert resposta.status_code == 400
+    # NoAudioStreamError é um ProcessorError -- o handler é o MESMO, global, reaproveitado da
+    # rota de vídeo (main.py: app.add_exception_handler(ProcessorError, generations.
+    # processor_error_handler), que sempre responde 422 de propósito -- nunca 400. routes/audio.py
+    # nunca registrou um handler próprio pra sobrescrever isso, então o contrato real da API aqui
+    # é 422 (o frontend não diferencia por status nesse caso, só mostra `detail`).
+    assert resposta.status_code == 422
     assert resposta.json()["detail"] == "Esse vídeo não tem áudio."
 
     saldo = auth_client.get("/api/audio/allowance").json()

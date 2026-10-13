@@ -145,8 +145,9 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
     aprovação do CÉREBRO; 0007 output_extension -- suporte a imagem, aprovação do CÉREBRO; 0008
     referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
     públicos, aprovação do CÉREBRO, 05/10/2026; 0010 só atualiza o texto dos exemplos, sem mudar
-    schema) -- nenhuma delas foi criada por esta camada; uma
-    12ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
+    schema; 0012 audio_batches/audio_extractions -- extração de áudio, 11/10/2026) -- nenhuma
+    delas foi criada por esta camada; uma
+    13ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -160,10 +161,12 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
         "0009_comments.py",
         "0010_comments_exemplo_natural.py",
         "0011_comments_moderacao.py",
+        "0012_audio_extraction.py",
     ]
     assert set(Base.metadata.tables) == {
         "users", "payments", "entitlements", "generations", "batches", "payment_events",
         "login_codes", "auth_sessions", "anonymous_identities", "referrals", "comments",
+        "audio_batches", "audio_extractions",
     }
 
 

@@ -73,11 +73,15 @@ def make_video_h264_com_audio_opus(path: Path, *, duration: float = 1.0, size: s
 
 
 def make_audio_only(path: Path, *, duration: float = 1.0) -> Path:
+    """`path` é sempre um .mp3 (ver chamadas em test_processor_audio_validation.py) -- o codec
+    de saída precisa ser MP3 de verdade (libmp3lame), nunca AAC: o muxer do ffmpeg recusa um
+    stream AAC dentro de um container .mp3 ("Invalid audio stream. Exactly one MP3 audio stream
+    is required."), erro que só aparece com versões mais recentes/estritas do ffmpeg."""
     subprocess.run(
         [
             _ffmpeg(), "-hide_banner", "-loglevel", "error",
             "-f", "lavfi", "-i", f"sine=frequency=440:duration={duration}",
-            "-c:a", "aac", "-y", str(path),
+            "-c:a", "libmp3lame", "-y", str(path),
         ],
         check=True,
     )
