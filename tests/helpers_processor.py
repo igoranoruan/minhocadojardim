@@ -73,15 +73,19 @@ def make_video_h264_com_audio_opus(path: Path, *, duration: float = 1.0, size: s
 
 
 def make_audio_only(path: Path, *, duration: float = 1.0) -> Path:
-    """`path` é sempre um .mp3 (ver chamadas em test_processor_audio_validation.py) -- o codec
-    de saída precisa ser MP3 de verdade (libmp3lame), nunca AAC: o muxer do ffmpeg recusa um
-    stream AAC dentro de um container .mp3 ("Invalid audio stream. Exactly one MP3 audio stream
-    is required."), erro que só aparece com versões mais recentes/estritas do ffmpeg."""
+    """O codec de saída precisa bater com o container de `path` -- a maioria das chamadas usa
+    `.m4a` (AAC) só como fonte para o PROCESSOR reencodar depois, mas duas chamadas em
+    test_processor_audio_validation.py usam `.mp3` de verdade (saída final, nunca reprocessada).
+    Versões mais novas/estritas do ffmpeg recusam o par errado codec/container (AAC dentro de um
+    .mp3: "Invalid audio stream. Exactly one MP3 audio stream is required."; MP3 dentro de um
+    .m4a: "Could not find tag for codec mp3 in stream #0, codec not currently supported in
+    container") -- por isso o codec é escolhido pela extensão real de `path`, nunca fixo."""
+    codec = "libmp3lame" if path.suffix.lower() == ".mp3" else "aac"
     subprocess.run(
         [
             _ffmpeg(), "-hide_banner", "-loglevel", "error",
             "-f", "lavfi", "-i", f"sine=frequency=440:duration={duration}",
-            "-c:a", "libmp3lame", "-y", str(path),
+            "-c:a", codec, "-y", str(path),
         ],
         check=True,
     )

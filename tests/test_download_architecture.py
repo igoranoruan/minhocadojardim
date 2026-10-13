@@ -51,7 +51,20 @@ def test_download_nao_importa_services_database_routes_ou_main():
 # o orquestrador em si, a rota que o expõe, e o composition root (main.py), que precisa da CLASSE
 # de erro para registrar app.add_exception_handler (mesmo padrão já usado para AuthError desde a
 # Etapa 3). Qualquer outro arquivo do projeto continua proibido de importar download/.
-DOWNLOAD_ALLOWED_CONSUMERS = {"main.py", "routes/generations.py", "services/generation_flow.py"}
+# routes/audio.py (extração de áudio, 11/10/2026): mesmo padrão de routes/generations.py -- a
+# rota permanece fina (a regra de negócio mora em services/audio_flow.py), mas o worker em
+# background do LOTE (_run_audio_batch_in_background, mesmo desenho de
+# routes/generations.py::_run_batch_in_background) também usa
+# download.audio_page_links.partition_audio_batch_items para separar links de página de áudio
+# ANTES de qualquer reserva -- mesma camada, mesmo motivo que já valia para routes/generations.py.
+# services/audio_flow.py (11/10/2026): o orquestrador da extração de áudio, equivalente a
+# services/generation_flow.py para vídeo -- baixa e identifica a plataforma antes de processar.
+# services/pinterest_board.py (autorização do CÉREBRO): lista os pins de uma pasta do Pinterest
+# via download.board_listing, mesma camada de orquestração.
+DOWNLOAD_ALLOWED_CONSUMERS = {
+    "main.py", "routes/generations.py", "routes/audio.py",
+    "services/generation_flow.py", "services/audio_flow.py", "services/pinterest_board.py",
+}
 
 
 def test_resto_do_sistema_nao_importa_download():

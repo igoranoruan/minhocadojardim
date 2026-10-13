@@ -48,7 +48,14 @@ def test_processor_nao_importa_download():
 # o orquestrador em si, a rota que o expõe, e o composition root (main.py), que precisa da CLASSE
 # de erro para registrar app.add_exception_handler (mesmo padrão já usado para AuthError desde a
 # Etapa 3). Qualquer outro arquivo do projeto continua proibido de importar processor/.
-PROCESSOR_ALLOWED_CONSUMERS = {"main.py", "routes/generations.py", "services/generation_flow.py"}
+# routes/audio.py (extração de áudio, 11/10/2026): mesmo padrão de routes/generations.py -- só
+# importa a CLASSE de erro (ProcessorError), pelo mesmo motivo (registrar o handler de exceção).
+# services/audio_flow.py (11/10/2026): o orquestrador da extração de áudio, equivalente a
+# services/generation_flow.py para vídeo -- chama processor.audio_service.process_audio.
+PROCESSOR_ALLOWED_CONSUMERS = {
+    "main.py", "routes/generations.py", "routes/audio.py",
+    "services/generation_flow.py", "services/audio_flow.py",
+}
 
 
 def test_nada_no_projeto_ainda_importa_processor():
