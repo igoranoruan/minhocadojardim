@@ -1463,7 +1463,7 @@
     // estivesse desatualizado.
     const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15 };
     let limiteLoteAtual = 0; // 0 = lote indisponível (sem sessão, Free, ou status ainda não carregado)
-    let loteIlimitado = false; // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO exibido
+    let loteSemTeto = false; // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO exibido
                                 // (limiteLoteAtual já vira Number.MAX_SAFE_INTEGER -- isto evita
                                 // mostrar esse número gigante pro usuário no contador do lote).
     let limiteLotePlano = 0; // SEMPRE o teto real do plano (LIMITE_LOTE_POR_PLANO), nunca inflado pra
@@ -2355,10 +2355,10 @@
         // ser isento (pedido explícito do Igor, importação de pasta do Pinterest maior que o teto
         // de qualquer plano) -- limiteLoteAtual vira um valor alto o bastante pra nunca travar
         // "addButton"/processarLote() na prática, mesma técnica já usada no resto desta tela.
-        const ilimitado = !!(uso && uso.unlimited);
-        loteIlimitado = ilimitado;
+        const semTeto = !!(uso && uso.unlimited);
+        loteSemTeto = semTeto;
         limiteLotePlano = LIMITE_LOTE_POR_PLANO[plano.code] ?? 0;
-        limiteLoteAtual = ilimitado ? Number.MAX_SAFE_INTEGER : limiteLotePlano;
+        limiteLoteAtual = semTeto ? Number.MAX_SAFE_INTEGER : limiteLotePlano;
         const secao = document.getElementById("secaoBatch");
         if (secao) secao.classList.toggle("hidden", limiteLoteAtual <= 0);
 
@@ -2367,7 +2367,7 @@
 
         const limiteTexto = document.getElementById("batchLimiteTexto");
         if (limiteTexto && limiteLoteAtual > 0 && formatoLote !== "audio") {
-            limiteTexto.textContent = ilimitado
+            limiteTexto.textContent = semTeto
                 ? "Sem limite de itens por operação nesta conta. Você pode dar um nome diferente para cada arquivo."
                 : `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
         }
@@ -3609,7 +3609,7 @@
         const items = document.querySelectorAll(".batch-item");
         const count = items.length;
         const max = limiteLoteAtual || 1;
-        document.getElementById("batchCount").textContent = loteIlimitado
+        document.getElementById("batchCount").textContent = loteSemTeto
             ? `${count} vídeos (sem limite nesta conta)`
             : `${count} de ${max} vídeos`;
         const addButton = document.getElementById("batchAddButton");
@@ -4071,11 +4071,11 @@
         const button = document.getElementById("batchButton");
         if (formatoLote !== "audio") {
             if (contador) contador.classList.add("hidden");
-            // Conta admin (loteIlimitado, 11/10/2026): mesmo texto de atualizarVisibilidadeBatch()
+            // Conta admin (loteSemTeto, 11/10/2026): mesmo texto de atualizarVisibilidadeBatch()
             // -- este reset roda de novo ao trocar de "Só áudio" pra "Vídeo" e não pode sobrescrever
             // com o número antigo.
             if (limiteTexto && limiteLoteAtual > 0) {
-                limiteTexto.textContent = loteIlimitado
+                limiteTexto.textContent = loteSemTeto
                     ? "Sem limite de itens por operação nesta conta. Você pode dar um nome diferente para cada arquivo."
                     : `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
             }
@@ -4401,7 +4401,7 @@
     let pinterestBoardPinsAtuais = [];      // [{pin_id, pin_url, thumbnail_url, has_video, title}, ...]
     let pinterestBoardSelecaoIds = new Set(); // pin_id dos selecionados
     let pinterestBoardLimiteSelecao = 0;      // menor valor entre max_batch_size do plano e gerações restantes hoje
-    let pinterestBoardIlimitado = false;      // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO
+    let pinterestBoardSemTeto = false;      // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO
                                                // exibido (nunca o limite real, que já é pinterestBoardLimiteSelecao
                                                // == Number.MAX_SAFE_INTEGER) -- evita mostrar esse número gigante
                                                // pro usuário.
@@ -4454,10 +4454,10 @@
         // do Pinterest, além do teto de qualquer plano) -- a seleção vira limitada só pela
         // quantidade de pins que a própria pasta tem.
         const uso = data.usage;
-        const ilimitado = !!(uso && uso.unlimited);
-        pinterestBoardIlimitado = ilimitado;
-        pinterestBoardMaxBatchSize = ilimitado ? Number.MAX_SAFE_INTEGER : maxBatchSize;
-        const restantesHoje = ilimitado
+        const semTeto = !!(uso && uso.unlimited);
+        pinterestBoardSemTeto = semTeto;
+        pinterestBoardMaxBatchSize = semTeto ? Number.MAX_SAFE_INTEGER : maxBatchSize;
+        const restantesHoje = semTeto
             ? pinterestBoardMaxBatchSize
             : (uso && uso.period === "day" && typeof uso.remaining === "number")
                 ? uso.remaining
@@ -4475,17 +4475,17 @@
 
         // Ajuste 3 do CÉREBRO (Etapa 4): o texto do botão já mostra o número X do limite atual
         // ("até Y gerações restantes" muda esse X -- nunca fica "Selecionar os primeiros" genérico).
-        // Conta admin (pinterestBoardIlimitado, 11/10/2026): mostra "todos" em vez do número
+        // Conta admin (pinterestBoardSemTeto, 11/10/2026): mostra "todos" em vez do número
         // gigante interno (Number.MAX_SAFE_INTEGER) usado só como teto técnico.
         if (selecionarPrimeirosBtn) {
-            selecionarPrimeirosBtn.textContent = pinterestBoardIlimitado
+            selecionarPrimeirosBtn.textContent = pinterestBoardSemTeto
                 ? "Selecionar todos"
                 : `Selecionar os primeiros ${Math.max(0, pinterestBoardLimiteSelecao)}`;
         }
 
         const selecionados = pinterestBoardSelecaoIds.size;
 
-        if (!pinterestBoardIlimitado && pinterestBoardLimiteSelecao <= 0) {
+        if (!pinterestBoardSemTeto && pinterestBoardLimiteSelecao <= 0) {
             cotaEl.textContent = "Você atingiu seu limite diário de gerações. Volte amanhã para importar desta pasta.";
             cotaEl.className = "text-xs text-amber-400 mt-4";
             baixarBtn.disabled = true;
@@ -4493,7 +4493,7 @@
         }
 
         cotaEl.className = "text-xs text-slate-400 mt-4";
-        cotaEl.textContent = pinterestBoardIlimitado
+        cotaEl.textContent = pinterestBoardSemTeto
             ? (selecionados > 0 ? `Isso vai usar ${selecionados} gerações. Sem limite nesta conta.` : "Sem limite nesta conta para esta importação.")
             : selecionados > 0
                 ? `Isso vai usar ${selecionados} gerações. Você tem ${pinterestBoardLimiteSelecao} restantes hoje.`
