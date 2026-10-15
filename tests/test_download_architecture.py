@@ -70,7 +70,13 @@ DOWNLOAD_ALLOWED_CONSUMERS = {
 def test_resto_do_sistema_nao_importa_download():
     """Só os consumidores legítimos (DOWNLOAD_ALLOWED_CONSUMERS) podem importar download/; todo
     o resto do projeto continua proibido — isolamento de camada, não uma lista permissiva."""
-    skip_dirs = {"tests", "migrations", "download", ".venv", "venv", "__pycache__", "data", "static"}
+    # "scripts" (15/10/2026): scripts/diagnostico/ guarda scripts de diagnóstico standalone (ex.:
+    # diag_pico_memoria.py) que importam download/processor de propósito, direto, sem mock --
+    # não são produção, não entram em nenhuma rota/serviço, e por isso ficam fora desta varredura
+    # de isolamento de camada (mesma lógica de já ignorar "tests").
+    skip_dirs = {
+        "tests", "migrations", "download", ".venv", "venv", "__pycache__", "data", "static", "scripts",
+    }
     for arquivo in ROOT.rglob("*.py"):
         if set(arquivo.relative_to(ROOT).parts) & skip_dirs:
             continue

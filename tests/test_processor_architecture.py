@@ -61,7 +61,14 @@ PROCESSOR_ALLOWED_CONSUMERS = {
 def test_nada_no_projeto_ainda_importa_processor():
     """Só os consumidores legítimos (PROCESSOR_ALLOWED_CONSUMERS) podem importar processor/;
     todo o resto do projeto continua proibido — isolamento de camada, não uma lista permissiva."""
-    skip_dirs = {"tests", "migrations", "processor", "download", ".venv", "venv", "__pycache__", "data", "static"}
+    # "scripts" (15/10/2026): scripts/diagnostico/ guarda scripts de diagnóstico standalone (ex.:
+    # diag_pico_memoria.py) que importam download/processor de propósito, direto, sem mock --
+    # não são produção, não entram em nenhuma rota/serviço, e por isso ficam fora desta varredura
+    # de isolamento de camada (mesma lógica de já ignorar "tests").
+    skip_dirs = {
+        "tests", "migrations", "processor", "download", ".venv", "venv", "__pycache__", "data",
+        "static", "scripts",
+    }
     for arquivo in ROOT.rglob("*.py"):
         if set(arquivo.relative_to(ROOT).parts) & skip_dirs:
             continue
