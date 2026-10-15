@@ -12,6 +12,26 @@ pode ser mesclada na `main`.
 **Branch:** `feature/atalho-compartilhamento` (NÃO mesclada na `main` -- não fazer merge/deploy até confirmação)
 **Data:** 2026-10-15
 
+### Atualização 2026-10-15 20:33 -- Igor rodou a suíte completa localmente
+Resultado: **8 failed, 1268 passed**. Deste total, 3 falhas eram bugs meus nesta etapa (corrigidos
+nesta branch, ver abaixo) e 2 falhas são de um problema PRÉ-EXISTENTE em `main`, sem relação com
+esta etapa (reportado ao Igor, aguardando autorização para corrigir -- ver seção própria no final
+deste arquivo).
+
+**Corrigido nesta branch:**
+- `tests/test_share_ext_routes.py` (5 falhas, 1 causa raiz): meu helper `_cliente_sem_origin()`
+  criava um `TestClient(app)` sem sobrescrever `get_session` -- a requisição caía no banco padrão
+  da aplicação (sem a migration 0013), não no SQLite de teste criado pela fixture `engine`/`session`
+  (que roda as migrations reais). Corrigido trocando por uma fixture `ext_client(maker)` que
+  sobrescreve `app.dependency_overrides[get_session]` (mesmo padrão da fixture `auth_client` em
+  `conftest.py`), mantendo a ausência de Origin/Referer (é esse o ponto do teste).
+- `tests/test_db_schema.py::test_metadata_dos_modelos_tem_as_tabelas_esperadas`: esqueci de somar
+  `share_tokens`/`share_queue_items` ao `EXPECTED_TABLES` deste arquivo (só tinha atualizado o
+  conjunto equivalente em `test_usage_architecture.py`). Corrigido.
+
+**Ainda não re-executado:** nenhum dos dois fixes acima foi rodado de verdade neste ambiente (sem
+pytest) -- só `ast.parse`. Pede-se rodar a suíte completa de novo antes do merge.
+
 ### Arquivos de teste novos nesta etapa
 - `tests/test_share_token_service.py` -- geração/hash/revogação/regeneração-revoga-anterior/autenticação do token.
 - `tests/test_share_queue_service.py` -- normalização de URL, extração de link de texto, add/list/remove/clear da fila, dedup, limite de fila, rate-limit, `send_to_batch` respeitando o teto do plano.
@@ -55,3 +75,29 @@ pytest -q tests/test_share_token_service.py tests/test_share_queue_service.py te
 - [ ] `POST /api/ext/share` funciona sem nenhum Origin (cenário real do atalho) e devolve 401 sem token válido, mesmo com cookie de sessão presente.
 - [ ] Nenhuma rota de pagamento, nenhuma migration antiga (0001-0012) e `utils/time_sp.py` não foram tocados (ver `git diff main...feature/atalho-compartilhamento --stat`).
 - [ ] Só depois de tudo isso: merge na `main` (o push na `main` dispara deploy automático no Render e roda a migration 0013 em produção).
+
+---
+
+## Pendência PRÉ-EXISTENTE em `main` -- sem relação com esta etapa (fora de escopo, aguardando autorização)
+**Origem:** commit `f3161ec` (scripts de diagnóstico do OOM, já em `main`), não a etapa do atalho.
+**Encontrada:** na mesma rodada de testes do Igor em 2026-10-15, junto com as falhas da etapa 2.
+
+Dois testes falham em `main` (não foram tocados nesta branch, e eu não os corrigi aqui porque não
+são do escopo desta etapa -- regra "só alterar o que está no escopo da etapa atual, sem
+autorização"):
+
+- `tests/test_download_architecture.py::test_resto_do_sistema_nao_importa_download`
+- `tests/test_processor_architecture.py::test_nada_no_projeto_ainda_importa_processor`
+
+Causa: esses testes varrem TODOS os `.py` do projeto (exceto uma lista fixa de pastas ignoradas:
+`tests`, `migrations`, `download`, `.venv`, `venv`, `__pycache__`, `data`, `static`) e barram
+qualquer arquivo fora da lista de permissão que importe `download.*`/`processor.*`. A pasta
+`scripts/diagnostico/` NÃO está na lista de pastas ignoradas, e `diag_pico_memoria.py` importa
+`download.service`/`processor.service` diretamente de propósito (é um script de diagnóstico real,
+não mockado) -- então ele é pego pela varredura e reprovado.
+
+**Correção precisa de autorização** (é mudança em teste de arquitetura/isolamento, fora da etapa
+do atalho): a opção mais simples é adicionar `"scripts"` à lista `skip_dirs` dos dois testes (o
+script de diagnóstico tem motivo legítimo para importar essas camadas diretamente e já não é
+produção). Posso fazer esse commit à parte, direto em `main` (é só nos dois arquivos de teste, sem
+tocar em código de produção), assim que você aprovar.
