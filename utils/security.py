@@ -14,7 +14,7 @@ import hmac
 import re
 import secrets
 
-from config import ANON_TOKEN_BYTES, LOGIN_CODE_LENGTH, SESSION_TOKEN_BYTES
+from config import ANON_TOKEN_BYTES, LOGIN_CODE_LENGTH, SESSION_TOKEN_BYTES, SHARE_TOKEN_BYTES
 
 _EMAIL_RE = re.compile(r"[^\s@]+@[^\s@]+\.[^\s@]+")
 _CODE_RE = re.compile(rf"[0-9]{{{LOGIN_CODE_LENGTH}}}")
@@ -63,6 +63,19 @@ def hash_anon_device_token(token: str) -> str:
 
 def constant_time_equals(a: str, b: str) -> bool:
     return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
+
+
+# Token do atalho "Enviar para o KLANGO" (15/10/2026, aprovação do CÉREBRO): MESMA entropia e MESMO
+# padrão do token de sessão/anônimo (256 bits, secrets.token_urlsafe, banco guarda só o SHA-256) --
+# mas com função PRÓPRIA, nunca hash_session_token, para manter os dois namespaces de token sem
+# nenhuma possibilidade de confusão entre eles (um token de sessão nunca deve, por acidente de
+# código, autenticar a rota do atalho, e vice-versa).
+def generate_share_token() -> str:
+    return secrets.token_urlsafe(SHARE_TOKEN_BYTES)
+
+
+def hash_share_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 # Alfabeto do código de indicação (Etapa 8, programa de indicação): só maiúsculas e dígitos, SEM

@@ -31,8 +31,15 @@ SESSION_LAST_USED_UPDATE_INTERVAL_SECONDS = 3600
 MIN_SECRET_LENGTH = 32
 DEV_AUTH_SECRET_KEY = "dev-only-auth-secret-key-never-use-in-production-0001"
 DEV_IP_HASH_SECRET = "dev-only-ip-hash-secret-never-use-in-production-0002"
-# Rotas que NÃO passam pela checagem de Origin (servidor-a-servidor, sem cookie): webhooks futuros.
-ORIGIN_CHECK_EXEMPT_PREFIXES = ("/api/webhooks/",)
+# Rotas que NÃO passam pela checagem de Origin (servidor-a-servidor/cliente nativo, sem cookie):
+# webhooks + a rota do atalho "Enviar para o KLANGO" (15/10/2026, aprovação do CÉREBRO -- ver
+# routes/share_ext.py). "/api/ext/" é um prefixo PRÓPRIO, separado de "/api/share/" de propósito:
+# as rotas autenticadas por COOKIE (gerar/revogar token, listar/remover/limpar fila, enviar para o
+# lote) continuam em /api/share/... e continuam protegidas por este middleware normalmente -- só
+# /api/ext/share (autenticada por TOKEN pessoal, nunca por cookie) fica de fora, pelo mesmo motivo
+# exato do webhook: CSRF protege sessão por cookie, e esta rota deliberadamente nunca lê cookie
+# nenhum (ver routes/share_ext.py).
+ORIGIN_CHECK_EXEMPT_PREFIXES = ("/api/webhooks/", "/api/ext/")
 
 # ------------------------------------------------------------------- identidade anônima (Free sem login)
 # Cookie SEPARADO do cookie de sessão (SESSION_COOKIE_NAME): identifica um "usuário-dispositivo"
@@ -186,6 +193,33 @@ AUDIO_EXTRACTIONS_PER_DAY = 15
 # (o encoder usado em processor/ffmpeg_audio.py) já vem compilado no FFmpeg oficial (confirmado
 # neste ambiente de desenvolvimento: /usr/bin/ffmpeg) -- nenhuma dependência nova.
 AUDIO_OUTPUT_BITRATE = "192k"
+
+# ----------------------------------------------------------------------------- atalho "Enviar para o KLANGO" (15/10/2026)
+# Autorização do CÉREBRO: compartilhar um link do Instagram/TikTok/Pinterest/YouTube direto para
+# uma fila na conta do usuário (atalho do iPhone/Android), sem login/cookie -- autenticado por um
+# token pessoal de escopo limitado (só adiciona link à fila). Ver services/share_queue.py,
+# routes/share.py (rotas por cookie) e routes/share_ext.py (a única rota por token).
+SHARE_TOKEN_BYTES = 32  # 256 bits, mesma entropia do token de sessão/anônimo (utils/security.py)
+
+# Nº máximo de links pendentes na fila por usuário. Acima disso, POST /api/ext/share devolve o
+# aviso "fila cheia" (sem erro duro) em vez de aceitar mais um item -- o usuário precisa enviar
+# para o lote (ou limpar manualmente) antes de continuar compartilhando.
+SHARE_QUEUE_MAX_PENDING = 50
+
+# Rate limit por usuário para POST /api/ext/share -- mesmo padrão/justificativa EM MEMÓRIA de
+# BOARD_LIST_RATE_LIMIT_PER_HOUR (1 única instância Render, 1 único processo uvicorn): protege
+# contra um atalho mal configurado disparando em loop, não é a cota financeira do plano.
+SHARE_QUEUE_RATE_LIMIT_PER_HOUR = 60
+
+# Parâmetros de rastreio removidos da URL antes de guardar na fila (normalize_share_url em
+# services/share_queue.py) -- lista FECHADA, aprovada pelo CÉREBRO (15/10/2026): só remove o que
+# está aqui, nunca um parâmetro desconhecido (alguns links dependem de parâmetros que não estão
+# nesta lista para funcionar).
+SHARE_TRACKING_PARAMS = frozenset({
+    "igsh", "igshid", "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+    "si", "feature", "pp", "fbclid", "gclid", "mibextid", "is_from_webapp", "sender_device",
+    "share_app_id",
+})
 
 # ----------------------------------------------------------------------------- comentários (05/10/2026)
 # Único "admin" do produto hoje é o próprio CÉREBRO -- sem cargo/permissão no banco, só um e-mail
