@@ -1,0 +1,168 @@
+"""Rotas por COOKIE do atalho "Enviar para o KLANGO" (routes/share.py, 15/10/2026): contrato HTTP
+de token/fila + a MESMA proteção de Origin (CSRF) que todo o resto do site já tem -- isentar
+/api/ext/share (ver tests/test_share_ext_routes.py) NÃO pode, por engano, isentar estas rotas.
+
+Teste obrigatório do CÉREBRO (ajuste de aprovação da Etapa 2): confirmar que DELETE /api/share/queue
+e POST /api/share/queue/send-to-batch continuam recebendo 403 sem Origin válido -- ver a seção
+final deste arquivo, espelhando tests/test_auth_origin.py."""
+import pytest
+from fastapi.testclient import TestClient
+
+from helpers_generation_flow import login_directly
+from helpers_usage import give
+from main import app
+from services.share_queue import _attempts_by_user, add_to_queue, list_queue
+
+BASE_URL = "http://localhost:8000"
+
+
+@pytest.fixture(autouse=True)
+def _limpa_rate_limit_em_memoria():
+    _attempts_by_user.clear()
+    yield
+    _attempts_by_user.clear()
+
+
+# ------------------------------------------------------------------ token
+def test_token_nao_existe_antes_de_gerar(auth_client, session, factory):
+    login_directly(auth_client, session, factory.user())
+    resposta = auth_client.get("/api/share/token")
+    assert resposta.status_code == 200
+    assert resposta.json() == {"exists": False, "created_at": None, "last_used_at": None}
+
+
+def test_gerar_consultar_e_revogar_token(auth_client, session, factory):
+    login_directly(auth_client, session, factory.user())
+
+    gerado = auth_client.post("/api/share/token")
+    assert gerado.status_code == 200
+    token = gerado.json()["token"]
+    assert isinstance(token, str) and len(token) > 20
+
+    status = auth_client.get("/api/share/token")
+    assert status.json()["exists"] is True
+    assert status.json()["last_used_at"] is None
+
+    revogado = auth_client.delete("/api/share/token")
+    assert revogado.status_code == 204
+
+    status_final = auth_client.get("/api/share/token")
+    assert status_final.json()["exists"] is False
+
+
+def test_gerar_novo_token_invalida_o_anterior(auth_client, session, factory):
+    login_directly(auth_client, session, factory.user())
+    primeiro = auth_client.post("/api/share/token").json()["token"]
+    segundo = auth_client.post("/api/share/token").json()["token"]
+    assert primeiro != segundo
+
+
+def test_rotas_de_token_exigem_sessao(engine):
+    cliente = TestClient(app, base_url=BASE_URL)
+    cliente.headers.update({"Origin": BASE_URL})
+    assert cliente.get("/api/share/token").status_code == 401
+    assert cliente.post("/api/share/token").status_code == 401
+    assert cliente.delete("/api/share/token").status_code == 401
+
+
+# ------------------------------------------------------------------ fila
+def test_listar_remover_e_limpar_fila(auth_client, session, factory):
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+
+    add_to_queue(session, usuario, url="https://www.tiktok.com/@a/video/1", text=None)
+    add_to_queue(session, usuario, url="https://www.tiktok.com/@a/video/2", text=None)
+
+    listagem = auth_client.get("/api/share/queue")
+    assert listagem.status_code == 200
+    itens = listagem.json()["items"]
+    assert len(itens) == 2
+
+    primeiro_id = itens[0]["id"]
+    removido = auth_client.delete(f"/api/share/queue/{primeiro_id}")
+    assert removido.status_code == 204
+    assert len(auth_client.get("/api/share/queue").json()["items"]) == 1
+
+    limpo = auth_client.delete("/api/share/queue")
+    assert limpo.status_code == 204
+    assert auth_client.get("/api/share/queue").json()["items"] == []
+
+
+def test_remover_item_de_outro_usuario_nao_apaga_nada(auth_client, session, factory):
+    dono = factory.user()
+    outro = factory.user()
+    add_to_queue(session, dono, url="https://www.tiktok.com/@a/video/1", text=None)
+    add_to_queue(session, dono, url="https://www.tiktok.com/@a/video/2", text=None)
+    item = list_queue(session, dono)[0]
+
+    login_directly(auth_client, session, outro)
+    resposta = auth_client.delete(f"/api/share/queue/{item.id}")
+    assert resposta.status_code == 204  # idempotente -- não revela se o item existe ou é de outro dono
+
+    login_directly(auth_client, session, dono)
+    assert len(auth_client.get("/api/share/queue").json()["items"]) == 2
+
+
+def test_send_to_batch_preenche_ate_o_teto_do_plano(auth_client, session, factory):
+    from database.types import utcnow
+
+    usuario = factory.user()
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 5
+    login_directly(auth_client, session, usuario)
+    for i in range(7):
+        add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
+
+    resposta = auth_client.post("/api/share/queue/send-to-batch")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["sent_count"] == 5
+    assert corpo["max_batch_size"] == 5
+    assert corpo["remaining_pending"] == 2
+    assert len(corpo["urls"]) == 5
+
+
+def test_rotas_de_fila_exigem_sessao(engine):
+    cliente = TestClient(app, base_url=BASE_URL)
+    cliente.headers.update({"Origin": BASE_URL})
+    assert cliente.get("/api/share/queue").status_code == 401
+    assert cliente.delete("/api/share/queue/1").status_code == 401
+    assert cliente.delete("/api/share/queue").status_code == 401
+    assert cliente.post("/api/share/queue/send-to-batch").status_code == 401
+
+
+# ------------------------------------------------------------------ CSRF continua protegendo estas rotas
+# Mesmo padrão de tests/test_auth_origin.py: sem Origin/Referer válido, o OriginProtectionMiddleware
+# barra a requisição ANTES de chegar na rota -- nem precisa de sessão/login para provar isso.
+def test_delete_queue_sem_origin_valido_recebe_403(engine):
+    cliente = TestClient(app, base_url=BASE_URL)  # sem Origin
+    resposta = cliente.delete("/api/share/queue")
+    assert resposta.status_code == 403
+    assert resposta.json()["code"] == "invalid_origin"
+
+
+def test_delete_queue_item_sem_origin_valido_recebe_403(engine):
+    cliente = TestClient(app, base_url=BASE_URL)
+    resposta = cliente.delete("/api/share/queue/1")
+    assert resposta.status_code == 403
+    assert resposta.json()["code"] == "invalid_origin"
+
+
+def test_send_to_batch_sem_origin_valido_recebe_403(engine):
+    cliente = TestClient(app, base_url=BASE_URL)
+    resposta = cliente.post("/api/share/queue/send-to-batch")
+    assert resposta.status_code == 403
+    assert resposta.json()["code"] == "invalid_origin"
+
+
+def test_post_token_sem_origin_valido_recebe_403(engine):
+    cliente = TestClient(app, base_url=BASE_URL)
+    resposta = cliente.post("/api/share/token")
+    assert resposta.status_code == 403
+    assert resposta.json()["code"] == "invalid_origin"
+
+
+def test_delete_token_sem_origin_valido_recebe_403(engine):
+    cliente = TestClient(app, base_url=BASE_URL)
+    resposta = cliente.delete("/api/share/token")
+    assert resposta.status_code == 403
+    assert resposta.json()["code"] == "invalid_origin"

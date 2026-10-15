@@ -11,6 +11,8 @@ from database.models.login_code import LoginCode
 from database.models.payment import Payment
 from database.models.payment_event import PaymentEvent
 from database.models.referral import Referral
+from database.models.share_queue_item import ShareQueueItem
+from database.models.share_token import ShareToken
 from database.models.user import User
 
 __all__ = [
@@ -26,5 +28,7 @@ __all__ = [
     "Payment",
     "PaymentEvent",
     "Referral",
+    "ShareQueueItem",
+    "ShareToken",
     "User",
 ]

@@ -22,6 +22,8 @@ EXPECTED_TABLES = {
     "comments",  # área de comentários públicos -- aprovação do CÉREBRO, migration 0009
     "audio_batches",  # extração de áudio em lote -- autorização do CÉREBRO, migration 0012
     "audio_extractions",  # extração de áudio -- autorização do CÉREBRO, migration 0012
+    "share_tokens",  # atalho "Enviar para o KLANGO" -- aprovação do CÉREBRO, migration 0013
+    "share_queue_items",  # atalho "Enviar para o KLANGO" -- aprovação do CÉREBRO, migration 0013
 }
 
 

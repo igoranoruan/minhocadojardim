@@ -25,7 +25,20 @@ from payments.errors import (
     PlanNotPurchasableError,
     UnknownPlanError,
 )
-from routes import audio, auth, comments, generations, health, me, payments, pinterest, stats, webhooks
+from routes import (
+    audio,
+    auth,
+    comments,
+    generations,
+    health,
+    me,
+    payments,
+    pinterest,
+    share,
+    share_ext,
+    stats,
+    webhooks,
+)
 from services.audio_flow import AudioPersistenceError
 from services.audio_usage import AudioBatchNotFoundError, AudioDownloadNotFoundError, AudioUsageError
 from services.batch_filenames import InvalidFilenameError
@@ -35,6 +48,7 @@ from services.entitlements import EntitlementInconsistencyError
 from services.generation_flow import GenerationPersistenceError
 from services.pinterest_board import PinterestBoardError
 from services.referrals import AlreadyClaimedError, InvalidReferralCodeError, SelfReferralError
+from services.share_queue import InvalidShareTokenError
 from services.usage import BatchNotFoundError, GenerationDownloadNotFoundError, QuotaExceededError, UsageError
 from utils.anon_cookie import AnonymousCookieMiddleware
 from utils.logging_setup import setup_logging
@@ -138,6 +152,13 @@ app.add_exception_handler(InvalidFilenameError, audio.audio_invalid_filename_han
 # chegam até aqui -- ver routes/audio.py::_error_payload_for_audio).
 app.add_exception_handler(AudioBatchNotFoundError, audio.audio_batch_not_found_handler)
 
+# Atalho "Enviar para o KLANGO" (15/10/2026, aprovação do CÉREBRO): tradução para HTTP, sem
+# nenhuma regra de negócio aqui -- ver services/share_queue.py, routes/share.py (rotas por cookie)
+# e routes/share_ext.py (a única rota por token, POST /api/ext/share). Único erro desta feature que
+# precisa de handler HTTP global -- todo o resto é um 200 com texto amigável (ver
+# routes/share_ext.py).
+app.add_exception_handler(InvalidShareTokenError, share_ext.share_token_error_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -149,6 +170,8 @@ app.include_router(webhooks.router)
 app.include_router(comments.router)
 app.include_router(pinterest.router)
 app.include_router(audio.router)
+app.include_router(share.router)
+app.include_router(share_ext.router)
 
 
 @app.get("/", include_in_schema=False)

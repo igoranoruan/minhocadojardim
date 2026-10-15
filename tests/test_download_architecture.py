@@ -61,9 +61,14 @@ def test_download_nao_importa_services_database_routes_ou_main():
 # services/generation_flow.py para vídeo -- baixa e identifica a plataforma antes de processar.
 # services/pinterest_board.py (autorização do CÉREBRO): lista os pins de uma pasta do Pinterest
 # via download.board_listing, mesma camada de orquestração.
+# services/share_queue.py (15/10/2026, aprovação do CÉREBRO -- atalho "Enviar para o KLANGO"):
+# valida/identifica a plataforma do link compartilhado via download.url_safety.validate_url +
+# download.platform.detect_platform, o MESMO validador usado pelo download real -- nunca duplica
+# essa lógica. Não importa yt_dlp (não baixa nada, só valida/identifica).
 DOWNLOAD_ALLOWED_CONSUMERS = {
     "main.py", "routes/generations.py", "routes/audio.py",
     "services/generation_flow.py", "services/audio_flow.py", "services/pinterest_board.py",
+    "services/share_queue.py",
 }
 
 
@@ -162,9 +167,10 @@ def test_nenhuma_migration_nova_foi_criada():
     request_fingerprint, 0006 anonymous_identities -- Free anônimo, aprovação do CÉREBRO; 0008
     referrals -- programa de indicação, aprovação do CÉREBRO; 0009 comments -- área de comentários
     públicos, aprovação do CÉREBRO, 05/10/2026; 0010 só atualiza o texto dos exemplos, sem mudar
-    schema; 0012 audio_batches/audio_extractions -- extração de áudio, 11/10/2026) -- nenhuma
+    schema; 0012 audio_batches/audio_extractions -- extração de áudio, 11/10/2026; 0013
+    share_tokens/share_queue_items -- atalho "Enviar para o KLANGO", 15/10/2026) -- nenhuma
     delas foi criada por esta camada; uma
-    13ª entrada aqui ainda quebraria este teste."""
+    14ª entrada aqui ainda quebraria este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -179,6 +185,7 @@ def test_nenhuma_migration_nova_foi_criada():
         "0010_comments_exemplo_natural.py",
         "0011_comments_moderacao.py",
         "0012_audio_extraction.py",
+        "0013_share_queue.py",
     ]
 
 
