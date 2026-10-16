@@ -772,6 +772,73 @@
                 </div>
             </section>
 
+            <!-- ENVIAR PARA O KLANGO (Etapa 3, 15/10/2026 -- aprovação do CÉREBRO): gerar/ver/
+                 revogar o token pessoal do atalho (iOS Shortcuts / Android, Etapas 4 e 5, ainda não
+                 construídas) + ver e enviar a fila para o lote. Backend já em produção desde a
+                 Etapa 2 (routes/share.py, routes/share_ext.py, services/share_queue.py, migration
+                 0013). SEMPRE visível pra quem tem sessão de verdade (mesmo padrão de
+                 #secaoIndicacao) -- NÃO depende de plano pago: qualquer usuário logado pode gerar
+                 um token e acumular links na fila (a REGRA do CÉREBRO era só limitar o download em
+                 lote, não o acúmulo). Só o ENVIO para o lote respeita o teto do plano
+                 (send_to_batch -> Plan.max_batch_size); Free não tem lote, então sent_count sempre
+                 vem 0 pra ele -- mostrado com aviso amigável, nunca escondido (mesmo espírito de
+                 #pinterestBoardBloqueado, só que sem bloquear a FILA em si, só o envio).
+
+                 "Enviar fila para o lote" NÃO duplica nada: insere as URLs retornadas no MESMO
+                 #batchItems e chama o MESMO processarLote() já existente e testado -- idêntico ao
+                 que #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
+            <section id="secaoAtalho" class="hidden py-10">
+                <div class="bg-card rounded-3xl p-7 glow-hover">
+                    <div class="flex items-start gap-3 mb-5">
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-share-nodes"></i></div>
+                        <div class="min-w-0">
+                            <h2 class="text-base font-extrabold text-white">Enviar para o KLANGO</h2>
+                            <p class="text-sm text-slate-400 mt-1">Gere seu token pessoal para compartilhar vídeos direto do Instagram, TikTok, Pinterest ou YouTube — sem usar login nem senha nesses apps.</p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-slate-800 bg-[#060b14] p-5">
+                        <div id="atalhoTokenSemToken">
+                            <p class="text-sm text-slate-300">Você ainda não gerou um token.</p>
+                            <button type="button" onclick="gerarTokenAtalho()" class="w-full mt-3 h-11 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-key mr-1.5"></i>Gerar token</button>
+                        </div>
+                        <div id="atalhoTokenComToken" class="hidden">
+                            <p class="text-sm text-slate-300">Token ativo desde <span id="atalhoTokenCriadoEm">—</span>.</p>
+                            <p id="atalhoTokenUltimoUso" class="text-xs text-slate-500 mt-1">Ainda não foi usado.</p>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-3">
+                                <button type="button" onclick="gerarTokenAtalho()" class="flex-1 h-11 rounded-xl border border-slate-700 bg-[#0a0f1a] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-xs transition-colors"><i class="fa-solid fa-rotate mr-1.5"></i>Gerar novo token</button>
+                                <button type="button" onclick="revogarTokenAtalho()" class="flex-1 h-11 rounded-xl border border-red-900/50 bg-[#0a0f1a] text-red-400 hover:border-red-500/60 hover:bg-red-950/30 font-bold text-xs transition-colors"><i class="fa-solid fa-ban mr-1.5"></i>Revogar token</button>
+                            </div>
+                        </div>
+
+                        <!-- Mostrado só UMA VEZ, logo depois de gerar -- o backend nunca guarda nem
+                             devolve o valor puro de novo (ver routes/share.py::post_share_token). -->
+                        <div id="atalhoTokenNovo" class="hidden mt-4 pt-4 border-t border-slate-800">
+                            <p class="text-xs font-bold text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Copie agora — por segurança, este token não aparece de novo.</p>
+                            <div class="flex flex-col sm:flex-row gap-2 mt-2">
+                                <input id="atalhoTokenNovoInput" type="text" readonly
+                                    class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-xs"
+                                    onclick="this.select()">
+                                <button id="atalhoTokenCopiarBtn" type="button" onclick="copiarTokenAtalho(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-xs hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap"><i class="fa-solid fa-copy mr-1.5"></i>Copiar</button>
+                            </div>
+                        </div>
+
+                        <div id="atalhoTokenStatus" class="mt-3 text-xs"></div>
+                    </div>
+
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                            <span id="atalhoFilaContador" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Fila vazia</span>
+                            <button id="atalhoFilaLimparBtn" type="button" onclick="limparFilaAtalho()" class="hidden text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-400">Limpar fila</button>
+                        </div>
+                        <div id="atalhoFilaLista" class="space-y-2"></div>
+                        <p id="atalhoFilaVazia" class="text-sm text-slate-500">Os links que você compartilhar pelo atalho aparecem aqui.</p>
+                        <button id="atalhoFilaEnviarBtn" type="button" onclick="enviarFilaParaLote()" class="hidden w-full mt-3 h-12 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-paper-plane mr-1.5"></i>Enviar fila para o lote</button>
+                        <div id="atalhoFilaStatus" class="mt-2 text-xs"></div>
+                    </div>
+                </div>
+            </section>
+
             <!-- HISTÓRICO (03/10/2026, aprovação do CÉREBRO, Etapa 7 da revisão de UX): "meus
                  últimos downloads". Só para quem tem login de verdade -- GET /api/me/generations
                  exige sessão autenticada (routes/me.py::get_generations_history), diferente de
@@ -2065,6 +2132,9 @@
         // na hora; esta seção tem a busca separada de propósito (ver comentário da seção), então
         // precisa ser chamada aqui também.
         carregarStatusPinterestBoard();
+        // "Enviar para o KLANGO" (Etapa 3, 15/10/2026): mesmo padrão de carregarIndicacao() acima
+        // -- não existe token/fila sem sessão de verdade, então só é buscado aqui.
+        carregarAtalho();
     }
 
     function aplicarSemSessao() {
@@ -2074,6 +2144,7 @@
         esconderBatch();
         esconderHistorico();
         esconderIndicacao();
+        esconderAtalho();
         // Mesmo raciocínio de esconderBatch() acima, para o bloco de áudio individual: sessaoEmail
         // já é null nesta linha, então o cadeado aparece JÁ NO LOGOUT, sem esperar a resposta
         // assíncrona de carregarStatusConta() mais abaixo (que ainda confirmaria o mesmo resultado).
@@ -4712,6 +4783,269 @@
         secaoBatch.classList.remove("hidden");
         secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
         processarLote();
+    }
+
+    // ============================================================================================
+    // ENVIAR PARA O KLANGO (Etapa 3, 15/10/2026 -- aprovação do CÉREBRO)
+    // Token pessoal (routes/share.py::/api/share/token) + fila (routes/share.py::/api/share/queue)
+    // do atalho de compartilhamento. "Enviar fila para o lote" reaproveita criarCampoLote/
+    // atualizarContagemLote/processarLote já existentes -- mesmo padrão de baixarSelecaoPinterest()
+    // acima, nenhuma lógica de download/lote duplicada aqui.
+    // ============================================================================================
+
+    function esconderAtalho() {
+        const secao = document.getElementById("secaoAtalho");
+        if (secao) secao.classList.add("hidden");
+        // Esconde também o token recém-gerado, se algum estivesse visível -- próxima sessão (outro
+        // usuário no mesmo navegador, por exemplo) nunca deve ver o token de quem saiu.
+        const novo = document.getElementById("atalhoTokenNovo");
+        if (novo) novo.classList.add("hidden");
+    }
+
+    function setStatusAtalhoToken(texto, classe) {
+        const el = document.getElementById("atalhoTokenStatus");
+        if (!el) return;
+        el.textContent = texto || "";
+        el.className = `mt-3 text-xs ${classe || "text-slate-500"}`;
+    }
+
+    function setStatusAtalhoFila(texto, classe) {
+        const el = document.getElementById("atalhoFilaStatus");
+        if (!el) return;
+        el.textContent = texto || "";
+        el.className = `mt-2 text-xs ${classe || "text-slate-500"}`;
+    }
+
+    async function carregarAtalho() {
+        const secao = document.getElementById("secaoAtalho");
+        if (!secao) return;
+        secao.classList.remove("hidden");
+        await Promise.all([carregarTokenAtalho(), carregarFilaAtalho()]);
+    }
+
+    async function carregarTokenAtalho() {
+        const semToken = document.getElementById("atalhoTokenSemToken");
+        const comToken = document.getElementById("atalhoTokenComToken");
+        if (!semToken || !comToken) return;
+        try {
+            const res = await fetch("/api/share/token", { credentials: "same-origin" });
+            if (!res.ok) return;
+            const dados = await res.json();
+            if (dados && dados.exists) {
+                semToken.classList.add("hidden");
+                comToken.classList.remove("hidden");
+                document.getElementById("atalhoTokenCriadoEm").textContent = formatarData(dados.created_at);
+                document.getElementById("atalhoTokenUltimoUso").textContent = dados.last_used_at
+                    ? `Último uso: ${formatarData(dados.last_used_at)}`
+                    : "Ainda não foi usado.";
+            } else {
+                comToken.classList.add("hidden");
+                semToken.classList.remove("hidden");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function gerarTokenAtalho() {
+        // Gerar um token novo revoga o anterior automaticamente (1 token ativo por usuário --
+        // aprovação do CÉREBRO, services/share_queue.py::generate_token). Já existindo um token,
+        // confirma antes: quem já tinha configurado o atalho no celular com o token antigo
+        // precisaria reconfigurar.
+        const jaTemToken = !document.getElementById("atalhoTokenComToken").classList.contains("hidden");
+        if (jaTemToken && !confirm("Gerar um novo token revoga o atual. Qualquer atalho já configurado com o token antigo para de funcionar. Continuar?")) {
+            return;
+        }
+        setStatusAtalhoToken("Gerando token...", "text-slate-500");
+        try {
+            const res = await fetch("/api/share/token", { method: "POST", credentials: "same-origin" });
+            if (!res.ok) {
+                setStatusAtalhoToken("Não foi possível gerar o token. Tente de novo.", "text-red-400");
+                return;
+            }
+            const dados = await res.json();
+            document.getElementById("atalhoTokenNovoInput").value = dados.token;
+            document.getElementById("atalhoTokenNovo").classList.remove("hidden");
+            setStatusAtalhoToken("", "text-slate-500");
+            await carregarTokenAtalho();
+        } catch (err) {
+            console.error(err);
+            setStatusAtalhoToken("Não foi possível gerar o token. Tente de novo.", "text-red-400");
+        }
+    }
+
+    async function revogarTokenAtalho() {
+        if (!confirm("Revogar o token? Qualquer atalho configurado com ele para de funcionar imediatamente.")) {
+            return;
+        }
+        setStatusAtalhoToken("Revogando...", "text-slate-500");
+        try {
+            const res = await fetch("/api/share/token", { method: "DELETE", credentials: "same-origin" });
+            if (!res.ok && res.status !== 204) {
+                setStatusAtalhoToken("Não foi possível revogar o token. Tente de novo.", "text-red-400");
+                return;
+            }
+            document.getElementById("atalhoTokenNovo").classList.add("hidden");
+            setStatusAtalhoToken("Token revogado.", "text-slate-400");
+            await carregarTokenAtalho();
+        } catch (err) {
+            console.error(err);
+            setStatusAtalhoToken("Não foi possível revogar o token. Tente de novo.", "text-red-400");
+        }
+    }
+
+    async function copiarTokenAtalho(botao) {
+        const input = document.getElementById("atalhoTokenNovoInput");
+        if (!input || !input.value) return;
+        try {
+            await navigator.clipboard.writeText(input.value);
+        } catch (err) {
+            // Mesmo fallback de copiarLinkIndicacao, acima -- contextos sem Clipboard API.
+            input.select();
+            try {
+                document.execCommand("copy");
+            } catch (_) {
+                return;
+            }
+        }
+        if (!botao) return;
+        const htmlOriginal = botao.innerHTML;
+        botao.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i>Copiado!';
+        setTimeout(() => { botao.innerHTML = htmlOriginal; }, 1800);
+    }
+
+    function criarItemFilaAtalho(item) {
+        const linha = document.createElement("div");
+        linha.className = "flex items-center gap-3 bg-[#050810] border border-slate-800 rounded-xl px-3 py-2.5";
+
+        const icone = document.createElement("i");
+        icone.className = `${ICONE_FONTAWESOME_POR_PLATAFORMA[item.platform] || "fa-solid fa-link"} text-slate-500 shrink-0`;
+        linha.appendChild(icone);
+
+        const url = document.createElement("span");
+        url.className = "flex-1 min-w-0 truncate text-xs text-slate-300";
+        url.textContent = item.url; // textContent, nunca innerHTML -- é conteúdo que veio de outro app.
+        url.title = item.url;
+        linha.appendChild(url);
+
+        const remover = document.createElement("button");
+        remover.type = "button";
+        remover.className = "shrink-0 text-slate-600 hover:text-red-400 text-xs px-2 py-1";
+        remover.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        remover.title = "Remover da fila";
+        remover.onclick = () => removerItemFilaAtalho(item.id);
+        linha.appendChild(remover);
+
+        return linha;
+    }
+
+    async function carregarFilaAtalho() {
+        const lista = document.getElementById("atalhoFilaLista");
+        const vazia = document.getElementById("atalhoFilaVazia");
+        const contador = document.getElementById("atalhoFilaContador");
+        const limparBtn = document.getElementById("atalhoFilaLimparBtn");
+        const enviarBtn = document.getElementById("atalhoFilaEnviarBtn");
+        if (!lista || !vazia || !contador) return;
+        try {
+            const res = await fetch("/api/share/queue", { credentials: "same-origin" });
+            if (!res.ok) return;
+            const dados = await res.json();
+            const itens = (dados && Array.isArray(dados.items)) ? dados.items : [];
+
+            lista.innerHTML = "";
+            itens.forEach((item) => lista.appendChild(criarItemFilaAtalho(item)));
+
+            const temItens = itens.length > 0;
+            vazia.classList.toggle("hidden", temItens);
+            lista.classList.toggle("hidden", !temItens);
+            if (limparBtn) limparBtn.classList.toggle("hidden", !temItens);
+            if (enviarBtn) enviarBtn.classList.toggle("hidden", !temItens);
+            contador.textContent = temItens
+                ? `${itens.length} ${itens.length === 1 ? "link" : "links"} na fila`
+                : "Fila vazia";
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function removerItemFilaAtalho(itemId) {
+        try {
+            await fetch(`/api/share/queue/${itemId}`, { method: "DELETE", credentials: "same-origin" });
+        } catch (err) {
+            console.error(err);
+        }
+        await carregarFilaAtalho();
+    }
+
+    async function limparFilaAtalho() {
+        if (!confirm("Limpar a fila inteira? Os links ainda não enviados para o lote serão removidos.")) {
+            return;
+        }
+        try {
+            await fetch("/api/share/queue", { method: "DELETE", credentials: "same-origin" });
+        } catch (err) {
+            console.error(err);
+        }
+        await carregarFilaAtalho();
+    }
+
+    async function enviarFilaParaLote() {
+        setStatusAtalhoFila("Enviando...", "text-slate-500");
+        let resultado;
+        try {
+            const res = await fetch("/api/share/queue/send-to-batch", { method: "POST", credentials: "same-origin" });
+            if (!res.ok) {
+                setStatusAtalhoFila("Não foi possível enviar a fila para o lote. Tente de novo.", "text-red-400");
+                return;
+            }
+            resultado = await res.json();
+        } catch (err) {
+            console.error(err);
+            setStatusAtalhoFila("Não foi possível enviar a fila para o lote. Tente de novo.", "text-red-400");
+            return;
+        }
+
+        if (!resultado.sent_count) {
+            // max_batch_size = 0 é o Free (sem lote) -- nunca escondido, só um aviso amigável que
+            // direciona pros planos (mesmo espírito de #pinterestBoardBloqueado).
+            setStatusAtalhoFila(
+                resultado.max_batch_size === 0
+                    ? "Enviar para o lote é um recurso dos planos com lote (Semanal, Mensal ou VIP Batch)."
+                    : "A fila está vazia.",
+                "text-amber-400",
+            );
+            await carregarFilaAtalho();
+            return;
+        }
+
+        // Mesmo padrão de baixarSelecaoPinterest(): preenche #batchItems com as URLs devolvidas e
+        // reaproveita o fluxo de lote já existente e testado -- nenhuma lógica de download nova.
+        const container = document.getElementById("batchItems");
+        const secaoBatch = document.getElementById("secaoBatch");
+        if (container && secaoBatch) {
+            container.innerHTML = "";
+            resultado.urls.forEach((url, indice) => {
+                const campo = criarCampoLote(indice + 1);
+                const urlField = campo.querySelector(".batch-url");
+                if (urlField) urlField.value = url;
+                container.appendChild(campo);
+            });
+
+            limiteLoteAtual = Math.max(limiteLoteAtual, resultado.max_batch_size);
+            atualizarContagemLote();
+
+            secaoBatch.classList.remove("hidden");
+            secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
+            processarLote();
+        }
+
+        setStatusAtalhoFila(
+            resultado.remaining_pending > 0
+                ? `${resultado.sent_count} enviados para o lote. ${resultado.remaining_pending} continuam na fila (acima do limite do plano).`
+                : `${resultado.sent_count} enviados para o lote.`,
+            "text-emerald-400",
+        );
+        await carregarFilaAtalho();
     }
 
     document.addEventListener("DOMContentLoaded", () => {

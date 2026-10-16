@@ -8,6 +8,67 @@ pode ser mesclada na `main`.
 
 ---
 
+## Etapa 3 -- Atalho "Enviar para o KLANGO": tela de UI (token + fila)
+**Branch:** `feature/atalho-ui-token` (NÃO mesclada na `main` -- não fazer merge/deploy até confirmação)
+**Data:** 2026-10-15
+
+**Arquivo alterado:** `static/index.html` (só este -- front-end puro, sem arquivo de produção
+Python tocado). Nova seção `#secaoAtalho` ("Enviar para o KLANGO"), visível só com sessão (mesmo
+padrão de `#secaoIndicacao`):
+- Token: estado sem token / com token (data de criação, último uso) / token recém-gerado (mostrado
+  UMA vez, com aviso e botão copiar). Botões "Gerar token", "Gerar novo token" (confirma antes,
+  avisa que revoga o atual) e "Revogar token" (confirma antes).
+- Fila: lista os itens pendentes (ícone da plataforma + URL + remover), "Limpar fila", e "Enviar
+  fila para o lote" -- que reaproveita `criarCampoLote`/`atualizarContagemLote`/`processarLote()`
+  já existentes (mesmo padrão de `baixarSelecaoPinterest()`), preenchendo `#batchItems` com as URLs
+  devolvidas por `POST /api/share/queue/send-to-batch` em vez de duplicar qualquer lógica de lote.
+  Free (sem plano com lote) recebe aviso amigável, nunca é bloqueado de acumular na fila.
+
+**Este projeto NÃO tem suíte de testes de frontend** (sem package.json, sem JS test runner, sem
+Playwright/Cypress -- só pytest no backend). O que foi verificado neste ambiente:
+- `node --check` no `<script>` inline inteiro do arquivo: sintaxe JS válida.
+- Checagem de balanceamento de tags HTML do arquivo inteiro (parser Python, não visual): nenhuma
+  tag aberta/fechada incorretamente.
+- Todos os `id` novos (`secaoAtalho`, `atalhoToken...`, `atalhoFila...`) conferidos como únicos no
+  arquivo; todas as funções/variáveis JS novas conferidas como declaradas uma única vez, sem
+  colidir com nome já existente.
+- Reli `tests/test_static_pages.py` (único teste de backend que toca `static/index.html`): só
+  confere substrings genéricas ("KLANGO.MP4", links do rodapé) -- nada que esta mudança quebre.
+
+### O que NÃO foi verificado (precisa de olho humano no navegador)
+- Nenhuma captura de tela / execução real no navegador -- não visualizei a seção renderizada.
+- Fluxo completo ponta a ponta: logar, gerar token, copiar, revogar, gerar de novo; adicionar um
+  link à fila de verdade (via `POST /api/ext/share` com o token, ex. curl/Postman -- a Etapa 4/5 do
+  atalho de verdade no celular ainda não existe) e confirmar que aparece na lista; remover um item;
+  limpar a fila; "Enviar fila para o lote" preenchendo `#batchItems` e dando certo com um plano
+  pago, e mostrando o aviso correto com uma conta Free (sem lote).
+- Responsividade mobile da nova seção (o resto do site é mobile-first; segui as mesmas classes
+  Tailwind de `#secaoIndicacao`/`#secaoPinterestBoard`, mas não há como confirmar visualmente aqui).
+
+### Comando/passos para o Igor conferir
+```powershell
+git fetch origin
+git checkout feature/atalho-ui-token
+git pull origin feature/atalho-ui-token
+```
+Depois, com o servidor local rodando (ou direto em produção depois do merge): logar no site, ver a
+seção "Enviar para o KLANGO" (aparece entre "Importar pasta do Pinterest" e "Histórico"), gerar o
+token, copiar, e testar o fluxo de ponta a ponta descrito acima.
+
+### Checklist antes do merge na `main`
+- [ ] Seção aparece certinho (visual/responsivo) ao logar.
+- [ ] Gerar/copiar/revogar/gerar-de-novo token funciona e os textos batem com o estado real.
+- [ ] Um link adicionado via `/api/ext/share` (com o token) aparece na fila na hora que a página
+      recarrega/a seção é recarregada.
+- [ ] Remover item e limpar fila funcionam.
+- [ ] "Enviar fila para o lote" preenche `#batchItems` e dispara `processarLote()` corretamente
+      para uma conta com plano de lote; mostra aviso amigável (sem quebrar nada) para uma conta
+      Free.
+- [ ] Só depois disso: merge na `main` (deploy do Render sobe o HTML novo -- sem migration/risco de
+      banco nesta etapa, é só front-end).
+
+---
+
 ## Etapa 2 -- Atalho "Enviar para o KLANGO": backend + migration 0013 + testes
 **Branch:** `feature/atalho-compartilhamento` (NÃO mesclada na `main` -- não fazer merge/deploy até confirmação)
 **Data:** 2026-10-15
