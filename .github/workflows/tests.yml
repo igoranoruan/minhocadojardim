@@ -29,4 +29,17 @@ jobs:
           pip install -r requirements-dev.txt
 
       - name: Rodar pytest
-        run: pytest -q
+        shell: bash
+        run: |
+          set +o pipefail
+          pytest -q -ra | tee pytest_output.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            echo "::group::Resumo das falhas (short test summary info)"
+            grep '^FAILED ' pytest_output.txt || true
+            echo "::endgroup::"
+            grep '^FAILED ' pytest_output.txt | while IFS= read -r linha; do
+              echo "::error::$linha"
+            done
+          fi
+          exit "$code"
