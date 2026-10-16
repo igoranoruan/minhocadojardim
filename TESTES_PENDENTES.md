@@ -117,6 +117,66 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
 
 ---
 
+## Etapa 4 -- Atalho "Enviar para o KLANGO": instruções de configuração no iPhone
+**Status:** PENDENTE DE TESTE EM DISPOSITIVO REAL -- nenhum teste automatizado substitui isso (ver
+"O que NÃO foi verificado" abaixo). **Não fazer merge na `main` até você confirmar.**
+**Branch:** `feature/atalho-ios-config`
+**Data:** 2026-10-15
+
+**Arquivos criados:**
+- `static/atalho-ios.html` -- página de instruções (mesmo estilo visual de `static/privacidade.html`),
+  com DUAS opções: (1) baixar e importar um atalho pronto, (2) montar manualmente dentro do app
+  Atalhos, passo a passo. A opção 2 é o caminho com garantia de funcionar.
+- `static/atalho-klango.shortcut` -- o "atalho pronto" da opção 1: um plist binário (formato
+  WFWorkflow que o app Atalhos importa) com 3 ações (Texto → guarda o token; Obter Conteúdo de URL
+  → `POST /api/ext/share` com `{"text": <compartilhado>, "token": <token colado>}`; Mostrar
+  Notificação → exibe a resposta). Gerado por script Python (`plistlib`, não ficou no projeto),
+  seguindo o esquema documentado publicamente do formato `.shortcut`.
+  **⚠️ ATENÇÃO: este arquivo NÃO FOI TESTADO em um iPhone real** -- não há dispositivo Apple
+  disponível neste ambiente para confirmar que o app Atalhos importa e executa corretamente. É
+  uma tentativa de boa-fé, estruturalmente válida (plist bem formado, confirmado por round-trip
+  com `plistlib`), mas pode falhar na importação ou se comportar diferente do esperado (ex.: o
+  app pode pedir mapear os campos JSON de novo, ou o ícone/nome não aparecer como esperado). Por
+  isso a Opção 2 (manual) existe na mesma página como caminho alternativo garantido.
+
+**Arquivos alterados:**
+- `main.py` -- nova rota `GET /atalho-ios` (mesmo padrão de `/termos`/`/privacidade`, método GET,
+  não precisa de isenção de Origin pois `SAFE_METHODS` já cobre GET).
+- `static/index.html` -- um link "Como configurar no iPhone" adicionado dentro de `#secaoAtalho`,
+  abrindo `/atalho-ios` em nova aba. Nenhuma outra alteração nesta seção.
+- `tests/test_share_routes.py`: **não alterado**. `tests/test_static_pages.py`: novo teste
+  `test_pagina_de_configuracao_do_atalho_ios` (mesmo padrão de `test_termos_de_uso`/
+  `test_politica_de_privacidade` -- confere só status 200 e texto da página).
+
+### O que NÃO foi verificado
+- **O arquivo `.shortcut` em um iPhone real** (o item mais importante desta etapa) -- ver aviso
+  acima. Teste no seu iPhone seguindo a Opção 1 da página; se falhar, não é bloqueante (a Opção 2
+  continua funcionando), mas me avise para eu ajustar/remover a Opção 1 se necessário.
+- `pytest -q` completo (sandbox sem rede/dependências, igual às etapas anteriores) -- só
+  `ast.parse` no Python e um parser de balanceamento de tags no HTML novo/alterado (sem erros).
+- Visual/responsividade real da página `/atalho-ios` no navegador.
+
+### Comando para você conferir
+```powershell
+git fetch origin
+git checkout feature/atalho-ios-config
+git pull origin feature/atalho-ios-config
+pytest -q
+```
+Suba o app local (`uvicorn main:app --reload`), abra `/atalho-ios` no navegador para ver a página,
+e teste de verdade no seu iPhone: baixe o `.shortcut` pela Opção 1 e veja se importa/funciona: se
+não funcionar, siga a Opção 2 (manual) e me diga o que aconteceu.
+
+### Checklist antes do merge na `main`
+- [ ] `pytest -q` = 0 failed.
+- [ ] Página `/atalho-ios` abre certinho, visual ok no celular.
+- [ ] Testou a Opção 1 (`.shortcut` pronto) no seu iPhone: importou? funcionou o compartilhamento?
+- [ ] Se a Opção 1 falhou, testou a Opção 2 (manual) e confirma que funciona de ponta a ponta.
+- [ ] Só depois disso: merge na `main` (sem migration/risco de banco nesta etapa, é só front-end +
+      uma rota GET nova).
+
+---
+
 ## Etapa 3 -- Atalho "Enviar para o KLANGO": tela de UI (token + fila)
 **Status:** CONFIRMADA -- Igor rodou localmente em 2026-10-15 22:xx (VS Code/Windows): `pytest -q`
 = **1276 passed, 0 failed**, e todo o checklist visual/funcional da seção "Enviar para o KLANGO"

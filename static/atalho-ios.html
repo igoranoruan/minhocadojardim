@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Configurar o Atalho no iPhone — KLANGO.MP4</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --klango-teal: #19D3AE;
+            --klango-ink: #090D0F;
+        }
+        * { font-family: 'Sora', system-ui, sans-serif; }
+        body { background: var(--klango-ink); color: #f8fafc; }
+        .bg-card { background: #0b1220; border: 1px solid #1b2738; }
+        h2 { color: #fff; font-weight: 800; margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.125rem; }
+        h2:first-of-type { margin-top: 0; }
+        p, li { color: #cbd5e1; line-height: 1.7; }
+        p + p { margin-top: 0.75rem; }
+        ul, ol { padding-left: 1.25rem; margin-top: 0.5rem; }
+        ul { list-style: disc; }
+        ol { list-style: decimal; }
+        li + li { margin-top: 0.5rem; }
+        a.voltar { color: #19D3AE; }
+        a.voltar:hover { text-decoration: underline; }
+        .passo-num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 1.5rem; height: 1.5rem; border-radius: 9999px;
+            background: rgba(25, 211, 174, 0.12); border: 1px solid rgba(25, 211, 174, 0.3);
+            color: var(--klango-teal); font-weight: 800; font-size: 0.75rem; flex-shrink: 0;
+        }
+        code { background: #050810; border: 1px solid #1b2738; padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.85em; color: #e2e8f0; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-2xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
+        <a href="/" class="voltar text-sm font-medium inline-flex items-center gap-2">&larr; Voltar para o KLANGO.MP4</a>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-6">Configurar o Atalho no iPhone</h1>
+        <p class="text-sm text-slate-500 mt-2">Compartilhe vídeos do Instagram, TikTok, Pinterest ou YouTube direto para sua fila do KLANGO.MP4, sem abrir o site.</p>
+
+        <div class="bg-card rounded-2xl p-5 mt-6 flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-[#19D3AE] mt-0.5"></i>
+            <p class="text-sm text-slate-300 m-0">O Atalho só envia o link do vídeo com o seu token pessoal — nunca pede nem guarda login, senha ou cookies das redes sociais.</p>
+        </div>
+
+        <div class="bg-card rounded-2xl p-6 sm:p-8 mt-6">
+
+            <h2>Antes de começar</h2>
+            <ul>
+                <li>Esteja logado no <a href="/" class="text-[#19D3AE] hover:underline">KLANGO.MP4</a> pelo navegador do iPhone.</li>
+                <li>Na seção <strong>"Enviar para o KLANGO"</strong>, toque em <strong>Gerar token</strong> e copie o token (ele só aparece uma vez).</li>
+            </ul>
+
+            <h2>Opção 1 — Importar o Atalho pronto (mais rápido)</h2>
+            <ol>
+                <li><span class="passo-num mr-2">1</span>Nas configurações do iPhone, vá em <strong>Atalhos → Avançado</strong> e ative <strong>Permitir Atalhos Não Confiáveis</strong> (só precisa fazer isso uma vez; é exigido pela Apple para qualquer atalho que não veio da App Store).</li>
+                <li><span class="passo-num mr-2">2</span>Toque para baixar: <a href="/static/atalho-klango.shortcut" class="text-[#19D3AE] font-bold hover:underline"><i class="fa-solid fa-download mr-1"></i>atalho-klango.shortcut</a></li>
+                <li><span class="passo-num mr-2">3</span>Abra o arquivo baixado (pelo app Arquivos, se necessário) — o app Atalhos vai abrir perguntando se você quer adicionar o atalho. Toque em <strong>Adicionar Atalho Não Confiável</strong>.</li>
+                <li><span class="passo-num mr-2">4</span>Na lista de Atalhos, toque nos <strong>•••</strong> do atalho "KLANGO.MP4" recém-adicionado para editar, toque no primeiro passo (o texto <code>COLE_AQUI_O_TOKEN...</code>) e substitua pelo seu token copiado. Toque em <strong>Concluído</strong>.</li>
+                <li><span class="passo-num mr-2">5</span>Pronto: agora, em qualquer vídeo do Instagram/TikTok/Pinterest/YouTube, toque em <strong>Compartilhar</strong> → <strong>KLANGO.MP4</strong> (se não aparecer na lista, toque em "Mais" e ative-o).</li>
+            </ol>
+            <p class="text-xs text-slate-500 mt-3"><i class="fa-solid fa-circle-info mr-1"></i>Se o atalho pronto não importar ou não funcionar no seu iPhone, siga a Opção 2 abaixo — o resultado final é idêntico.</p>
+
+            <h2>Opção 2 — Montar o Atalho manualmente</h2>
+            <ol>
+                <li><span class="passo-num mr-2">1</span>Abra o app <strong>Atalhos</strong> → aba <strong>Meus Atalhos</strong> → toque em <strong>+</strong> para criar um novo.</li>
+                <li><span class="passo-num mr-2">2</span>Toque em <strong>Adicionar Ação</strong>, busque por <strong>"Texto"</strong> e adicione a ação <strong>Texto</strong>. No campo, cole o seu token pessoal.</li>
+                <li><span class="passo-num mr-2">3</span>Adicione a ação <strong>"Obter Conteúdo de URL"</strong>. Configure:
+                    <ul>
+                        <li><strong>URL:</strong> <code>https://klango.site/api/ext/share</code></li>
+                        <li><strong>Método:</strong> toque em "Mostrar Mais" → <strong>POST</strong></li>
+                        <li><strong>Cabeçalhos:</strong> adicione <code>Content-Type</code> = <code>application/json</code></li>
+                        <li><strong>Corpo da Requisição:</strong> JSON, com dois campos:
+                            <ul>
+                                <li><code>text</code> → toque no campo e escolha a variável <strong>Entrada do Atalho</strong> (o texto/link compartilhado)</li>
+                                <li><code>token</code> → toque no campo e escolha a variável <strong>Texto</strong> (a ação do passo 2)</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><span class="passo-num mr-2">4</span>Adicione a ação <strong>"Mostrar Notificação"</strong> e, no corpo, escolha a variável <strong>Conteúdo de URL</strong> (resultado do passo 3) — assim você vê a confirmação de que o link entrou na fila.</li>
+                <li><span class="passo-num mr-2">5</span>Toque no nome do atalho (topo) e troque para <strong>"KLANGO.MP4"</strong>. Toque no ícone de configurações (⚙️) e ative <strong>"Mostrar na Tela de Compartilhamento"</strong>, marcando como tipos aceitos <strong>URLs</strong> e <strong>Texto</strong>.</li>
+                <li><span class="passo-num mr-2">6</span>Pronto: use pelo botão <strong>Compartilhar</strong> em qualquer vídeo, igual na Opção 1.</li>
+            </ol>
+
+            <h2>Se algo der errado</h2>
+            <ul>
+                <li><strong>"Token inválido ou revogado"</strong> — gere um novo token na seção "Enviar para o KLANGO" do site e cole-o de novo no Atalho (passo 2).</li>
+                <li><strong>O atalho não aparece na Tela de Compartilhamento</strong> — no app que você está compartilhando, toque em "Mais" (os três pontinhos) na fileira de ícones e ative o KLANGO.MP4 ali.</li>
+                <li><strong>A fila não aparece no site</strong> — recarregue a página; os itens enviados pelo Atalho aparecem na seção "Enviar para o KLANGO" assim que a página recarrega.</li>
+            </ul>
+
+        </div>
+    </div>
+</body>
+</html>
