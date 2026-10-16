@@ -8,6 +8,111 @@ pode ser mesclada na `main`.
 
 ---
 
+## Como testar as Etapas 2 + 3 juntas (atalho "Enviar para o KLANGO")
+
+### Confirmação da base da branch (pedido do Igor, 2026-10-15)
+`feature/atalho-ui-token` foi criada a partir da `main` DEPOIS que a `main` já tinha recebido o
+merge completo da Etapa 2 (commit `44f8194`, que já inclui `19e8c8e` + `caf31de` da
+`feature/atalho-compartilhamento`) e o fix pré-existente dos testes de arquitetura (`a94b375`).
+Ou seja: a Etapa 2 inteira (backend + migration 0013) já está contida em `feature/atalho-ui-token`
+-- **nenhum rebase foi necessário** (confirmado com `git merge-base --is-ancestor`). A ordem de
+merge Etapa 2 → Etapa 3 já está embutida na própria história da branch:
+
+```
+* 079e358 feat(share): tela de UI do atalho "Enviar para o KLANGO" -- token + fila (Etapa 3)
+*   44f8194 merge: atalho "Enviar para o KLANGO" -- Etapa 2 (backend + migration 0013)
+|\
+| * caf31de fix(share): corrige 3 das 8 falhas que o Igor encontrou rodando a suíte completa
+| * 19e8c8e feat(share): atalho "Enviar para o KLANGO" -- backend + migration 0013 (Etapa 2)
+* | a94b375 test(arquitetura): ignora scripts/ na varredura de isolamento download/processor
+|/
+* f3161ec chore(diag): scripts de diagnóstico do OOM em lotes (sem alteração de produção)
+```
+
+Por isso, quando tudo estiver aprovado, **um único merge** de `feature/atalho-ui-token` na `main`
+já traz as duas etapas, na ordem certa (é um fast-forward, já que `main` é ancestral direto desta
+branch) -- não precisa mesclar `feature/atalho-compartilhamento` separadamente (ela já está contida
+aqui). Depois do merge, a branch `feature/atalho-compartilhamento` fica obsoleta e pode ser
+apagada.
+
+### Roteiro único (Windows/PowerShell, VS Code)
+
+**1) Preparar o ambiente e rodar a suíte completa**
+```powershell
+cd caminho\para\minhocadojardim
+git fetch origin
+git checkout feature/atalho-ui-token
+git pull origin feature/atalho-ui-token
+
+# Se ainda não tiver o ambiente virtual desta pasta:
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+pytest -q
+```
+Esperado: **0 failed** (mesmo resultado de quando a Etapa 2 foi aprovada, 1276 passed -- a Etapa 3
+não mexeu em nenhum arquivo Python/teste, só em `static/index.html`).
+
+**2) Subir o app localmente**
+Sem nenhuma variável de ambiente especial: em desenvolvimento (`ENV` não definido = `development`)
+o app já usa SQLite local (`./data/minhoca.db`, pasta criada sozinha) e e-mail "console" (os
+códigos de login aparecem no terminal em vez de serem enviados de verdade).
+```powershell
+# Ainda na mesma pasta, com o .venv ativado:
+alembic upgrade head
+uvicorn main:app --reload
+```
+Abra `http://localhost:8000` no navegador.
+
+**3) Checklist visual da tela "Enviar para o KLANGO"**
+1. Faça login (o código de verificação aparece no terminal onde o `uvicorn` está rodando, já que
+   `EMAIL_SENDER=console` em dev).
+2. Role até a seção **"Enviar para o KLANGO"** (entre "Importar pasta do Pinterest" e "Histórico").
+3. Clique **"Gerar token"** -- deve aparecer o token em texto, com aviso amarelo "copie agora" e
+   botão "Copiar". **Copie o token** (vai precisar dele no passo 4).
+4. Recarregue a página (F5) -- a seção deve mostrar "Token ativo desde [data]", sem mostrar o
+   token de novo (ele não é guardado em texto puro, só o hash).
+5. Clique **"Gerar novo token"** -- deve pedir confirmação avisando que revoga o atual; confirme e
+   copie o NOVO token (o antigo some).
+6. Clique **"Revogar token"** -- deve pedir confirmação; depois de confirmar, a seção volta para o
+   estado "Você ainda não gerou um token."
+7. Gere um token de novo e siga para o passo 4 abaixo (fila) antes de continuar.
+
+**4) Colocar um link na fila via `/api/ext/share` (simula o atalho, que ainda não existe --
+Etapas 4/5)**
+```powershell
+curl.exe -X POST "http://localhost:8000/api/ext/share" `
+  -H "Authorization: Bearer COLE_SEU_TOKEN_AQUI" `
+  -H "Content-Type: application/json" `
+  -d '{\"url\": \"https://www.tiktok.com/@algumusuario/video/123456789\"}'
+```
+Deve devolver texto puro tipo `✅ Adicionado ao KLANGO (1 na fila)`. Teste também sem Origin
+nenhum (é exatamente assim que o comando acima já funciona -- `curl.exe` não manda Origin) e com
+um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
+
+**5) Checklist visual da fila**
+1. Recarregue a página (F5) com a sessão do MESMO usuário que gerou o token usado no curl -- o
+   link deve aparecer na lista da fila, com o ícone da plataforma (TikTok, no exemplo acima).
+2. Clique no ícone de lixeira de um item -- deve sumir da lista.
+3. Adicione 2-3 itens de novo (repita o passo 4) e clique **"Limpar fila"** -- deve pedir
+   confirmação e esvaziar tudo.
+4. Adicione itens de novo e clique **"Enviar fila para o lote"**:
+   - Numa conta **sem plano pago (Free)**: deve mostrar o aviso "Enviar para o lote é um recurso
+     dos planos com lote...", SEM quebrar nada e SEM mexer na seção de lote.
+   - Numa conta **com plano de lote** (Semanal, Mensal ou VIP Batch -- pode usar o admin ou
+     conceder um plano de teste): deve preencher `#secaoBatch` com as URLs da fila e já disparar o
+     processamento (mesmo comportamento de "Importar pasta do Pinterest" → "Baixar selecionados").
+     Itens acima do teto do plano devem continuar na fila, com o aviso "X continuam na fila".
+
+**6) Antes de aprovar o merge**
+- [ ] `pytest -q` = 0 failed.
+- [ ] Os dois branches de teste do passo 5 (Free e plano pago) se comportaram como descrito.
+- [ ] Nenhum erro no console do navegador (F12) ao usar a seção.
+
+---
+
 ## Etapa 3 -- Atalho "Enviar para o KLANGO": tela de UI (token + fila)
 **Branch:** `feature/atalho-ui-token` (NÃO mesclada na `main` -- não fazer merge/deploy até confirmação)
 **Data:** 2026-10-15
