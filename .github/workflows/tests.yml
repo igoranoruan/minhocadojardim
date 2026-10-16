@@ -1,0 +1,48 @@
+name: Testes
+
+# Roda a suíte completa (pytest) a cada push em qualquer branch e em pull requests para a main.
+# Objetivo (15/10/2026, aprovação do CÉREBRO): permitir que o Claude confirme "0 failed" direto
+# pelo resultado do GitHub Actions (via `gh api`), sem precisar que o Igor rode pytest localmente
+# no VS Code a cada etapa. Isso NÃO substitui os testes manuais que precisam de um navegador/iPhone
+# de verdade (ex.: checklist visual, importar o .shortcut) -- só a suíte automatizada (pytest).
+#
+# Não faz deploy nem mexe em nada de produção: só checkout + instalar dependências + pytest.
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar ffmpeg (dependência de sistema usada por processor/*)
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Rodar pytest
+        shell: bash
+        run: |
+          set +o pipefail
+          pytest -q -ra | tee pytest_output.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            echo "::group::Resumo das falhas (short test summary info)"
+            grep '^FAILED ' pytest_output.txt || true
+            echo "::endgroup::"
+            grep '^FAILED ' pytest_output.txt | while IFS= read -r linha; do
+              echo "::error::$linha"
+            done
+          fi
+          exit "$code"

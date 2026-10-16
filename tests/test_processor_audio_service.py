@@ -63,10 +63,16 @@ def test_saida_e_mp3_192kbps_sem_metadados_de_origem(tmp_path):
 
 
 def test_duracao_da_saida_bate_com_a_duracao_da_entrada(tmp_path):
+    """Tolerância de 0.15s (15/10/2026, achado ao configurar o CI no GitHub Actions): o reencode
+    AAC -> MP3 soma um padding/encoder-delay cuja duração exata varia entre builds/versões do
+    FFmpeg (ex.: Windows local do Igor vs. Ubuntu do runner do Actions) -- comparar com
+    igualdade exata depois de arredondar para 1 casa decimal falhava só por essa diferença de
+    ambiente (2.1 vs 2.0), sem nenhum problema real no processamento. Uma diferença grande
+    (ex.: áudio cortado pela metade) continua sendo pega por esta margem."""
     entrada = make_audio_only(tmp_path / "au.m4a", duration=2.0)
     entrada_probe = probe(entrada)
     resultado = process_audio(entrada)
-    assert round(resultado.duration_seconds, 1) == round(entrada_probe.duration_seconds or 0, 1)
+    assert resultado.duration_seconds == pytest.approx(entrada_probe.duration_seconds or 0, abs=0.15)
 
 
 def test_entrada_nao_e_apagada_pelo_processor(tmp_path):
