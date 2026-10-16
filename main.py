@@ -194,6 +194,17 @@ async def politica_de_privacidade() -> FileResponse:
     return FileResponse(STATIC_DIR / "privacidade.html")
 
 
+@app.get("/atalho-ios", include_in_schema=False)
+async def atalho_ios_configuracao() -> FileResponse:
+    """Instruções de configuração do atalho "Enviar para o KLANGO" no iPhone (Etapa 4, 15/10/2026,
+    aprovação do CÉREBRO) -- mesmo padrão de URL limpa de /termos e /privacidade acima. Link a
+    partir da seção #secaoAtalho em static/index.html. Oferece dois caminhos: baixar o atalho
+    pronto (static/atalho-klango.shortcut) ou montar manualmente dentro do app Atalhos -- o segundo
+    é o caminho com garantia de funcionar, caso a importação do arquivo pronto falhe em algum
+    iPhone (não foi possível testar a importação em um dispositivo real a partir deste ambiente)."""
+    return FileResponse(STATIC_DIR / "atalho-ios.html")
+
+
 @app.get("/admin", include_in_schema=False)
 async def painel_admin() -> FileResponse:
     """Moderação de comentários (06/10/2026, aprovação do CÉREBRO) -- mesmo padrão de URL limpa

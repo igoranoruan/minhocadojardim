@@ -22,6 +22,15 @@ def test_politica_de_privacidade(auth_client):
     assert "Política de Privacidade" in resposta.text
 
 
+def test_pagina_de_configuracao_do_atalho_ios(auth_client):
+    """Etapa 4 (15/10/2026) -- instruções de configuração do atalho "Enviar para o KLANGO" no
+    iPhone, mesmo padrão de URL limpa de /termos e /privacidade."""
+    resposta = auth_client.get("/atalho-ios")
+    assert resposta.status_code == 200
+    assert "Configurar o Atalho no iPhone" in resposta.text
+    assert "atalho-klango.shortcut" in resposta.text
+
+
 def test_rodape_da_pagina_inicial_linka_as_paginas_legais(auth_client):
     """Regressão: o rodapé já teve a coluna "Legal" removida de propósito porque as páginas não
     existiam (ver histórico em static/index.html) -- agora que existem, os links precisam estar
