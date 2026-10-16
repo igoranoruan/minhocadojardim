@@ -24,11 +24,14 @@ def test_politica_de_privacidade(auth_client):
 
 def test_pagina_de_configuracao_do_atalho_ios(auth_client):
     """Etapa 4 (15/10/2026) -- instruções de configuração do atalho "Enviar para o KLANGO" no
-    iPhone, mesmo padrão de URL limpa de /termos e /privacidade."""
+    iPhone, mesmo padrão de URL limpa de /termos e /privacidade. Passo a passo manual só (16/10/2026
+    -- o Igor testou em um iPhone real e confirmou que a Apple bloqueia importar um .shortcut
+    baixado da web: "Não é possível importar arquivos de atalho não assinados.")."""
     resposta = auth_client.get("/atalho-ios")
     assert resposta.status_code == 200
     assert "Configurar o Atalho no iPhone" in resposta.text
-    assert "atalho-klango.shortcut" in resposta.text
+    assert "api/ext/share" in resposta.text
+    assert "atalho-klango.shortcut" not in resposta.text
 
 
 def test_rodape_da_pagina_inicial_linka_as_paginas_legais(auth_client):

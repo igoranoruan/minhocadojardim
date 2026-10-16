@@ -124,59 +124,49 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
 ---
 
 ## Etapa 4 -- Atalho "Enviar para o KLANGO": instruções de configuração no iPhone
-**Status:** `pytest -q` CONFIRMADO VERDE pelo GitHub Actions (1277 passed, 0 failed --
-https://github.com/igoranoruan/minhocadojardim/actions/runs/38841330422). Falta só o teste no
-iPhone de verdade (ver "O que NÃO foi verificado" abaixo) -- **não fazer merge na `main` até você
-testar o `.shortcut` no seu iPhone e confirmar** (isso nenhum teste automatizado substitui).
-**Branch:** `feature/atalho-ios-config`
-**Data:** 2026-10-15
+**Status:** `pytest -q` confirmado verde pelo GitHub Actions. **Opção 1 (atalho pronto para
+importar) testada pelo Igor em iPhone real em 16/10/2026 e CONFIRMADA QUEBRADA** -- a Apple recusa
+importar qualquer `.shortcut` baixado da web ("Não é possível importar arquivos de atalho não
+assinados. Use outra opção de compartilhamento."); só um link do iCloud gerado pelo próprio app
+Atalhos passa por essa checagem, e não tem como gerar esse link por fora do app. **Removida** a
+Opção 1 e o arquivo `static/atalho-klango.shortcut`; a página agora só tem o passo a passo manual
+(que não depende de nada assinado pela Apple). **Falta só você confirmar que o passo a passo manual
+funciona de ponta a ponta no seu iPhone** -- isso sim nenhum teste automatizado substitui.
+**Branch:** `fix/atalho-ios-sem-shortcut-pronto` (em cima da `main`, que já tem a Etapa 4 original)
+**Data:** 2026-10-15 (original) / 2026-10-16 (correção depois do teste no iPhone)
 
-**Arquivos criados:**
-- `static/atalho-ios.html` -- página de instruções (mesmo estilo visual de `static/privacidade.html`),
-  com DUAS opções: (1) baixar e importar um atalho pronto, (2) montar manualmente dentro do app
-  Atalhos, passo a passo. A opção 2 é o caminho com garantia de funcionar.
-- `static/atalho-klango.shortcut` -- o "atalho pronto" da opção 1: um plist binário (formato
-  WFWorkflow que o app Atalhos importa) com 3 ações (Texto → guarda o token; Obter Conteúdo de URL
-  → `POST /api/ext/share` com `{"text": <compartilhado>, "token": <token colado>}`; Mostrar
-  Notificação → exibe a resposta). Gerado por script Python (`plistlib`, não ficou no projeto),
-  seguindo o esquema documentado publicamente do formato `.shortcut`.
-  **⚠️ ATENÇÃO: este arquivo NÃO FOI TESTADO em um iPhone real** -- não há dispositivo Apple
-  disponível neste ambiente para confirmar que o app Atalhos importa e executa corretamente. É
-  uma tentativa de boa-fé, estruturalmente válida (plist bem formado, confirmado por round-trip
-  com `plistlib`), mas pode falhar na importação ou se comportar diferente do esperado (ex.: o
-  app pode pedir mapear os campos JSON de novo, ou o ícone/nome não aparecer como esperado). Por
-  isso a Opção 2 (manual) existe na mesma página como caminho alternativo garantido.
+**Arquivos alterados (nesta correção de 16/10):**
+- `static/atalho-ios.html` -- removida a seção "Opção 1" (atalho pronto) inteira; o que era "Opção
+  2" virou o único passo a passo da página, com uma nota curta explicando por que não existe atalho
+  pronto para baixar.
+- `static/atalho-klango.shortcut` -- **removido** (não tinha como funcionar, ver acima).
+- `main.py` -- docstring da rota `/atalho-ios` atualizado para refletir o motivo da mudança.
+- `tests/test_static_pages.py` -- `test_pagina_de_configuracao_do_atalho_ios` atualizado: confere
+  que a página menciona `api/ext/share` (passo manual) e que `atalho-klango.shortcut` NÃO aparece
+  mais.
 
-**Arquivos alterados:**
-- `main.py` -- nova rota `GET /atalho-ios` (mesmo padrão de `/termos`/`/privacidade`, método GET,
-  não precisa de isenção de Origin pois `SAFE_METHODS` já cobre GET).
-- `static/index.html` -- um link "Como configurar no iPhone" adicionado dentro de `#secaoAtalho`,
-  abrindo `/atalho-ios` em nova aba. Nenhuma outra alteração nesta seção.
-- `tests/test_share_routes.py`: **não alterado**. `tests/test_static_pages.py`: novo teste
-  `test_pagina_de_configuracao_do_atalho_ios` (mesmo padrão de `test_termos_de_uso`/
-  `test_politica_de_privacidade` -- confere só status 200 e texto da página).
-
-### O que NÃO foi verificado
-- **O arquivo `.shortcut` em um iPhone real** (o item mais importante desta etapa, e o único que
-  sobra) -- precisa do seu iPhone de verdade. Teste pela Opção 1 da página; se falhar, não é
-  bloqueante (a Opção 2 continua funcionando), mas me avise para eu ajustar/remover a Opção 1.
-- Visual/responsividade real da página `/atalho-ios` -- você pode conferir só abrindo
-  `https://klango.site/atalho-ios` pelo celular, sem precisar de nada no computador.
+### O que NÃO foi verificado ainda
+- **O passo a passo manual de ponta a ponta num iPhone real** -- é o único item que falta. Monte o
+  atalho seguindo `/atalho-ios` e teste compartilhar um vídeo de verdade.
+- Visual/responsividade da página depois da edição -- confira em `https://klango.site/atalho-ios`
+  pelo celular (a mesma URL de antes).
 
 ### Como você conferir (só o que precisa do seu celular)
-Abra pelo navegador do iPhone, já logado no site:
-1. `https://klango.site/atalho-ios` (ou o link "Como configurar no iPhone" na seção "Enviar para o
-   KLANGO") -- veja se a página abre certinho.
-2. Siga a Opção 1: baixe o `.shortcut`, tente importar, cole o token, teste compartilhar um vídeo.
-3. Se a Opção 1 falhar em qualquer passo, siga a Opção 2 (manual) e me diga o que aconteceu.
+1. Abra `https://klango.site/atalho-ios` no navegador do iPhone (a página já deve estar sem a
+   Opção 1 depois do próximo deploy).
+2. Monte o atalho seguindo o passo a passo (agora é o único).
+3. Teste compartilhar um vídeo real (Instagram/TikTok/etc.) → KLANGO.MP4, e confirme que o link
+   aparece na fila do site depois.
 
 ### Checklist antes do merge na `main`
-- [x] `pytest -q` = 0 failed (confirmado pelo GitHub Actions, sem precisar do seu computador).
-- [ ] Página `/atalho-ios` abre certinho, visual ok no celular.
-- [ ] Testou a Opção 1 (`.shortcut` pronto) no seu iPhone: importou? funcionou o compartilhamento?
-- [ ] Se a Opção 1 falhou, testou a Opção 2 (manual) e confirma que funciona de ponta a ponta.
-- [ ] Só depois disso: merge na `main` (sem migration/risco de banco nesta etapa, é só front-end +
-      uma rota GET nova).
+- [x] `pytest -q` = 0 failed (confirmado pelo GitHub Actions).
+- [x] Confirmado (pelo Igor, em iPhone real) que a Opção 1 (atalho pronto) não funciona -- por
+      isso foi removida.
+- [ ] Passo a passo manual testado de ponta a ponta no iPhone: atalho monta, aparece na Tela de
+      Compartilhamento, e o link compartilhado aparece na fila do site.
+- [ ] Só depois disso: fechar esta etapa como confirmada (merge já pode acontecer antes disso, já
+      que não há nenhum risco de produção em remover um link quebrado -- mas o "confirmado" final
+      da etapa depende deste teste).
 
 ---
 

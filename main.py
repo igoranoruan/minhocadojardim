@@ -198,10 +198,12 @@ async def politica_de_privacidade() -> FileResponse:
 async def atalho_ios_configuracao() -> FileResponse:
     """Instruções de configuração do atalho "Enviar para o KLANGO" no iPhone (Etapa 4, 15/10/2026,
     aprovação do CÉREBRO) -- mesmo padrão de URL limpa de /termos e /privacidade acima. Link a
-    partir da seção #secaoAtalho em static/index.html. Oferece dois caminhos: baixar o atalho
-    pronto (static/atalho-klango.shortcut) ou montar manualmente dentro do app Atalhos -- o segundo
-    é o caminho com garantia de funcionar, caso a importação do arquivo pronto falhe em algum
-    iPhone (não foi possível testar a importação em um dispositivo real a partir deste ambiente)."""
+    partir da seção #secaoAtalho em static/index.html. Passo a passo manual só, dentro do app
+    Atalhos: o Igor testou em um iPhone real (16/10/2026) e confirmou que a Apple bloqueia
+    importar um .shortcut baixado da web ("Não é possível importar arquivos de atalho não
+    assinados. Use outra opção de compartilhamento.") -- só funciona um link do iCloud gerado pelo
+    próprio app Atalhos, que não dá pra gerar por fora dele. Por isso static/atalho-klango.shortcut
+    (gerado na primeira versão desta etapa) foi removido -- não tinha como funcionar."""
     return FileResponse(STATIC_DIR / "atalho-ios.html")
 
 
