@@ -124,49 +124,52 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
 ---
 
 ## Etapa 4 -- Atalho "Enviar para o KLANGO": instruções de configuração no iPhone
-**Status:** `pytest -q` confirmado verde pelo GitHub Actions. **Opção 1 (atalho pronto para
-importar) testada pelo Igor em iPhone real em 16/10/2026 e CONFIRMADA QUEBRADA** -- a Apple recusa
-importar qualquer `.shortcut` baixado da web ("Não é possível importar arquivos de atalho não
-assinados. Use outra opção de compartilhamento."); só um link do iCloud gerado pelo próprio app
-Atalhos passa por essa checagem, e não tem como gerar esse link por fora do app. **Removida** a
-Opção 1 e o arquivo `static/atalho-klango.shortcut`; a página agora só tem o passo a passo manual
-(que não depende de nada assinado pela Apple). **Falta só você confirmar que o passo a passo manual
-funciona de ponta a ponta no seu iPhone** -- isso sim nenhum teste automatizado substitui.
-**Branch:** `fix/atalho-ios-sem-shortcut-pronto` (em cima da `main`, que já tem a Etapa 4 original)
-**Data:** 2026-10-15 (original) / 2026-10-16 (correção depois do teste no iPhone)
+**Status:** CONFIRMADA de ponta a ponta. `pytest -q` verde pelo GitHub Actions. Opção 1 (atalho
+pronto para importar) foi testada pelo Igor em iPhone real em 16/10/2026 e confirmada quebrada --
+a Apple recusa importar qualquer `.shortcut` baixado da web ("Não é possível importar arquivos de
+atalho não assinados."); foi removida (arquivo `static/atalho-klango.shortcut` excluído). O passo a
+passo manual (único caminho possível) foi montado ao vivo pelo Igor comigo guiando tela por tela, e
+testado com **3 vídeos reais** (2 Reels do Instagram + 1 vídeo do TikTok) no mesmo dia -- os 3
+entraram certinho na fila do site. Depois do teste ao vivo, reescrevi `static/atalho-ios.html` com
+as **capturas de tela reais** desse atendimento (pasta `static/img/atalho/`) e corrigi os nomes de
+botão que na primeira versão estavam errados/desatualizados (ex.: "Obter Conteúdo de URL" →
+"Obter Conteúdo do URL"; "Mostrar na Tela de Compartilhamento" → "Mostrar ao Compartilhar") --
+mais um pega-ratão do próprio Atalhos documentado (o campo da URL vem preenchido sozinho com a
+variável errada; agora a página já avisa disso antes de acontecer).
+**Branch:** `fix/atalho-ios-sem-shortcut-pronto` (Opção 1 removida) + `docs/atalho-ios-passo-a-passo-real`
+(reescrita com fotos) -- ambas em cima da `main`.
+**Data:** 2026-10-15 (original) / 2026-10-16 (correção + teste real + reescrita com fotos)
 
-**Arquivos alterados (nesta correção de 16/10):**
-- `static/atalho-ios.html` -- removida a seção "Opção 1" (atalho pronto) inteira; o que era "Opção
-  2" virou o único passo a passo da página, com uma nota curta explicando por que não existe atalho
-  pronto para baixar.
-- `static/atalho-klango.shortcut` -- **removido** (não tinha como funcionar, ver acima).
-- `main.py` -- docstring da rota `/atalho-ios` atualizado para refletir o motivo da mudança.
-- `tests/test_static_pages.py` -- `test_pagina_de_configuracao_do_atalho_ios` atualizado: confere
-  que a página menciona `api/ext/share` (passo manual) e que `atalho-klango.shortcut` NÃO aparece
-  mais.
+**Arquivos alterados (correção de 16/10, acumulado):**
+- `static/atalho-ios.html` -- reescrito do zero: passo a passo com nomes de botão corretos, 18
+  capturas de tela reais embutidas, seção "Como testar" nova, aviso específico sobre o campo de URL
+  que se autopreenche errado.
+- `static/img/atalho/*.jpg` -- 18 capturas de tela (comprimidas, ~45KB cada) do processo real de
+  montagem e teste do atalho, tiradas pelo Igor durante o atendimento.
+- `static/atalho-klango.shortcut` -- removido (não tinha como funcionar, ver acima).
+- `main.py` -- docstring da rota `/atalho-ios` atualizado duas vezes (motivo da remoção da Opção 1;
+  depois, a reescrita com fotos reais).
+- `tests/test_static_pages.py` -- `test_pagina_de_configuracao_do_atalho_ios` (sem mudança nesta
+  rodada -- as asserções já cobertas continuam valendo com o novo conteúdo).
+
+### O que foi verificado
+- [x] `pytest -q` = 0 failed (confirmado pelo GitHub Actions).
+- [x] Confirmado (pelo Igor, em iPhone real) que a Opção 1 (atalho pronto) não funciona.
+- [x] Passo a passo manual testado de ponta a ponta no iPhone: atalho montado, aparece ao
+      compartilhar, e os 3 links compartilhados (2 Instagram + 1 TikTok) apareceram na fila do site.
 
 ### O que NÃO foi verificado ainda
-- **O passo a passo manual de ponta a ponta num iPhone real** -- é o único item que falta. Monte o
-  atalho seguindo `/atalho-ios` e teste compartilhar um vídeo de verdade.
-- Visual/responsividade da página depois da edição -- confira em `https://klango.site/atalho-ios`
-  pelo celular (a mesma URL de antes).
-
-### Como você conferir (só o que precisa do seu celular)
-1. Abra `https://klango.site/atalho-ios` no navegador do iPhone (a página já deve estar sem a
-   Opção 1 depois do próximo deploy).
-2. Monte o atalho seguindo o passo a passo (agora é o único).
-3. Teste compartilhar um vídeo real (Instagram/TikTok/etc.) → KLANGO.MP4, e confirme que o link
-   aparece na fila do site depois.
+- Visual/responsividade da página reescrita (com as fotos) -- vale uma olhada rápida em
+  `https://klango.site/atalho-ios` pelo celular depois do deploy, só pra conferir que as imagens
+  carregam bem e o layout não quebrou.
 
 ### Checklist antes do merge na `main`
 - [x] `pytest -q` = 0 failed (confirmado pelo GitHub Actions).
 - [x] Confirmado (pelo Igor, em iPhone real) que a Opção 1 (atalho pronto) não funciona -- por
       isso foi removida.
-- [ ] Passo a passo manual testado de ponta a ponta no iPhone: atalho monta, aparece na Tela de
-      Compartilhamento, e o link compartilhado aparece na fila do site.
-- [ ] Só depois disso: fechar esta etapa como confirmada (merge já pode acontecer antes disso, já
-      que não há nenhum risco de produção em remover um link quebrado -- mas o "confirmado" final
-      da etapa depende deste teste).
+- [x] Passo a passo manual testado de ponta a ponta no iPhone: atalho monta, aparece ao
+      compartilhar, e o link compartilhado aparece na fila do site (3 vídeos testados).
+- [x] Etapa fechada.
 
 ---
 

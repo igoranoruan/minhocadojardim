@@ -203,7 +203,15 @@ async def atalho_ios_configuracao() -> FileResponse:
     importar um .shortcut baixado da web ("Não é possível importar arquivos de atalho não
     assinados. Use outra opção de compartilhamento.") -- só funciona um link do iCloud gerado pelo
     próprio app Atalhos, que não dá pra gerar por fora dele. Por isso static/atalho-klango.shortcut
-    (gerado na primeira versão desta etapa) foi removido -- não tinha como funcionar."""
+    (gerado na primeira versão desta etapa) foi removido -- não tinha como funcionar.
+
+    16/10/2026: página reescrita com capturas de tela reais (static/img/atalho/) tiradas pelo Igor
+    enquanto montava o atalho ao vivo comigo -- os nomes de botão da primeira versão ("Obter
+    Conteúdo de URL", "Mostrar na Tela de Compartilhamento") estavam desatualizados/errados em
+    relação ao app de verdade ("Obter Conteúdo do URL", "Mostrar ao Compartilhar"); o novo texto
+    também documenta um pega-ratão real do Atalhos (o campo da URL vem preenchido sozinho com a
+    variável errada) que não tinha como prever sem testar ao vivo. Confirmado funcionando pelo
+    Igor com 3 vídeos reais (2 Instagram + 1 TikTok) no mesmo dia."""
     return FileResponse(STATIC_DIR / "atalho-ios.html")
 
 
