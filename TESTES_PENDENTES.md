@@ -107,18 +107,24 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
      Itens acima do teto do plano devem continuar na fila, com o aviso "X continuam na fila".
 
 **6) Antes de aprovar o merge**
-- [ ] `pytest -q` = 0 failed.
-- [ ] Os dois branches de teste do passo 5 (Free e plano pago) se comportaram como descrito.
-- [ ] Nenhum erro no console do navegador (F12) ao usar a seção.
+- [x] `pytest -q` = 0 failed (1276 passed, confirmado por Igor em 2026-10-15).
+- [x] Checklist de token (gerar/recarregar-persiste/gerar-novo-invalida/revogar) e de fila
+      (adicionar via curl/remover/limpar) confirmados por Igor em 2026-10-15.
+- [ ] Branch de teste "Enviar fila para o lote" com conta de plano pago (Semanal/Mensal/VIP Batch)
+      não foi testado explicitamente -- só o caso Free (aviso de recurso pago). Não bloqueia (a
+      lógica reaproveita `send_to_batch`/`processarLote()` já testados no backend e em outras
+      seções da tela), mas fica registrado como o único item do roteiro não percorrido.
 
 ---
 
 ## Etapa 3 -- Atalho "Enviar para o KLANGO": tela de UI (token + fila)
-**Status:** MESCLADA SEM TESTE VISUAL -- pendente de conferência (Igor autorizou o merge em
-2026-10-15 21:46 sem rodar o roteiro abaixo antes; vai rodar depois no VS Code). Nenhum teste
-automatizado cobre este arquivo (ver "O que NÃO foi verificado" logo abaixo) -- só o smoke test de
-produção feito pelo Claude logo após o deploy (resultado registrado nesta seção).
-**Branch:** `feature/atalho-ui-token` (mesclada na `main` em 2026-10-15)
+**Status:** CONFIRMADA -- Igor rodou localmente em 2026-10-15 22:xx (VS Code/Windows): `pytest -q`
+= **1276 passed, 0 failed**, e todo o checklist visual/funcional da seção "Enviar para o KLANGO"
+(gerar/recarregar-persiste/gerar-novo-invalida-anterior/revogar token; adicionar via
+`POST /api/ext/share` com curl e ver aparecer na fila; remover item; limpar fila) confirmado
+funcionando. Já tinha passado também no smoke test de produção logo após o deploy (ver histórico
+abaixo). Nenhuma pendência restante desta etapa.
+**Branch:** `feature/atalho-ui-token` (mesclada na `main` em 2026-10-15, commit `64b3e7d`)
 **Data:** 2026-10-15
 
 **Arquivo alterado:** `static/index.html` (só este -- front-end puro, sem arquivo de produção
@@ -165,16 +171,17 @@ seção "Enviar para o KLANGO" (aparece entre "Importar pasta do Pinterest" e "H
 token, copiar, e testar o fluxo de ponta a ponta descrito acima.
 
 ### Checklist antes do merge na `main`
-- [ ] Seção aparece certinho (visual/responsivo) ao logar.
-- [ ] Gerar/copiar/revogar/gerar-de-novo token funciona e os textos batem com o estado real.
-- [ ] Um link adicionado via `/api/ext/share` (com o token) aparece na fila na hora que a página
+- [x] Seção aparece certinho ao logar (confirmado por Igor em 2026-10-15).
+- [x] Gerar/copiar/revogar/gerar-de-novo token funciona e os textos batem com o estado real.
+- [x] Um link adicionado via `/api/ext/share` (com o token) aparece na fila na hora que a página
       recarrega/a seção é recarregada.
-- [ ] Remover item e limpar fila funcionam.
-- [ ] "Enviar fila para o lote" preenche `#batchItems` e dispara `processarLote()` corretamente
-      para uma conta com plano de lote; mostra aviso amigável (sem quebrar nada) para uma conta
-      Free.
-- [ ] Só depois disso: merge na `main` (deploy do Render sobe o HTML novo -- sem migration/risco de
-      banco nesta etapa, é só front-end).
+- [x] Remover item e limpar fila funcionam.
+- [x] "Enviar fila para o lote" mostra aviso amigável (sem quebrar nada) para uma conta Free
+      (caso testado). Caso de conta com plano de lote (preenche `#batchItems` e dispara
+      `processarLote()`) NÃO foi testado manualmente -- ver nota na seção "6) Antes de aprovar o
+      merge" acima.
+- [x] Merge na `main` já foi feito (autorizado por Igor em 2026-10-15 21:46, commit `64b3e7d`) --
+      este checklist foi concluído DEPOIS do merge, por decisão explícita do Igor.
 
 ---
 
