@@ -1,10 +1,16 @@
 # Testes pendentes de execução
 
-Este arquivo acumula, por etapa, o que foi commitado SEM rodar a suíte completa localmente,
-porque o ambiente do Claude (sandbox) não tem rede/sqlalchemy/fastapi/pytest instalados -- só
-`ast.parse` (checagem de sintaxe) foi possível aqui. Regra: nenhuma entrada deste arquivo é
-removida até o Igor confirmar que rodou os testes e que passaram; só então a branch correspondente
-pode ser mesclada na `main`.
+Este arquivo acumula, por etapa, o que foi commitado sem a suíte completa confirmada.
+
+**Atualização 15/10/2026 (pedido do Igor):** até aqui, "testes executados" dependia do Igor rodar
+`pytest -q` localmente no VS Code, porque o ambiente do Claude (sandbox) não tem rede para instalar
+fastapi/sqlalchemy/pytest -- só `ast.parse` (checagem de sintaxe) era possível aqui. Isso mudou: a
+partir do commit `edecfa9`, toda branch/push roda a suíte completa sozinha no GitHub Actions
+(`.github/workflows/tests.yml`), e o Claude confirma "0 failed" direto pelo resultado (via
+`gh api`), sem precisar do computador do Igor. Regra atualizada: nenhuma entrada deste arquivo é
+fechada até o pytest estar confirmado **verde** (pelo Actions, ou pelo Igor quando ele preferir
+rodar à parte) -- e qualquer coisa que só dê pra verificar num navegador/iPhone de verdade (visual,
+responsividade, o app Atalhos) continua precisando do Igor, exatamente como antes.
 
 ---
 
@@ -118,8 +124,10 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
 ---
 
 ## Etapa 4 -- Atalho "Enviar para o KLANGO": instruções de configuração no iPhone
-**Status:** PENDENTE DE TESTE EM DISPOSITIVO REAL -- nenhum teste automatizado substitui isso (ver
-"O que NÃO foi verificado" abaixo). **Não fazer merge na `main` até você confirmar.**
+**Status:** `pytest -q` CONFIRMADO VERDE pelo GitHub Actions (1277 passed, 0 failed --
+https://github.com/igoranoruan/minhocadojardim/actions/runs/38841330422). Falta só o teste no
+iPhone de verdade (ver "O que NÃO foi verificado" abaixo) -- **não fazer merge na `main` até você
+testar o `.shortcut` no seu iPhone e confirmar** (isso nenhum teste automatizado substitui).
 **Branch:** `feature/atalho-ios-config`
 **Data:** 2026-10-15
 
@@ -149,26 +157,21 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
   `test_politica_de_privacidade` -- confere só status 200 e texto da página).
 
 ### O que NÃO foi verificado
-- **O arquivo `.shortcut` em um iPhone real** (o item mais importante desta etapa) -- ver aviso
-  acima. Teste no seu iPhone seguindo a Opção 1 da página; se falhar, não é bloqueante (a Opção 2
-  continua funcionando), mas me avise para eu ajustar/remover a Opção 1 se necessário.
-- `pytest -q` completo (sandbox sem rede/dependências, igual às etapas anteriores) -- só
-  `ast.parse` no Python e um parser de balanceamento de tags no HTML novo/alterado (sem erros).
-- Visual/responsividade real da página `/atalho-ios` no navegador.
+- **O arquivo `.shortcut` em um iPhone real** (o item mais importante desta etapa, e o único que
+  sobra) -- precisa do seu iPhone de verdade. Teste pela Opção 1 da página; se falhar, não é
+  bloqueante (a Opção 2 continua funcionando), mas me avise para eu ajustar/remover a Opção 1.
+- Visual/responsividade real da página `/atalho-ios` -- você pode conferir só abrindo
+  `https://klango.site/atalho-ios` pelo celular, sem precisar de nada no computador.
 
-### Comando para você conferir
-```powershell
-git fetch origin
-git checkout feature/atalho-ios-config
-git pull origin feature/atalho-ios-config
-pytest -q
-```
-Suba o app local (`uvicorn main:app --reload`), abra `/atalho-ios` no navegador para ver a página,
-e teste de verdade no seu iPhone: baixe o `.shortcut` pela Opção 1 e veja se importa/funciona: se
-não funcionar, siga a Opção 2 (manual) e me diga o que aconteceu.
+### Como você conferir (só o que precisa do seu celular)
+Abra pelo navegador do iPhone, já logado no site:
+1. `https://klango.site/atalho-ios` (ou o link "Como configurar no iPhone" na seção "Enviar para o
+   KLANGO") -- veja se a página abre certinho.
+2. Siga a Opção 1: baixe o `.shortcut`, tente importar, cole o token, teste compartilhar um vídeo.
+3. Se a Opção 1 falhar em qualquer passo, siga a Opção 2 (manual) e me diga o que aconteceu.
 
 ### Checklist antes do merge na `main`
-- [ ] `pytest -q` = 0 failed.
+- [x] `pytest -q` = 0 failed (confirmado pelo GitHub Actions, sem precisar do seu computador).
 - [ ] Página `/atalho-ios` abre certinho, visual ok no celular.
 - [ ] Testou a Opção 1 (`.shortcut` pronto) no seu iPhone: importou? funcionou o compartilhamento?
 - [ ] Se a Opção 1 falhou, testou a Opção 2 (manual) e confirma que funciona de ponta a ponta.
