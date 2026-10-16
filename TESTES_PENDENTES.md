@@ -114,7 +114,11 @@ um token errado (`Authorization: Bearer token-invalido`), que deve devolver 401.
 ---
 
 ## Etapa 3 -- Atalho "Enviar para o KLANGO": tela de UI (token + fila)
-**Branch:** `feature/atalho-ui-token` (NÃO mesclada na `main` -- não fazer merge/deploy até confirmação)
+**Status:** MESCLADA SEM TESTE VISUAL -- pendente de conferência (Igor autorizou o merge em
+2026-10-15 21:46 sem rodar o roteiro abaixo antes; vai rodar depois no VS Code). Nenhum teste
+automatizado cobre este arquivo (ver "O que NÃO foi verificado" logo abaixo) -- só o smoke test de
+produção feito pelo Claude logo após o deploy (resultado registrado nesta seção).
+**Branch:** `feature/atalho-ui-token` (mesclada na `main` em 2026-10-15)
 **Data:** 2026-10-15
 
 **Arquivo alterado:** `static/index.html` (só este -- front-end puro, sem arquivo de produção
