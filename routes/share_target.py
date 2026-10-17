@@ -40,7 +40,7 @@ import html
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from database.models import User
@@ -84,7 +84,12 @@ def get_share_target(
     title: str | None = None,  # recebido pro manifest bater com o spec do Web Share Target, mas nunca usado
     user: User | None = Depends(get_optional_authenticated_user),
     db: Session = Depends(get_session),
-) -> HTMLResponse | RedirectResponse:
+) -> Response:
+    # (anotação é `Response`, não `HTMLResponse | RedirectResponse`: um Union de subclasses de
+    # Response quebra o FastAPI na hora de registrar a rota -- ele não reconhece o Union como "já é
+    # uma resposta pronta" e tenta montar um response_model a partir dele, o que falha; `Response`
+    # sozinho, sendo a classe-mãe comum, cobre as duas sem esse problema. Foi exatamente essa a
+    # causa do "exit code 4" na CI logo após este arquivo passar a devolver HTML além de redirect.)
     candidato = (url or "").strip() or (text or "").strip()
 
     if user is not None:
