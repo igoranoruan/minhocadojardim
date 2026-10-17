@@ -37,15 +37,19 @@ def test_pagina_de_configuracao_do_atalho_ios(auth_client):
 def test_pagina_de_configuracao_do_atalho_ios_tem_a_instalacao_rapida_e_o_manual_recolhido(auth_client):
     """Smoke test (17/10/2026, aprovação do CÉREBRO -- reestruturação em 3 camadas): confirma que
     os 3 passos da instalação rápida, o <details> recolhido com o manual completo e a seção
-    "Problemas comuns" estão todos presentes -- e que o botão de instalar continua "Em breve"
-    (sem link quebrado pro visitante real) até o Igor mandar o link de verdade do iCloud."""
+    "Problemas comuns" estão todos presentes -- e que o botão de instalar já aponta pro link real
+    do iCloud confirmado pelo Igor (deixa de ser "Em breve")."""
     resposta = auth_client.get("/atalho-ios")
     assert resposta.status_code == 200
     assert "Instalação rápida" in resposta.text
     assert "Copie seu token" in resposta.text
     assert "Instale o atalho" in resposta.text
     assert "Teste compartilhando" in resposta.text
-    assert "Em breve" in resposta.text  # botão de instalar ainda sem o link real do iCloud
+    assert "https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721" in resposta.text
+    # botão de instalar já tem o link real do iCloud (classe "em-breve" não existe mais nele --
+    # a palavra "Em breve" ainda aparece num comentário HTML que documenta o histórico, por isso
+    # não dá pra checar a ausência do texto puro aqui)
+    assert 'class="btn-instalar em-breve"' not in resposta.text
     assert "Prefere configurar manualmente?" in resposta.text
     assert "Problemas comuns" in resposta.text
     # o passo a passo manual original continua inteiro, só recolhido

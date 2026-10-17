@@ -225,7 +225,12 @@ async def atalho_ios_configuracao() -> FileResponse:
     partir do atalho real dele, com uma Pergunta de Importação configurada pra pedir o token de
     cada pessoa que instalar sem levar o token DELE junto -- ver TESTES_PENDENTES.md. Nenhum
     arquivo de screenshot novo: as 3 capturas com destaque (static/img/atalho/16/17/18-destaque.jpg)
-    foram desenhadas sobre as 3 originais já existentes, que continuam servindo a seção manual."""
+    foram desenhadas sobre as 3 originais já existentes, que continuam servindo a seção manual.
+
+    17/10/2026 (confirmado pelo Igor, mesmo dia): link real do iCloud recebido e testado ao vivo
+    (apagou o klango_token.txt local, compartilhou -- pediu o token, colou, caiu na fila; um
+    segundo compartilhamento logo depois não pediu mais nada). Botão "Instale o atalho" trocado de
+    "Em breve" pro link de verdade -- ver TESTES_PENDENTES.md, Etapa 7."""
     return FileResponse(STATIC_DIR / "atalho-ios.html")
 
 

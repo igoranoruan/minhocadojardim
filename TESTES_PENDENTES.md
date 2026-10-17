@@ -15,12 +15,14 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 ---
 
 ## Etapa 7 -- /atalho-ios: instalação rápida (3 passos) + manual recolhido + problemas comuns
-**Status:** Implementado e commitado na branch `feature/fila-extrair-audio` (mesma branch da
-Etapa 6, ainda não mesclada); aguardando `pytest -q` verde e, depois, 3 coisas do Igor: (1)
-configurar a Pergunta de Importação no atalho real dele, (2) gerar o link do iCloud e testar a
-instalação, (3) me mandar o link + o que observou (quando a pergunta aparece, se o token dele veio
-vazio) -- só então o botão "Instale o atalho" sai de "Em breve" e vira o link de verdade.
-**Branch:** `feature/fila-extrair-audio` (em cima da `main`).
+**Status:** Concluído e mesclado na `main` (merge `53eb0f1`). As 3 pendências do Igor foram
+resolvidas ao vivo em 17/10/2026: (1) Pergunta de Importação configurada no atalho real (campo do
+token do passo "Pedir Texto"), (2) link do iCloud gerado e testado -- apagou o
+`klango_token.txt` local, compartilhou um post (pediu o token, colou, caiu na fila), compartilhou
+um segundo post logo depois (não pediu mais nada, token salvo localmente e reaproveitado), (3) link
+confirmado: `https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721`. Botão "Instale o
+atalho" trocado de "Em breve" pro link real (commit separado, nesta mesma `main`).
+**Branch:** `main` (direto, troca de link pequena e já coberta pelo smoke test existente).
 **Data:** 17/10/2026
 
 **O que mudou:** `static/atalho-ios.html` ganhou uma seção "Instalação rápida" no topo (3 cards:
@@ -63,20 +65,23 @@ real do iCloud, é só trocar esse botão (já deixei marcado com comentário `T
       abre/fecha corretamente, seção "Problemas comuns" renderiza bem.
 
 ### O que NÃO foi verificado ainda (precisa do Igor)
-- **Pergunta de Importação no atalho real:** configurar em Ajustes do atalho → "Configurar" →
-  "Adicionar Nova Pergunta" → selecionar o parâmetro da ação Texto do passo 1 (o token) -- a
-  documentação da Apple confirma que esse campo é limpo automaticamente ao compartilhar (o token do
-  Igor não vai junto no link), mas NÃO deixa claro se a pergunta aparece só uma vez na instalação ou
-  no primeiro uso -- precisa confirmar na prática.
-- **Gerar e testar o link do iCloud** (idealmente instalando numa segunda conta/dispositivo, pra
-  simular um usuário novo de verdade) e me mandar o link + o resultado.
-- Visual real no iPhone do Igor (esta seção só foi conferida via mockup/Playwright, nunca num
-  Safari de verdade).
+- Visual real no iPhone do Igor da tela de instalação rápida em si (o fluxo do atalho -- pedir
+  token, salvar, reusar -- já foi testado ao vivo e confirmado; falta só conferir a própria página
+  `/atalho-ios` renderizada no Safari do iPhone, nunca só via Playwright/mockup).
+
+~~**Pergunta de Importação no atalho real:** configurar em Ajustes do atalho → "Configurar" →
+"Adicionar Nova Pergunta" → selecionar o parâmetro da ação Texto do passo 1 (o token).~~ **Não foi
+esse o caminho usado** -- em vez da "Pergunta de Importação" nativa do app Atalhos, a lógica de
+"perguntar só uma vez" foi implementada dentro do próprio atalho (Contar Itens num arquivo local
+`klango_token.txt` no iCloud Drive/Shortcuts → Se Contagem é 0 → Pedir Texto + Salvar; senão pula
+direto pra leitura do arquivo salvo). Testado e confirmado funcionando ao vivo em 17/10/2026.
+
+~~**Gerar e testar o link do iCloud**~~ Feito -- link confirmado:
+`https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721`.
 
 ### Checklist antes do merge na `main`
-- [ ] `pytest -q` = 0 failed (GitHub Actions) -- junto com a Etapa 6.
-- [ ] Pode mesclar com o botão ainda "Em breve" (não bloqueia; é seguro pro usuário real) -- trocar
-      pelo link de verdade é um commit pequeno à parte, depois que o Igor confirmar.
+- [x] `pytest -q` = 0 failed (GitHub Actions) -- junto com a Etapa 6 (já mesclado, `53eb0f1`).
+- [x] Botão "Instale o atalho" trocado de "Em breve" pro link real do iCloud.
 
 ---
 
