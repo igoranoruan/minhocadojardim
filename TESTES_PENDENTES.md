@@ -37,7 +37,10 @@ depende de nenhum link gerado manualmente pelo Igor (como o link do iCloud do iP
   escopo `/` inteiro.
 - `routes/share_target.py` (novo) -- `GET /share-target`: autenticado por SESSÃO (cookie, via
   `get_optional_authenticated_user`), nunca token. Logado: adiciona à fila (reaproveita
-  `add_to_queue`, mesma função de `POST /api/ext/share`) e redireciona pra `/?compartilhado=1`.
+  `add_to_queue`, mesma função de `POST /api/ext/share`) e devolve uma página HTML mínima de
+  confirmação (sem Tailwind/fontes externas -- carrega instantânea), que tenta se fechar sozinha
+  (`window.close()`) menos de 1s depois, voltando pro Instagram/TikTok sem mais nenhum toque
+  (ajuste de 17/10/2026, pedido do Igor depois de testar num Android real -- ver próxima entrada).
   Sem sessão: redireciona pra `/?compartilhar_pendente=<link>` -- o frontend guarda em
   localStorage até o login completar.
 - `routes/share.py` -- `POST /api/share/queue` (novo) -- adicionar à fila por cookie, usada pelo

@@ -1595,18 +1595,9 @@
 
     function capturarAutoFluxoAtalhoDaUrl() {
         const params = new URLSearchParams(window.location.search);
-        if (params.get("atalho") === "1") {
-            autoFluxoAtalho = true;
-        } else if (params.get("compartilhado") === "1") {
-            // Vem do redirect de GET /share-target (Android, ver routes/share_target.py) quando a
-            // pessoa JÁ estava logada -- o link já foi adicionado à fila no servidor; aqui só
-            // rola até a seção, sem gerar nenhum token (Android não usa token nenhum).
-            autoFluxoAtalho = "so-rolar";
-        } else {
-            return;
-        }
+        if (params.get("atalho") !== "1") return;
+        autoFluxoAtalho = true;
         params.delete("atalho");
-        params.delete("compartilhado");
         const novaQuery = params.toString();
         const novaUrl = window.location.pathname + (novaQuery ? `?${novaQuery}` : "") + window.location.hash;
         window.history.replaceState({}, "", novaUrl);
@@ -1654,7 +1645,8 @@
             console.error(err);
         }
         // Independente do resultado (link duplicado/inválido incluso), rola até a fila pra pessoa
-        // conferir com os próprios olhos -- mesmo espírito de "?compartilhado=1" acima.
+        // conferir com os próprios olhos -- "so-rolar" nunca gera token sozinho (Android não usa
+        // token nenhum, ver carregarAtalho() abaixo).
         autoFluxoAtalho = "so-rolar";
     }
 
