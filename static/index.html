@@ -784,9 +784,10 @@
                  vem 0 pra ele -- mostrado com aviso amigável, nunca escondido (mesmo espírito de
                  #pinterestBoardBloqueado, só que sem bloquear a FILA em si, só o envio).
 
-                 "Enviar fila para o lote" NÃO duplica nada: insere as URLs retornadas no MESMO
-                 #batchItems e chama o MESMO processarLote() já existente e testado -- idêntico ao
-                 que #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
+                 Os dois botões da fila ("🎬 Baixar vídeos" / "🎵 Extrair áudios", 17/10/2026) NÃO
+                 duplicam nada: inserem as URLs retornadas no MESMO #batchItems e chamam os MESMOS
+                 processarLote()/processarLoteAudio() já existentes e testados -- idêntico ao que
+                 #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
             <section id="secaoAtalho" class="hidden py-10">
                 <div class="bg-card rounded-3xl p-7 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
@@ -4797,9 +4798,10 @@
     // ============================================================================================
     // ENVIAR PARA O KLANGO (Etapa 3, 15/10/2026 -- aprovação do CÉREBRO)
     // Token pessoal (routes/share.py::/api/share/token) + fila (routes/share.py::/api/share/queue)
-    // do atalho de compartilhamento. "Enviar fila para o lote" reaproveita criarCampoLote/
-    // atualizarContagemLote/processarLote já existentes -- mesmo padrão de baixarSelecaoPinterest()
-    // acima, nenhuma lógica de download/lote duplicada aqui.
+    // do atalho de compartilhamento. Os dois botões "🎬 Baixar vídeos" / "🎵 Extrair áudios"
+    // (17/10/2026) reaproveitam criarCampoLote/atualizarContagemLote/processarLote(Formato) já
+    // existentes -- mesmo padrão de baixarSelecaoPinterest() acima, nenhuma lógica de
+    // download/lote/extração duplicada aqui.
     // ============================================================================================
 
     function esconderAtalho() {
