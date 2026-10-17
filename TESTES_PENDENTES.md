@@ -22,6 +22,16 @@ token do passo "Pedir Texto"), (2) link do iCloud gerado e testado -- apagou o
 um segundo post logo depois (não pediu mais nada, token salvo localmente e reaproveitado), (3) link
 confirmado: `https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721`. Botão "Instale o
 atalho" trocado de "Em breve" pro link real (commit separado, nesta mesma `main`).
+
+**17/10/2026 (ajuste de UX pedido pelo Igor, mesmo dia):** o passo 1 ("Copie seu token") mandava
+pra "/" simples -- a pessoa caía na home e precisava rolar até achar a seção "Enviar para o
+KLANGO" e tocar em "Gerar token" por conta própria. Trocado pra "/?atalho=1": `index.html` agora
+lê essa flag (`capturarAutoFluxoAtalhoDaUrl()`, mesmo padrão do "?ref=CODIGO" do programa de
+indicação) e, assim que a sessão carrega (`carregarAtalho()`), já rola a tela até a seção e --
+só se a pessoa AINDA não tiver um token -- gera um sozinho. Decisão de segurança: se a pessoa já
+tem um token ativo, não gera um novo automaticamente (isso revogaria o antigo e quebraria
+qualquer atalho já configurado) -- só rola até a seção e deixa a pessoa decidir, o
+`confirm()` de `gerarTokenAtalho()` continua protegendo esse caso.
 **Branch:** `main` (direto, troca de link pequena e já coberta pelo smoke test existente).
 **Data:** 17/10/2026
 

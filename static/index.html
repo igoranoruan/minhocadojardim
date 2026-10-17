@@ -1578,8 +1578,29 @@
     // ativo ao mesmo tempo. Ver neutralizarFaixaParcelamento().
     let parcelamentoObserver = null;
 
+    // "?atalho=1" (17/10/2026, pedido do Igor): vem do botão "Ir gerar meu token" em
+    // /atalho-ios -- em vez de só mandar pra "/" e deixar a pessoa rolar a página até achar a
+    // seção "Enviar para o KLANGO", guarda a intenção aqui (mesmo padrão de
+    // capturarCodigoIndicacaoDaUrl() logo abaixo, mas sem precisar de localStorage: se a pessoa
+    // ainda não estiver logada, a flag sobrevive na própria URL até aplicarSessao() rodar) e
+    // carregarAtalho() consome na sequência: rola até a seção e, só se a pessoa AINDA não tiver
+    // token, já gera um -- nunca gera (e revoga) um token existente sem ação explícita da
+    // pessoa, ver gerarTokenAtalho().
+    let autoFluxoAtalho = false;
+
+    function capturarAutoFluxoAtalhoDaUrl() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("atalho") !== "1") return;
+        autoFluxoAtalho = true;
+        params.delete("atalho");
+        const novaQuery = params.toString();
+        const novaUrl = window.location.pathname + (novaQuery ? `?${novaQuery}` : "") + window.location.hash;
+        window.history.replaceState({}, "", novaUrl);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         capturarCodigoIndicacaoDaUrl();
+        capturarAutoFluxoAtalhoDaUrl();
         inicializarBatch();
         inicializarLotePreview();
         carregarSessao();
@@ -4832,6 +4853,21 @@
         if (!secao) return;
         secao.classList.remove("hidden");
         await Promise.all([carregarTokenAtalho(), carregarFilaAtalho()]);
+
+        // Consome a flag de "?atalho=1" (ver capturarAutoFluxoAtalhoDaUrl acima) -- só uma vez,
+        // por isso zera logo em seguida: chamadas futuras de carregarAtalho() nesta mesma sessão
+        // (ex.: depois de revogar um token) não devem rolar a tela nem gerar nada sozinhas de novo.
+        if (autoFluxoAtalho) {
+            autoFluxoAtalho = false;
+            secao.scrollIntoView({ behavior: "smooth", block: "start" });
+            const semToken = document.getElementById("atalhoTokenSemToken");
+            if (semToken && !semToken.classList.contains("hidden")) {
+                // Sem token ainda -- gera direto, sem precisar de mais um toque. Já existindo um
+                // token, gerarTokenAtalho() pede confirmação antes de revogar o atual, então aqui
+                // só rolamos até a seção e deixamos a pessoa decidir.
+                await gerarTokenAtalho();
+            }
+        }
     }
 
     async function carregarTokenAtalho() {

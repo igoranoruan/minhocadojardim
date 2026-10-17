@@ -8,6 +8,10 @@ def test_pagina_inicial(auth_client):
     resposta = auth_client.get("/")
     assert resposta.status_code == 200
     assert "KLANGO.MP4" in resposta.text
+    # "?atalho=1" (17/10/2026): flag que o botão "Ir gerar meu token" de /atalho-ios manda pra cá
+    # -- confirma que o helper que a consome continua presente (ver carregarAtalho() e
+    # capturarAutoFluxoAtalhoDaUrl() em static/index.html).
+    assert "capturarAutoFluxoAtalhoDaUrl" in resposta.text
 
 
 def test_termos_de_uso(auth_client):
@@ -50,6 +54,11 @@ def test_pagina_de_configuracao_do_atalho_ios_tem_a_instalacao_rapida_e_o_manual
     # a palavra "Em breve" ainda aparece num comentário HTML que documenta o histórico, por isso
     # não dá pra checar a ausência do texto puro aqui)
     assert 'class="btn-instalar em-breve"' not in resposta.text
+    # Passo 1 ("Copie seu token") manda pra "/?atalho=1" -- index.html consome essa flag em
+    # carregarAtalho() pra já rolar até a seção "Enviar para o KLANGO" e gerar o token sozinho,
+    # sem a pessoa precisar rolar a home inteira e tocar em "Gerar token" (pedido do Igor,
+    # 17/10/2026, ver carregarAtalho() em static/index.html).
+    assert 'href="/?atalho=1"' in resposta.text
     assert "Prefere configurar manualmente?" in resposta.text
     assert "Problemas comuns" in resposta.text
     # o passo a passo manual original continua inteiro, só recolhido
