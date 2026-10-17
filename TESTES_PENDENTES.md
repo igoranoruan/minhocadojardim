@@ -14,6 +14,72 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 7 -- /atalho-ios: instalação rápida (3 passos) + manual recolhido + problemas comuns
+**Status:** Implementado e commitado na branch `feature/fila-extrair-audio` (mesma branch da
+Etapa 6, ainda não mesclada); aguardando `pytest -q` verde e, depois, 3 coisas do Igor: (1)
+configurar a Pergunta de Importação no atalho real dele, (2) gerar o link do iCloud e testar a
+instalação, (3) me mandar o link + o que observou (quando a pergunta aparece, se o token dele veio
+vazio) -- só então o botão "Instale o atalho" sai de "Em breve" e vira o link de verdade.
+**Branch:** `feature/fila-extrair-audio` (em cima da `main`).
+**Data:** 17/10/2026
+
+**O que mudou:** `static/atalho-ios.html` ganhou uma seção "Instalação rápida" no topo (3 cards:
+copiar token → instalar atalho pronto → testar compartilhando), no estilo visual de um mockup que
+o Igor trouxe como referência (passos numerados, destaque verde, selo "ilustração") -- mas com
+conteúdo 100% baseado no comportamento real do projeto, nunca copiado do mockup (que tinha URL/JSON
+inventados). As 3 capturas reais de teste (16/17/18, já existentes) ganharam uma cópia com um
+destaque verde desenhado por cima (`16/17/18-destaque.jpg`, gerado com Pillow, círculo+selo
+numerado sobre o elemento certo de cada tela) -- os originais continuam intactos e são reusados na
+seção manual. O passo a passo manual completo (8 passos de configuração + 3 de teste, conteúdo
+idêntico ao da Etapa 4) foi movido para dentro de um `<details>` recolhido "Prefere configurar
+manualmente?". Seção nova "Problemas comuns", baseada na leitura real de `routes/share_ext.py` (só
+token ausente/inválido/revogado é erro HTTP de verdade; duplicado/fila cheia/plataforma não
+suportada sempre voltam 200 com aviso amigável na notificação -- documentado pra quem achar que
+"não deu erro mas não sei se funcionou").
+
+**Decisão de produto tomada sem perguntar (risco baixo, reversível):** o botão "Instale o atalho"
+(passo 2) fica visualmente desabilitado ("Em breve", sem link) em vez de apontar pra um link
+inventado/quebrado -- a página é pública, visitada por usuários reais agora, e um botão de
+destaque que não funciona seria pior que não ter o atalho rápido ainda. A seção manual (que já
+funciona de ponta a ponta) continua sempre acessível por um toque. Assim que o Igor mandar o link
+real do iCloud, é só trocar esse botão (já deixei marcado com comentário `TODO` no HTML).
+
+**Arquivos alterados:**
+- `static/atalho-ios.html` -- reestruturado (instalação rápida + manual recolhido + problemas
+  comuns), ver acima.
+- `static/img/atalho/16-destaque.jpg`, `17-destaque.jpg`, `18-destaque.jpg` -- novos, gerados a
+  partir das 3 capturas reais já existentes (16/17/18), com destaque verde + selo numerado
+  desenhados por cima via script Python/Pillow.
+- `main.py` -- docstring da rota `/atalho-ios` atualizado (motivo da reestruturação).
+- `tests/test_static_pages.py` -- smoke test novo: confirma que os 3 passos da instalação rápida,
+  o `<details>` recolhido com o manual, "Problemas comuns" e o botão "Em breve" (sem link ainda)
+  estão todos presentes.
+
+### O que foi verificado
+- [ ] `pytest -q` = 0 failed pelo GitHub Actions (confirmar antes do merge -- mesma branch da
+      Etapa 6, então os dois ficam prontos juntos).
+- [x] Visual conferido via Playwright em largura de celular (390px): instalação rápida legível,
+      botão "Em breve" claramente diferente (cinza, tracejado) do botão "pronto" (verde), `<details>`
+      abre/fecha corretamente, seção "Problemas comuns" renderiza bem.
+
+### O que NÃO foi verificado ainda (precisa do Igor)
+- **Pergunta de Importação no atalho real:** configurar em Ajustes do atalho → "Configurar" →
+  "Adicionar Nova Pergunta" → selecionar o parâmetro da ação Texto do passo 1 (o token) -- a
+  documentação da Apple confirma que esse campo é limpo automaticamente ao compartilhar (o token do
+  Igor não vai junto no link), mas NÃO deixa claro se a pergunta aparece só uma vez na instalação ou
+  no primeiro uso -- precisa confirmar na prática.
+- **Gerar e testar o link do iCloud** (idealmente instalando numa segunda conta/dispositivo, pra
+  simular um usuário novo de verdade) e me mandar o link + o resultado.
+- Visual real no iPhone do Igor (esta seção só foi conferida via mockup/Playwright, nunca num
+  Safari de verdade).
+
+### Checklist antes do merge na `main`
+- [ ] `pytest -q` = 0 failed (GitHub Actions) -- junto com a Etapa 6.
+- [ ] Pode mesclar com o botão ainda "Em breve" (não bloqueia; é seguro pro usuário real) -- trocar
+      pelo link de verdade é um commit pequeno à parte, depois que o Igor confirmar.
+
+---
+
 ## Etapa 6 -- Fila do atalho "Enviar para o KLANGO" também extrai ÁUDIO
 **Status:** Implementado e commitado; aguardando `pytest -q` verde no GitHub Actions e, depois do
 merge/deploy, o teste manual do Igor no celular (único jeito de confirmar de verdade o atalho + o

@@ -34,6 +34,26 @@ def test_pagina_de_configuracao_do_atalho_ios(auth_client):
     assert "atalho-klango.shortcut" not in resposta.text
 
 
+def test_pagina_de_configuracao_do_atalho_ios_tem_a_instalacao_rapida_e_o_manual_recolhido(auth_client):
+    """Smoke test (17/10/2026, aprovação do CÉREBRO -- reestruturação em 3 camadas): confirma que
+    os 3 passos da instalação rápida, o <details> recolhido com o manual completo e a seção
+    "Problemas comuns" estão todos presentes -- e que o botão de instalar continua "Em breve"
+    (sem link quebrado pro visitante real) até o Igor mandar o link de verdade do iCloud."""
+    resposta = auth_client.get("/atalho-ios")
+    assert resposta.status_code == 200
+    assert "Instalação rápida" in resposta.text
+    assert "Copie seu token" in resposta.text
+    assert "Instale o atalho" in resposta.text
+    assert "Teste compartilhando" in resposta.text
+    assert "Em breve" in resposta.text  # botão de instalar ainda sem o link real do iCloud
+    assert "Prefere configurar manualmente?" in resposta.text
+    assert "Problemas comuns" in resposta.text
+    # o passo a passo manual original continua inteiro, só recolhido
+    assert "Mostrar ao Compartilhar" in resposta.text
+    assert "16-destaque.jpg" in resposta.text  # capturas com destaque usadas na instalação rápida
+    assert "16-teste-achar-na-lista.jpg" in resposta.text  # originais, ainda usadas na seção manual
+
+
 def test_pagina_inicial_tem_os_dois_botoes_da_fila_do_atalho(auth_client):
     """Smoke test (17/10/2026, aprovação do CÉREBRO -- ajuste #1 da demanda de extrair áudio pela
     fila): o botão único "Enviar fila para o lote" virou dois botões lado a lado, mesmo destaque
