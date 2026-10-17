@@ -211,7 +211,21 @@ async def atalho_ios_configuracao() -> FileResponse:
     relação ao app de verdade ("Obter Conteúdo do URL", "Mostrar ao Compartilhar"); o novo texto
     também documenta um pega-ratão real do Atalhos (o campo da URL vem preenchido sozinho com a
     variável errada) que não tinha como prever sem testar ao vivo. Confirmado funcionando pelo
-    Igor com 3 vídeos reais (2 Instagram + 1 TikTok) no mesmo dia."""
+    Igor com 3 vídeos reais (2 Instagram + 1 TikTok) no mesmo dia.
+
+    17/10/2026 (aprovação do CÉREBRO): página reestruturada em 3 camadas -- "Instalação rápida" (3
+    passos, topo, com destaque verde desenhado sobre 3 das 18 capturas reais do passo a passo
+    manual, mesmo estilo de um mockup de referência que o Igor trouxe); o passo a passo manual
+    completo (8 passos de configuração + 3 de teste, inalterado) agora vive recolhido num
+    <details> "Prefere configurar manualmente?"; "Problemas comuns" nova, baseada no
+    comportamento real de routes/share_ext.py (só token ausente/inválido/revogado é erro HTTP de
+    verdade; o resto -- duplicado, fila cheia, plataforma não suportada -- é sempre 200 com aviso
+    amigável na notificação). O Passo 2 da instalação rápida ("Instale o atalho") fica
+    propositalmente "Em breve" (sem link) até o Igor confirmar e enviar o link do iCloud gerado a
+    partir do atalho real dele, com uma Pergunta de Importação configurada pra pedir o token de
+    cada pessoa que instalar sem levar o token DELE junto -- ver TESTES_PENDENTES.md. Nenhum
+    arquivo de screenshot novo: as 3 capturas com destaque (static/img/atalho/16/17/18-destaque.jpg)
+    foram desenhadas sobre as 3 originais já existentes, que continuam servindo a seção manual."""
     return FileResponse(STATIC_DIR / "atalho-ios.html")
 
 

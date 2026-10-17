@@ -10,6 +10,8 @@ propósito: isso mantém estas rotas aqui protegidas pelo OriginProtectionMiddle
 
 Rota fina, mesmo padrão do resto do projeto: toda regra de negócio mora em services/share_queue.py.
 """
+from typing import Literal
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -17,6 +19,7 @@ from sqlalchemy.orm import Session
 from database.models import User
 from database.session import get_session
 from routes.deps import get_current_user
+from services.audio_usage import get_audio_allowance
 from services.share_queue import (
     SendToBatchResult,
     clear_queue,
@@ -114,12 +117,31 @@ class SendToBatchOut(BaseModel):
 
 
 @router.post("/queue/send-to-batch", response_model=SendToBatchOut)
-def post_send_to_batch(user: User = Depends(get_current_user), db: Session = Depends(get_session)) -> SendToBatchOut:
+def post_send_to_batch(
+    formato: Literal["video", "audio"] = "video",
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_session),
+) -> SendToBatchOut:
     """Separa até o teto do plano (Plan.max_batch_size) e devolve as URLs para o FRONTEND
     preencher o formulário de lote já existente -- não cria lote/reserva cota aqui (ver docstring
     de services.share_queue.send_to_batch): a confirmação final continua sendo POST
-    /api/download-batch, inalterado."""
-    resultado: SendToBatchResult = send_to_batch(db, user)
+    /api/download-batch (vídeo) ou /api/audio/batch (áudio), inalterados.
+
+    `formato` (17/10/2026, ajuste pedido pelo CÉREBRO -- botão "Extrair áudios"): default "video"
+    preserva o comportamento de sempre (nenhuma mudança para quem já usa a fila para vídeo).
+    "audio" calcula o saldo diário de áudio restante AGORA, no servidor (nunca confia num número
+    vindo do cliente), e passa como teto adicional a send_to_batch -- assim a fila nunca separa
+    (e marca 'consumed') mais itens do que o saldo de áudio realmente aceita; o que não couber
+    continua pendente na fila, em vez de ser perdido se /api/audio/batch rejeitasse o lote inteiro
+    por falta de saldo (reserve_audio_batch é tudo-ou-nada, ver services/audio_usage.py)."""
+    max_items = None
+    if formato == "audio":
+        allowance = get_audio_allowance(db, user.id)
+        # unlimited (admin, ver services/audio_usage.py::AudioAllowance.unlimited): `remaining`
+        # pode estar em 0 mesmo a reserva não bloqueando mais essa conta -- não impor teto extra
+        # aqui, mesmo padrão de isenção já usado no resto da camada de áudio.
+        max_items = None if allowance.unlimited else allowance.remaining
+    resultado: SendToBatchResult = send_to_batch(db, user, max_items=max_items)
     return SendToBatchOut(
         urls=resultado.urls,
         sent_count=resultado.sent_count,

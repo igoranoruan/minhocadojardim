@@ -231,3 +231,57 @@ def test_send_to_batch_sem_itens_pendentes_devolve_vazio(factory, session):
     assert resultado.urls == []
     assert resultado.sent_count == 0
     assert resultado.max_batch_size == 15
+
+
+# ------------------------------------------------------------------ send_to_batch(max_items=...)
+# 17/10/2026 (aprovação do CÉREBRO, ajuste #2 da demanda de extrair áudio pela fila): `max_items`
+# existe especificamente para o botão "Extrair áudios" nunca separar (e marcar 'consumed') mais
+# itens do que o saldo diário de áudio aceita -- reserve_audio_batch é tudo-ou-nada, então sem isso
+# o excedente seria perdido da fila mesmo sem nenhum áudio ter sido extraído.
+def test_send_to_batch_com_max_items_menor_que_o_teto_do_plano_respeita_o_menor(factory, session):
+    usuario = factory.user()
+    give(factory, session, usuario, "vip_batch", now=utcnow())  # max_batch_size = 15
+    for i in range(10):
+        add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
+
+    resultado = send_to_batch(session, usuario, max_items=3)  # saldo diário de áudio = 3
+    assert resultado.sent_count == 3
+    assert resultado.max_batch_size == 15  # o teto REPORTADO continua sendo o do plano
+    assert resultado.remaining_pending == 7
+    assert len(list_queue(session, usuario)) == 7  # o excedente NUNCA é perdido -- continua pendente
+
+
+def test_send_to_batch_com_max_items_maior_que_o_teto_do_plano_nao_libera_mais_que_o_plano(factory, session):
+    usuario = factory.user()
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 5
+    for i in range(8):
+        add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
+
+    resultado = send_to_batch(session, usuario, max_items=100)  # saldo de áudio bem maior que o plano
+    assert resultado.sent_count == 5  # ainda trava no teto do plano, max_items nunca AUMENTA o limite
+    assert len(list_queue(session, usuario)) == 3
+
+
+def test_send_to_batch_com_max_items_zero_nao_separa_nada_e_mantem_tudo_pendente(factory, session):
+    usuario = factory.user()
+    give(factory, session, usuario, "vip_batch", now=utcnow())
+    add_to_queue(session, usuario, url=TIKTOK_URL, text=None)
+
+    resultado = send_to_batch(session, usuario, max_items=0)  # saldo diário de áudio zerado por hoje
+    assert resultado.urls == []
+    assert resultado.sent_count == 0
+    assert resultado.max_batch_size == 15  # continua reportando o teto do plano, não 0
+    assert len(list_queue(session, usuario)) == 1  # nada foi consumido
+
+
+def test_send_to_batch_sem_max_items_preserva_o_comportamento_de_sempre(factory, session):
+    """Regressão: o botão de VÍDEO nunca passa max_items -- precisa continuar idêntico a antes
+    desta mudança."""
+    usuario = factory.user()
+    give(factory, session, usuario, "vip_batch", now=utcnow())
+    for i in range(20):
+        add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
+
+    resultado = send_to_batch(session, usuario)
+    assert resultado.sent_count == 15
+    assert resultado.remaining_pending == 5

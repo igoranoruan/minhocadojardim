@@ -784,9 +784,10 @@
                  vem 0 pra ele -- mostrado com aviso amigável, nunca escondido (mesmo espírito de
                  #pinterestBoardBloqueado, só que sem bloquear a FILA em si, só o envio).
 
-                 "Enviar fila para o lote" NÃO duplica nada: insere as URLs retornadas no MESMO
-                 #batchItems e chama o MESMO processarLote() já existente e testado -- idêntico ao
-                 que #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
+                 Os dois botões da fila ("🎬 Baixar vídeos" / "🎵 Extrair áudios", 17/10/2026) NÃO
+                 duplicam nada: inserem as URLs retornadas no MESMO #batchItems e chamam os MESMOS
+                 processarLote()/processarLoteAudio() já existentes e testados -- idêntico ao que
+                 #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
             <section id="secaoAtalho" class="hidden py-10">
                 <div class="bg-card rounded-3xl p-7 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
@@ -834,7 +835,15 @@
                         </div>
                         <div id="atalhoFilaLista" class="space-y-2"></div>
                         <p id="atalhoFilaVazia" class="text-sm text-slate-500">Os links que você compartilhar pelo atalho aparecem aqui.</p>
-                        <button id="atalhoFilaEnviarBtn" type="button" onclick="enviarFilaParaLote()" class="hidden w-full mt-3 h-12 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-paper-plane mr-1.5"></i>Enviar fila para o lote</button>
+                        <!-- Dois botões lado a lado (17/10/2026, aprovação do CÉREBRO -- ajuste
+                             #1): mesmo destaque visual pros dois, grid-cols-2 + texto/padding
+                             pensados pra caber numa linha só a partir de 360px (iPhone SE, o mais
+                             estreito comum) -- verificado com um mockup renderizado via Playwright
+                             nessa largura antes de escrever aqui. -->
+                        <div id="atalhoFilaBotoes" class="hidden grid grid-cols-2 gap-2 mt-3">
+                            <button id="atalhoFilaVideoBtn" type="button" onclick="enviarFilaParaLote('video')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors">🎬&nbsp;Baixar vídeos</button>
+                            <button id="atalhoFilaAudioBtn" type="button" onclick="enviarFilaParaLote('audio')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors">🎵&nbsp;Extrair áudios</button>
+                        </div>
                         <div id="atalhoFilaStatus" class="mt-2 text-xs"></div>
                     </div>
                 </div>
@@ -4789,9 +4798,10 @@
     // ============================================================================================
     // ENVIAR PARA O KLANGO (Etapa 3, 15/10/2026 -- aprovação do CÉREBRO)
     // Token pessoal (routes/share.py::/api/share/token) + fila (routes/share.py::/api/share/queue)
-    // do atalho de compartilhamento. "Enviar fila para o lote" reaproveita criarCampoLote/
-    // atualizarContagemLote/processarLote já existentes -- mesmo padrão de baixarSelecaoPinterest()
-    // acima, nenhuma lógica de download/lote duplicada aqui.
+    // do atalho de compartilhamento. Os dois botões "🎬 Baixar vídeos" / "🎵 Extrair áudios"
+    // (17/10/2026) reaproveitam criarCampoLote/atualizarContagemLote/processarLote(Formato) já
+    // existentes -- mesmo padrão de baixarSelecaoPinterest() acima, nenhuma lógica de
+    // download/lote/extração duplicada aqui.
     // ============================================================================================
 
     function esconderAtalho() {
@@ -4945,7 +4955,7 @@
         const vazia = document.getElementById("atalhoFilaVazia");
         const contador = document.getElementById("atalhoFilaContador");
         const limparBtn = document.getElementById("atalhoFilaLimparBtn");
-        const enviarBtn = document.getElementById("atalhoFilaEnviarBtn");
+        const botoes = document.getElementById("atalhoFilaBotoes");
         if (!lista || !vazia || !contador) return;
         try {
             const res = await fetch("/api/share/queue", { credentials: "same-origin" });
@@ -4960,7 +4970,7 @@
             vazia.classList.toggle("hidden", temItens);
             lista.classList.toggle("hidden", !temItens);
             if (limparBtn) limparBtn.classList.toggle("hidden", !temItens);
-            if (enviarBtn) enviarBtn.classList.toggle("hidden", !temItens);
+            if (botoes) botoes.classList.toggle("hidden", !temItens);
             contador.textContent = temItens
                 ? `${itens.length} ${itens.length === 1 ? "link" : "links"} na fila`
                 : "Fila vazia";
@@ -4990,29 +5000,45 @@
         await carregarFilaAtalho();
     }
 
-    async function enviarFilaParaLote() {
+    // `formato` ("video"/"audio", 17/10/2026, ajuste pedido pelo CÉREBRO): os dois botões
+    // (#atalhoFilaVideoBtn/#atalhoFilaAudioBtn) chamam esta mesma função, só mudando o formato.
+    // "audio" manda `?formato=audio` pro backend, que então limita quantos itens da fila são
+    // separados ao saldo diário de áudio REAL (routes/share.py::post_send_to_batch) -- o que não
+    // couber continua pendente na fila, nunca é perdido (ver services/share_queue.py::send_to_batch,
+    // parâmetro max_items). Depois de preencher #batchItems, troca o toggle vídeo/áudio do lote
+    // (selecionarFormatoLote) e dispara o fluxo certo via processarLoteFormato() -- mesmos
+    // processarLote()/processarLoteAudio() já existentes e testados, nenhuma lógica de
+    // download/extração nova aqui.
+    async function enviarFilaParaLote(formato) {
+        const ehAudio = formato === "audio";
         setStatusAtalhoFila("Enviando...", "text-slate-500");
         let resultado;
         try {
-            const res = await fetch("/api/share/queue/send-to-batch", { method: "POST", credentials: "same-origin" });
+            const res = await fetch(`/api/share/queue/send-to-batch?formato=${ehAudio ? "audio" : "video"}`, {
+                method: "POST",
+                credentials: "same-origin",
+            });
             if (!res.ok) {
-                setStatusAtalhoFila("Não foi possível enviar a fila para o lote. Tente de novo.", "text-red-400");
+                setStatusAtalhoFila("Não foi possível enviar a fila. Tente de novo.", "text-red-400");
                 return;
             }
             resultado = await res.json();
         } catch (err) {
             console.error(err);
-            setStatusAtalhoFila("Não foi possível enviar a fila para o lote. Tente de novo.", "text-red-400");
+            setStatusAtalhoFila("Não foi possível enviar a fila. Tente de novo.", "text-red-400");
             return;
         }
 
         if (!resultado.sent_count) {
             // max_batch_size = 0 é o Free (sem lote) -- nunca escondido, só um aviso amigável que
-            // direciona pros planos (mesmo espírito de #pinterestBoardBloqueado).
+            // direciona pros planos (mesmo espírito de #pinterestBoardBloqueado). Para áudio, saldo
+            // diário zerado também cai aqui (send_to_batch com max_items=0 não separa nada).
             setStatusAtalhoFila(
                 resultado.max_batch_size === 0
                     ? "Enviar para o lote é um recurso dos planos com lote (Semanal, Mensal ou VIP Batch)."
-                    : "A fila está vazia.",
+                    : (ehAudio
+                        ? "A fila está vazia, ou seu saldo diário de áudio já acabou por hoje."
+                        : "A fila está vazia."),
                 "text-amber-400",
             );
             await carregarFilaAtalho();
@@ -5034,16 +5060,17 @@
 
             limiteLoteAtual = Math.max(limiteLoteAtual, resultado.max_batch_size);
             atualizarContagemLote();
+            selecionarFormatoLote(ehAudio ? "audio" : "video");
 
             secaoBatch.classList.remove("hidden");
             secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
-            processarLote();
+            processarLoteFormato();
         }
 
         setStatusAtalhoFila(
             resultado.remaining_pending > 0
-                ? `${resultado.sent_count} enviados para o lote. ${resultado.remaining_pending} continuam na fila (acima do limite do plano).`
-                : `${resultado.sent_count} enviados para o lote.`,
+                ? `${resultado.sent_count} enviados. ${resultado.remaining_pending} continuam na fila (acima do limite${ehAudio ? " ou do saldo diário de áudio" : " do plano"}).`
+                : `${resultado.sent_count} enviados.`,
             "text-emerald-400",
         );
         await carregarFilaAtalho();

@@ -58,6 +58,40 @@
             height: 220px; width: auto; border-radius: 0.75rem; border: 1px solid #1b2738; flex-shrink: 0;
         }
         code { background: #050810; border: 1px solid #1b2738; padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.85em; color: #e2e8f0; }
+
+        /* Instalação rápida (3 passos, 17/10/2026) -- cards numerados maiores, estilo "onboarding",
+           visualmente mais chamativos que os .passo da seção manual (que fica recolhida abaixo). */
+        .rapido-grade { display: grid; gap: 0.9rem; margin-top: 1rem; }
+        @media (min-width: 640px) { .rapido-grade { grid-template-columns: repeat(3, 1fr); } }
+        .rapido-card {
+            border: 1px solid #1b2738; border-radius: 1.1rem; padding: 1.25rem;
+            background: linear-gradient(180deg, #0c1420 0%, #070c14 100%);
+        }
+        .rapido-selo {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 2.25rem; height: 2.25rem; border-radius: 9999px;
+            background: var(--klango-teal); color: #020617; font-weight: 800; font-size: 1rem;
+        }
+        .rapido-titulo { color: #fff; font-weight: 800; margin-top: 0.75rem; font-size: 1rem; }
+        .rapido-card p { font-size: 0.875rem; margin-top: 0.4rem; }
+        .btn-instalar {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; margin-top: 0.85rem; height: 2.75rem; border-radius: 0.75rem;
+            font-weight: 800; font-size: 0.875rem; text-decoration: none; transition: filter 0.15s;
+        }
+        .btn-instalar.pronto { background: var(--klango-teal); color: #020617; }
+        .btn-instalar.pronto:hover { filter: brightness(1.1); }
+        .btn-instalar.em-breve { background: #11182a; color: #64748b; border: 1px dashed #334155; cursor: not-allowed; }
+
+        details.manual { border: 1px solid #1b2738; border-radius: 1rem; margin-top: 0.75rem; background: #070c14; overflow: hidden; }
+        details.manual > summary {
+            list-style: none; cursor: pointer; padding: 1rem 1.1rem; color: #fff; font-weight: 700;
+            display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+        }
+        details.manual > summary::-webkit-details-marker { display: none; }
+        details.manual > summary .seta { transition: transform 0.2s; color: #64748b; }
+        details.manual[open] > summary .seta { transform: rotate(180deg); }
+        details.manual > .manual-corpo { padding: 0 1.1rem 1.1rem; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -65,7 +99,7 @@
         <a href="/" class="voltar text-sm font-medium inline-flex items-center gap-2">&larr; Voltar para o KLANGO.MP4</a>
 
         <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-6">Configurar o Atalho no iPhone</h1>
-        <p class="text-sm text-slate-500 mt-2">Compartilhe vídeos do Instagram, TikTok, Pinterest ou YouTube direto para sua fila do KLANGO.MP4, sem abrir o site. Passo a passo com as telas reais do app Atalhos.</p>
+        <p class="text-sm text-slate-500 mt-2">Compartilhe vídeos do Instagram, TikTok, Pinterest ou YouTube direto para sua fila do KLANGO.MP4, sem abrir o site.</p>
 
         <div class="bg-card rounded-2xl p-5 mt-6 flex items-start gap-3">
             <i class="fa-solid fa-shield-halved text-[#19D3AE] mt-0.5"></i>
@@ -74,149 +108,214 @@
 
         <div class="bg-card rounded-2xl p-6 sm:p-8 mt-6">
 
-            <h2>Antes de começar</h2>
+            <!-- ============================================================================
+                 INSTALAÇÃO RÁPIDA (17/10/2026, aprovação do CÉREBRO) -- 3 passos em vez do
+                 passo a passo manual de 8 ações. O atalho pronto é instalado por um link do
+                 iCloud (gerado pelo Igor a partir do atalho real dele, nunca por este servidor);
+                 esse link usa uma "Pergunta de Importação" do próprio app Atalhos pra pedir o
+                 token de CADA pessoa que instalar, sem levar o token do Igor junto (ver
+                 TESTES_PENDENTES.md). ATÉ o Igor confirmar o link de verdade e o comportamento
+                 real dessa tela de instalação, o botão abaixo fica desabilitado/"Em breve" em vez
+                 de um link quebrado -- a seção "Configurar manualmente" continua sendo o caminho
+                 que já funciona de ponta a ponta, sempre disponível. -->
+            <h2 class="!mt-0">Instalação rápida</h2>
+            <p class="text-xs text-slate-500 -mt-1 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>O caminho mais rápido: instala o atalho pronto com um toque. Se preferir montar você mesmo (ou o botão abaixo ainda não estiver liberado), use "Configurar manualmente" mais abaixo.</p>
+
+            <div class="rapido-grade">
+                <div class="rapido-card">
+                    <span class="rapido-selo">1</span>
+                    <p class="rapido-titulo">Copie seu token</p>
+                    <p>No KLANGO, na seção <strong>"Enviar para o KLANGO"</strong>, toque em <strong>Gerar token</strong> e depois em <strong>Copiar</strong>.</p>
+                    <a href="/" class="btn-instalar pronto"><i class="fa-solid fa-key"></i>Ir gerar meu token</a>
+                </div>
+
+                <div class="rapido-card">
+                    <span class="rapido-selo">2</span>
+                    <p class="rapido-titulo">Instale o atalho</p>
+                    <p>Toque no botão abaixo e siga as telas do app Atalhos — ele vai pedir pra colar o token que você acabou de copiar.</p>
+                    <!-- TODO (17/10/2026): trocar por <a href="LINK_ICLOUD_REAL" class="btn-instalar pronto">
+                         assim que o Igor confirmar o link do iCloud e o comportamento real da tela
+                         de instalação (ver TESTES_PENDENTES.md, Etapa 7). -->
+                    <span class="btn-instalar em-breve"><i class="fa-solid fa-clock"></i>Em breve</span>
+                </div>
+
+                <div class="rapido-card">
+                    <span class="rapido-selo">3</span>
+                    <p class="rapido-titulo">Teste compartilhando</p>
+                    <p>Abra um vídeo em qualquer app, toque em <strong>Compartilhar</strong> → <strong>Klango.MP4</strong> → <strong>Permitir Sempre</strong>.</p>
+                    <div class="fotos">
+                        <img src="/static/img/atalho/16-destaque.jpg" alt="Klango.MP4 destacado na lista do menu de compartilhar">
+                        <img src="/static/img/atalho/17-destaque.jpg" alt="Botão Permitir Sempre destacado no alerta de privacidade">
+                        <img src="/static/img/atalho/18-destaque.jpg" alt="Notificação Adicionado ao KLANGO destacada">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================================
+                 CONFIGURAÇÃO MANUAL (conteúdo original da Etapa 4, 15-16/10/2026) -- recolhida
+                 por padrão agora que existe o caminho rápido acima, mas continua INTEIRA e
+                 inalterada: é o único caminho hoje (e o caminho de reserva depois) para quem
+                 prefere montar o atalho com as próprias mãos ou quer entender o que cada ação
+                 faz. -->
+            <details class="manual mt-6">
+                <summary>
+                    <span><i class="fa-solid fa-screwdriver-wrench mr-2 text-[#19D3AE]"></i>Prefere configurar manualmente?</span>
+                    <i class="fa-solid fa-chevron-down seta"></i>
+                </summary>
+                <div class="manual-corpo">
+                    <h2>Antes de começar</h2>
+                    <ul>
+                        <li>Esteja logado no <a href="/" class="text-[#19D3AE] hover:underline">KLANGO.MP4</a> pelo navegador do iPhone.</li>
+                        <li>Na seção <strong>"Enviar para o KLANGO"</strong>, toque em <strong>Gerar token</strong> e copie o token (ele só aparece uma vez).</li>
+                    </ul>
+
+                    <h2>Monte o Atalho</h2>
+                    <p class="text-xs text-slate-500 -mt-1 mb-3"><i class="fa-solid fa-circle-info mr-1"></i>A Apple não permite importar um atalho pronto baixado da internet por um link que não seja um link do iCloud gerado pelo próprio app Atalhos — monte na mão seguindo os passos abaixo. Leva uns 5 minutos na primeira vez; as telas abaixo são do próprio processo, passo a passo.</p>
+
+                    <ol>
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">1</span>Crie o atalho e guarde o token</p>
+                            <div class="passo-corpo">
+                                <p>Abra o app <strong>Atalhos</strong> → aba <strong>Biblioteca</strong> → toque em <strong>+</strong> (canto superior direito) para criar um novo atalho.</p>
+                                <p>Toque em <strong>"Buscar Ações"</strong> (barra de baixo), digite <strong>"Texto"</strong> e toque na ação <strong>Texto</strong> para adicioná-la. No campo dela, cole o seu token pessoal.</p>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">2</span>Adicione "Obter Conteúdo do URL"</p>
+                            <div class="passo-corpo">
+                                <p>Busque por <strong>"Obter conteúdo"</strong> e adicione a ação <strong>Obter Conteúdo do URL</strong>.</p>
+                                <div class="alerta"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Pega-ratão comum: o Atalhos preenche sozinho o campo da URL com a variável <strong>"Texto"</strong> (o seu token) em vez de deixar vazio. Toque nesse campo azul, apague (backspace) até limpar, e digite a URL de verdade: <code>https://klango.site/api/ext/share</code></div>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/01-url-errada.jpg" alt="Campo da URL preenchido por engano com a variável Texto (o token)">
+                                    <img src="/static/img/atalho/02-url-digitando.jpg" alt="Digitando a URL correta https://klango.site/api/ext/share">
+                                    <img src="/static/img/atalho/03-url-certa.jpg" alt="Campo da URL já corrigido, mostrando https://klango.site/api/ext/share">
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">3</span>Mude o Método para POST</p>
+                            <div class="passo-corpo">
+                                <p>Toque na setinha azul (➤) ao lado do campo da URL pra abrir mais opções. Toque em <strong>Método</strong> (vem como "GET") e mude para <strong>POST</strong>.</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/04-metodo-get.jpg" alt="Tela expandida mostrando Método em GET, antes de trocar">
+                                    <img src="/static/img/atalho/05-metodo-post-corpo.jpg" alt="Método já em POST, com Cabeçalhos e Pedir Corpo JSON aparecendo">
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">4</span>Adicione o cabeçalho Content-Type</p>
+                            <div class="passo-corpo">
+                                <p>Em <strong>Cabeçalhos</strong>, toque em <strong>"Adicionar novo cabeçalho"</strong> e preencha:</p>
+                                <ul>
+                                    <li>Chave: <code>Content-Type</code></li>
+                                    <li>Valor: <code>application/json</code></li>
+                                </ul>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/06-cabecalho-content-type.jpg" alt="Cabeçalho Content-Type: application/json adicionado">
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">5</span>Monte o corpo (JSON) com os dois campos</p>
+                            <div class="passo-corpo">
+                                <p>Em <strong>Pedir Corpo</strong>, deixe <strong>JSON</strong> selecionado e toque em <strong>"Adicionar novo campo"</strong>. Vai aparecer um menu de tipo — escolha <strong>Texto</strong> (não precisa de Número/Vetor/Dicionário/Booleano).</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/07-tipo-texto.jpg" alt="Menu de tipo do campo: Texto, Número, Vetor, Dicionário, Booleano">
+                                </div>
+                                <p><strong>Primeiro campo:</strong> toque na "Chave" e digite <code>text</code>; toque no valor e, na barra que aparece em cima do teclado, escolha a variável <strong>Entrada do Atalho</strong> (é o link que vier do Instagram/TikTok).</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/08-campo-text-ok.jpg" alt="Campo text preenchido com a variável Entrada do Atalho">
+                                </div>
+                                <p><strong>Segundo campo:</strong> toque em "Adicionar novo campo" de novo, escolha Texto, digite a chave <code>token</code> e, no valor, toque no chip azul <strong>Texto</strong> (a ação com o seu token, do passo 1).</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/09-campo-token-variavel.jpg" alt="Selecionando a variável Texto (token) como valor do campo token">
+                                    <img src="/static/img/atalho/10-dois-campos-ok.jpg" alt="Os dois campos prontos: text com Entrada do Atalho, token com Texto">
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">6</span>Adicione "Mostrar Notificação"</p>
+                            <div class="passo-corpo">
+                                <p>Busque por <strong>"Mostrar Notificação"</strong> e adicione a ação. Ela já vem preenchida sozinha com a variável <strong>Conteúdos do URL</strong> (resposta do passo 2) — não precisa mexer em "Título" nem em "Anexo".</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/11-notificacao-auto.jpg" alt="Ação Mostrar Notificação já preenchida com Conteúdos do URL">
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">7</span>Renomeie o atalho</p>
+                            <div class="passo-corpo">
+                                <p>Saia da edição e volte pra <strong>Biblioteca</strong>. Toque nos <strong>•••</strong> do card do atalho (ele vai estar com o nome "Texto") → <strong>Renomear</strong> → troque para <strong>"Klango.MP4"</strong>.</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/12-renomeado-klango.jpg" alt="Atalho já renomeado para Klango.MP4 na biblioteca">
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">8</span>Ative "Mostrar ao Compartilhar"</p>
+                            <div class="passo-corpo">
+                                <p>Toque nos <strong>•••</strong> do card de novo → <strong>Detalhes</strong>. Ative o botão <strong>"Mostrar ao Compartilhar"</strong> (fica verde).</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/13-menu-detalhes.jpg" alt="Menu de contexto do atalho: Editar, Renomear, Detalhes, Compartilhar...">
+                                    <img src="/static/img/atalho/14-compartilhar-desligado.jpg" alt="Tela de Detalhes com Mostrar ao Compartilhar ainda desligado">
+                                    <img src="/static/img/atalho/15-compartilhar-ligado.jpg" alt="Mostrar ao Compartilhar já ligado, em verde">
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+
+                    <h2>Como testar</h2>
+                    <ol>
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">1</span>Compartilhe um vídeo</p>
+                            <div class="passo-corpo">
+                                <p>Abra o Instagram, TikTok, Pinterest ou YouTube, ache um vídeo e toque em <strong>Compartilhar</strong>. Se o <strong>Klango.MP4</strong> não aparecer na primeira fileira de ícones, toque em <strong>"Mais"</strong> (ou role a lista) pra encontrá-lo.</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/16-teste-achar-na-lista.jpg" alt="Klango.MP4 na lista de Mais ações do menu de compartilhar do Instagram">
+                                </div>
+                            </div>
+                        </li>
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">2</span>Permita o envio</p>
+                            <div class="passo-corpo">
+                                <p>Na primeira vez, o iPhone pergunta se pode deixar o Klango.MP4 enviar o item para "klango.site". Toque em <strong>Permitir Sempre</strong> (ou "Permitir Uma Vez" se preferir confirmar toda vez).</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/17-teste-permissao.jpg" alt="Alerta de privacidade perguntando se pode permitir o envio para klango.site">
+                                </div>
+                            </div>
+                        </li>
+                        <li class="passo">
+                            <p class="passo-titulo"><span class="passo-num">3</span>Confira a notificação</p>
+                            <div class="passo-corpo">
+                                <p>Aparece uma notificação confirmando que o link entrou na fila. Depois é só abrir o site — o vídeo já está esperando na seção "Enviar para o KLANGO".</p>
+                                <div class="fotos">
+                                    <img src="/static/img/atalho/18-teste-sucesso.jpg" alt="Notificação Adicionado ao KLANGO confirmando que o link entrou na fila">
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </details>
+
+            <!-- ============================================================================
+                 PROBLEMAS COMUNS (17/10/2026) -- baseado no comportamento REAL do backend
+                 (routes/share_ext.py): só token ausente/inválido/revogado vira erro de verdade
+                 (401); link duplicado, fila cheia ou plataforma não suportada SEMPRE voltam 200
+                 com um aviso amigável na própria notificação (nunca um erro de rede) -- por
+                 isso "não deu erro, mas também não sei se funcionou" quase sempre quer dizer
+                 "leia o texto da notificação", não "quebrou". -->
+            <h2>Problemas comuns</h2>
             <ul>
-                <li>Esteja logado no <a href="/" class="text-[#19D3AE] hover:underline">KLANGO.MP4</a> pelo navegador do iPhone.</li>
-                <li>Na seção <strong>"Enviar para o KLANGO"</strong>, toque em <strong>Gerar token</strong> e copie o token (ele só aparece uma vez).</li>
-            </ul>
-
-            <h2>Monte o Atalho</h2>
-            <p class="text-xs text-slate-500 -mt-1 mb-3"><i class="fa-solid fa-circle-info mr-1"></i>A Apple não permite importar um atalho pronto baixado da internet — só dá pra montar direto no app Atalhos. Leva uns 5 minutos na primeira vez; as telas abaixo são do próprio processo, passo a passo.</p>
-
-            <ol>
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">1</span>Crie o atalho e guarde o token</p>
-                    <div class="passo-corpo">
-                        <p>Abra o app <strong>Atalhos</strong> → aba <strong>Biblioteca</strong> → toque em <strong>+</strong> (canto superior direito) para criar um novo atalho.</p>
-                        <p>Toque em <strong>"Buscar Ações"</strong> (barra de baixo), digite <strong>"Texto"</strong> e toque na ação <strong>Texto</strong> para adicioná-la. No campo dela, cole o seu token pessoal.</p>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">2</span>Adicione "Obter Conteúdo do URL"</p>
-                    <div class="passo-corpo">
-                        <p>Busque por <strong>"Obter conteúdo"</strong> e adicione a ação <strong>Obter Conteúdo do URL</strong>.</p>
-                        <div class="alerta"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Pega-ratão comum: o Atalhos preenche sozinho o campo da URL com a variável <strong>"Texto"</strong> (o seu token) em vez de deixar vazio. Toque nesse campo azul, apague (backspace) até limpar, e digite a URL de verdade: <code>https://klango.site/api/ext/share</code></div>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/01-url-errada.jpg" alt="Campo da URL preenchido por engano com a variável Texto (o token)">
-                            <img src="/static/img/atalho/02-url-digitando.jpg" alt="Digitando a URL correta https://klango.site/api/ext/share">
-                            <img src="/static/img/atalho/03-url-certa.jpg" alt="Campo da URL já corrigido, mostrando https://klango.site/api/ext/share">
-                        </div>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">3</span>Mude o Método para POST</p>
-                    <div class="passo-corpo">
-                        <p>Toque na setinha azul (➤) ao lado do campo da URL pra abrir mais opções. Toque em <strong>Método</strong> (vem como "GET") e mude para <strong>POST</strong>.</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/04-metodo-get.jpg" alt="Tela expandida mostrando Método em GET, antes de trocar">
-                            <img src="/static/img/atalho/05-metodo-post-corpo.jpg" alt="Método já em POST, com Cabeçalhos e Pedir Corpo JSON aparecendo">
-                        </div>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">4</span>Adicione o cabeçalho Content-Type</p>
-                    <div class="passo-corpo">
-                        <p>Em <strong>Cabeçalhos</strong>, toque em <strong>"Adicionar novo cabeçalho"</strong> e preencha:</p>
-                        <ul>
-                            <li>Chave: <code>Content-Type</code></li>
-                            <li>Valor: <code>application/json</code></li>
-                        </ul>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/06-cabecalho-content-type.jpg" alt="Cabeçalho Content-Type: application/json adicionado">
-                        </div>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">5</span>Monte o corpo (JSON) com os dois campos</p>
-                    <div class="passo-corpo">
-                        <p>Em <strong>Pedir Corpo</strong>, deixe <strong>JSON</strong> selecionado e toque em <strong>"Adicionar novo campo"</strong>. Vai aparecer um menu de tipo — escolha <strong>Texto</strong> (não precisa de Número/Vetor/Dicionário/Booleano).</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/07-tipo-texto.jpg" alt="Menu de tipo do campo: Texto, Número, Vetor, Dicionário, Booleano">
-                        </div>
-                        <p><strong>Primeiro campo:</strong> toque na "Chave" e digite <code>text</code>; toque no valor e, na barra que aparece em cima do teclado, escolha a variável <strong>Entrada do Atalho</strong> (é o link que vier do Instagram/TikTok).</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/08-campo-text-ok.jpg" alt="Campo text preenchido com a variável Entrada do Atalho">
-                        </div>
-                        <p><strong>Segundo campo:</strong> toque em "Adicionar novo campo" de novo, escolha Texto, digite a chave <code>token</code> e, no valor, toque no chip azul <strong>Texto</strong> (a ação com o seu token, do passo 1).</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/09-campo-token-variavel.jpg" alt="Selecionando a variável Texto (token) como valor do campo token">
-                            <img src="/static/img/atalho/10-dois-campos-ok.jpg" alt="Os dois campos prontos: text com Entrada do Atalho, token com Texto">
-                        </div>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">6</span>Adicione "Mostrar Notificação"</p>
-                    <div class="passo-corpo">
-                        <p>Busque por <strong>"Mostrar Notificação"</strong> e adicione a ação. Ela já vem preenchida sozinha com a variável <strong>Conteúdos do URL</strong> (resposta do passo 2) — não precisa mexer em "Título" nem em "Anexo".</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/11-notificacao-auto.jpg" alt="Ação Mostrar Notificação já preenchida com Conteúdos do URL">
-                        </div>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">7</span>Renomeie o atalho</p>
-                    <div class="passo-corpo">
-                        <p>Saia da edição e volte pra <strong>Biblioteca</strong>. Toque nos <strong>•••</strong> do card do atalho (ele vai estar com o nome "Texto") → <strong>Renomear</strong> → troque para <strong>"Klango.MP4"</strong>.</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/12-renomeado-klango.jpg" alt="Atalho já renomeado para Klango.MP4 na biblioteca">
-                        </div>
-                    </div>
-                </li>
-
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">8</span>Ative "Mostrar ao Compartilhar"</p>
-                    <div class="passo-corpo">
-                        <p>Toque nos <strong>•••</strong> do card de novo → <strong>Detalhes</strong>. Ative o botão <strong>"Mostrar ao Compartilhar"</strong> (fica verde).</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/13-menu-detalhes.jpg" alt="Menu de contexto do atalho: Editar, Renomear, Detalhes, Compartilhar...">
-                            <img src="/static/img/atalho/14-compartilhar-desligado.jpg" alt="Tela de Detalhes com Mostrar ao Compartilhar ainda desligado">
-                            <img src="/static/img/atalho/15-compartilhar-ligado.jpg" alt="Mostrar ao Compartilhar já ligado, em verde">
-                        </div>
-                    </div>
-                </li>
-            </ol>
-
-            <h2>Como testar</h2>
-            <ol>
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">1</span>Compartilhe um vídeo</p>
-                    <div class="passo-corpo">
-                        <p>Abra o Instagram, TikTok, Pinterest ou YouTube, ache um vídeo e toque em <strong>Compartilhar</strong>. Se o <strong>Klango.MP4</strong> não aparecer na primeira fileira de ícones, toque em <strong>"Mais"</strong> (ou role a lista) pra encontrá-lo.</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/16-teste-achar-na-lista.jpg" alt="Klango.MP4 na lista de Mais ações do menu de compartilhar do Instagram">
-                        </div>
-                    </div>
-                </li>
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">2</span>Permita o envio</p>
-                    <div class="passo-corpo">
-                        <p>Na primeira vez, o iPhone pergunta se pode deixar o Klango.MP4 enviar o item para "klango.site". Toque em <strong>Permitir Sempre</strong> (ou "Permitir Uma Vez" se preferir confirmar toda vez).</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/17-teste-permissao.jpg" alt="Alerta de privacidade perguntando se pode permitir o envio para klango.site">
-                        </div>
-                    </div>
-                </li>
-                <li class="passo">
-                    <p class="passo-titulo"><span class="passo-num">3</span>Confira a notificação</p>
-                    <div class="passo-corpo">
-                        <p>Aparece uma notificação confirmando que o link entrou na fila. Depois é só abrir o site — o vídeo já está esperando na seção "Enviar para o KLANGO".</p>
-                        <div class="fotos">
-                            <img src="/static/img/atalho/18-teste-sucesso.jpg" alt="Notificação Adicionado ao KLANGO confirmando que o link entrou na fila">
-                        </div>
-                    </div>
-                </li>
-            </ol>
-
-            <h2>Se algo der errado</h2>
-            <ul>
-                <li><strong>"Token inválido ou revogado"</strong> — gere um novo token na seção "Enviar para o KLANGO" do site e cole-o de novo na ação Texto (passo 1).</li>
-                <li><strong>O atalho não aparece ao compartilhar</strong> — confirme que "Mostrar ao Compartilhar" está ativo (passo 8); no app que você está compartilhando, toque em "Mais" (os três pontinhos) e ative o Klango.MP4 ali.</li>
+                <li><strong>A notificação mostra "Token inválido ou revogado"</strong> — gere um novo token na seção "Enviar para o KLANGO" do site e cole-o de novo (passo 1 da instalação rápida, ou ação Texto do passo 1 manual).</li>
+                <li><strong>A notificação mostra outro aviso</strong> (link já estava na fila, fila cheia, ou essa plataforma/link não é suportado) — não é erro de conexão: é a resposta normal do KLANGO explicando o motivo. Leia o texto da notificação, ele já diz o que fazer.</li>
+                <li><strong>O atalho não aparece ao compartilhar</strong> — confirme que "Mostrar ao Compartilhar" está ativo (passo 8 da configuração manual); no app que você está compartilhando, toque em "Mais" (os três pontinhos) e ative o Klango.MP4 ali.</li>
                 <li><strong>A fila não aparece no site</strong> — recarregue a página; os itens enviados pelo Atalho aparecem na seção "Enviar para o KLANGO" assim que a página recarrega.</li>
             </ul>
 
