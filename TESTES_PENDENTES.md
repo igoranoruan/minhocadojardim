@@ -15,10 +15,11 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 ---
 
 ## Etapa 8 -- "Enviar para o KLANGO" no Android: PWA instalável + Web Share Target
-**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
-Pendente do Igor: instalar de verdade num Android real (Chrome) e testar o fluxo completo --
-nada disso dá pra verificar no sandbox (nem o prompt "Instalar app" do Chrome, nem a folha de
-compartilhamento nativa escolhendo "KLANGO.MP4").
+**Status:** Concluído e confirmado pelo Igor num Android real (17/10/2026): instalou o PWA via
+Chrome, compartilhou um link do Instagram escolhendo "KLANGO.MP4" na folha de compartilhamento --
+apareceu a confirmação ("Adicionado à fila"), a aba fechou sozinha (`window.close()` funcionou) e
+voltou direto pro Instagram, sem precisar tocar em nada. `pytest -q` confirmado verde pelo GitHub
+Actions.
 **Branch:** `main` (direto).
 **Data:** 17/10/2026
 
@@ -63,19 +64,20 @@ download -- risco equivalente a "add to cart" por GET, não a uma ação destrut
 dado sensível.
 
 ### O que foi verificado
-- [ ] `pytest -q` = 0 failed pelo GitHub Actions (confirmar antes de considerar fechado).
-- [ ] Sintaxe (`ast.parse`) e JSON do manifest conferidos no sandbox (sem rede pra rodar o app de
+- [x] `pytest -q` = 0 failed pelo GitHub Actions (commit `d184419`, depois de corrigir a quebra do
+      Union no retorno de `routes/share_target.py` -- ver histórico do commit).
+- [x] Sintaxe (`ast.parse`) e JSON do manifest conferidos no sandbox (sem rede pra rodar o app de
       verdade).
+- [x] Instalar via Chrome ("Instalar app") e compartilhar um link real do Instagram escolhendo
+      "KLANGO.MP4" -- confirmado pelo Igor num Android real: caiu na fila, mostrou a confirmação e
+      fechou sozinho, voltando pro Instagram sem precisar de mais nenhum toque.
+- [x] Service worker em `/sw.js` registrou sem erro (consequência do PWA ter instalado e
+      funcionado de ponta a ponta no teste acima).
 
-### O que NÃO foi verificado ainda (precisa do Igor, num Android real)
-- Instalar via Chrome ("Instalar app"/"Adicionar à tela inicial") e confirmar que o ícone
-  "KLANGO.MP4" aparece na tela inicial.
-- Compartilhar um link de verdade (Instagram/TikTok) e confirmar que "KLANGO.MP4" aparece na
-  folha de compartilhamento nativa, e que o link cai na fila.
-- Testar o caso de NÃO estar logado no momento de compartilhar (deve guardar o link, pedir login,
-  e adicionar o link à fila automaticamente assim que o login completar).
-- Confirmar que o service worker em `/sw.js` registra sem erro no Chrome de verdade (sandbox só
-  confere a sintaxe do arquivo, nunca o registro real no navegador).
+### O que ainda NÃO foi testado explicitamente (não bloqueia o fechamento da etapa)
+- O caso de NÃO estar logado no momento de compartilhar (deve guardar o link pendente, pedir
+  login, e adicionar à fila automaticamente assim que o login completar) -- o Igor já estava
+  logado em todos os testes feitos até aqui.
 
 ---
 
