@@ -36,6 +36,7 @@ from routes import (
     pinterest,
     share,
     share_ext,
+    share_target,
     stats,
     webhooks,
 )
@@ -172,6 +173,7 @@ app.include_router(pinterest.router)
 app.include_router(audio.router)
 app.include_router(share.router)
 app.include_router(share_ext.router)
+app.include_router(share_target.router)
 
 
 @app.get("/", include_in_schema=False)
@@ -232,6 +234,31 @@ async def atalho_ios_configuracao() -> FileResponse:
     segundo compartilhamento logo depois não pediu mais nada). Botão "Instale o atalho" trocado de
     "Em breve" pro link de verdade -- ver TESTES_PENDENTES.md, Etapa 7."""
     return FileResponse(STATIC_DIR / "atalho-ios.html")
+
+
+@app.get("/atalho-android", include_in_schema=False)
+async def atalho_android_configuracao() -> FileResponse:
+    """Instruções de instalação do PWA "Enviar para o KLANGO" no Android (17/10/2026, pedido do
+    Igor depois de fechar o fluxo do iPhone) -- mesmo padrão de URL limpa de /atalho-ios acima.
+
+    Diferente do iPhone (que não tem como instalar um "atalho de compartilhamento" sem o link do
+    iCloud gerado manualmente), o Android aceita instalar o próprio site como app (PWA) e registrar
+    esse app como alvo de compartilhamento nativo via static/manifest.json::share_target -- ver
+    routes/share_target.py. Por isso aqui NÃO existe link de instalação nenhum pra gerar (ao
+    contrário do botão "Em breve"/iCloud do /atalho-ios): a instalação é só "Adicionar à tela
+    inicial"/"Instalar app" no menu do próprio Chrome, sempre disponível, sem depender de nenhuma
+    ação prévia do Igor."""
+    return FileResponse(STATIC_DIR / "atalho-android.html")
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def service_worker() -> FileResponse:
+    """Service worker do PWA, servido na RAIZ do site (não em /static/sw.js) de propósito: o
+    escopo de um service worker é o diretório de onde ele é servido, e o Web Share Target (e o
+    resto do PWA) precisa cobrir toda a origem ("/"), não só "/static/". Ver static/sw.js --
+    deliberadamente sem cache/offline, só existe pra satisfazer o requisito de instalabilidade do
+    Chrome/Android."""
+    return FileResponse(STATIC_DIR / "sw.js", media_type="text/javascript")
 
 
 @app.get("/admin", include_in_schema=False)

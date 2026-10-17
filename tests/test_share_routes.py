@@ -66,6 +66,30 @@ def test_rotas_de_token_exigem_sessao(engine):
 
 
 # ------------------------------------------------------------------ fila
+def test_post_queue_adiciona_por_cookie(auth_client, session, factory):
+    """POST /api/share/queue (17/10/2026, suporte a Android via PWA) -- usada pelo frontend
+    depois do login, pra consumir um link que ficou pendente em localStorage (ver
+    routes/share_target.py). Mesma lógica de POST /api/ext/share, só que por cookie."""
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+
+    resposta = auth_client.post("/api/share/queue", json={"url": "https://www.tiktok.com/@a/video/1"})
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["added"] is True
+    assert corpo["pending_count"] == 1
+    assert len(list_queue(session, usuario)) == 1
+
+
+def test_post_queue_extrai_link_de_text(auth_client, session, factory):
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+
+    resposta = auth_client.post("/api/share/queue", json={"text": "olha: https://www.tiktok.com/@a/video/1"})
+    assert resposta.status_code == 200
+    assert len(list_queue(session, usuario)) == 1
+
+
 def test_listar_remover_e_limpar_fila(auth_client, session, factory):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
@@ -178,6 +202,7 @@ def test_rotas_de_fila_exigem_sessao(engine):
     cliente = TestClient(app, base_url=BASE_URL)
     cliente.headers.update({"Origin": BASE_URL})
     assert cliente.get("/api/share/queue").status_code == 401
+    assert cliente.post("/api/share/queue", json={"url": "https://www.tiktok.com/@a/video/1"}).status_code == 401
     assert cliente.delete("/api/share/queue/1").status_code == 401
     assert cliente.delete("/api/share/queue").status_code == 401
     assert cliente.post("/api/share/queue/send-to-batch").status_code == 401
@@ -186,6 +211,13 @@ def test_rotas_de_fila_exigem_sessao(engine):
 # ------------------------------------------------------------------ CSRF continua protegendo estas rotas
 # Mesmo padrão de tests/test_auth_origin.py: sem Origin/Referer válido, o OriginProtectionMiddleware
 # barra a requisição ANTES de chegar na rota -- nem precisa de sessão/login para provar isso.
+def test_post_queue_sem_origin_valido_recebe_403(engine):
+    cliente = TestClient(app, base_url=BASE_URL)  # sem Origin
+    resposta = cliente.post("/api/share/queue", json={"url": "https://www.tiktok.com/@a/video/1"})
+    assert resposta.status_code == 403
+    assert resposta.json()["code"] == "invalid_origin"
+
+
 def test_delete_queue_sem_origin_valido_recebe_403(engine):
     cliente = TestClient(app, base_url=BASE_URL)  # sem Origin
     resposta = cliente.delete("/api/share/queue")

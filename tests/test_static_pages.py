@@ -12,6 +12,35 @@ def test_pagina_inicial(auth_client):
     # -- confirma que o helper que a consome continua presente (ver carregarAtalho() e
     # capturarAutoFluxoAtalhoDaUrl() em static/index.html).
     assert "capturarAutoFluxoAtalhoDaUrl" in resposta.text
+    # PWA do Android (17/10/2026, ver routes/share_target.py e static/manifest.json): manifest
+    # linkado, helper que consome "?compartilhar_pendente=" presente, e link pra /atalho-android.
+    assert 'rel="manifest" href="/static/manifest.json"' in resposta.text
+    assert "capturarCompartilharPendenteDaUrl" in resposta.text
+    assert 'href="/atalho-android"' in resposta.text
+
+
+def test_manifest_pwa(auth_client):
+    resposta = auth_client.get("/static/manifest.json")
+    assert resposta.status_code == 200
+    dados = resposta.json()
+    assert dados["name"] == "KLANGO.MP4"
+    assert dados["share_target"]["action"] == "/share-target"
+    assert dados["icons"][0]["src"] == "/static/icon-192.png"
+
+
+def test_service_worker_servido_na_raiz_com_escopo_total(auth_client):
+    """Precisa estar em /sw.js (raiz), não em /static/sw.js -- o escopo de um service worker é o
+    diretório de onde ele é servido, e o Web Share Target precisa cobrir toda a origem ("/")."""
+    resposta = auth_client.get("/sw.js")
+    assert resposta.status_code == 200
+    assert resposta.headers["content-type"].startswith("text/javascript")
+
+
+def test_pagina_de_instalacao_do_atalho_android(auth_client):
+    resposta = auth_client.get("/atalho-android")
+    assert resposta.status_code == 200
+    assert "Instalar o KLANGO.MP4 no Android" in resposta.text
+    assert "Instalar app" in resposta.text
 
 
 def test_termos_de_uso(auth_client):

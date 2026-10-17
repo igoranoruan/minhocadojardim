@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Instalar o KLANGO.MP4 no Android</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#090D0F">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --klango-teal: #19D3AE;
+            --klango-ink: #090D0F;
+        }
+        * { font-family: 'Sora', system-ui, sans-serif; }
+        body { background: var(--klango-ink); color: #f8fafc; }
+        .bg-card { background: #0b1220; border: 1px solid #1b2738; }
+        h2 { color: #fff; font-weight: 800; margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.125rem; }
+        h2:first-of-type { margin-top: 0; }
+        p, li { color: #cbd5e1; line-height: 1.7; }
+        p + p { margin-top: 0.75rem; }
+        ul, ol { padding-left: 1.25rem; margin-top: 0.5rem; }
+        ul { list-style: disc; }
+        li + li { margin-top: 0.5rem; }
+        a.voltar { color: #19D3AE; }
+        a.voltar:hover { text-decoration: underline; }
+        .dica {
+            margin-top: 0.6rem; background: rgba(25, 211, 174, 0.08); border: 1px solid rgba(25, 211, 174, 0.25);
+            border-radius: 0.6rem; padding: 0.55rem 0.75rem; font-size: 0.85rem; color: #a7f3e8;
+        }
+        .alerta {
+            margin-top: 0.6rem; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 0.6rem; padding: 0.55rem 0.75rem; font-size: 0.85rem; color: #fde68a;
+        }
+
+        .rapido-grade { display: grid; gap: 0.9rem; margin-top: 1rem; }
+        @media (min-width: 640px) { .rapido-grade { grid-template-columns: repeat(3, 1fr); } }
+        .rapido-card {
+            border: 1px solid #1b2738; border-radius: 1.1rem; padding: 1.25rem;
+            background: linear-gradient(180deg, #0c1420 0%, #070c14 100%);
+        }
+        .rapido-selo {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 2.25rem; height: 2.25rem; border-radius: 9999px;
+            background: var(--klango-teal); color: #020617; font-weight: 800; font-size: 1rem;
+        }
+        .rapido-titulo { color: #fff; font-weight: 800; margin-top: 0.75rem; font-size: 1rem; }
+        .rapido-card p { font-size: 0.875rem; margin-top: 0.4rem; }
+        .btn-instalar {
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+            width: 100%; margin-top: 0.85rem; height: 2.75rem; border-radius: 0.75rem;
+            font-weight: 800; font-size: 0.875rem; text-decoration: none; transition: filter 0.15s;
+        }
+        .btn-instalar.pronto { background: var(--klango-teal); color: #020617; }
+        .btn-instalar.pronto:hover { filter: brightness(1.1); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="max-w-2xl mx-auto px-5 sm:px-8 py-12 sm:py-16">
+        <a href="/" class="voltar text-sm font-medium inline-flex items-center gap-2">&larr; Voltar para o KLANGO.MP4</a>
+
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-6">Instalar o KLANGO.MP4 no Android</h1>
+        <p class="text-sm text-slate-500 mt-2">Compartilhe vídeos do Instagram, TikTok, Pinterest ou YouTube direto para sua fila do KLANGO.MP4, sem abrir o site.</p>
+
+        <div class="bg-card rounded-2xl p-5 mt-6 flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-[#19D3AE] mt-0.5"></i>
+            <p class="text-sm text-slate-300 m-0">No Android, o KLANGO.MP4 roda como um app instalado no seu próprio Chrome -- ele usa o login que você já tem no site, nunca pede nem guarda login, senha ou cookies das redes sociais.</p>
+        </div>
+
+        <div class="bg-card rounded-2xl p-6 sm:p-8 mt-6">
+
+            <!-- ============================================================================
+                 17/10/2026 (pedido do Igor, depois de fechar o fluxo do iPhone): diferente do
+                 iOS (que precisa de um link do iCloud gerado manualmente, ver /atalho-ios), o
+                 Android aceita instalar o próprio site como PWA e virar um alvo de
+                 compartilhamento nativo via static/manifest.json::share_target (ver
+                 routes/share_target.py). Por isso NÃO existe um botão "Em breve"/link pra gerar
+                 aqui: a instalação depende só do menu do Chrome, sempre disponível. -->
+            <h2 class="!mt-0">Instalação</h2>
+            <p class="text-xs text-slate-500 -mt-1 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>Funciona no Chrome do Android (a maioria dos aparelhos já vem com ele). Outros navegadores podem não oferecer a opção "Instalar app".</p>
+
+            <div class="rapido-grade">
+                <div class="rapido-card">
+                    <span class="rapido-selo">1</span>
+                    <p class="rapido-titulo">Entre na sua conta</p>
+                    <p>No KLANGO, faça login normalmente (o mesmo login que você já usa pra baixar vídeos).</p>
+                    <a href="/" class="btn-instalar pronto"><i class="fa-solid fa-right-to-bracket"></i>Ir para o KLANGO</a>
+                </div>
+
+                <div class="rapido-card">
+                    <span class="rapido-selo">2</span>
+                    <p class="rapido-titulo">Instale o app</p>
+                    <p>No Chrome, toque nos <strong>três pontinhos</strong> (canto superior direito) e depois em <strong>"Instalar app"</strong> ou <strong>"Adicionar à tela inicial"</strong>.</p>
+                    <div class="dica"><i class="fa-solid fa-lightbulb mr-1"></i>O ícone "KLANGO.MP4" aparece na sua tela inicial, igual qualquer outro app.</div>
+                </div>
+
+                <div class="rapido-card">
+                    <span class="rapido-selo">3</span>
+                    <p class="rapido-titulo">Teste compartilhando</p>
+                    <p>Abra um vídeo em qualquer app, toque em <strong>Compartilhar</strong> → <strong>KLANGO.MP4</strong>. Você volta pro app com o link já na fila.</p>
+                </div>
+            </div>
+
+            <h2>Problemas comuns</h2>
+            <ul class="text-sm">
+                <li><strong>Não aparece "Instalar app" no menu do Chrome:</strong> confirme que está usando o Chrome (não outro navegador) e que já visitou <code>klango.site</code> pelo menos uma vez antes de procurar a opção.</li>
+                <li><strong>"KLANGO.MP4" não aparece na lista de compartilhar:</strong> o app precisa estar instalado (passo 2) -- só ter o site salvo como favorito/atalho de navegador não é a mesma coisa.</li>
+                <li><strong>Compartilhei mas não apareceu nada na fila:</strong> você provavelmente não estava logado nesse Chrome -- faça login uma vez (passo 1) que o próximo link compartilhado já cai direto na fila.</li>
+                <li><strong>Compartilhei um link de uma plataforma não suportada:</strong> o link simplesmente não entra na fila, sem nenhum aviso de erro -- confira em <a href="/" class="text-[#19D3AE] hover:underline">klango.site</a> se as plataformas que você usa (Instagram, TikTok, Pinterest, YouTube) estão na lista.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/sw.js").catch(() => {});
+        }
+    </script>
+</body>
+</html>

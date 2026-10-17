@@ -3,17 +3,22 @@
 Gerar/consultar/revogar o token pessoal, e gerenciar a fila (listar, remover item, limpar,
 enviar para o lote) -- todas exigem login, exatamente como o resto da conta do usuário.
 
-A ÚNICA rota pensada para ser chamada pelo atalho do celular (POST /api/ext/share, autenticada por
+A ÚNICA rota pensada para ser chamada pelo atalho do iPhone (POST /api/ext/share, autenticada por
 TOKEN, nunca por cookie) fica num arquivo/prefixo SEPARADO -- ver routes/share_ext.py -- de
 propósito: isso mantém estas rotas aqui protegidas pelo OriginProtectionMiddleware normalmente
 (CSRF), sem precisar isentar nada que use cookie.
+
+POST /queue (17/10/2026, suporte a Android via PWA) é a ÚNICA rota deste arquivo que ADICIONA à
+fila -- usada pelo frontend depois do login, quando um link compartilhado pelo PWA do Android
+ficou pendente em localStorage (ver routes/share_target.py). Continua autenticada por cookie como
+toda rota aqui, nenhuma isenção nova.
 
 Rota fina, mesmo padrão do resto do projeto: toda regra de negócio mora em services/share_queue.py.
 """
 from typing import Literal
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database.models import User
@@ -22,6 +27,7 @@ from routes.deps import get_current_user
 from services.audio_usage import get_audio_allowance
 from services.share_queue import (
     SendToBatchResult,
+    add_to_queue,
     clear_queue,
     generate_token,
     get_token_status,
@@ -82,6 +88,31 @@ class ShareQueueItemOut(BaseModel):
 
 class ShareQueueListOut(BaseModel):
     items: list[ShareQueueItemOut]
+
+
+class ShareQueueAddIn(BaseModel):
+    url: str | None = Field(default=None, max_length=2048)
+    text: str | None = Field(default=None, max_length=4096)
+
+
+class ShareQueueAddOut(BaseModel):
+    added: bool
+    message: str
+    pending_count: int
+
+
+@router.post("/queue", response_model=ShareQueueAddOut)
+def post_share_queue(
+    body: ShareQueueAddIn, user: User = Depends(get_current_user), db: Session = Depends(get_session),
+) -> ShareQueueAddOut:
+    """Adicionar à fila autenticado por SESSÃO (cookie) -- usado pelo PWA do Android depois do
+    login, quando um link compartilhado ficou pendente em localStorage (ver
+    routes/share_target.py e capturarCompartilharPendenteDaUrl() em static/index.html). Mesma
+    lógica de POST /api/ext/share (add_to_queue), só que chamada por fetch() de dentro do próprio
+    site -- por isso passa pelo OriginProtectionMiddleware normalmente (igual toda outra rota
+    deste arquivo), sem precisar de nenhuma isenção nova."""
+    resultado = add_to_queue(db, user, url=body.url, text=body.text)
+    return ShareQueueAddOut(added=resultado.added, message=resultado.message, pending_count=resultado.pending_count)
 
 
 @router.get("/queue", response_model=ShareQueueListOut)

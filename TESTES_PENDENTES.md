@@ -14,6 +14,68 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 8 -- "Enviar para o KLANGO" no Android: PWA instalável + Web Share Target
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+Pendente do Igor: instalar de verdade num Android real (Chrome) e testar o fluxo completo --
+nada disso dá pra verificar no sandbox (nem o prompt "Instalar app" do Chrome, nem a folha de
+compartilhamento nativa escolhendo "KLANGO.MP4").
+**Branch:** `main` (direto).
+**Data:** 17/10/2026
+
+**Por que Android é mais simples que iPhone:** o app Atalhos do iOS não é um navegador logado no
+site, por isso precisa de um token pessoal + arquivo local pra "lembrar" quem é o usuário (ver
+Etapa 7). O PWA do Android roda no MESMO Chrome onde a pessoa já está logada em klango.site --
+então a identidade vem da sessão normal (cookie), sem token nenhum. A instalação também não
+depende de nenhum link gerado manualmente pelo Igor (como o link do iCloud do iPhone): é só
+"Instalar app" no menu do próprio Chrome, sempre disponível.
+
+**O que mudou:**
+- `static/manifest.json` (novo) -- nome, ícones (`static/icon-192.png`/`icon-512.png`, gerados de
+  `static/symbol-master.png` via Pillow), e `share_target` apontando pra `GET /share-target`.
+- `static/sw.js` (novo) -- service worker mínimo, sem cache/offline nenhum, só pra satisfazer o
+  requisito de instalabilidade do Chrome; servido em `/sw.js` (raiz, não `/static/sw.js`) pra ter
+  escopo `/` inteiro.
+- `routes/share_target.py` (novo) -- `GET /share-target`: autenticado por SESSÃO (cookie, via
+  `get_optional_authenticated_user`), nunca token. Logado: adiciona à fila (reaproveita
+  `add_to_queue`, mesma função de `POST /api/ext/share`) e redireciona pra `/?compartilhado=1`.
+  Sem sessão: redireciona pra `/?compartilhar_pendente=<link>` -- o frontend guarda em
+  localStorage até o login completar.
+- `routes/share.py` -- `POST /api/share/queue` (novo) -- adicionar à fila por cookie, usada pelo
+  frontend depois do login pra consumir um link pendente.
+- `static/index.html` -- `<link rel="manifest">`, registro do service worker, e os helpers
+  `capturarAutoFluxoAtalhoDaUrl` (estendido com o modo `"so-rolar"` pro Android, que NUNCA gera
+  token sozinho) e `capturarCompartilharPendenteDaUrl`/`consumirCompartilharPendente` (mesmo
+  padrão do `"?ref=CODIGO"` do programa de indicação). Novo link "Como configurar no Android" ao
+  lado do link do iPhone já existente.
+- `static/atalho-android.html` (novo) -- instruções de instalação (3 passos: logar, instalar via
+  menu do Chrome, testar compartilhando) + problemas comuns, servida em `/atalho-android`.
+
+**Decisão de segurança (mesmo espírito do GET exempt de Origin já usado no resto do site):**
+`GET /share-target` fica fora do `OriginProtectionMiddleware` porque GET já está em
+`utils.origin.SAFE_METHODS` -- nenhuma entrada nova precisou em `ORIGIN_CHECK_EXEMPT_PREFIXES`. O
+pior cenário de abuso (um link forjado que, clicado por alguém logado, adiciona uma URL à fila
+dessa pessoa) só consegue adicionar um link de VÍDEO VÁLIDO (`add_to_queue` continua validando
+plataforma) à fila própria dela, que ainda precisa ser confirmada manualmente antes de qualquer
+download -- risco equivalente a "add to cart" por GET, não a uma ação destrutiva ou de leitura de
+dado sensível.
+
+### O que foi verificado
+- [ ] `pytest -q` = 0 failed pelo GitHub Actions (confirmar antes de considerar fechado).
+- [ ] Sintaxe (`ast.parse`) e JSON do manifest conferidos no sandbox (sem rede pra rodar o app de
+      verdade).
+
+### O que NÃO foi verificado ainda (precisa do Igor, num Android real)
+- Instalar via Chrome ("Instalar app"/"Adicionar à tela inicial") e confirmar que o ícone
+  "KLANGO.MP4" aparece na tela inicial.
+- Compartilhar um link de verdade (Instagram/TikTok) e confirmar que "KLANGO.MP4" aparece na
+  folha de compartilhamento nativa, e que o link cai na fila.
+- Testar o caso de NÃO estar logado no momento de compartilhar (deve guardar o link, pedir login,
+  e adicionar o link à fila automaticamente assim que o login completar).
+- Confirmar que o service worker em `/sw.js` registra sem erro no Chrome de verdade (sandbox só
+  confere a sintaxe do arquivo, nunca o registro real no navegador).
+
+---
+
 ## Etapa 7 -- /atalho-ios: instalação rápida (3 passos) + manual recolhido + problemas comuns
 **Status:** Concluído e mesclado na `main` (merge `53eb0f1`). As 3 pendências do Igor foram
 resolvidas ao vivo em 17/10/2026: (1) Pergunta de Importação configurada no atalho real (campo do

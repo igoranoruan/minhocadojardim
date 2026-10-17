@@ -7,6 +7,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#090D0F">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -795,7 +797,10 @@
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Enviar para o KLANGO</h2>
                             <p class="text-sm text-slate-400 mt-1">Gere seu token pessoal para compartilhar vídeos direto do Instagram, TikTok, Pinterest ou YouTube — sem usar login nem senha nesses apps.</p>
-                            <a href="/atalho-ios" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#19D3AE] hover:underline mt-2"><i class="fa-solid fa-mobile-screen-button"></i>Como configurar no iPhone</a>
+                            <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                                <a href="/atalho-ios" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-apple"></i>Como configurar no iPhone</a>
+                                <a href="/atalho-android" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-android"></i>Como configurar no Android</a>
+                            </div>
                         </div>
                     </div>
 
@@ -1590,17 +1595,81 @@
 
     function capturarAutoFluxoAtalhoDaUrl() {
         const params = new URLSearchParams(window.location.search);
-        if (params.get("atalho") !== "1") return;
-        autoFluxoAtalho = true;
+        if (params.get("atalho") === "1") {
+            autoFluxoAtalho = true;
+        } else if (params.get("compartilhado") === "1") {
+            // Vem do redirect de GET /share-target (Android, ver routes/share_target.py) quando a
+            // pessoa JÁ estava logada -- o link já foi adicionado à fila no servidor; aqui só
+            // rola até a seção, sem gerar nenhum token (Android não usa token nenhum).
+            autoFluxoAtalho = "so-rolar";
+        } else {
+            return;
+        }
         params.delete("atalho");
+        params.delete("compartilhado");
         const novaQuery = params.toString();
         const novaUrl = window.location.pathname + (novaQuery ? `?${novaQuery}` : "") + window.location.hash;
         window.history.replaceState({}, "", novaUrl);
     }
 
+    // "?compartilhar_pendente=..." (17/10/2026, suporte a Android via PWA): vem do mesmo
+    // GET /share-target quando a pessoa AINDA NÃO estava logada nesse Chrome -- o servidor não
+    // sabe de quem é a fila, então devolve o link pra cá. Guarda em localStorage (mesmo padrão de
+    // INDICACAO_STORAGE_KEY acima) até existir uma sessão de verdade; aplicarSessao() consome e
+    // chama POST /api/share/queue (routes/share.py, autenticado por cookie) pra adicionar.
+    const COMPARTILHAR_PENDENTE_STORAGE_KEY = "klango_compartilhar_pendente";
+
+    function capturarCompartilharPendenteDaUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const valor = params.get("compartilhar_pendente");
+        if (!valor) return;
+        try {
+            localStorage.setItem(COMPARTILHAR_PENDENTE_STORAGE_KEY, valor);
+        } catch (err) {
+            console.warn("[ATALHO] não foi possível guardar o link pendente:", err);
+        }
+        params.delete("compartilhar_pendente");
+        const novaQuery = params.toString();
+        const novaUrl = window.location.pathname + (novaQuery ? `?${novaQuery}` : "") + window.location.hash;
+        window.history.replaceState({}, "", novaUrl);
+    }
+
+    async function consumirCompartilharPendente() {
+        let valor;
+        try {
+            valor = localStorage.getItem(COMPARTILHAR_PENDENTE_STORAGE_KEY);
+            if (valor) localStorage.removeItem(COMPARTILHAR_PENDENTE_STORAGE_KEY);
+        } catch (err) {
+            return;
+        }
+        if (!valor) return;
+        try {
+            await fetch("/api/share/queue", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: valor }),
+            });
+        } catch (err) {
+            console.error(err);
+        }
+        // Independente do resultado (link duplicado/inválido incluso), rola até a fila pra pessoa
+        // conferir com os próprios olhos -- mesmo espírito de "?compartilhado=1" acima.
+        autoFluxoAtalho = "so-rolar";
+    }
+
+    function registrarServiceWorkerPwa() {
+        if (!("serviceWorker" in navigator)) return;
+        navigator.serviceWorker.register("/sw.js").catch((err) => {
+            console.warn("[PWA] service worker não registrado:", err);
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
         capturarCodigoIndicacaoDaUrl();
         capturarAutoFluxoAtalhoDaUrl();
+        capturarCompartilharPendenteDaUrl();
+        registrarServiceWorkerPwa();
         inicializarBatch();
         inicializarLotePreview();
         carregarSessao();
@@ -2165,7 +2234,11 @@
         carregarStatusPinterestBoard();
         // "Enviar para o KLANGO" (Etapa 3, 15/10/2026): mesmo padrão de carregarIndicacao() acima
         // -- não existe token/fila sem sessão de verdade, então só é buscado aqui.
-        carregarAtalho();
+        // consumirCompartilharPendente() (17/10/2026, Android) ANTES de carregarAtalho(): se
+        // havia um link de compartilhamento esperando o login, ele precisa ser adicionado à fila
+        // antes de carregarFilaAtalho() buscar o estado atual -- senão a pessoa rolaria até a
+        // seção sem ver o link que acabou de compartilhar.
+        consumirCompartilharPendente().then(carregarAtalho);
     }
 
     function aplicarSemSessao() {
@@ -4858,10 +4931,15 @@
         // por isso zera logo em seguida: chamadas futuras de carregarAtalho() nesta mesma sessão
         // (ex.: depois de revogar um token) não devem rolar a tela nem gerar nada sozinhas de novo.
         if (autoFluxoAtalho) {
+            const modo = autoFluxoAtalho;
             autoFluxoAtalho = false;
             secao.scrollIntoView({ behavior: "smooth", block: "start" });
+            // "so-rolar" (Android, ver capturarAutoFluxoAtalhoDaUrl/consumirCompartilharPendente
+            // acima) nunca gera token sozinho -- o PWA do Android não usa token nenhum, só a
+            // sessão normal. Só o fluxo do iOS (autoFluxoAtalho === true) gera um token quando a
+            // pessoa ainda não tem um.
             const semToken = document.getElementById("atalhoTokenSemToken");
-            if (semToken && !semToken.classList.contains("hidden")) {
+            if (modo === true && semToken && !semToken.classList.contains("hidden")) {
                 // Sem token ainda -- gera direto, sem precisar de mais um toque. Já existindo um
                 // token, gerarTokenAtalho() pede confirmação antes de revogar o atual, então aqui
                 // só rolamos até a seção e deixamos a pessoa decidir.
