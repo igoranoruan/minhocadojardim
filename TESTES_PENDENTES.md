@@ -14,6 +14,74 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 6 -- Fila do atalho "Enviar para o KLANGO" também extrai ÁUDIO
+**Status:** Implementado e commitado; aguardando `pytest -q` verde no GitHub Actions e, depois do
+merge/deploy, o teste manual do Igor no celular (único jeito de confirmar de verdade o atalho + o
+layout dos botões no celular).
+**Branch:** `feature/fila-extrair-audio` (em cima da `main`).
+**Data:** 17/10/2026
+
+**O que mudou:** o botão único "Enviar fila para o lote" virou dois botões lado a lado, mesmo
+destaque visual: "🎬 Baixar vídeos" (comportamento de sempre, inalterado) e "🎵 Extrair áudios"
+(novo -- reaproveita o fluxo de lote de áudio já existente, `processarLoteAudio()`).
+
+**Ajuste #2 do Igor (proteção contra perda de item da fila):** antes desta mudança,
+`send_to_batch()` já marcava os itens como "consumidos" (fora da fila) assim que o botão era
+clicado, independente do que acontecesse depois -- e `reserve_audio_batch` (e também
+`reserve_batch`, de vídeo, mesmo padrão) é tudo-ou-nada: se a quantidade pedida passar do saldo
+diário, rejeita o lote inteiro. Ou seja, mandar pra extração de áudio mais links do que o saldo
+diário aceitava faria esses itens sumirem da fila sem nenhum áudio ter sido extraído. Corrigido com
+um parâmetro novo opcional (`max_items`) em `send_to_batch()`: quando o botão é "Extrair áudios", a
+rota consulta o saldo diário de áudio REAL no servidor antes de separar os itens, e nunca separa
+mais do que esse saldo aceita -- o excedente continua pendente na fila. O botão de vídeo não mudou
+em nada (mesmo comportamento de antes, testado de regressão).
+
+**Arquivos alterados:**
+- `static/index.html` -- botão único → dois botões lado a lado (`#atalhoFilaVideoBtn`/
+  `#atalhoFilaAudioBtn`); `enviarFilaParaLote()` agora recebe o formato e manda
+  `?formato=video|audio` pro backend; depois de preencher o formulário de lote, troca o toggle
+  vídeo/áudio (`selecionarFormatoLote`) e dispara `processarLoteFormato()` (que já decide entre
+  `processarLote()`/`processarLoteAudio()`, nenhum dos dois alterado).
+- `services/share_queue.py` -- `send_to_batch()` ganhou o parâmetro opcional `max_items` (default
+  `None` = comportamento idêntico ao de antes).
+- `routes/share.py` -- `POST /api/share/queue/send-to-batch` ganhou o parâmetro de query opcional
+  `formato` (default `"video"`, sem mudança de comportamento); quando `"audio"`, calcula o saldo
+  diário de áudio restante (`services.audio_usage.get_audio_allowance`) e passa como `max_items`.
+- `tests/test_share_queue_service.py` -- 4 testes novos de `send_to_batch(..., max_items=...)`
+  (respeita o menor entre teto do plano e `max_items`; `max_items` nunca AUMENTA o teto do plano;
+  `max_items=0` não separa nada e não perde a fila; sem `max_items` continua idêntico a antes).
+- `tests/test_share_routes.py` -- 2 testes novos: `?formato=audio` respeita o saldo diário de áudio
+  e mantém o excedente na fila (consome o saldo até sobrarem 3, confirma que só 3 são enviados e 7
+  continuam pendentes); `?formato=video` continua usando só o teto do plano (regressão).
+- `tests/test_static_pages.py` -- smoke test novo: confirma que os dois botões existem na página
+  inicial, com os rótulos e `onclick` certos, e que o botão antigo não sobrou no HTML.
+
+### O que foi verificado
+- [ ] `pytest -q` = 0 failed pelo GitHub Actions (confirmar antes do merge).
+- [x] Os textos "🎬 Baixar vídeos" e "🎵 Extrair áudios" cabem numa linha só, lado a lado, na
+      largura mínima comum de iPhone (360px, iPhone SE) -- verificado renderizando as classes
+      exatas usadas no HTML (grid de 2 colunas) num mockup via Playwright nessa largura, já que
+      este sandbox não alcança o CDN do Tailwind pra renderizar a página real com estilo completo.
+
+### O que NÃO foi verificado ainda (precisa do Igor, no celular de verdade)
+- **Teste manual pedido pelo Igor:** compartilhar 2 links pelo atalho do iPhone (`/atalho-ios`) →
+  na seção "Enviar para o KLANGO" do site, tocar **"🎵 Extrair áudios"** → conferir que os 2 MP3s
+  são gerados e dá pra baixar (individualmente e/ou pelo ZIP `klango_audios.zip`).
+- Visual real dos dois botões lado a lado no iPhone do Igor (cores, toque, alinhamento) -- a
+  verificação acima foi só das classes/medidas, não da página renderizada de verdade com o CSS do
+  Tailwind carregado.
+- Cenário de saldo de áudio insuficiente (fila com mais links do que o saldo diário restante) --
+  coberto por teste automatizado, mas vale o Igor confirmar visualmente o aviso "X continuam na
+  fila (acima do limite ou do saldo diário de áudio)" pelo menos uma vez, se for prático simular
+  (ex.: extrair várias avulsas primeiro pra sobrar pouco saldo).
+
+### Checklist antes do merge na `main`
+- [ ] `pytest -q` = 0 failed (GitHub Actions).
+- [ ] Teste manual do Igor (2 links → "Extrair áudios" → baixar os MP3s) confirmado.
+- [ ] Visual dos dois botões no celular aprovado pelo Igor.
+
+---
+
 ## Como testar as Etapas 2 + 3 juntas (atalho "Enviar para o KLANGO")
 
 ### Confirmação da base da branch (pedido do Igor, 2026-10-15)

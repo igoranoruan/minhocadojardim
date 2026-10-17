@@ -34,6 +34,21 @@ def test_pagina_de_configuracao_do_atalho_ios(auth_client):
     assert "atalho-klango.shortcut" not in resposta.text
 
 
+def test_pagina_inicial_tem_os_dois_botoes_da_fila_do_atalho(auth_client):
+    """Smoke test (17/10/2026, aprovação do CÉREBRO -- ajuste #1 da demanda de extrair áudio pela
+    fila): o botão único "Enviar fila para o lote" virou dois botões lado a lado, mesmo destaque
+    visual -- confere que os dois existem, com os rótulos exatos pedidos, chamando
+    enviarFilaParaLote() com o formato certo, e que o botão antigo não sobrou no HTML."""
+    resposta = auth_client.get("/")
+    assert resposta.status_code == 200
+    assert "🎬" in resposta.text and "Baixar vídeos" in resposta.text
+    assert "🎵" in resposta.text and "Extrair áudios" in resposta.text
+    assert "enviarFilaParaLote('video')" in resposta.text
+    assert "enviarFilaParaLote('audio')" in resposta.text
+    assert "atalhoFilaEnviarBtn" not in resposta.text
+    assert "Enviar fila para o lote" not in resposta.text
+
+
 def test_rodape_da_pagina_inicial_linka_as_paginas_legais(auth_client):
     """Regressão: o rodapé já teve a coluna "Legal" removida de propósito porque as páginas não
     existiam (ver histórico em static/index.html) -- agora que existem, os links precisam estar

@@ -121,6 +121,59 @@ def test_send_to_batch_preenche_ate_o_teto_do_plano(auth_client, session, factor
     assert len(corpo["urls"]) == 5
 
 
+# 17/10/2026 (aprovação do CÉREBRO, ajuste #2 -- botão "Extrair áudios"): `?formato=audio` nunca
+# pode separar (e marcar 'consumed') mais itens da fila do que o saldo diário de áudio restante
+# aceita -- reserve_audio_batch é tudo-ou-nada, então sem essa trava o excedente seria perdido da
+# fila sem nenhum áudio ter sido extraído. Ver services/share_queue.py::send_to_batch (max_items) e
+# tests/test_share_queue_service.py (testes de max_items na camada de serviço).
+def test_send_to_batch_formato_audio_respeita_o_saldo_diario_e_mantem_o_excedente_na_fila(
+    auth_client, session, factory,
+):
+    from config import AUDIO_EXTRACTIONS_PER_DAY
+    from database.types import utcnow
+    from services.audio_usage import complete_audio_extraction, reserve_audio_extraction
+
+    usuario = factory.user()
+    give(factory, session, usuario, "vip_batch", now=utcnow())  # max_batch_size = 15, sem lote áudio isento
+    login_directly(auth_client, session, usuario)
+
+    # Consome o saldo diário de áudio até sobrarem só 3 extrações hoje (cada reserva precisa ser
+    # completada antes da próxima -- "uma operação de áudio por vez", mesmo padrão de
+    # tests/test_audio_usage_batch.py::test_lote_e_limitado_pelo_saldo_diario_restante_nao_so_pelo_plano).
+    for i in range(AUDIO_EXTRACTIONS_PER_DAY - 3):
+        reserva = reserve_audio_extraction(session, user_id=usuario.id, request_id=f"avulsa-{i}", now=utcnow())
+        complete_audio_extraction(session, reserva.extraction_id, now=utcnow())
+
+    for i in range(10):
+        add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
+
+    resposta = auth_client.post("/api/share/queue/send-to-batch?formato=audio")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["sent_count"] == 3  # travado pelo saldo diário, não pelo teto do plano (15)
+    assert corpo["remaining_pending"] == 7
+
+    restantes = auth_client.get("/api/share/queue").json()["items"]
+    assert len(restantes) == 7  # o excedente NUNCA é perdido -- continua pendente na fila
+
+
+def test_send_to_batch_formato_video_continua_usando_so_o_teto_do_plano(auth_client, session, factory):
+    """Regressão: o botão de VÍDEO (formato padrão) nunca deve ser afetado pelo saldo de áudio."""
+    from database.types import utcnow
+
+    usuario = factory.user()
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 5
+    login_directly(auth_client, session, usuario)
+    for i in range(7):
+        add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
+
+    resposta = auth_client.post("/api/share/queue/send-to-batch?formato=video")
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["sent_count"] == 5
+    assert corpo["remaining_pending"] == 2
+
+
 def test_rotas_de_fila_exigem_sessao(engine):
     cliente = TestClient(app, base_url=BASE_URL)
     cliente.headers.update({"Origin": BASE_URL})

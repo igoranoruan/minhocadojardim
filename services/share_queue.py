@@ -321,7 +321,7 @@ class SendToBatchResult:
     max_batch_size: int
 
 
-def send_to_batch(db: Session, user: User) -> SendToBatchResult:
+def send_to_batch(db: Session, user: User, *, max_items: int | None = None) -> SendToBatchResult:
     """Separa até `Plan.max_batch_size` itens pendentes (os MAIS ANTIGOS primeiro) e marca como
     'consumed' -- devolve as URLs para o FRONTEND preencher o formulário de lote já existente. NÃO
     chama reserve_batch/run_batch aqui: a reserva de cota e o download continuam acontecendo
@@ -329,7 +329,16 @@ def send_to_batch(db: Session, user: User) -> SendToBatchResult:
     duplicamos essa lógica nesta camada -- ver docstring do módulo).
 
     Plano Free (max_batch_size=0, sem lote) devolve uma lista vazia -- a rota decide se isso vira
-    aviso específico; `remaining_pending` deixa claro para o frontend que nada foi consumido."""
+    aviso específico; `remaining_pending` deixa claro para o frontend que nada foi consumido.
+
+    `max_items` (17/10/2026, ajuste pedido pelo CÉREBRO para o botão "Extrair áudios"): teto
+    ADICIONAL, opcional, imposto pelo CHAMADOR -- hoje usado para nunca separar mais itens do que
+    o saldo diário de ÁUDIO restante (services.audio_usage.get_audio_allowance), já que
+    reserve_audio_batch (e reserve_batch, de vídeo) são tudo-ou-nada: se `send_to_batch` marcasse
+    'consumed' mais itens do que o saldo aceita, a chamada seguinte a /api/audio/batch rejeitaria o
+    lote inteiro e esses itens teriam sumido da fila sem nenhum áudio/vídeo ter sido gerado. Omitido
+    (None, default), o comportamento é EXATAMENTE o de antes desta mudança -- usado pelo botão de
+    vídeo, que não ganhou nenhuma alteração de comportamento aqui."""
     entitlement = get_current_entitlement(db, user.id)
     plan = FREE_PLAN if entitlement is None else get_plan(entitlement.plan_code)
     total_pendente = _pending_count(db, user)
@@ -337,12 +346,18 @@ def send_to_batch(db: Session, user: User) -> SendToBatchResult:
     if plan.max_batch_size <= 0:
         return SendToBatchResult(urls=[], sent_count=0, remaining_pending=total_pendente, max_batch_size=0)
 
+    limite = plan.max_batch_size if max_items is None else max(0, min(plan.max_batch_size, max_items))
+    if limite <= 0:
+        return SendToBatchResult(
+            urls=[], sent_count=0, remaining_pending=total_pendente, max_batch_size=plan.max_batch_size
+        )
+
     itens = list(
         db.execute(
             select(ShareQueueItem)
             .where(ShareQueueItem.user_id == user.id, ShareQueueItem.status == "pending")
             .order_by(ShareQueueItem.created_at.asc(), ShareQueueItem.id.asc())
-            .limit(plan.max_batch_size)
+            .limit(limite)
         ).scalars()
     )
     if not itens:
