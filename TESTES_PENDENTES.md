@@ -14,6 +14,79 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 1 da revisão de UX/copy -- Correções rápidas de texto
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 19/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4 (Oct 19, 2026, @Tuxi), entregue pelo Igor. Plano de
+execução em 7 etapas; esta é a primeira ("correções rápidas de texto, baixo risco"). Só mudança
+visual/texto -- nenhuma lógica de pagamento, autenticação, limites ou migrations tocada.
+
+**[confirmar] levantados antes de implementar:** dos 8 itens da seção "Plano de execução" do
+dossiê, só um bloqueava esta etapa -- "áudio e vídeo dividem o mesmo limite diário?" --, resolvido
+direto no código (`services/plans.py::Plan.limit` varia 5/10/15 por plano; `config.py::AUDIO_EXTRACTIONS_PER_DAY`
+é fixo em 15, ledger próprio `audio_extractions`): **não dividem**, então o texto do contador de
+áudio usa "áudios" (não "vídeos") e o número vem de `GET /api/audio/allowance.limit` (nunca
+hardcoded). Os outros 7 itens ficam para as etapas em que o dossiê já os previa (4, 5, 6 ou 7).
+
+**O que mudou (tudo em `static/index.html`):**
+- `plural(n, singular, plural)` (função nova): elimina "1 vídeos"/"1 extrações" fixo. Aplicada em
+  todo contador visível que fala de vídeo/áudio (lote de vídeo, lote de áudio, Pinterest, "Meu
+  acesso", validação de excesso de itens do lote).
+- "Renova automaticamente amanhã/semana que vem" -> "Seu limite volta amanhã/na próxima semana"
+  (contradizia o checkout, que promete "sem renovação automática").
+- `abrirAcesso()`: limpa a mensagem de status do modal ("Você saiu da conta.") toda vez que abre --
+  antes ficava visível de uma sessão anterior.
+- Emojis 🎬/🎵 dos botões "Baixar vídeos"/"Extrair áudios" (fila do atalho) -> ícones Font Awesome
+  (`fa-film`/`fa-music`), como no resto do site.
+- Glossário (jargão -> termo comum), em todas as mensagens geradas por JS que não pertencem às
+  seções reescritas nas Etapas 6/7 (planos, FAQ, hero, checkout -- essas ficam como estão, serão
+  substituídas por conteúdo novo lá): "gerações"/"extrações" -> "vídeos"/"áudios"; "por operação"
+  -> "por vez"; único "--" visível encontrado (dentro de um desses textos) -> "—".
+- Seção Comunidade (comentários) escondida: `const MOSTRAR_COMENTARIOS = false` controla a seção
+  inteira, os links de nav (header e rodapé) e evita a chamada de rede de `carregarComentarios()`.
+  Backend/tabela/endpoints intactos -- religar é só trocar a constante pra `true`.
+
+**Mensagens com o jargão que vêm do BACKEND (não alteradas nesta etapa -- listadas pro Igor decidir
+depois, conforme pedido):**
+- `routes/generations.py:133` (429) -- "Você atingiu o limite de gerações do seu plano."
+- `routes/generations.py:139` (400) -- "Não foi possível processar esta geração."
+- `routes/generations.py:153,194` (500) -- "Não foi possível concluir o registro desta geração."
+- `routes/generations.py:180` (429, caminho de lote) -- mesmo texto de 133.
+- `routes/generations.py:196` (400, caminho de lote) -- mesmo texto de 139.
+- `routes/audio.py:111,247` (500) -- "Não foi possível concluir o registro desta extração."
+- `services/audio_usage.py:66` (`AudioUsageError`, 400 default) -- "Não foi possível processar
+  esta extração de áudio."
+- `services/audio_usage.py:84` (`AudioQuotaExceededError`, 429) -- "Você usou suas 15 extrações de
+  hoje. Amanhã libera de novo." (a versão do FRONTEND desta mesma mensagem, mostrada antes de
+  qualquer chamada ao backend, já foi corrigida nesta etapa -- ver acima.)
+- `services/audio_usage.py:97` (`AudioConcurrentOperationError`, 409) -- "Já existe uma extração
+  de áudio em andamento. Aguarde terminar."
+
+### O que foi verificado
+- [x] Sintaxe do JS inline (`node --check`) e `ast.parse` dos arquivos Python tocados.
+- [x] Verificação estrutural via Playwright (DOM, sem depender de CSS): `#comentarios` e os dois
+      links de nav têm a classe `hidden`; `plural(1, ...)` devolve singular e `plural(5, ...)`
+      devolve plural; `abrirAcesso()` limpa a mensagem de status antiga; `atualizarCardAcessoDetalhes()`
+      produz "Seu limite volta amanhã"/"...na próxima semana" para period "day"/"week";
+      `atualizarContadorAudioLoteTexto()` produz "Vai usar 1 dos seus 15 áudios de hoje."/"Você
+      usou seus 15 áudios de hoje..."; nenhum emoji 🎬/🎵 restante no HTML; botões da fila mostram
+      os ícones Font Awesome certos.
+- [ ] `pytest -q` = 0 failed pelo GitHub Actions (confirmar antes de considerar fechado).
+- [ ] **Prints antes/depois (390px e desktop) -- NÃO foi possível produzir no sandbox.** O sandbox
+      bloqueia toda saída de rede externa além de alguns registries (`npm`, `pip`): `cdn.tailwindcss.com`,
+      `fonts.googleapis.com` e `cdnjs.cloudflare.com` (Font Awesome) deram `ERR_TUNNEL_CONNECTION_FAILED`
+      ao tentar renderizar a página aqui -- sem Tailwind carregado, qualquer print mostraria a
+      página sem nenhum estilo (ou, pior, com elementos certos escondidos por engano por um CSS
+      de verificação manual que criei e descartei, que não reproduz as regras responsivas reais do
+      Tailwind). Por isso a verificação acima foi feita direto no DOM/JS (prova que a lógica está
+      certa), não por imagem. Pede-se ao Igor uma conferência visual rápida (navegador de verdade,
+      390px e desktop) nos pontos: cabeçalho/rodapé sem "Comentários", seção Comunidade ausente,
+      botões da fila do atalho com ícone (sem emoji), "Meu acesso" mostrando "Seu limite volta
+      amanhã/na próxima semana", contador do lote sem "1 vídeos"/"1 extrações".
+
+---
+
 ## Etapa 8 -- "Enviar para o KLANGO" no Android: PWA instalável + Web Share Target
 **Status:** Concluído e confirmado pelo Igor num Android real (17/10/2026): instalou o PWA via
 Chrome, compartilhou um link do Instagram escolhendo "KLANGO.MP4" na folha de compartilhamento --

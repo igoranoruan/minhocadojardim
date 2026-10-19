@@ -105,7 +105,7 @@
                 <nav class="hidden sm:flex items-center gap-8 text-sm font-medium text-slate-400">
                     <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors">Como funciona</a>
                     <a href="#secaoPlanos" class="hover:text-white transition-colors">Planos</a>
-                    <a href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors">Comentários</a>
+                    <a id="navComentariosHeader" href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors hidden">Comentários</a>
                     <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors">Perguntas frequentes</a>
                 </nav>
                 <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
@@ -694,7 +694,7 @@
                     <p id="audioContadorLote" class="hidden mb-3 text-center text-xs text-slate-500"></p>
 
                     <div class="flex items-center justify-between gap-3 mb-3">
-                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeos</span>
+                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeo</span>
                         <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-violet-500/80">—</span>
                     </div>
 
@@ -786,7 +786,8 @@
                  vem 0 pra ele -- mostrado com aviso amigável, nunca escondido (mesmo espírito de
                  #pinterestBoardBloqueado, só que sem bloquear a FILA em si, só o envio).
 
-                 Os dois botões da fila ("🎬 Baixar vídeos" / "🎵 Extrair áudios", 17/10/2026) NÃO
+                 Os dois botões da fila ("Baixar vídeos" / "Extrair áudios", 17/10/2026; ícones
+                 Font Awesome desde a Etapa 1 da revisão de UX, 19/10/2026 -- antes eram emojis) NÃO
                  duplicam nada: inserem as URLs retornadas no MESMO #batchItems e chamam os MESMOS
                  processarLote()/processarLoteAudio() já existentes e testados -- idêntico ao que
                  #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
@@ -846,8 +847,8 @@
                              estreito comum) -- verificado com um mockup renderizado via Playwright
                              nessa largura antes de escrever aqui. -->
                         <div id="atalhoFilaBotoes" class="hidden grid grid-cols-2 gap-2 mt-3">
-                            <button id="atalhoFilaVideoBtn" type="button" onclick="enviarFilaParaLote('video')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors">🎬&nbsp;Baixar vídeos</button>
-                            <button id="atalhoFilaAudioBtn" type="button" onclick="enviarFilaParaLote('audio')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors">🎵&nbsp;Extrair áudios</button>
+                            <button id="atalhoFilaVideoBtn" type="button" onclick="enviarFilaParaLote('video')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors"><i class="fa-solid fa-film mr-1.5"></i>Baixar vídeos</button>
+                            <button id="atalhoFilaAudioBtn" type="button" onclick="enviarFilaParaLote('audio')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors"><i class="fa-solid fa-music mr-1.5"></i>Extrair áudios</button>
                         </div>
                         <div id="atalhoFilaStatus" class="mt-2 text-xs"></div>
                     </div>
@@ -956,7 +957,14 @@
                  pro texto normal "O que quem usa está dizendo.". Texto inicial no HTML já é o
                  estado vazio (mesma cautela de "statsProcessados": nunca mostrar por um instante
                  um estado que pode não ser verdade; JS corrige assim que a resposta real chega). -->
-            <section id="comentarios" class="py-16 sm:py-24 border-t section-line">
+            <!-- Etapa 1 da revisão de UX/copy (19/10/2026, decisão do Igor, dossiê item 3.10): seção
+                 escondida (motivo: mistura elogio curto com reclamação pública, e mostra "Estamos
+                 começando por aqui..." pra quem ainda não viu nenhum comentário real). NADA de
+                 backend/tabela/endpoint foi removido ou alterado -- só a constante MOSTRAR_COMENTARIOS
+                 (ver o bloco de script mais abaixo) controla a visibilidade; religar é só trocar pra true.
+                 "hidden" aqui no HTML é só o estado inicial sem flash de conteúdo -- aplicarVisibilidadeComentarios()
+                 no JS é quem de fato decide, e cuida também dos dois links de nav (header/rodapé). -->
+            <section id="comentarios" class="py-16 sm:py-24 border-t section-line hidden">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
                     <h2 id="comentariosTitulo" class="text-2xl sm:text-3xl font-extrabold text-white">Primeiros usuários do KLANGO.MP4</h2>
@@ -1135,7 +1143,7 @@
                         <button type="button" onclick="abrirAcesso()" class="hover:text-white transition-colors w-fit sm:self-end text-left">Acesso</button>
                         <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
                         <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors w-fit">Como funciona</a>
-                        <a href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors w-fit">Comentários</a>
+                        <a id="navComentariosFooter" href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors w-fit hidden">Comentários</a>
                         <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors w-fit">Perguntas frequentes</a>
                     </nav>
                 </div>
@@ -1666,8 +1674,25 @@
         inicializarLotePreview();
         carregarSessao();
         carregarEstatisticas();
-        carregarComentarios();
+        aplicarVisibilidadeComentarios();
+        if (MOSTRAR_COMENTARIOS) carregarComentarios();
     });
+
+    // Etapa 1 da revisão de UX/copy (19/10/2026, decisão do Igor, dossiê 3.10): esconde a seção
+    // Comunidade (comentários), os dois links de nav (header/rodapé) e evita a chamada de rede de
+    // carregarComentarios() enquanto a flag for false -- NADA de backend/tabela/endpoint é tocado;
+    // basta trocar MOSTRAR_COMENTARIOS para true (e religar a chamada acima) pra voltar a mostrar.
+    const MOSTRAR_COMENTARIOS = false;
+
+    function aplicarVisibilidadeComentarios() {
+        [
+            document.getElementById("comentarios"),
+            document.getElementById("navComentariosHeader"),
+            document.getElementById("navComentariosFooter"),
+        ].forEach((el) => {
+            if (el) el.classList.toggle("hidden", !MOSTRAR_COMENTARIOS);
+        });
+    }
 
     // ---- Programa de indicação (Etapa 8 da revisão de UX, aprovação do CÉREBRO) ----
     // Guarda um "?ref=CODIGO" da URL em localStorage até existir uma sessão autenticada pra
@@ -2083,6 +2108,10 @@
     // em services/audio_usage.py::reserve_audio_batch, nunca decidida aqui.
     let formatoLote = "video";
     let loteAudioRestanteHoje = 0;
+    // Etapa 1 (dossiê, 19/10/2026): teto diário de áudio é SEPARADO do de vídeo (AUDIO_EXTRACTIONS_PER_DAY,
+    // config.py -- 15 fixo, não escala por plano, diferente de Plan.limit que é 5/10/15). Guardado à
+    // parte (nunca hardcoded "15" no texto) pra nunca destoar se esse número mudar um dia.
+    let loteAudioLimiteHoje = 15;
 
     async function chamarAuth(caminho, opcoes = {}) {
         const res = await fetch(`/api/auth/${caminho}`, {
@@ -2367,8 +2396,9 @@
         // nada novo, só reaproveita pra exibir aqui também).
         if (statusDescEl) {
             const limiteLote = plano && LIMITE_LOTE_POR_PLANO[plano.code];
+            // Etapa 1 (dossiê, glossário): "por operação" (jargão) vira "por vez".
             statusDescEl.textContent = limiteLote
-                ? `Processamento em lote de até ${limiteLote} vídeos por operação.`
+                ? `Processamento em lote de até ${limiteLote} ${plural(limiteLote, "vídeo", "vídeos")} por vez.`
                 : "—";
         }
 
@@ -2410,10 +2440,14 @@
             // recorrente (day/week) -- nunca inventa a frase pra um período desconhecido/vazio.
             if (renovaWrapEl && renovaTextoEl) {
                 if (uso.period === "day") {
-                    renovaTextoEl.textContent = "Renova automaticamente amanhã";
+                    // Etapa 1 (dossiê, item de prioridade alta): "Renova automaticamente" contradizia
+                    // o checkout, que promete "sem renovação automática" -- o cliente podia achar
+                    // que seria cobrado de novo. O que de fato "renova" é só o CONTADOR de uso, não
+                    // o pagamento/plano.
+                    renovaTextoEl.textContent = "Seu limite volta amanhã";
                     renovaWrapEl.classList.remove("hidden");
                 } else if (uso.period === "week") {
-                    renovaTextoEl.textContent = "Renova automaticamente semana que vem";
+                    renovaTextoEl.textContent = "Seu limite volta na próxima semana";
                     renovaWrapEl.classList.remove("hidden");
                 } else {
                     renovaWrapEl.classList.add("hidden");
@@ -2534,9 +2568,10 @@
 
         const limiteTexto = document.getElementById("batchLimiteTexto");
         if (limiteTexto && limiteLoteAtual > 0 && formatoLote !== "audio") {
+            // Etapa 1 (dossiê, glossário): "por operação" (jargão) vira "por vez".
             limiteTexto.textContent = semTeto
-                ? "Sem limite de itens por operação nesta conta. Você pode dar um nome diferente para cada arquivo."
-                : `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
+                ? "Sem limite de itens por vez nesta conta. Você pode dar um nome diferente para cada arquivo."
+                : `Adicione até ${limiteLoteAtual} ${plural(limiteLoteAtual, "vídeo", "vídeos")} por vez. Você pode dar um nome diferente para cada arquivo.`;
         }
 
         if (limiteLoteAtual > 0) atualizarContagemLote();
@@ -3549,9 +3584,10 @@
                 );
                 return;
             }
-            // Free (planoAtualCode === "free"/null): comportamento original, intacto.
+            // Free (planoAtualCode === "free"/null): comportamento original, intacto. Etapa 1
+            // (dossiê, glossário): "gerações" (jargão) vira "vídeos".
             setStatusBox(
-                '<p class="font-bold mb-1">Limite de gerações atingido.</p>' +
+                '<p class="font-bold mb-1">Limite de vídeos atingido.</p>' +
                 '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
                 '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
                 'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
@@ -3776,9 +3812,10 @@
         const items = document.querySelectorAll(".batch-item");
         const count = items.length;
         const max = limiteLoteAtual || 1;
+        // Etapa 1 (dossiê): "1 VÍDEOS (sem limite nesta conta)" -- plural(n, ...) nunca mais fixo.
         document.getElementById("batchCount").textContent = loteSemTeto
-            ? `${count} vídeos (sem limite nesta conta)`
-            : `${count} de ${max} vídeos`;
+            ? `${count} ${plural(count, "vídeo", "vídeos")} (sem limite nesta conta)`
+            : `${count} de ${max} ${plural(max, "vídeo", "vídeos")}`;
         const addButton = document.getElementById("batchAddButton");
         addButton.disabled = count >= max;
         addButton.classList.toggle("opacity-40", count >= max);
@@ -3999,7 +4036,8 @@
 
         const max = limiteLoteAtual || 1;
         if (entries.length > max) {
-            status.textContent = `Este plano aceita no máximo ${max} vídeos por operação de lote.`;
+            // Etapa 1 (dossiê, glossário): "por operação" (jargão) vira "por vez".
+            status.textContent = `Este plano aceita no máximo ${max} ${plural(max, "vídeo", "vídeos")} por vez no lote.`;
             status.className = "mt-4 text-xs text-red-400";
             return;
         }
@@ -4223,9 +4261,13 @@
         const contador = document.getElementById("audioContadorLote");
         if (!contador) return;
         const count = document.querySelectorAll(".batch-item").length;
+        // Etapa 1 (dossiê): "extrações" era jargão, e dizer "vídeos" aqui seria enganoso -- áudio
+        // tem teto PRÓPRIO (loteAudioLimiteHoje, sempre 15, nunca o limite de vídeo do plano), então
+        // o texto usa "áudios" mesmo (confirmado com o Igor: os dois NÃO dividem o mesmo limite).
+        const usados = Math.min(count, loteAudioRestanteHoje);
         contador.textContent = loteAudioRestanteHoje > 0
-            ? `Isso vai usar ${Math.min(count, loteAudioRestanteHoje)} extrações. Você tem ${loteAudioRestanteHoje} restantes hoje.`
-            : "Você usou suas 15 extrações de hoje. Amanhã libera de novo.";
+            ? `Vai usar ${usados} dos seus ${loteAudioLimiteHoje} ${plural(loteAudioLimiteHoje, "áudio", "áudios")} de hoje.`
+            : `Você usou seus ${loteAudioLimiteHoje} ${plural(loteAudioLimiteHoje, "áudio", "áudios")} de hoje. Amanhã libera de novo.`;
     }
 
     // Chamada sempre que o formato muda (selecionarFormatoLote) ou o plano/status é confirmado de
@@ -4243,8 +4285,8 @@
             // com o número antigo.
             if (limiteTexto && limiteLoteAtual > 0) {
                 limiteTexto.textContent = loteSemTeto
-                    ? "Sem limite de itens por operação nesta conta. Você pode dar um nome diferente para cada arquivo."
-                    : `Adicione até ${limiteLoteAtual} vídeos por operação. Você pode dar um nome diferente para cada arquivo.`;
+                    ? "Sem limite de itens por vez nesta conta. Você pode dar um nome diferente para cada arquivo."
+                    : `Adicione até ${limiteLoteAtual} ${plural(limiteLoteAtual, "vídeo", "vídeos")} por vez. Você pode dar um nome diferente para cada arquivo.`;
             }
             if (button) {
                 button.disabled = false;
@@ -4256,7 +4298,8 @@
         // SEMPRE limiteLotePlano aqui (nunca limiteLoteAtual, que vira "sem limite" pro admin só
         // pro lote de VÍDEO) -- o lote de ÁUDIO nunca teve o teto de itens por operação isento.
         if (limiteLotePlano > 0 && limiteTexto) {
-            limiteTexto.textContent = `Adicione até ${limiteLotePlano} vídeos por operação -- cada um gera um arquivo MP3.`;
+            // Etapa 1 (dossiê): "--" visível vira "—"; "por operação" (jargão) vira "por vez".
+            limiteTexto.textContent = `Adicione até ${limiteLotePlano} ${plural(limiteLotePlano, "vídeo", "vídeos")} por vez — cada um gera um arquivo MP3.`;
         }
         if (contador) {
             contador.classList.remove("hidden");
@@ -4277,6 +4320,7 @@
             // conta, inclusive admin -- só a cota diária de 15 extrações foi isenta) -- diferente
             // do lote de VÍDEO, onde limiteLoteAtual vira "sem limite" pro admin.
             loteAudioRestanteHoje = dados.unlimited ? limiteLotePlano : dados.remaining;
+            loteAudioLimiteHoje = dados.limit;
             atualizarContadorAudioLoteTexto();
             if (button) {
                 button.innerHTML = '<i class="fa-solid fa-music mr-1"></i>Processar e extrair áudio do lote';
@@ -4516,6 +4560,13 @@
         return div.innerHTML;
     }
 
+    // Etapa 1 da revisão de UX/copy (19/10/2026, aprovação do Igor): função ÚNICA de plural, pra
+    // nunca mais ter "1 vídeos"/"1 extrações" espalhado em cada contador na mão. Uso:
+    // `${n} ${plural(n, "vídeo", "vídeos")}` -- nunca decide singular/plural sozinha sem receber n.
+    function plural(n, singular, pluralForm) {
+        return n === 1 ? singular : pluralForm;
+    }
+
     document.getElementById("url").addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
             baixarVideo();
@@ -4531,6 +4582,10 @@
             // Login avulso pelo header/rodapé nunca passa por aqui depois, então nunca herda um
             // plano de uma tentativa de compra anterior que o usuário tenha abandonado.
             planoPendenteAposLogin = null;
+            // Etapa 1 (dossiê, bug visual): sem isso, um "Você saiu da conta." deixado por sair()
+            // ficava visível embaixo do botão da próxima vez que o modal abria -- a mensagem de
+            // status é sempre de UMA tentativa específica, nunca deve sobreviver a uma nova abertura.
+            mostrarMensagemAcesso("");
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             if (sessaoEmail) {
@@ -4652,8 +4707,10 @@
 
         const selecionados = pinterestBoardSelecaoIds.size;
 
+        // Etapa 1 (dossiê, glossário): "gerações" (jargão) vira "vídeos"; plural(n, ...) em vez de
+        // texto fixo.
         if (!pinterestBoardSemTeto && pinterestBoardLimiteSelecao <= 0) {
-            cotaEl.textContent = "Você atingiu seu limite diário de gerações. Volte amanhã para importar desta pasta.";
+            cotaEl.textContent = "Você atingiu seu limite diário de vídeos. Volte amanhã para importar desta pasta.";
             cotaEl.className = "text-xs text-amber-400 mt-4";
             baixarBtn.disabled = true;
             return;
@@ -4661,10 +4718,10 @@
 
         cotaEl.className = "text-xs text-slate-400 mt-4";
         cotaEl.textContent = pinterestBoardSemTeto
-            ? (selecionados > 0 ? `Isso vai usar ${selecionados} gerações. Sem limite nesta conta.` : "Sem limite nesta conta para esta importação.")
+            ? (selecionados > 0 ? `Vai usar ${selecionados} ${plural(selecionados, "vídeo", "vídeos")}. Sem limite nesta conta.` : "Sem limite nesta conta para esta importação.")
             : selecionados > 0
-                ? `Isso vai usar ${selecionados} gerações. Você tem ${pinterestBoardLimiteSelecao} restantes hoje.`
-                : `Você tem ${pinterestBoardLimiteSelecao} gerações restantes hoje para usar nesta importação.`;
+                ? `Vai usar ${selecionados} dos seus ${pinterestBoardLimiteSelecao} ${plural(pinterestBoardLimiteSelecao, "vídeo", "vídeos")} de hoje.`
+                : `Você tem ${pinterestBoardLimiteSelecao} ${plural(pinterestBoardLimiteSelecao, "vídeo", "vídeos")} restantes hoje para usar nesta importação.`;
         baixarBtn.disabled = selecionados === 0;
     }
 
@@ -4884,7 +4941,7 @@
     // ============================================================================================
     // ENVIAR PARA O KLANGO (Etapa 3, 15/10/2026 -- aprovação do CÉREBRO)
     // Token pessoal (routes/share.py::/api/share/token) + fila (routes/share.py::/api/share/queue)
-    // do atalho de compartilhamento. Os dois botões "🎬 Baixar vídeos" / "🎵 Extrair áudios"
+    // do atalho de compartilhamento. Os dois botões "Baixar vídeos" / "Extrair áudios"
     // (17/10/2026) reaproveitam criarCampoLote/atualizarContagemLote/processarLote(Formato) já
     // existentes -- mesmo padrão de baixarSelecaoPinterest() acima, nenhuma lógica de
     // download/lote/extração duplicada aqui.
