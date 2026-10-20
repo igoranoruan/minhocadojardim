@@ -347,7 +347,15 @@
             <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
                 <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-2">PARA QUEM É</p>
                 <h2 class="text-lg sm:text-xl font-extrabold text-white">Feito para quem cria e reaproveita conteúdo.</h2>
-                <p class="mt-2 text-[17px] leading-[1.5] sm:text-sm sm:leading-normal text-slate-500">Criadores · Social Media · Afiliados</p>
+                <!-- 20/10/2026 (pedido do Igor): "Afiliados" trocado por "Clipadores" -- faz mais
+                     sentido com o público real do produto (quem recorta/republica clipes de
+                     conteúdo já existente é exatamente quem usa o KLANGO.MP4).
+
+                     Também normalizado pro mesmo padrão de fonte da seção Planos (ver comentário
+                     grande em #secaoPlanos/ 20/10/2026, "Padronização de tamanho de fonte"): era
+                     "text-[17px] ... sm:text-sm" (17px fixo no mobile, só encolhia a partir do sm)
+                     -- virou "text-sm" direto, sem bump no mobile. -->
+                <p class="mt-2 text-sm leading-normal text-slate-500">Criadores · Social Media · Clipadores</p>
             </section>
 
             <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
@@ -361,11 +369,20 @@
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja a diferença <span class="text-[#19D3AE]">na prática.</span></h2>
-                    <p class="mt-3 text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Mesmo vídeo, pronto para seguir no seu fluxo de edição, sem os dados que vieram da plataforma de origem.</p>
+                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos (ver comentário
+                         grande em #secaoPlanos) -- "text-sm" direto, sem o bump pra 18px no mobile. -->
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Mesmo vídeo, pronto para seguir no seu fluxo de edição, sem os dados que vieram da plataforma de origem.</p>
                 </div>
 
-                <div class="max-w-md mx-auto mt-10 space-y-0">
-                    <div class="rounded-2xl p-5 bg-card-soft border-2 border-rose-500/40 text-left">
+                <!-- 20/10/2026 (pedido do Igor, revisão de UX): Antes/Depois eram 2 cards
+                     empilhados (Antes, seta pra baixo, Depois) -- bastante rolagem vertical só
+                     pra comparar os dois. Vira carrossel horizontal igual o de Planos: no mobile,
+                     scroll-snap horizontal (arraste pra ver "Depois"); a partir do sm, os 2 cards
+                     ficam lado a lado num grid (sm:grid sm:grid-cols-2) -- o ícone de seta pra
+                     baixo foi removido (não fazia sentido em nenhum dos 2 layouts; a cor/selo de
+                     cada card já basta pra identificar "Antes" vs "Depois"). -->
+                <div class="flex sm:grid sm:grid-cols-2 overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none gap-4 mt-10 px-[9%] sm:px-0 sm:max-w-3xl sm:mx-auto pb-2 sm:pb-0">
+                    <div class="shrink-0 w-[85%] sm:w-auto snap-center rounded-2xl p-5 bg-card-soft border-2 border-rose-500/40 text-left">
                         <div class="flex items-center justify-between mb-4">
                             <span class="inline-block text-[13px] font-extrabold uppercase tracking-wider text-slate-950 bg-rose-500 rounded-lg px-3 py-1.5">Antes</span>
                             <div class="text-right">
@@ -403,11 +420,7 @@
                         </ul>
                     </div>
 
-                    <div class="flex justify-center py-2">
-                        <i class="fa-solid fa-circle-arrow-down text-2xl text-[#19D3AE]"></i>
-                    </div>
-
-                    <div class="rounded-2xl p-5 bg-card-soft border-2 border-[#19D3AE]/50 text-left">
+                    <div class="shrink-0 w-[85%] sm:w-auto snap-center rounded-2xl p-5 bg-card-soft border-2 border-[#19D3AE]/50 text-left">
                         <div class="flex items-center justify-between mb-4">
                             <span class="inline-block text-[13px] font-extrabold uppercase tracking-wider text-slate-950 bg-[#19D3AE] rounded-lg px-3 py-1.5">Depois</span>
                             <div class="text-right">
@@ -440,8 +453,8 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nome de arquivo personalizável</li>
                         </ul>
                     </div>
-                    <p class="text-center text-[13px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
                 </div>
+                <p class="text-center text-[13px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
             </section>
 
             <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; redesenhada em 05/10/2026;
@@ -456,29 +469,30 @@
                  só quem tem plano pago ativo digita de verdade, na aba "Vários (lote)" do card
                  "Baixar em lote" mais abaixo (ver #secaoBatch, Etapa 4).
                  O botão "Adicionar vídeo" é REAL (adicionarCampoLotePreview()): quem clica vê a
-                 tela ganhar mais uma linha travada, sem nunca liberar o campo. Acima de
-                 LOTE_PREVIEW_VISIVEL_PADRAO linhas, o excesso fica atrás de "Ver mais/Ver menos"
-                 (alternarExpansaoLotePreview()). "Baixar vídeos" (Etapa 4, 20/10/2026 -- renomeado
-                 pra acompanhar o rótulo dinâmico do botão real) continua sem onclick
-                 (cursor-default select-none, mesma régua de "sem botão falso" de sempre). Posição:
-                 depois de Antes/Depois (pedido do CÉREBRO, 05/10/2026) -- mesmo id
-                 (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS). -->
+                 tela ganhar mais uma linha travada, sem nunca liberar o campo. "Baixar vídeos"
+                 (Etapa 4, 20/10/2026 -- renomeado pra acompanhar o rótulo dinâmico do botão real)
+                 continua sem onclick (cursor-default select-none, mesma régua de "sem botão
+                 falso" de sempre). Posição: depois de Antes/Depois (pedido do CÉREBRO,
+                 05/10/2026) -- mesmo id (#loteNaPratica), mesma lógica de visibilidade
+                 (SECOES_FUNIL_FRIO_IDS).
+
+                 20/10/2026 (2ª rodada, pedido do Igor): a lista de vídeos (#loteNaPraticaItems)
+                 era empilhada verticalmente, com "Ver mais/Ver menos" escondendo o que passasse de
+                 3 linhas. Virou carrossel horizontal com scroll-snap, igual o carrossel de Planos
+                 -- dá pra arrastar pra ver todos os vídeos adicionados, sem empurrar o resto da
+                 página pra baixo. Ver o comentário maior sobre isso em
+                 criarCampoLotePreview()/adicionarCampoLotePreview() no script, mais abaixo. -->
             <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
-                    <p class="mt-3 text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Pare de repetir o processo vídeo por vídeo: adicione todos de uma vez e baixe tudo pronto pra editar.</p>
+                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Pare de repetir o processo vídeo por vídeo: adicione todos de uma vez e baixe tudo pronto pra editar.</p>
                     <p class="mt-2 text-[13px] text-slate-500">Disponível nos planos pagos.</p>
                 </div>
 
                 <div class="max-w-xl mx-auto mt-10">
                     <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/30">
-                        <div id="loteNaPraticaItems" class="space-y-3"></div>
-
-                        <!-- Etapa 2 (dossiê): altura mínima de toque 44px em qualquer botão, mesmo
-                             um terciário/link como este -- h-8 (32px) virou h-11 (44px). -->
-                        <button type="button" id="lotePreviewVerMaisBtn" onclick="alternarExpansaoLotePreview()" class="hidden w-full mt-3 h-11 text-[#19D3AE] hover:text-[#19D3AE]/80 font-bold text-[13px] transition-colors">
-                            Ver mais
-                        </button>
+                        <div id="loteNaPraticaItems" class="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-1"></div>
 
                         <button type="button" onclick="adicionarCampoLotePreview()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
                             <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
@@ -550,7 +564,8 @@
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">01</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Cole o link</h3>
                         </div>
-                        <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Cole o link do conteúdo que você quer reutilizar.</p>
+                        <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
+                        <p class="text-sm leading-relaxed text-slate-400">Cole o link do conteúdo que você quer reutilizar.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
@@ -559,7 +574,7 @@
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">02</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Limpa e prepara</h3>
                         </div>
-                        <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
+                        <p class="text-sm leading-relaxed text-slate-400">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
@@ -568,19 +583,34 @@
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">03</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Baixe e reutilize</h3>
                         </div>
-                        <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Baixe o arquivo e leve para seu editor para adaptar e publicar.</p>
+                        <p class="text-sm leading-relaxed text-slate-400">Baixe o arquivo e leve para seu editor para adaptar e publicar.</p>
                     </div>
                 </div>
 
                 <div class="mt-5 bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <div>
                         <h3 class="font-bold text-white">Agora é com você.</h3>
-                        <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400 mt-1">Pegue o vídeo preparado, faça os ajustes que quiser e publique no seu próprio estilo.</p>
+                        <p class="text-sm leading-relaxed text-slate-400 mt-1">Pegue o vídeo preparado, faça os ajustes que quiser e publique no seu próprio estilo.</p>
                     </div>
                 </div>
             </section>
 
             <!-- PLANOS -->
+            <!-- 20/10/2026 (pedido do Igor, "Padronização de tamanho de fonte"): Igor marcou o
+                 tamanho das fontes usadas aqui em Planos (subtítulo "Comece simples..." em
+                 text-sm/14px fixo, parágrafo de cada card em text-[15px] fixo) como o tamanho ideal
+                 -- achou "muito bom" e pediu pra aplicar no resto do site, que segundo ele estava
+                 com fontes maiores. Comparando o resto do HTML: a maioria dos parágrafos de
+                 seção (Como funciona, Antes/Depois, Vários vídeos de uma vez, Para quem é, Agora é
+                 com você, subtítulo de Comentários) usava "text-[17px]/[18px] ... sm:text-sm" --
+                 ou seja, 17-18px no MOBILE (o que o Igor estava vendo no teste real pelo celular) e
+                 só encolhia pra 14px a partir do breakpoint sm. Essas ocorrências viraram "text-sm"
+                 direto (sem bump no mobile), igual ao padrão já usado aqui em Planos -- nenhuma
+                 mudou de leading/cor, só o tamanho. Títulos (h2 "text-2xl sm:text-3xl") já
+                 seguiam o mesmo padrão em quase todo lugar, não precisaram de ajuste. Deixado de
+                 fora de propósito: o H1 do Hero (tamanho de destaque, não comparável a parágrafo de
+                 seção) e o corpo dos comentários de usuário reais (texto variável de terceiros,
+                 onde legibilidade pesa mais que padronização visual). -->
             <section id="secaoPlanos" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">PLANOS</p>
@@ -1140,7 +1170,8 @@ https://..."></textarea>
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
                     <h2 id="comentariosTitulo" class="text-2xl sm:text-3xl font-extrabold text-white">Primeiros usuários do KLANGO.MP4</h2>
-                    <p id="comentariosSubtitulo" class="mt-3 text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.</p>
+                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
+                    <p id="comentariosSubtitulo" class="mt-3 text-sm leading-relaxed text-slate-400">Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.</p>
                 </div>
 
                 <div class="max-w-2xl mx-auto mt-10">
@@ -4471,13 +4502,20 @@ https://..."></textarea>
     }
 
     // ---- Preview travado do lote, na seção pública "Lote na Prática" (05/10/2026, pedido do
-    // CÉREBRO) -- campos sempre com cadeado (disabled), nunca digitáveis; só "Adicionar vídeo",
-    // "Remover" e "Ver mais/Ver menos" são reais (mexem no DOM local, sem chamar o backend). Acima
-    // de LOTE_PREVIEW_VISIVEL_PADRAO linhas, o excesso fica atrás de "Ver mais" pra não poluir a
-    // tela se alguém ficar clicando em adicionar.
-    const LOTE_PREVIEW_VISIVEL_PADRAO = 3;
+    // CÉREBRO) -- campos sempre com cadeado (disabled), nunca digitáveis; só "Adicionar vídeo" e
+    // "Remover" são reais (mexem no DOM local, sem chamar o backend).
+    //
+    // 20/10/2026 (pedido do Igor, revisão de UX): a lista (#loteNaPraticaItems) era empilhada
+    // verticalmente (space-y-3), com "Ver mais/Ver menos" escondendo o que passasse de 3 linhas
+    // pra não poluir a tela. Virou carrossel horizontal com scroll-snap (ver a classe do próprio
+    // #loteNaPraticaItems no HTML) -- como agora dá pra arrastar até o último item a qualquer
+    // momento, sem empurrar a página, "Ver mais/Ver menos" deixou de fazer sentido e foi removido
+    // junto com a lógica de esconder item por índice (eram
+    // atualizarVisibilidadeLotePreview()/alternarExpansaoLotePreview()/lotePreviewExpandido/
+    // LOTE_PREVIEW_VISIVEL_PADRAO -- nenhuma outra função do site dependia deles). LOTE_PREVIEW_MAX
+    // continua intacto: é só o teto de quantas linhas falsas dá pra adicionar no preview, sem
+    // relação nenhuma com "Ver mais".
     const LOTE_PREVIEW_MAX = 15; // mesmo teto do maior plano (VIP Batch) -- ver services/plans.py
-    let lotePreviewExpandido = false;
 
     function campoTravado(placeholder, extraClass) {
         const wrap = document.createElement("div");
@@ -4499,7 +4537,10 @@ https://..."></textarea>
 
     function criarCampoLotePreview(index) {
         const wrapper = document.createElement("div");
-        wrapper.className = "batch-item-preview bg-[#060b14] border border-slate-800 rounded-xl p-3";
+        // shrink-0 + w-[85%] + snap-center: cada "janela" ocupa quase a largura do card e
+        // encaixa ao arrastar (mesmo padrão do carrossel de Planos) -- sobra ~15% visível da
+        // próxima janela, sinalizando que dá pra arrastar pra ver mais vídeos adicionados.
+        wrapper.className = "batch-item-preview shrink-0 w-[85%] snap-center bg-[#060b14] border border-slate-800 rounded-xl p-3";
 
         const top = document.createElement("div");
         top.className = "flex items-center justify-between gap-3 mb-2";
@@ -4529,33 +4570,11 @@ https://..."></textarea>
         return wrapper;
     }
 
-    function atualizarVisibilidadeLotePreview() {
-        const itens = Array.from(document.querySelectorAll("#loteNaPraticaItems .batch-item-preview"));
-        itens.forEach((item, index) => {
-            item.classList.toggle("hidden", !lotePreviewExpandido && index >= LOTE_PREVIEW_VISIVEL_PADRAO);
-        });
-        const escondidos = itens.length - LOTE_PREVIEW_VISIVEL_PADRAO;
-        const verMaisBtn = document.getElementById("lotePreviewVerMaisBtn");
-        if (!verMaisBtn) return;
-        if (escondidos <= 0) {
-            verMaisBtn.classList.add("hidden");
-            return;
-        }
-        verMaisBtn.classList.remove("hidden");
-        verMaisBtn.textContent = lotePreviewExpandido ? "Ver menos" : `Ver mais (${escondidos})`;
-    }
-
-    function alternarExpansaoLotePreview() {
-        lotePreviewExpandido = !lotePreviewExpandido;
-        atualizarVisibilidadeLotePreview();
-    }
-
     function renumerarCamposLotePreview() {
         document.querySelectorAll("#loteNaPraticaItems .batch-item-preview").forEach((item, index) => {
             const label = item.querySelector(".batch-label-preview");
             if (label) label.textContent = `VÍDEO ${String(index + 1).padStart(2, "0")}`;
         });
-        atualizarVisibilidadeLotePreview();
     }
 
     function adicionarCampoLotePreview() {
@@ -4563,16 +4582,17 @@ https://..."></textarea>
         if (!container) return;
         const count = container.querySelectorAll(".batch-item-preview").length;
         if (count >= LOTE_PREVIEW_MAX) return;
-        container.appendChild(criarCampoLotePreview(count + 1));
-        if (count + 1 > LOTE_PREVIEW_VISIVEL_PADRAO) lotePreviewExpandido = true;
-        atualizarVisibilidadeLotePreview();
+        const item = criarCampoLotePreview(count + 1);
+        container.appendChild(item);
+        // Rola o carrossel pra centralizar a janela recém-adicionada -- sem isso, quem já tiver
+        // arrastado pro final não veria a nova janela aparecer fora da tela à direita.
+        item.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     }
 
     function inicializarLotePreview() {
         const container = document.getElementById("loteNaPraticaItems");
         if (!container || container.children.length) return;
         container.appendChild(criarCampoLotePreview(1));
-        atualizarVisibilidadeLotePreview();
     }
 
     // Gera um identificador único por ENVIO de lote -- exigido por POST /api/download-batch

@@ -14,6 +14,71 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Padronização de fonte + carrosséis horizontais (Antes/Depois e Lote na Prática) + "Clipadores"
+**Status:** Implementado e commitado na `main`. Sem mudança de Python/backend desta vez (só HTML/
+CSS/JS) -- aguardando confirmação do CI (que ainda cobre o front-end via `test_frontend.py`).
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+
+**Origem:** Igor mandou 2 prints novos do celular (seção "Agora é com você"/Planos e seção "Como
+funciona") e pediu 4 ajustes:
+1. Padronizar o tamanho de fonte do site inteiro pelo padrão usado na seção Planos -- segundo ele,
+   a maioria do resto do site estava com fontes maiores.
+2. Carrossel horizontal (igual o de Planos) na seção "Vários vídeos de uma vez." (Lote na Prática).
+3. Carrossel horizontal (igual o de Planos) na seção "Veja a diferença na prática." (Antes/Depois).
+4. Trocar "Afiliados" por "Clipadores" na seção "Para quem é".
+
+### 1. Padronização de fonte
+Comparando o resto do HTML com os parágrafos de Planos (que usam `text-sm`/`text-[15px]` fixos, sem
+diferença entre mobile e desktop), a maioria dos parágrafos de seção usava `text-[17px]`/`text-[18px]`
+no mobile, só encolhendo pra `text-sm` a partir do breakpoint `sm:` -- ou seja, maiores exatamente
+na tela que o Igor estava testando. Normalizado pra `text-sm` fixo (sem bump no mobile) em:
+"Para quem é", "Veja a diferença na prática", "Vários vídeos de uma vez", os 3 passos de "Como
+funciona", "Agora é com você." e o subtítulo inicial da seção Comentários. Os títulos (`h2`) já
+seguiam o mesmo padrão (`text-2xl sm:text-3xl`) em quase todo lugar, não precisaram de ajuste.
+Deixados de fora de propósito: o H1 do Hero (tamanho de destaque) e o corpo de comentários reais de
+usuário (texto de terceiros, onde legibilidade pesa mais que padronização). Ver o comentário grande
+logo antes de `#secaoPlanos` em `static/index.html` para o detalhamento completo.
+
+### 2. Carrossel horizontal em "Vários vídeos de uma vez" (Lote na Prática)
+A lista de vídeos (`#loteNaPraticaItems`) era empilhada verticalmente (`space-y-3`), com um botão
+"Ver mais/Ver menos" escondendo o que passasse de 3 linhas. Virou um `flex overflow-x-auto
+snap-x snap-mandatory` (scroll horizontal com encaixe, mesmo padrão do carrossel de Planos) -- como
+agora dá pra arrastar até o último item a qualquer momento, sem empurrar a página pra baixo, o
+botão "Ver mais/Ver menos" e toda a lógica de esconder item por índice deixaram de fazer sentido e
+foram removidos (`atualizarVisibilidadeLotePreview()`, `alternarExpansaoLotePreview()`,
+`lotePreviewExpandido`, `LOTE_PREVIEW_VISIVEL_PADRAO`). Ao clicar "Adicionar vídeo", o carrossel
+rola automaticamente até a nova janela. Nada do comportamento travado dos campos (cadeado,
+disabled) foi alterado.
+
+### 3. Carrossel horizontal em "Veja a diferença na prática" (Antes/Depois)
+Os cards "Antes" e "Depois" eram empilhados verticalmente com uma seta apontando pra baixo entre
+eles. Viraram um carrossel horizontal no mobile (`flex overflow-x-auto snap-x snap-mandatory`,
+mesmo padrão de Planos) e, a partir do `sm:`, um grid de 2 colunas lado a lado (`sm:grid
+sm:grid-cols-2`) -- a seta foi removida (não fazia sentido em nenhum dos 2 layouts; a cor/selo de
+cada card já deixa claro qual é qual).
+
+### 4. "Afiliados" -> "Clipadores"
+Só a palavra, na linha "Criadores · Social Media · Clipadores" da seção "Para quem é" -- nenhuma
+outra mudança de conteúdo.
+
+### O que foi verificado
+- [x] HTML de `static/index.html` passa por um parser real (`html.parser.HTMLParser`): zero tags
+      desbalanceadas, zero erros.
+- [x] O `<script>` principal (onde a lógica do preview de lote foi alterada) passa por
+      `node --check`: zero erros de sintaxe.
+- [x] Nenhum arquivo de teste (`tests/`) referencia os textos/classes alterados ("Afiliados", "Ver
+      mais", `space-y-0`, `fa-circle-arrow-down`) -- conferido por busca antes do commit.
+- [x] **Limitação do sandbox:** sem rede liberada pra instalar fastapi/pytest localmente -- a suíte
+      completa roda sozinha no GitHub Actions; nenhuma mudança de Python nesta rodada, então o
+      risco de quebra é baixo, mas o CI ainda será conferido antes de considerar isso fechado.
+- [ ] **Só dá pra confirmar visualmente num celular de verdade:** se os tamanhos de fonte ficaram
+      bons (nem pequenos demais) em cada seção, se os 2 carrosséis novos arrastam/encaixam direito
+      no mobile (Lote na Prática e Antes/Depois) e se a troca pra "Clipadores" apareceu -- pedir
+      pro Igor conferir antes de considerar fechado.
+
+---
+
 ## Cota diária revista de novo (2ª rodada do dia) + FAQ "ver mais/ver menos"
 **Status:** Implementado, commitado na `main` e **`pytest -q` confirmado verde** pelo GitHub
 Actions. Deploy `live` no Render. Inclui também um 3º commit da mesma rodada: correção do vão
