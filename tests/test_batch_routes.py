@@ -96,7 +96,7 @@ def test_lote_maior_que_o_teto_do_plano_recebe_invalid_batch_size(auth_client, f
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
     give(factory, session, usuario, "weekly", now=resolve_now())
-    urls = [f"https://www.tiktok.com/@a/{i}" for i in range(6)]  # weekly: max 5 por lote
+    urls = [f"https://www.tiktok.com/@a/{i}" for i in range(11)]  # weekly: max 10 por lote (20/10/2026)
     resposta = auth_client.post("/api/download-batch", json=_body("r1", urls))
     eventos = _eventos(resposta)
     assert eventos[-1][0] == "error"
@@ -119,8 +119,8 @@ def test_cota_de_operacoes_de_lote_esgotada_recebe_batch_quota_exceeded(auth_cli
 def test_cota_de_videos_esgotada_recebe_quota_exceeded_nao_batch_quota(auth_client, factory, session):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
-    give(factory, session, usuario, "monthly", now=resolve_now())  # 10 vídeos/dia, 5 operações/semana
-    consume(session, usuario, 8, now=resolve_now())  # sobram 2 vídeos/dia
+    give(factory, session, usuario, "monthly", now=resolve_now())  # 15 vídeos/dia, 5 operações/semana
+    consume(session, usuario, 13, now=resolve_now())  # sobram 2 vídeos/dia (20/10/2026: cota subiu)
 
     urls = [f"https://www.tiktok.com/@a/{i}" for i in range(4)]  # pede 4, só sobram 2
     resposta = auth_client.post("/api/download-batch", json=_body("r1", urls))

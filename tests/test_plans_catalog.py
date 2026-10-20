@@ -29,10 +29,10 @@ def test_free_5_por_semana_sem_batch():
     assert FREE_PLAN.batch_period == "week"
 
 
-def test_semanal_5_por_dia_7_dias_r_9_90_batch_3_operacoes_semana_maximo_5():
+def test_semanal_10_por_dia_7_dias_r_9_90_batch_3_operacoes_semana_maximo_10():
     assert (WEEKLY_PLAN.code, WEEKLY_PLAN.limit, WEEKLY_PLAN.period) == (
         WEEKLY,
-        5,
+        10,
         "day",
     )
     assert (
@@ -41,20 +41,20 @@ def test_semanal_5_por_dia_7_dias_r_9_90_batch_3_operacoes_semana_maximo_5():
         WEEKLY_PLAN.paid,
     ) == (7, 990, True)
     assert WEEKLY_PLAN.batch_enabled
-    assert WEEKLY_PLAN.max_batch_size == 5
+    assert WEEKLY_PLAN.max_batch_size == 10
     assert WEEKLY_PLAN.batch_limit == 3
     assert WEEKLY_PLAN.batch_period == "week"
 
 
-def test_mensal_10_por_dia_30_dias_r_16_90_batch_5_operacoes_semana_maximo_5():
+def test_mensal_15_por_dia_30_dias_r_16_90_batch_5_operacoes_semana_maximo_15():
     assert (MONTHLY_PLAN.code, MONTHLY_PLAN.limit, MONTHLY_PLAN.period) == (
         MONTHLY,
-        10,
+        15,
         "day",
     )
     assert (MONTHLY_PLAN.duration_days, MONTHLY_PLAN.price_cents) == (30, 1690)
     assert MONTHLY_PLAN.batch_enabled
-    assert MONTHLY_PLAN.max_batch_size == 5
+    assert MONTHLY_PLAN.max_batch_size == 15
     assert MONTHLY_PLAN.batch_limit == 5
     assert MONTHLY_PLAN.batch_period == "week"
 
@@ -82,8 +82,8 @@ def test_todos_os_planos_pagos_permitem_batch_so_o_free_nao():
 
 
 def test_limites_de_batch_por_plano_seguem_a_regra_comercial():
-    assert WEEKLY_PLAN.max_batch_size == 5
-    assert MONTHLY_PLAN.max_batch_size == 5
+    assert WEEKLY_PLAN.max_batch_size == 10
+    assert MONTHLY_PLAN.max_batch_size == 15
     assert VIP_BATCH_PLAN.max_batch_size == 15
 
     assert WEEKLY_PLAN.batch_limit == 3

@@ -108,7 +108,7 @@ def test_weekly_com_entitlement_vigente(auth_client, factory, session):
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "weekly", "name": "Semanal"}
-    assert corpo["usage"] == {"used": 3, "limit": 5, "remaining": 2, "period": "day", "unlimited": False}
+    assert corpo["usage"] == {"used": 3, "limit": 10, "remaining": 7, "period": "day", "unlimited": False}
     assert corpo["entitlement"] is not None
     from datetime import datetime
 
@@ -117,7 +117,8 @@ def test_weekly_com_entitlement_vigente(auth_client, factory, session):
 
 
 def test_monthly_com_entitlement_vigente_usa_o_exemplo_do_contrato(auth_client, factory, session):
-    """Mesmos números do exemplo de contrato autorizado (used=4, limit=10, remaining=6)."""
+    """Mesmos números do exemplo de contrato autorizado, atualizados em 20/10/2026 junto com a
+    cota diária do Mensal (used=4, limit=15, remaining=11)."""
     usuario = _login(auth_client, session, factory)
     agora = now_sp()
     acesso = _entitlement(
@@ -131,7 +132,7 @@ def test_monthly_com_entitlement_vigente_usa_o_exemplo_do_contrato(auth_client, 
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["plan"] == {"code": "monthly", "name": "Mensal"}
-    assert corpo["usage"] == {"used": 4, "limit": 10, "remaining": 6, "period": "day", "unlimited": False}
+    assert corpo["usage"] == {"used": 4, "limit": 15, "remaining": 11, "period": "day", "unlimited": False}
     from datetime import datetime
 
     devolvido = datetime.fromisoformat(corpo["entitlement"]["expires_at"])

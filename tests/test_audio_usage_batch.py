@@ -43,7 +43,9 @@ def test_free_nao_consegue_reservar_lote(factory, session):
 
 
 # ============================================================================ teto por plano (Plan.max_batch_size)
-@pytest.mark.parametrize("plano,teto", [("weekly", 5), ("monthly", 5), ("vip_batch", 15)])
+# 20/10/2026: max_batch_size de Semanal/Mensal subiu junto com a cota diária de gerações (pedido
+# do Igor) -- 5->10 e 5->15. VIP Batch sem mudança.
+@pytest.mark.parametrize("plano,teto", [("weekly", 10), ("monthly", 15), ("vip_batch", 15)])
 def test_lote_aceita_ate_o_teto_do_plano(factory, session, plano, teto):
     usuario = factory.user()
     give(factory, session, usuario, plano, now=NOW)
@@ -53,7 +55,7 @@ def test_lote_aceita_ate_o_teto_do_plano(factory, session, plano, teto):
     assert len(reserva.extraction_ids) == teto
 
 
-@pytest.mark.parametrize("plano,teto", [("weekly", 5), ("monthly", 5), ("vip_batch", 15)])
+@pytest.mark.parametrize("plano,teto", [("weekly", 10), ("monthly", 15), ("vip_batch", 15)])
 def test_lote_recusa_acima_do_teto_do_plano(factory, session, plano, teto):
     usuario = factory.user()
     give(factory, session, usuario, plano, now=NOW)
