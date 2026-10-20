@@ -14,6 +14,97 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 2 (card único "Baixar em lote", com abas)
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção 4.1 "Nova estrutura da página logada" + 4.3 +
+4.4. Aprovação do Igor: "Sim meu amigo, você tem total autonomia, pode seguir com tudo" (em
+resposta direto à pergunta sobre como tratar a fusão em abas, a mudança estrutural de maior risco
+deste projeto até aqui).
+
+**Decisão de escopo tomada sozinho (documentando o porquê, pra você poder desfazer se discordar):**
+O dossiê pede as 3 ferramentas (Um link / Vários / Pinterest) num card só com 3 abas. Implementei a
+fusão de **2 das 3** (Vários + Pinterest) e deixei o formulário de "Um link" de fora, por 2 motivos
+concretos encontrados no próprio código, não por excesso de cautela genérica:
+1. **"Um link" está na posição de maior destaque da página** (dentro do hero, estilizado como
+   `hero-glow`, com vários comentários de "rodada de conversão" no histórico) -- é o fluxo mais
+   usado e o mais testado/ajustado ao longo do projeto. Tirar ele dali pra um card mais abaixo seria
+   uma mudança de conversão pra visitante anônimo, não só uma reorganização visual.
+2. **Você mesmo pediu em 04/10/2026** que o card de lote ficasse "logo depois do próprio status
+   'Meu acesso'" (comentário original ainda estava no código, citado linha por linha). O card único
+   que fiz manteve exatamente essa posição -- fundir "Um link" ali também teria empurrado ele pra
+   longe do topo da página, o oposto do que o pedido original de 04/10 queria.
+Se você quiser a fusão completa das 3 mesmo assim (inclusive mover o formulário do topo), é só
+pedir -- a base (sistema de abas, função `atualizarVisibilidadeSecaoBaixarLote()`) já está pronta
+pra receber uma 3ª aba.
+
+**O que mudou (tudo em `static/index.html`):**
+- Os 2 cards separados "Processamento em lote" (`#secaoBatch`) e "Importar pasta do Pinterest"
+  (`#secaoPinterestBoard`) viraram 1 card só, `#secaoBaixarLote` ("Baixar em lote"), com 2 abas:
+  "Vários (lote)" e "Pasta do Pinterest". Fica exatamente na mesma posição de antes (logo depois do
+  card "Meu acesso").
+- Nenhum id interno mudou -- `#secaoBatch` e `#secaoPinterestBoard` continuam existindo, com todo o
+  conteúdo/ids de dentro intactos (campos, botões, textos dinâmicos), só que agora são `<div>`s
+  dentro das abas em vez de `<section>`s soltas. Nenhuma função JS de dentro de cada ferramenta foi
+  reescrita -- só ganharam um wrapper de aba por fora.
+- Removido o cabeçalho duplicado (ícone + título + subtítulo) de cada card -- vira 1 cabeçalho só
+  ("Baixar em lote") + a barra de abas; o texto funcional de cada ferramenta (ex.: "Adicione até N
+  vídeos por vez...", "Cole o link de uma pasta pública...") continua, só o título decorativo saiu.
+- 3 funções novas: `selecionarAbaBaixarLote(aba)` (clique do usuário), `aplicarAbaBaixarLote()`
+  (desenha qual painel/botão fica visível/ativo) e `atualizarVisibilidadeSecaoBaixarLote()`
+  (decide se o card aparece e se cada aba está disponível pra esta conta -- chamada por
+  `atualizarVisibilidadeBatch()`/`esconderBatch()` quando o lote muda, e por
+  `carregarStatusPinterestBoard()` quando o Pinterest muda; as duas rodam de forma independente e
+  em ordem não garantida, então a função nunca assume que a outra já rodou).
+- **Duas razões de "escondido" nunca se misturam**: a aba não selecionada esconde o PAINEL por
+  fora; o plano não habilitado continua escondendo a FERRAMENTA por dentro (exatamente como já
+  funcionava) -- uma nunca sobrescreve a outra.
+- Troca automática de aba se a aba ativa ficar sem conteúdo pra esta conta (ex.: só Pinterest
+  disponível) -- nunca deixa o usuário numa aba selecionada vazia.
+- As 2 chamadas que inseriam itens no lote e rolavam a tela até `#secaoBatch` (vindas da fila do
+  atalho e de "Baixar selecionados" do Pinterest) agora também trocam pra aba "Vários (lote)" antes
+  de rolar -- senão a tela rolaria até um painel escondido (ainda na aba Pinterest).
+
+**Fora do escopo desta etapa** (catalogado, ver "Decisão de escopo" acima e a lista já publicada na
+parte 1): fusão da aba "Um link", linha compacta por vídeo, "Colar vários links", separação dos
+passos de processamento, resumo "N de M prontos", aviso de processamento rebaixado, botão "Tentar
+de novo".
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Balanço de tags `<div>` E `<section>` no arquivo inteiro conferido antes/depois: `<section>`
+      13 abre/13 fecha (sem órfã -- os 2 cards antigos viraram 1, -1 líquido, bateu); `<div>` com o
+      mesmo saldo residual pré-existente de sempre (+3), nenhum desbalanceamento novo.
+- [x] `grep` em todo o arquivo por seletor de CSS que dependesse de `#secaoBatch`/
+      `#secaoPinterestBoard` serem especificamente `<section>` (em vez de `<div>`) -- nenhum
+      encontrado (tudo no arquivo usa `getElementById`, nunca um seletor combinando tag+id).
+- [x] `grep` por qualquer código que dependa da ORDEM/posição dos 2 cards no DOM (seletores tipo
+      `parentElement`/`nextElementSibling`/`closest` apontando pra eles) -- nenhum encontrado; todo
+      acesso no projeto inteiro é por id (`getElementById`), nunca posicional -- por isso mover o
+      conteúdo de lugar no documento era seguro.
+- [x] Testes de lógica isolados em Node (document/elementos simulados à mão -- sandbox sem
+      pip/npm/Playwright nesta sessão), 17 asserções cobrindo: card visível quando as 2 ferramentas
+      estão disponíveis (aba padrão "Vários" ativa, botões com a classe certa); troca de aba manual
+      (clique do usuário); Free com só Pinterest disponível (botão "Vários" escondido, troca
+      automática de aba); as 2 ferramentas indisponíveis ao mesmo tempo (card inteiro escondido);
+      lote volta a ficar disponível depois de indisponível (troca automática de volta, sem ficar
+      preso na aba antiga). Todos bateram o esperado.
+- [x] `grep` confirma que nenhum teste em `tests/` dependia de `secaoBatch`/`secaoPinterestBoard`
+      serem seções soltas na página.
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind, e esta é a mudança
+      estrutural de maior risco do projeto até aqui.** Vale MUITO o Igor conferir de verdade:
+      entrar com uma conta de plano pago com lote, ver o card único "Baixar em lote" logo depois de
+      "Meu acesso", clicar nas 2 abas e ver cada ferramenta funcionando normalmente (adicionar
+      vídeo, trocar formato, listar pasta do Pinterest), e testar os 2 fluxos que inserem itens e
+      rolam a tela (enviar a fila do atalho pro lote; selecionar pins do Pinterest e "Baixar
+      selecionados") pra confirmar que a aba certa abre e a rolagem chega no lugar certo. Testar
+      também com uma conta Free/sem plano de lote, pra ver só a aba Pinterest (com o estado
+      bloqueado) e a aba "Vários" escondida.
+
+---
+
 ## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 1 (textos/contadores do lote e do Pinterest)
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).

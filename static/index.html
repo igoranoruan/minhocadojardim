@@ -441,7 +441,8 @@
                  legenda final virou só "Demonstração ilustrativa." (mesmo padrão enxuto de
                  "Antes/Depois"). Nada na MECÂNICA mudou: mesmo card visual do #secaoBatch real,
                  campos de link e nome com cadeado (disabled + ícone fa-lock, nunca digitáveis) --
-                 só quem tem plano pago ativo digita de verdade, na seção #secaoBatch mais abaixo.
+                 só quem tem plano pago ativo digita de verdade, na aba "Vários (lote)" do card
+                 "Baixar em lote" mais abaixo (ver #secaoBatch, Etapa 4).
                  O botão "Adicionar vídeo" é REAL (adicionarCampoLotePreview()): quem clica vê a
                  tela ganhar mais uma linha travada, sem nunca liberar o campo. Acima de
                  LOTE_PREVIEW_VISIVEL_PADRAO linhas, o excesso fica atrás de "Ver mais/Ver menos"
@@ -719,126 +720,158 @@
                 </div>
             </section>
 
-            <!-- BATCH (04/10/2026, pedido do Igor: quem já pagou sente mais utilidade em achar o
-                 processamento em lote logo depois do próprio status "Meu acesso" -- inclusive pra
-                 quem ainda não tem o plano certo, já ver ali embaixo o botão de upgrade pro VIP
-                 Batch, sem precisar rolar a página toda. Movido pra cá (antes ficava depois de
-                 Histórico/Indicação); nenhum id, classe ou função mudou -- só a posição no HTML.
-                 Continua escondida/mostrada exatamente como antes, por getElementById, sem
-                 depender de ordem no DOM -- ver atualizarVisibilidadeBatch() no script. -->
-            <section id="secaoBatch" class="hidden py-16 sm:py-24">
-                <!-- Etapa 2 (dossiê, 20/10/2026): este card era roxo sem ser a marca VIP -- violeta
-                     volta a ser exclusividade do selo/card do plano VIP; aqui (lote, disponível em
-                     3 planos, não só VIP Batch) é cor primária padrão = verde-água. -->
+            <!-- BAIXAR EM LOTE -- card único com abas (Etapa 4, dossiê 4.1/4.3/4.4, 20/10/2026):
+                 "Processamento em lote" e "Importar pasta do Pinterest" eram 2 cards/seções
+                 separados, um embaixo do outro, com cabeçalho duplicado -- o dossiê pede 1 card só,
+                 com abas. A posição continua a mesma de 04/10 (pedido do Igor: logo depois do
+                 próprio status "Meu acesso") -- só os 2 cards viraram 1, com uma aba cada.
+
+                 "Um link" (o formulário individual no topo da página) FICA DE FORA desta fusão por
+                 enquanto -- é o fluxo mais usado/mais testado em rodadas de conversão (ver
+                 comentários "rodada de conversão" na seção hero), e mover esse formulário pra cá
+                 significaria tirá-lo da posição de maior destaque da página pra visitante anônimo,
+                 uma decisão de produto/conversão maior do que cabia decidir sozinho nesta etapa.
+                 Ver TESTES_PENDENTES.md (Etapa 4) para o motivo completo e a pergunta em aberto pro
+                 Igor.
+
+                 IDs internos (#secaoBatch, #secaoPinterestBoard e tudo dentro deles) preservados
+                 EXATAMENTE como estavam -- nenhuma função JS foi reescrita pra isso, só os ganhos
+                 um wrapper de aba por fora (ver atualizarVisibilidadeSecaoBaixarLote()/
+                 selecionarAbaBaixarLote() no script). A visibilidade de CADA ferramenta continua
+                 decidida por quem já decidia (atualizarVisibilidadeBatch() pro lote,
+                 carregarStatusPinterestBoard() pro Pinterest) -- a aba só soma mais um motivo de
+                 "hidden" por cima (aba não selecionada), nunca substitui o motivo que já existia
+                 (plano não habilitado). -->
+            <section id="secaoBaixarLote" class="hidden py-16 sm:py-24">
                 <div class="bg-card rounded-3xl p-7 border-[#19D3AE]/30 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/40 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="min-w-0">
-                            <h2 class="text-base font-extrabold text-white">Processamento em lote</h2>
-                            <p id="batchLimiteTexto" class="text-sm text-slate-400 mt-1">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
+                            <h2 class="text-base font-extrabold text-white">Baixar em lote</h2>
                         </div>
                     </div>
 
-                    <!-- Toggle de formato do LOTE (Parte B, extração de áudio -- autorização do
-                         CÉREBRO, 11/10/2026): mesmo padrão do toggle individual
-                         (formatoVideoBtn/formatoAudioBtn), "Vídeo (MP4)" sempre como padrão --
-                         quem nunca tocar aqui nunca muda de fluxo. Esta seção (#secaoBatch) já só
-                         aparece pra quem tem plano pago com lote habilitado (gate pré-existente,
-                         não alterado por esta etapa) -- por isso a regra "nunca esconder a opção
-                         de áudio do Free" já está satisfeita: não existe Free vendo esta seção
-                         para esconder algo dele. -->
-                    <div class="flex gap-2 mb-4">
-                        <button type="button" id="formatoVideoBtnLote" onclick="selecionarFormatoLote('video')"
-                            class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]">
-                            <i class="fa-solid fa-film mr-1"></i>Vídeo (MP4)
+                    <div class="flex gap-1 mb-5 border-b border-slate-800" role="tablist">
+                        <button type="button" id="abaBaixarLoteBtnVarios" role="tab" onclick="selecionarAbaBaixarLote('varios')"
+                            class="h-11 px-4 text-[13px] font-bold border-b-2 -mb-px transition-colors">
+                            <i class="fa-solid fa-layer-group mr-1"></i>Vários (lote)
                         </button>
-                        <button type="button" id="formatoAudioBtnLote" onclick="selecionarFormatoLote('audio')"
-                            class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700">
-                            <i class="fa-solid fa-music mr-1"></i>Só áudio (MP3)
+                        <button type="button" id="abaBaixarLoteBtnPinterest" role="tab" onclick="selecionarAbaBaixarLote('pinterest')"
+                            class="h-11 px-4 text-[13px] font-bold border-b-2 -mb-px transition-colors">
+                            <i class="fa-brands fa-pinterest mr-1"></i>Pasta do Pinterest
                         </button>
                     </div>
-                    <p id="audioContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
 
-                    <div class="flex items-center justify-between gap-3 mb-3">
-                        <!-- Etapa 4 (dossiê, 4.3): selo de plano ("VIP BATCH" etc.) removido daqui --
-                             contador em texto normal, sem selo. -->
-                        <span id="batchCount" class="text-[13px] font-semibold text-slate-400">1 vídeo · até 1 por vez</span>
-                    </div>
-                    <p id="videoContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
+                    <div id="abaBaixarLoteVarios">
+                        <!-- Etapa 2 (dossiê, 20/10/2026): este card era roxo sem ser a marca VIP --
+                             violeta volta a ser exclusividade do selo/card do plano VIP; aqui
+                             (lote, disponível em 3 planos, não só VIP Batch) é cor primária padrão
+                             = verde-água. -->
+                        <div id="secaoBatch" class="hidden">
+                            <p id="batchLimiteTexto" class="text-sm text-slate-400 mb-4">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
 
-                    <div id="batchItems" class="space-y-3"></div>
+                            <!-- Toggle de formato do LOTE (Parte B, extração de áudio -- autorização
+                                 do CÉREBRO, 11/10/2026): mesmo padrão do toggle individual
+                                 (formatoVideoBtn/formatoAudioBtn), "Vídeo (MP4)" sempre como padrão
+                                 -- quem nunca tocar aqui nunca muda de fluxo. Esta aba (#secaoBatch)
+                                 já só aparece pra quem tem plano pago com lote habilitado (gate
+                                 pré-existente, não alterado por esta etapa) -- por isso a regra
+                                 "nunca esconder a opção de áudio do Free" já está satisfeita: não
+                                 existe Free vendo esta aba para esconder algo dele. -->
+                            <div class="flex gap-2 mb-4">
+                                <button type="button" id="formatoVideoBtnLote" onclick="selecionarFormatoLote('video')"
+                                    class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]">
+                                    <i class="fa-solid fa-film mr-1"></i>Vídeo (MP4)
+                                </button>
+                                <button type="button" id="formatoAudioBtnLote" onclick="selecionarFormatoLote('audio')"
+                                    class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700">
+                                    <i class="fa-solid fa-music mr-1"></i>Só áudio (MP3)
+                                </button>
+                            </div>
+                            <p id="audioContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
 
-                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
-                        <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
-                    </button>
+                            <div class="flex items-center justify-between gap-3 mb-3">
+                                <!-- Etapa 4 (dossiê, 4.3): selo de plano ("VIP BATCH" etc.) removido
+                                     daqui -- contador em texto normal, sem selo. -->
+                                <span id="batchCount" class="text-[13px] font-semibold text-slate-400">1 vídeo · até 1 por vez</span>
+                            </div>
+                            <p id="videoContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
 
-                    <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Baixar 1 vídeo</button>
-                    <div id="batchStatus" class="mt-4 text-sm"></div>
-                </div>
-            </section>
+                            <div id="batchItems" class="space-y-3"></div>
 
-            <!-- IMPORTAR PASTA DO PINTEREST (Etapa 4, 10/10/2026 -- aprovação do CÉREBRO): seção
-                 NOVA e ISOLADA -- nenhuma linha de HTML/CSS/JS já existente foi alterada para criar
-                 esta seção (só leitura das constantes PLANOS/LIMITE_LOTE_POR_PLANO, e CHAMADAS a
-                 funções já existentes: criarCampoLote/atualizarContagemLote/processarLote/
-                 mostrarSecaoSeEscondida/escapeHtml -- nenhuma delas foi editada).
+                            <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
+                                <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
+                            </button>
 
-                 Lista os pins de uma pasta pública do Pinterest (POST /api/pinterest/board-list,
-                 Etapa 3) e deixa escolher quais baixar -- o download em si NÃO é um caminho novo:
-                 ao clicar em "Baixar selecionados", os pins marcados são inseridos no MESMO
-                 #batchItems do processamento em lote logo acima, e o MESMO processarLote() já
-                 existente (e já testado) é quem efetivamente baixa/processa/gera o ZIP.
-
-                 Diferente de #secaoBatch (escondida inteira pro Free), esta seção é SEMPRE visível
-                 pra quem tem sessão de verdade -- pedido do CÉREBRO: Free vê um estado BLOQUEADO
-                 com CTA de upgrade, nunca escondido. Busca seu PRÓPRIO status (/api/me/status) de
-                 forma independente (carregarStatusPinterestBoard, chamada no DOMContentLoaded
-                 PRÓPRIO desta seção, nunca no bootstrap antigo) -- não depende de nenhuma variável
-                 mutável das funções antigas (planoAtualCode/limiteLoteAtual), só do que a PRÓPRIA
-                 resposta trouxer, sempre fresca no momento em que a seção é usada. -->
-            <section id="secaoPinterestBoard" class="hidden py-16 sm:py-24">
-                <!-- Etapa 2 (dossiê, 20/10/2026): mesma regra do card de lote acima -- roxo some,
-                     verde-água entra (violeta fica só pro selo/card do plano VIP). -->
-                <div class="bg-card rounded-3xl p-7 border-[#19D3AE]/30 glow-hover">
-                    <div class="flex items-start gap-3 mb-5">
-                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/40 flex items-center justify-center text-[#19D3AE]"><i class="fa-brands fa-pinterest"></i></div>
-                        <div class="min-w-0">
-                            <h2 class="text-base font-extrabold text-white">Importar pasta do Pinterest</h2>
-                            <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha o que baixar.</p>
+                            <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Baixar 1 vídeo</button>
+                            <div id="batchStatus" class="mt-4 text-sm"></div>
                         </div>
                     </div>
 
-                    <!-- Estado BLOQUEADO (Free / sem sessão / plano sem lote) -- CTA de upgrade,
-                         NUNCA escondido (pedido explícito do CÉREBRO, item 4 da Etapa 4). -->
-                    <div id="pinterestBoardBloqueado" class="hidden rounded-2xl border border-slate-700 bg-[#060b14] p-5 text-center">
-                        <i class="fa-solid fa-lock text-slate-500 text-xl mb-2"></i>
-                        <p class="text-sm text-slate-300 font-bold">Importar pasta do Pinterest é um recurso dos planos com lote.</p>
-                        <p class="text-[13px] text-slate-500 mt-1">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
-                        <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-[13px] transition-colors">Ver planos</a>
-                    </div>
+                    <div id="abaBaixarLotePinterest" class="hidden">
+                        <!-- IMPORTAR PASTA DO PINTEREST (Etapa 4, 10/10/2026 -- aprovação do
+                             CÉREBRO): nenhuma linha de HTML/CSS/JS já existente foi alterada para
+                             criar esta aba (só leitura das constantes PLANOS/LIMITE_LOTE_POR_PLANO,
+                             e CHAMADAS a funções já existentes: criarCampoLote/
+                             atualizarContagemLote/processarLote/mostrarSecaoSeEscondida/
+                             escapeHtml -- nenhuma delas foi editada).
 
-                    <!-- Estado DESBLOQUEADO (planos com lote: Semanal/Mensal/VIP Batch). -->
-                    <div id="pinterestBoardLiberado" class="hidden">
-                        <div class="flex flex-col sm:flex-row gap-2 mb-3">
-                            <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="Link da pasta do Pinterest" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-[#19D3AE]/60 focus:outline-none">
-                            <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Ver o que tem na pasta</button>
-                        </div>
+                             Lista os pins de uma pasta pública do Pinterest (POST
+                             /api/pinterest/board-list, Etapa 3) e deixa escolher quais baixar -- o
+                             download em si NÃO é um caminho novo: ao clicar em "Baixar
+                             selecionados", os pins marcados são inseridos no MESMO #batchItems do
+                             processamento em lote (aba ao lado), e o MESMO processarLote() já
+                             existente (e já testado) é quem efetivamente baixa/processa/gera o ZIP.
 
-                        <div id="pinterestBoardStatus" class="text-sm"></div>
+                             Diferente de #secaoBatch (escondida inteira pro Free), esta aba é
+                             SEMPRE visível pra quem tem sessão de verdade -- pedido do CÉREBRO:
+                             Free vê um estado BLOQUEADO com CTA de upgrade, nunca escondido. Busca
+                             seu PRÓPRIO status (/api/me/status) de forma independente
+                             (carregarStatusPinterestBoard, chamada no DOMContentLoaded PRÓPRIO
+                             desta aba, nunca no bootstrap antigo) -- não depende de nenhuma
+                             variável mutável das funções antigas (planoAtualCode/limiteLoteAtual),
+                             só do que a PRÓPRIA resposta trouxer, sempre fresca no momento em que a
+                             aba é usada. -->
+                        <div id="secaoPinterestBoard" class="hidden">
+                            <!-- Etapa 2 (dossiê, 20/10/2026): mesma regra do card de lote acima --
+                                 roxo some, verde-água entra (violeta fica só pro selo/card do plano
+                                 VIP). -->
+                            <p class="text-sm text-slate-400 mb-4">Cole o link de uma pasta pública e escolha o que baixar.</p>
 
-                        <div id="pinterestBoardResultado" class="hidden mt-4">
-                            <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                                <span id="pinterestBoardSelecionados" class="text-[13px] font-bold uppercase tracking-wider text-slate-500">0 selecionados</span>
-                                <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[13px] font-bold uppercase tracking-wider text-[#19D3AE] hover:text-[#19D3AE]/80">Selecionar os primeiros</button>
+                            <!-- Estado BLOQUEADO (Free / sem sessão / plano sem lote) -- CTA de
+                                 upgrade, NUNCA escondido (pedido explícito do CÉREBRO, item 4 da
+                                 Etapa 4). -->
+                            <div id="pinterestBoardBloqueado" class="hidden rounded-2xl border border-slate-700 bg-[#060b14] p-5 text-center">
+                                <i class="fa-solid fa-lock text-slate-500 text-xl mb-2"></i>
+                                <p class="text-sm text-slate-300 font-bold">Importar pasta do Pinterest é um recurso dos planos com lote.</p>
+                                <p class="text-[13px] text-slate-500 mt-1">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
+                                <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-[13px] transition-colors">Ver planos</a>
                             </div>
 
-                            <div id="pinterestBoardGrade" class="grid grid-cols-3 gap-2"></div>
+                            <!-- Estado DESBLOQUEADO (planos com lote: Semanal/Mensal/VIP Batch). -->
+                            <div id="pinterestBoardLiberado" class="hidden">
+                                <div class="flex flex-col sm:flex-row gap-2 mb-3">
+                                    <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="Link da pasta do Pinterest" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-[#19D3AE]/60 focus:outline-none">
+                                    <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Ver o que tem na pasta</button>
+                                </div>
 
-                            <p id="pinterestBoardMaisAviso" class="hidden text-[13px] text-slate-500 mt-3">Esta pasta tem mais pins do que o mostrado aqui — só os primeiros itens aparecem.</p>
+                                <div id="pinterestBoardStatus" class="text-sm"></div>
 
-                            <div id="pinterestBoardCotaTexto" class="text-[13px] text-slate-400 mt-4"></div>
+                                <div id="pinterestBoardResultado" class="hidden mt-4">
+                                    <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+                                        <span id="pinterestBoardSelecionados" class="text-[13px] font-bold uppercase tracking-wider text-slate-500">0 selecionados</span>
+                                        <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[13px] font-bold uppercase tracking-wider text-[#19D3AE] hover:text-[#19D3AE]/80">Selecionar os primeiros</button>
+                                    </div>
 
-                            <button id="pinterestBoardBaixarBtn" type="button" onclick="baixarSelecaoPinterest()" disabled class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-download mr-1"></i>Baixar selecionados</button>
+                                    <div id="pinterestBoardGrade" class="grid grid-cols-3 gap-2"></div>
+
+                                    <p id="pinterestBoardMaisAviso" class="hidden text-[13px] text-slate-500 mt-3">Esta pasta tem mais pins do que o mostrado aqui — só os primeiros itens aparecem.</p>
+
+                                    <div id="pinterestBoardCotaTexto" class="text-[13px] text-slate-400 mt-4"></div>
+
+                                    <button id="pinterestBoardBaixarBtn" type="button" onclick="baixarSelecaoPinterest()" disabled class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-download mr-1"></i>Baixar selecionados</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2745,12 +2778,85 @@
         // precisam refletir o plano REAL agora confirmado -- mesma disciplina de
         // atualizarVisibilidadeAudioIndividual() para a extração avulsa.
         atualizarVisibilidadeAudioLote();
+        // Etapa 4 (dossiê, 4.1): #secaoBatch agora mora dentro do card único "Baixar em lote"
+        // (#secaoBaixarLote) -- o card só aparece se PELO MENOS uma das 2 abas (lote/Pinterest)
+        // tiver algo pra mostrar pra esta conta.
+        atualizarVisibilidadeSecaoBaixarLote();
     }
 
     function esconderBatch() {
         limiteLoteAtual = 0;
         const secao = document.getElementById("secaoBatch");
         if (secao) secao.classList.add("hidden");
+        atualizarVisibilidadeSecaoBaixarLote();
+    }
+
+    // ---- Card único "Baixar em lote" com abas (Etapa 4, dossiê 4.1/4.3/4.4, 20/10/2026) ----
+    // "varios" (processamento em lote) ou "pinterest" (importar pasta) -- cada aba só alterna
+    // `hidden` no WRAPPER da aba (#abaBaixarLoteVarios/#abaBaixarLotePinterest), nunca no elemento
+    // de dentro (#secaoBatch/#secaoPinterestBoard) -- esse continua 100% controlado por quem já
+    // controlava (atualizarVisibilidadeBatch() e carregarStatusPinterestBoard()). As duas razões
+    // de "hidden" (aba não selecionada x plano não habilitado) nunca se misturam.
+    let abaBaixarLoteAtiva = "varios";
+    // Disponibilidade de cada aba PRA ESTA CONTA (não é sobre qual está selecionada) -- quem
+    // decide isso é sempre atualizarVisibilidadeBatch()/esconderBatch() (lote) e
+    // carregarStatusPinterestBoard() (Pinterest), nunca esta aba em si. Começa true (otimista) até
+    // a primeira resposta real chegar, pra nunca esconder um botão de aba por um instante antes de
+    // saber o estado de verdade.
+    let abaBaixarLoteVariosDisponivel = true;
+    let abaBaixarLotePinterestDisponivel = true;
+
+    function selecionarAbaBaixarLote(aba) {
+        abaBaixarLoteAtiva = aba;
+        aplicarAbaBaixarLote();
+    }
+
+    // Único lugar que escreve o className inteiro dos 2 botões de aba e o `hidden` dos 2 painéis
+    // -- nunca mexe em classList.toggle("hidden") deles fora daqui, pra nunca ter duas fontes de
+    // verdade pisando uma na outra (a disponibilidade some nas variáveis acima, a seleção em
+    // abaBaixarLoteAtiva; esta função só LÊ as duas e desenha o resultado).
+    function aplicarAbaBaixarLote() {
+        const painelVarios = document.getElementById("abaBaixarLoteVarios");
+        const painelPinterest = document.getElementById("abaBaixarLotePinterest");
+        const btnVarios = document.getElementById("abaBaixarLoteBtnVarios");
+        const btnPinterest = document.getElementById("abaBaixarLoteBtnPinterest");
+        if (painelVarios) painelVarios.classList.toggle("hidden", abaBaixarLoteAtiva !== "varios");
+        if (painelPinterest) painelPinterest.classList.toggle("hidden", abaBaixarLoteAtiva !== "pinterest");
+
+        const base = "h-11 px-4 text-[13px] font-bold border-b-2 -mb-px transition-colors";
+        const ativo = base + " border-[#19D3AE] text-[#19D3AE]";
+        const inativo = base + " border-transparent text-slate-500 hover:text-slate-300";
+        if (btnVarios) {
+            btnVarios.className = (abaBaixarLoteAtiva === "varios" ? ativo : inativo) +
+                (abaBaixarLoteVariosDisponivel ? "" : " hidden");
+        }
+        if (btnPinterest) {
+            btnPinterest.className = (abaBaixarLoteAtiva === "pinterest" ? ativo : inativo) +
+                (abaBaixarLotePinterestDisponivel ? "" : " hidden");
+        }
+    }
+
+    // Chamada por atualizarVisibilidadeBatch()/esconderBatch() (muda o lote) E por
+    // carregarStatusPinterestBoard() (muda o Pinterest) -- as duas rodam de forma independente e
+    // em ordem não garantida no carregamento da página, então o card só decide "mostrar ou não"
+    // depois de cada uma delas rodar, nunca assumindo que a outra já rodou.
+    function atualizarVisibilidadeSecaoBaixarLote() {
+        const outer = document.getElementById("secaoBaixarLote");
+        if (!outer) return;
+        const batch = document.getElementById("secaoBatch");
+        const pinterest = document.getElementById("secaoPinterestBoard");
+        abaBaixarLoteVariosDisponivel = !!(batch && !batch.classList.contains("hidden"));
+        abaBaixarLotePinterestDisponivel = !!(pinterest && !pinterest.classList.contains("hidden"));
+        outer.classList.toggle("hidden", !abaBaixarLoteVariosDisponivel && !abaBaixarLotePinterestDisponivel);
+
+        // Se a aba ativa ficou sem conteúdo pra esta conta (ex.: só uma das 2 ferramentas
+        // habilitada), troca pra aba que sobrou.
+        if (abaBaixarLoteAtiva === "varios" && !abaBaixarLoteVariosDisponivel && abaBaixarLotePinterestDisponivel) {
+            abaBaixarLoteAtiva = "pinterest";
+        } else if (abaBaixarLoteAtiva === "pinterest" && !abaBaixarLotePinterestDisponivel && abaBaixarLoteVariosDisponivel) {
+            abaBaixarLoteAtiva = "varios";
+        }
+        aplicarAbaBaixarLote();
     }
 
     // ---- Histórico de gerações (Etapa 7 da revisão de UX, aprovação do CÉREBRO) ----
@@ -4862,6 +4968,9 @@
             // Sem conseguir saber o plano, não mostra a seção (mesmo espírito defensivo de
             // atualizarStatusContaVisual: nunca afirma um estado que o backend não confirmou).
             secao.classList.add("hidden");
+            // Etapa 4 (dossiê, 4.1): #secaoPinterestBoard agora mora dentro do card único "Baixar
+            // em lote" (#secaoBaixarLote) -- ver atualizarVisibilidadeSecaoBaixarLote().
+            atualizarVisibilidadeSecaoBaixarLote();
             return;
         }
 
@@ -4873,6 +4982,7 @@
         if (maxBatchSize <= 0) {
             bloqueado.classList.remove("hidden");
             liberado.classList.add("hidden");
+            atualizarVisibilidadeSecaoBaixarLote();
             return;
         }
 
@@ -4899,6 +5009,7 @@
         pinterestBoardLimiteSelecao = Math.min(pinterestBoardMaxBatchSize, restantesHoje);
 
         atualizarCotaPinterestBoard();
+        atualizarVisibilidadeSecaoBaixarLote();
     }
 
     function atualizarCotaPinterestBoard() {
@@ -5149,6 +5260,10 @@
         atualizarContagemLote();
 
         secaoBatch.classList.remove("hidden");
+        // Etapa 4 (dossiê, 4.1): #secaoBatch agora mora na aba "Vários (lote)" do card único
+        // "Baixar em lote" -- troca pra essa aba antes de rolar até ela, senão o usuário rolaria
+        // até um painel escondido (ainda na aba "Pasta do Pinterest").
+        selecionarAbaBaixarLote("varios");
         secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
         processarLote();
     }
@@ -5461,6 +5576,11 @@
             selecionarFormatoLote(ehAudio ? "audio" : "video");
 
             secaoBatch.classList.remove("hidden");
+            // Etapa 4 (dossiê, 4.1): #secaoBatch agora mora na aba "Vários (lote)" do card único
+            // "Baixar em lote" -- troca pra essa aba (e garante o card visível) antes de rolar.
+            const cardBaixarLote = document.getElementById("secaoBaixarLote");
+            if (cardBaixarLote) cardBaixarLote.classList.remove("hidden");
+            selecionarAbaBaixarLote("varios");
             secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
             processarLoteFormato();
         }
