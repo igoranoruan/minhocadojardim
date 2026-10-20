@@ -575,7 +575,7 @@ def test_payload_acima_de_15_itens_nao_e_bloqueado_pelo_pydantic(auth_client, fa
     text/event-stream) e é o PLANO, não o Pydantic, quem recusa."""
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
-    give(factory, session, usuario, "weekly", now=resolve_now())  # max_batch_size=5
+    give(factory, session, usuario, "weekly", now=resolve_now())  # max_batch_size=10
     urls = [f"https://www.tiktok.com/@a/{i}" for i in range(20)]
     resposta = auth_client.post("/api/download-batch", json=_body("r1", urls))
     assert resposta.status_code == 200  # não foi rejeitado na validação estrutural

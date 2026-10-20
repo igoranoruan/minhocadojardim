@@ -54,6 +54,57 @@ card Mensal e o selo "Recomendado" cortado/sobrepondo no topo.
 
 ---
 
+## Cota diária de Semanal/Mensal aumentada; teto de lote acompanha
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Pedido do Igor (decisão de produto/preço): com o Atalho do iOS/Android facilitando o
+download avulso, ele achou que o teto DIÁRIO de gerações de Semanal e Mensal ficou apertado demais
+-- pediu pra aumentar, mantendo o teto de OPERAÇÕES de batch por semana como o diferenciador real
+entre os planos. Confirmado por ele em 2 rodadas (a 1ª tinha uma ambiguidade/typo nos números -- o
+Claude recapitulou o entendimento antes de mexer em código de monetização; a 2ª confirmou os
+números e esclareceu que o teto de ITENS por lote também devia acompanhar o novo limite diário).
+
+**O que mudou:**
+| Plano | Gerações/dia | Itens por lote (`max_batch_size`) | Lotes/semana (`batch_limit`, sem mudança) |
+|---|---|---|---|
+| Semanal | 5 → **10** | 5 → **10** | 3 |
+| Mensal | 10 → **15** | 5 → **15** | 5 |
+| VIP Batch | 15 (sem mudança) | 15 (sem mudança) | ilimitado |
+
+1. **`services/plans.py`** -- `WEEKLY_PLAN.limit` 5→10, `WEEKLY_PLAN.max_batch_size` 5→10;
+   `MONTHLY_PLAN.limit` 10→15, `MONTHLY_PLAN.max_batch_size` 5→15. `batch_limit` (operações/semana)
+   de nenhum plano foi tocado. Docstring do módulo atualizada.
+2. **`static/index.html`** -- cards de Semanal e Mensal: "gerações/dia", o sub-texto "até X vídeos,
+   Y/semana" e "Até X gerações no período" (recalculado: 10×7=70, 15×30=450) atualizados. O modal de
+   pagamento (`PLANOS` no `<script>`) também atualizado com os mesmos números.
+3. **Testes atualizados** para não travar nos números antigos: `tests/test_frontend.py` (string
+   exata "X gerações/dia" na home), `tests/test_usage_batch.py` (3 testes com números do produto
+   hardcoded no nome/corpo, reescritos com os novos valores -- `_disponiveis_permite_1_ou_5`→`_10`,
+   cenário de "2 disponíveis" ajustado pra consumir 8 de 10 em vez de 3 de 5, e o teste de teto de
+   itens do Mensal usa 15/16 em vez de 5/6), `tests/test_usage_admin.py` e
+   `tests/test_batch_routes.py` (só comentários desatualizados, nenhuma asserção numérica dependia
+   do valor antigo nesses dois).
+
+**Nota pro Igor (efeito colateral do número escolhido):** Mensal e VIP Batch agora têm a MESMA cota
+diária (15 gerações/dia) -- o único diferencial numérico restante do VIP Batch é o lote ilimitado
+(Mensal: só 5 operações de batch/semana). Igor já estava ciente disso quando confirmou os números
+(avisado antes de qualquer código ser alterado).
+
+### O que foi verificado
+- [x] HTML de `static/index.html` passa por um parser real (`html.parser.HTMLParser`): zero tags
+      desbalanceadas.
+- [x] `ast.parse` confirma sintaxe válida em todos os `.py` alterados.
+- [x] `grep` confirma que nenhum outro ponto do código (rotas, e-mails, outras páginas estáticas)
+      tinha os números antigos hardcoded fora dos arquivos já corrigidos -- a lógica de negócio
+      (`services/usage.py`) lê `Plan.limit`/`Plan.max_batch_size` dinamicamente, nenhuma mensagem
+      de erro precisou mudar.
+- [ ] **Limitação do sandbox:** o ambiente do Claude não tem rede liberada pra instalar
+      fastapi/pytest agora (falha de DNS mesmo em domínios liberados, tentado 3x) -- a suíte
+      completa roda sozinha no GitHub Actions a cada push; falta confirmar "0 failed" lá.
+
+---
+
 ## Páginas do Atalho (iOS e Android): espaçamento de texto corrigido em 2 lugares
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).

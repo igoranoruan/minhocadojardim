@@ -1,9 +1,10 @@
 """Reserva de lote e consumo das cotas de gerações e operações de batch.
 
-Regras comerciais:
+Regras comerciais (atualizado 20/10/2026, pedido do Igor -- tetos diários de Semanal/Mensal
+subiram; o que segue diferenciando os planos agora é só o teto de OPERAÇÕES de batch por semana):
 - Free: não usa batch.
-- Semanal: 5 gerações/dia, 3 operações de batch/semana, máximo 5 vídeos por operação.
-- Mensal: 10 gerações/dia, 5 operações de batch/semana, máximo 5 vídeos por operação.
+- Semanal: 10 gerações/dia, 3 operações de batch/semana, máximo 10 vídeos por operação.
+- Mensal: 15 gerações/dia, 5 operações de batch/semana, máximo 15 vídeos por operação.
 - VIP Batch: 15 gerações/dia, operações de batch ilimitadas, máximo 15 vídeos por operação.
 
 Batch usa a MESMA cota de gerações do plano: 1 geração por vídeo.
@@ -502,7 +503,7 @@ def test_lote_nao_e_reduzido_para_caber_no_saldo(vip, session):
     ).remaining == 2
 
 
-def test_semanal_exemplo_do_produto_5_disponiveis_permite_1_ou_5(
+def test_semanal_exemplo_do_produto_10_disponiveis_permite_1_ou_10(
     factory,
     session,
 ):
@@ -520,7 +521,7 @@ def test_semanal_exemplo_do_produto_5_disponiveis_permite_1_ou_5(
         session,
         usuario.id,
         now=NOW,
-    ).remaining == 4
+    ).remaining == 9
 
     outro = factory.user()
     give(factory, session, outro, "weekly")
@@ -528,9 +529,9 @@ def test_semanal_exemplo_do_produto_5_disponiveis_permite_1_ou_5(
     assert _lote(
         session,
         outro,
-        "lote-5",
-        5,
-    ).item_count == 5
+        "lote-10",
+        10,
+    ).item_count == 10
 
     assert get_allowance(
         session,
@@ -549,7 +550,7 @@ def test_semanal_exemplo_do_produto_2_disponiveis_lote_de_3_e_recusado_lote_de_2
     consume(
         session,
         usuario,
-        3,
+        8,
         now=NOW,
     )
 
@@ -561,7 +562,7 @@ def test_semanal_exemplo_do_produto_2_disponiveis_lote_de_3_e_recusado_lote_de_2
             3,
         )
 
-    assert _n(session, Generation) == 3
+    assert _n(session, Generation) == 8
 
     assert _lote(
         session,
@@ -571,7 +572,7 @@ def test_semanal_exemplo_do_produto_2_disponiveis_lote_de_3_e_recusado_lote_de_2
     ).item_count == 2
 
 
-def test_mensal_exemplo_do_produto_maximo_diario_10_lote_maximo_5(
+def test_mensal_exemplo_do_produto_maximo_diario_15_lote_maximo_15(
     factory,
     session,
 ):
@@ -581,22 +582,22 @@ def test_mensal_exemplo_do_produto_maximo_diario_10_lote_maximo_5(
     assert _lote(
         session,
         usuario,
-        "cinco",
-        5,
-    ).item_count == 5
+        "quinze",
+        15,
+    ).item_count == 15
 
     assert get_allowance(
         session,
         usuario.id,
         now=NOW,
-    ).remaining == 5
+    ).remaining == 0
 
     with pytest.raises(InvalidBatchSizeError):
         _lote(
             session,
             usuario,
-            "seis",
-            6,
+            "dezesseis",
+            16,
         )
 
 

@@ -149,7 +149,7 @@ def test_admin_consegue_reservar_lote_alem_da_cota_semanal_de_operacoes(factory,
     independente da de vídeos), sem levantar BatchQuotaExceededError."""
     use_settings(admin_email="igoranoruan@gmail.com")
     admin = factory.user(email="igoranoruan@gmail.com")
-    give(factory, session, admin, "monthly", now=NOW)  # monthly: 10/dia, 5 operações/semana, teto 5/lote
+    give(factory, session, admin, "monthly", now=NOW)  # monthly: 15/dia, 5 operações/semana, teto 15/lote
 
     for i in range(5):  # esgota as 5 operações/semana normalmente
         reserve_batch(session, user_id=admin.id, request_id=f"admin-op-{i}", size=1, now=NOW)
