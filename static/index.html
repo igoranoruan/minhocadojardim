@@ -596,8 +596,20 @@
                      colunas lado a lado de sempre (md:grid md:px-0 md:snap-none md:overflow-visible
                      e md:w-auto em cada card desfazem o carrossel acima desse breakpoint).
                      Centralização inicial do Mensal: ver centralizarCarrosselPlanos(), chamada no
-                     DOMContentLoaded, só em telas mobile (abaixo de 768px). -->
-                <div class="flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none gap-5 mt-10 items-stretch px-[9%] md:px-0 md:grid-cols-3 pb-2 md:pb-0">
+                     DOMContentLoaded, só em telas mobile (abaixo de 768px).
+
+                     Correção (20/10/2026, mesmo dia -- Igor reportou "ficou meio cortado" no teste
+                     real): os selos "Recomendado"/"Maior lote disponível" são posicionados com
+                     "absolute -top-3" (saem 0.75rem PARA CIMA da borda do próprio card, de propósito,
+                     pra "flutuar" por cima). Isso funcionava no grid de desktop porque o grid não
+                     recorta conteúdo que vaza (overflow visível por padrão). Mas no container do
+                     carrossel, "overflow-x-auto" faz o navegador tratar "overflow-y" também como
+                     "auto" (regra do CSS: um eixo não pode ficar "visible" se o outro não é) -- ou
+                     seja, o container passou a recortar tudo que vaza verticalmente, cortando o topo
+                     dos selos. "pt-4" aqui reserva espaço de sobra acima dos cards (mais que os
+                     0.75rem do "-top-3") só dentro da área rolável, pra o selo caber inteiro sem ser
+                     cortado -- md:pt-0 desfaz isso no desktop, onde o problema não existe. -->
+                <div class="flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none gap-5 mt-10 items-stretch px-[9%] md:px-0 md:grid-cols-3 pt-4 md:pt-0 pb-2 md:pb-0">
                     <div class="shrink-0 w-[82%] md:w-auto snap-center bg-card rounded-3xl p-7 flex flex-col glow-hover">
                         <div class="text-[13px] text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>

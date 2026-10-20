@@ -14,6 +14,46 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Carrossel de planos no mobile: selo "Recomendado"/"Maior lote disponível" cortado no topo
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Igor testou o carrossel (commit `c1244ef`) numa aba anônima de verdade -- a copy e o
+carrossel estavam no ar (confirmando que o relato anterior de "não mudou nada" era mesmo cache do
+navegador, não bug) -- mas reportou "ficou meio cortado, bugou um pouco", com 2 prints mostrando o
+card Mensal e o selo "Recomendado" cortado/sobrepondo no topo.
+
+**O que mudou (`static/index.html`, dentro de `#secaoPlanos`):**
+- **Causa raiz:** os selos `<span class="absolute -top-3 ...">Recomendado</span>` e `Maior lote
+  disponível` são posicionados "saindo" 0.75rem pra cima do próprio card, de propósito -- isso
+  sempre funcionou no grid de desktop, que não recorta conteúdo que vaza. O container do carrossel
+  mobile (`overflow-x-auto`), porém, faz o navegador tratar o eixo vertical (`overflow-y`) também
+  como recortado (regra do CSS: um eixo não fica "visible" se o outro não é) -- então o topo dos
+  selos passou a ser cortado só no mobile, só depois de virar carrossel.
+- **Correção:** adicionado `pt-4 md:pt-0` no container do carrossel -- reserva espaço de sobra
+  acima dos cards (mais que os 0.75rem que o selo usa) só dentro da área rolável, só no mobile;
+  `md:pt-0` desfaz no desktop, onde o problema nunca existiu.
+- Nenhuma outra classe dos cards (`w-[82%]`, `px-[9%]`, `snap-center`) foi alterada -- o espaçamento
+  horizontal (a "pontinha" do Semanal/VIP Batch visível nas laterais) é o comportamento pretendido,
+  não fazia parte do bug relatado.
+
+### O que foi verificado
+- [x] HTML de `static/index.html` passa por um parser real (`html.parser.HTMLParser`): zero tags
+      desbalanceadas, zero erros, depois da mudança.
+- [x] Mudança é só de classes CSS (Tailwind) num `<div>` existente -- nenhum HTML, JS ou Python
+      tocado, então nenhum teste existente (`test_frontend.py`, `test_static_pages.py`) depende
+      dessas classes.
+- [ ] **Limitação do sandbox:** o ambiente do Claude não tem rede liberada para instalar
+      fastapi/pytest agora (falha de DNS mesmo em domínios liberados, tentado 2x) -- a suíte
+      completa roda sozinha no GitHub Actions a cada push; falta confirmar "0 failed" lá (deve
+      aparecer em poucos minutos, sem precisar do Igor).
+- [ ] **Só dá pra confirmar visualmente num celular de verdade:** o raciocínio do overflow-x/
+      overflow-y é uma explicação técnica sólida e bem conhecida do CSS, mas o Claude não tem como
+      renderizar o carrossel num navegador real aqui dentro -- pedir pro Igor conferir de novo
+      (aba anônima, pra não repetir o problema de cache) antes de considerar fechado.
+
+---
+
 ## Páginas do Atalho (iOS e Android): espaçamento de texto corrigido em 2 lugares
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).
