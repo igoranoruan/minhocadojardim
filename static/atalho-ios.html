@@ -125,21 +125,25 @@
                  (token já salvo localmente, sem o dele ir junto no link). Botão trocado de
                  "Em breve" pro link de verdade. -->
             <h2 class="!mt-0">Instalação rápida</h2>
-            <p class="text-xs text-slate-500 -mt-1 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>O caminho mais rápido: instala o atalho pronto com um toque. Se preferir montar você mesmo (ou o botão abaixo ainda não estiver liberado), use "Configurar manualmente" mais abaixo.</p>
+            <p class="text-xs text-slate-500 mt-2 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>O caminho mais rápido: instala o atalho pronto com um toque, direto pelo app Atalhos.</p>
 
             <div class="rapido-grade">
                 <div class="rapido-card">
                     <span class="rapido-selo">1</span>
-                    <p class="rapido-titulo">Copie seu token</p>
-                    <p>No KLANGO, na seção <strong>"Enviar para o KLANGO"</strong>, toque em <strong>Gerar token</strong> e depois em <strong>Copiar</strong>.</p>
-                    <a href="/?atalho=1" class="btn-instalar pronto"><i class="fa-solid fa-key"></i>Ir gerar meu token</a>
+                    <p class="rapido-titulo">Instale o atalho</p>
+                    <p>Toque no botão abaixo e siga as telas do app Atalhos. Durante a instalação ele vai pedir pra colar seu token pessoal — se ainda não tiver um, é só voltar aqui e gerar no passo 2 (dá pra ir e voltar entre os dois apps sem perder o lugar).</p>
+                    <a href="https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721" target="_blank" rel="noopener" class="btn-instalar pronto"><i class="fa-solid fa-download"></i>Instalar atalho</a>
                 </div>
 
                 <div class="rapido-card">
                     <span class="rapido-selo">2</span>
-                    <p class="rapido-titulo">Instale o atalho</p>
-                    <p>Toque no botão abaixo e siga as telas do app Atalhos — ele vai pedir pra colar o token que você acabou de copiar.</p>
-                    <a href="https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721" target="_blank" rel="noopener" class="btn-instalar pronto"><i class="fa-solid fa-download"></i>Instalar atalho</a>
+                    <p class="rapido-titulo">Gere o token</p>
+                    <p>Toque no botão abaixo pra gerar seu token e copiar — sem sair desta página. Depois é só voltar pro Atalhos e colar.</p>
+                    <button type="button" id="btnGerarTokenRapido" onclick="gerarTokenRapido(this)" class="btn-instalar pronto"><i class="fa-solid fa-key"></i>Gerar token</button>
+                    <div id="tokenRapidoCampo" class="hidden mt-2">
+                        <input type="text" id="tokenRapidoInput" readonly class="w-full h-9 px-2.5 bg-[#050810] border border-slate-800 rounded-lg text-[#19D3AE] text-xs font-mono">
+                    </div>
+                    <p id="tokenRapidoStatus" class="hidden text-xs mt-2"></p>
                 </div>
 
                 <div class="rapido-card">
@@ -154,12 +158,14 @@
                 </div>
             </div>
 
-            <!-- ============================================================================
-                 CONFIGURAÇÃO MANUAL (conteúdo original da Etapa 4, 15-16/10/2026) -- recolhida
-                 por padrão agora que existe o caminho rápido acima, mas continua INTEIRA e
-                 inalterada: é o único caminho hoje (e o caminho de reserva depois) para quem
-                 prefere montar o atalho com as próprias mãos ou quer entender o que cada ação
-                 faz. -->
+            <!-- CONFIGURAÇÃO MANUAL (conteúdo original da Etapa 4, 15-16/10/2026) — escondida a
+                 partir de 20/10/2026 (pedido do Igor, depois de testar a instalação rápida com
+                 sucesso pelo celular): agora que o caminho rápido de 3 passos funciona de ponta a
+                 ponta, o passo a passo manual completo (8 passos de configuração + 3 de teste) traz
+                 mais objeção do que ajuda pra quem está chegando. Fica comentada aqui embaixo,
+                 inteira e sem nenhuma edição, pra poder voltar fácil se um dia precisar de novo
+                 (ex.: alguém com um app Atalhos mais antigo pra quem o link do iCloud não funcione).
+
             <details class="manual mt-6">
                 <summary>
                     <span><i class="fa-solid fa-screwdriver-wrench mr-2 text-[#19D3AE]"></i>Prefere configurar manualmente?</span>
@@ -306,6 +312,7 @@
                     </ol>
                 </div>
             </details>
+            -->
 
             <!-- ============================================================================
                  PROBLEMAS COMUNS (17/10/2026) -- baseado no comportamento REAL do backend
@@ -316,13 +323,95 @@
                  "leia o texto da notificação", não "quebrou". -->
             <h2>Problemas comuns</h2>
             <ul>
-                <li><strong>A notificação mostra "Token inválido ou revogado"</strong> — gere um novo token na seção "Enviar para o KLANGO" do site e cole-o de novo (passo 1 da instalação rápida, ou ação Texto do passo 1 manual).</li>
+                <li><strong>A notificação mostra "Token inválido ou revogado"</strong> — gere um novo token aqui mesmo (passo 2 da instalação rápida, botão "Gerar token") e cole-o no atalho quando ele pedir.</li>
                 <li><strong>A notificação mostra outro aviso</strong> (link já estava na fila, fila cheia, ou essa plataforma/link não é suportado) — não é erro de conexão: é a resposta normal do KLANGO explicando o motivo. Leia o texto da notificação, ele já diz o que fazer.</li>
-                <li><strong>O atalho não aparece ao compartilhar</strong> — confirme que "Mostrar ao Compartilhar" está ativo (passo 8 da configuração manual); no app que você está compartilhando, toque em "Mais" (os três pontinhos) e ative o Klango.MP4 ali.</li>
+                <li><strong>O atalho não aparece ao compartilhar</strong> — no app que você está compartilhando, toque em "Mais" (os três pontinhos) e ative o Klango.MP4 ali; a instalação rápida já deixa isso ativado automaticamente, então normalmente não precisa.</li>
                 <li><strong>A fila não aparece no site</strong> — recarregue a página; os itens enviados pelo Atalho aparecem na seção "Enviar para o KLANGO" assim que a página recarrega.</li>
             </ul>
 
         </div>
     </div>
+
+    <!-- Passo 2 da instalação rápida ("Gere o token", 20/10/2026, pedido do Igor): antes esse botão
+         mandava pra "/?atalho=1" e fechava esta página de instruções, forçando a pessoa a voltar
+         aqui depois pra continuar o passo 3/instalação -- agora gera e copia o token direto aqui,
+         sem sair da página. Mesma rota (/api/share/token) e mesma lógica de confirmação antes de
+         revogar um token existente já usadas por gerarTokenAtalho() em static/index.html. -->
+    <script>
+        async function gerarTokenRapido(botao) {
+            const campo = document.getElementById("tokenRapidoCampo");
+            const input = document.getElementById("tokenRapidoInput");
+            const status = document.getElementById("tokenRapidoStatus");
+
+            function mostrarStatus(texto, classe) {
+                status.textContent = texto;
+                status.className = `text-xs mt-2 ${classe}`;
+                status.classList.remove("hidden");
+            }
+
+            // Gerar um token novo revoga o anterior automaticamente (1 token ativo por usuário --
+            // services/share_queue.py::generate_token). Já existindo um, confirma antes: quem já
+            // tinha configurado o atalho no celular com o token antigo precisaria reconfigurar.
+            let jaTemToken = false;
+            try {
+                const statusRes = await fetch("/api/share/token", { credentials: "same-origin" });
+                if (statusRes.status === 401) {
+                    mostrarStatus("Você precisa estar logado no KLANGO.MP4 neste navegador. Abra o site, faça login e volte aqui.", "text-amber-400");
+                    return;
+                }
+                if (statusRes.ok) {
+                    const dados = await statusRes.json();
+                    jaTemToken = !!(dados && dados.exists);
+                }
+            } catch (err) {
+                mostrarStatus("Não foi possível checar seu token agora. Tente de novo.", "text-red-400");
+                return;
+            }
+
+            if (jaTemToken && !confirm("Gerar um novo token revoga o atual. Qualquer atalho já configurado com o token antigo para de funcionar. Continuar?")) {
+                return;
+            }
+
+            mostrarStatus("Gerando token...", "text-slate-500");
+            try {
+                const res = await fetch("/api/share/token", { method: "POST", credentials: "same-origin" });
+                if (res.status === 401) {
+                    mostrarStatus("Você precisa estar logado no KLANGO.MP4 neste navegador. Abra o site, faça login e volte aqui.", "text-amber-400");
+                    return;
+                }
+                if (!res.ok) {
+                    mostrarStatus("Não foi possível gerar o token. Tente de novo.", "text-red-400");
+                    return;
+                }
+                const dados = await res.json();
+                input.value = dados.token;
+                campo.classList.remove("hidden");
+
+                let copiado = false;
+                try {
+                    await navigator.clipboard.writeText(dados.token);
+                    copiado = true;
+                } catch (err) {
+                    // Contextos sem Clipboard API (mesmo fallback de copiarTokenAtalho em
+                    // static/index.html): seleciona o campo pra copiar manualmente.
+                    input.select();
+                    try {
+                        document.execCommand("copy");
+                        copiado = true;
+                    } catch (_) {
+                        copiado = false;
+                    }
+                }
+
+                mostrarStatus(
+                    copiado ? "Token copiado! Volte pro app Atalhos e cole quando ele pedir." : "Token gerado. Toque no campo acima pra copiar manualmente.",
+                    "text-[#a7f3e8]"
+                );
+            } catch (err) {
+                console.error(err);
+                mostrarStatus("Não foi possível gerar o token. Tente de novo.", "text-red-400");
+            }
+        }
+    </script>
 </body>
 </html>

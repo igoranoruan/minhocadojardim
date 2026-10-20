@@ -14,6 +14,73 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Página de instalação do Atalho no iPhone (/atalho-ios) -- ajustes pós-teste do Igor
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Feedback do Igor depois de testar a Instalação Rápida pelo celular de verdade (prints
+anexados na conversa). Pediu 4 ajustes pontuais, todos em `static/atalho-ios.html`.
+
+**O que mudou:**
+1. **Botão "Ir gerar meu token" → "Gerar token", sem sair da página.** Antes ele navegava pra
+   `/?atalho=1` (fechando a página de instruções -- a pessoa tinha que gerar o token na home e
+   depois voltar manualmente pra `/atalho-ios` pra continuar a instalação). Agora o botão chama
+   `gerarTokenRapido()`, uma função nova que gera o token (`POST /api/share/token`) e copia pro
+   clipboard (`navigator.clipboard`, com fallback via `execCommand("copy")` se a API não estiver
+   disponível) direto nesta página, mostrando o token num campo e uma mensagem de status -- nunca
+   navega pra lugar nenhum. Se já existir um token ativo, confirma antes de gerar um novo (mesmo
+   texto/raciocínio de `gerarTokenAtalho()` em `static/index.html`, já que gerar revoga o anterior).
+   Se a pessoa não estiver logada (401), mostra aviso pedindo pra fazer login no site primeiro.
+2. **Ordem dos passos invertida:** "Instale o atalho" agora é o passo 1, "Gere o token" é o passo
+   2 (era o contrário). Raciocínio do Igor: ao instalar, o próprio app Atalhos já pede o token
+   durante a importação -- nesse momento a pessoa se liga que precisa de um e só então vai gerar.
+   Como o passo 2 não navega mais pra fora da página (ajuste 1 acima), dá pra alternar entre Atalhos
+   e Safari sem perder o lugar.
+3. **Seção "Prefere configurar manualmente?" escondida.** Não foi removida -- o `<details>` inteiro
+   (8 passos de configuração + 3 de teste, 18 fotos) foi envolvido num comentário HTML, preservado
+   palavra por palavra, fácil de restaurar se precisar de novo (ex.: alguém com um app Atalhos mais
+   antigo). Raciocínio do Igor: agora que a instalação rápida funciona de ponta a ponta e já foi
+   confirmada, o passo a passo manual completo traz mais objeção do que ajuda pra quem está
+   chegando. A seção "Problemas comuns" (que referenciava passos do manual) foi reescrita pra não
+   depender mais dele.
+4. **Espaçamento do texto de apoio em "Instalação rápida".** O parágrafo pequeno logo abaixo do
+   título tinha uma margem negativa (`-mt-1`) que colava ele no título -- trocado por `mt-2` (mais
+   distância) e o texto também foi encurtado (a frase "use 'Configurar manualmente' mais abaixo"
+   não fazia mais sentido com a seção escondida).
+
+**Fora do escopo / decisão consciente:** o mecanismo que consumia a flag `?atalho=1` em
+`static/index.html` (`capturarAutoFluxoAtalhoDaUrl()`, `carregarAtalho()`) não foi removido --
+ficou órfão (nenhum botão manda mais `?atalho=1`) mas inofensivo, só rodaria se alguém digitasse
+isso na URL manualmente. Não mexi porque é fora do pedido específico do Igor desta vez; fica
+registrado aqui caso ele prefira que eu limpe depois.
+
+### O que foi verificado
+- [x] HTML inteiro passa por um parser real (`html.parser.HTMLParser`, que entende limites de
+      comentário corretamente, diferente de uma contagem de tags por regex): zero tags
+      desbalanceadas, zero erros -- confirma que o `<details>` da configuração manual está
+      corretamente dentro do novo comentário HTML (não vazou nem quebrou a estrutura da página).
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Teste de lógica isolado em Node para `gerarTokenRapido()` (fetch/clipboard/confirm mockados
+      à mão): 9 asserções cobrindo (a) sem token ainda -- gera direto, sem confirmação; (b) já tem
+      token, usuário confirma -- gera e substitui; (c) já tem token, usuário cancela -- não chama a
+      API de gerar nem mexe na tela; (d) não logado (401) -- avisa pra fazer login, nunca tenta
+      gerar; (e) clipboard falha mas o fallback `execCommand` funciona -- ainda conta como copiado;
+      (f) os dois falham -- token aparece no campo mesmo assim, com mensagem de copiar na mão.
+      Todas as 9 bateram.
+- [x] `tests/test_static_pages.py` atualizado: o teste que verificava a página antiga foi reescrito
+      (nova ordem dos passos, botão local em vez do link pra `/?atalho=1`, textos novos) e ganhou um
+      teste novo que confirma estruturalmente que o `<details>` manual está dentro do comentário
+      HTML que o esconde.
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Teste de verdade no iPhone -- mesma limitação de sempre, sandbox sem navegador/app
+      Atalhos reais.** Vale o Igor conferir: tocar em "Gerar token" sem sair da página e ver o
+      token aparecer + a mensagem de copiado; tentar de novo já tendo um token ativo e confirmar que
+      pede confirmação antes de revogar; conferir visualmente o espaçamento novo do texto de apoio;
+      e confirmar que a seção manual realmente não aparece mais na tela (só o atalho rápido +
+      problemas comuns).
+
+---
+
 ## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 5 (ícone de plataforma + ID curto no lote)
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).

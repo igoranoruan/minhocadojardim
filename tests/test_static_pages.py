@@ -8,9 +8,11 @@ def test_pagina_inicial(auth_client):
     resposta = auth_client.get("/")
     assert resposta.status_code == 200
     assert "KLANGO.MP4" in resposta.text
-    # "?atalho=1" (17/10/2026): flag que o botão "Ir gerar meu token" de /atalho-ios manda pra cá
-    # -- confirma que o helper que a consome continua presente (ver carregarAtalho() e
-    # capturarAutoFluxoAtalhoDaUrl() em static/index.html).
+    # "?atalho=1" (17/10/2026): nenhum botão manda mais pra cá desde 20/10/2026 (o botão de
+    # /atalho-ios agora gera e copia o token sem navegar, ver gerarTokenRapido() em
+    # static/atalho-ios.html) -- o helper que consumia a flag (capturarAutoFluxoAtalhoDaUrl() em
+    # static/index.html) ficou órfão mas inofensivo (só roda se alguém digitar "?atalho=1" na URL
+    # na mão) e não foi removido por estar fora do escopo deste pedido do Igor; continua presente.
     assert "capturarAutoFluxoAtalhoDaUrl" in resposta.text
     # PWA do Android (17/10/2026, ver routes/share_target.py e static/manifest.json): manifest
     # linkado, helper que consome "?compartilhar_pendente=" presente, e link pra /atalho-android.
@@ -67,33 +69,54 @@ def test_pagina_de_configuracao_do_atalho_ios(auth_client):
     assert "atalho-klango.shortcut" not in resposta.text
 
 
-def test_pagina_de_configuracao_do_atalho_ios_tem_a_instalacao_rapida_e_o_manual_recolhido(auth_client):
-    """Smoke test (17/10/2026, aprovação do CÉREBRO -- reestruturação em 3 camadas): confirma que
-    os 3 passos da instalação rápida, o <details> recolhido com o manual completo e a seção
-    "Problemas comuns" estão todos presentes -- e que o botão de instalar já aponta pro link real
-    do iCloud confirmado pelo Igor (deixa de ser "Em breve")."""
+def test_pagina_de_configuracao_do_atalho_ios_tem_a_instalacao_rapida(auth_client):
+    """Smoke test (17/10/2026, aprovação do CÉREBRO -- reestruturação em 3 camadas; ajustado em
+    20/10/2026 por pedido do Igor depois do teste real no celular): confirma que os 3 passos da
+    instalação rápida e a seção "Problemas comuns" estão presentes, que o botão de instalar aponta
+    pro link real do iCloud (deixa de ser "Em breve"), e que a ordem dos passos foi invertida --
+    "Instale o atalho" vem antes de "Gere o token" agora (o próprio app Atalhos pede o token durante
+    a instalação, então faz mais sentido a pessoa só perceber que precisa de um nesse momento).
+
+    20/10/2026 (pedido do Igor): o botão que antes mandava pra "/?atalho=1" (fechando esta página e
+    exigindo voltar depois) virou um botão que gera e copia o token direto aqui, sem navegar pra
+    lugar nenhum -- ver gerarTokenRapido() em static/atalho-ios.html. A seção "Prefere configurar
+    manualmente?" foi escondida (comentada no HTML, não removida) por trazer mais objeção do que
+    ajuda agora que o caminho rápido já foi confirmado funcionando de ponta a ponta."""
     resposta = auth_client.get("/atalho-ios")
     assert resposta.status_code == 200
     assert "Instalação rápida" in resposta.text
-    assert "Copie seu token" in resposta.text
     assert "Instale o atalho" in resposta.text
+    assert "Gere o token" in resposta.text
     assert "Teste compartilhando" in resposta.text
     assert "https://www.icloud.com/shortcuts/e02b6e62f2654acf8b17765878d3f721" in resposta.text
     # botão de instalar já tem o link real do iCloud (classe "em-breve" não existe mais nele --
     # a palavra "Em breve" ainda aparece num comentário HTML que documenta o histórico, por isso
     # não dá pra checar a ausência do texto puro aqui)
     assert 'class="btn-instalar em-breve"' not in resposta.text
-    # Passo 1 ("Copie seu token") manda pra "/?atalho=1" -- index.html consome essa flag em
-    # carregarAtalho() pra já rolar até a seção "Enviar para o KLANGO" e gerar o token sozinho,
-    # sem a pessoa precisar rolar a home inteira e tocar em "Gerar token" (pedido do Igor,
-    # 17/10/2026, ver carregarAtalho() em static/index.html).
-    assert 'href="/?atalho=1"' in resposta.text
-    assert "Prefere configurar manualmente?" in resposta.text
+    # "Instale o atalho" aparece ANTES de "Gere o token" no HTML (ordem invertida nesta etapa).
+    assert resposta.text.index("Instale o atalho") < resposta.text.index("Gere o token")
+    # botão de gerar token agora é local (chama JS, não navega pra "/?atalho=1" nem fecha a página)
+    assert 'onclick="gerarTokenRapido(this)"' in resposta.text
+    assert 'href="/?atalho=1"' not in resposta.text
     assert "Problemas comuns" in resposta.text
-    # o passo a passo manual original continua inteiro, só recolhido
-    assert "Mostrar ao Compartilhar" in resposta.text
     assert "16-destaque.jpg" in resposta.text  # capturas com destaque usadas na instalação rápida
-    assert "16-teste-achar-na-lista.jpg" in resposta.text  # originais, ainda usadas na seção manual
+    # a seção manual foi escondida (comentada), não removida -- o texto ainda aparece na resposta
+    # bruta (dentro do comentário HTML); o teste abaixo confirma que está mesmo dentro dele.
+    assert "Prefere configurar manualmente?" in resposta.text
+
+
+def test_pagina_de_configuracao_do_atalho_ios_tem_a_configuracao_manual_comentada_no_html(auth_client):
+    """A seção "Prefere configurar manualmente?" não é renderizada como elemento visível -- ela foi
+    envolvida por um comentário HTML (<!-- ... -->) em 20/10/2026, então o <details> inteiro deve
+    estar DENTRO de um bloco de comentário, não solto no HTML."""
+    resposta = auth_client.get("/atalho-ios")
+    texto = resposta.text
+    inicio_comentario = texto.index("CONFIGURAÇÃO MANUAL (conteúdo original")
+    # o comentário HTML que engloba essa nota começa antes dela
+    abre = texto.rindex("<!--", 0, inicio_comentario + 1)
+    fecha = texto.index("-->", abre)
+    posicao_details = texto.index('<details class="manual mt-6">')
+    assert abre < posicao_details < fecha, "o <details> da configuração manual precisa estar dentro do comentário HTML"
 
 
 def test_pagina_inicial_tem_os_dois_botoes_da_fila_do_atalho(auth_client):
