@@ -15,7 +15,10 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 ---
 
 ## Cota diária revista de novo (2ª rodada do dia) + FAQ "ver mais/ver menos"
-**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Status:** Implementado, commitado na `main` e **`pytest -q` confirmado verde** pelo GitHub
+Actions. Deploy `live` no Render. Inclui também um 3º commit da mesma rodada: correção do vão
+vazio nos cards no mobile (`flex-1` -> `md:flex-1` nos bullets), achado na revisão de conversão
+que o Igor pediu junto com esses outros dois itens -- também CI verde e deploy `live`.
 **Branch:** `main` (direto).
 **Data:** 20/10/2026
 
@@ -71,11 +74,11 @@ mais" que revela o resto, e "ver menos" pra recolher de novo.
 - [x] O `<script>` principal (onde `alternarFaqMais()` foi adicionada) passa por `node --check`:
       zero erros de sintaxe.
 - [x] `ast.parse` confirma sintaxe válida em `services/plans.py` e nos 13 arquivos de teste.
-- [ ] **Limitação do sandbox:** sem rede liberada pra instalar fastapi/pytest localmente -- a suíte
-      completa roda sozinha no GitHub Actions a cada push; falta confirmar "0 failed" lá.
+- [x] **Limitação do sandbox:** sem rede liberada pra instalar fastapi/pytest localmente -- a suíte
+      completa rodou sozinha no GitHub Actions, "0 failed" confirmado (2 commits dessa rodada).
 - [ ] **Só dá pra confirmar visualmente num celular de verdade:** o toggle do FAQ (abre/fecha,
-      texto do botão, scroll ao fechar) e os novos números de cota nos cards -- pedir pro Igor
-      conferir antes de considerar fechado.
+      texto do botão, scroll ao fechar), os novos números de cota nos cards e se o vão vazio no
+      card do mobile realmente sumiu -- pedir pro Igor conferir antes de considerar fechado.
 
 ---
 
