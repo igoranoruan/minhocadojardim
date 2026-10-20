@@ -4481,10 +4481,28 @@ https://..."></textarea>
         // `position`, 1-based -- o mesmo campo que os eventos SSE do backend usam para dizer a
         // qual item cada atualização pertence). `rodape` recebe o resumo final ou uma mensagem
         // de erro; nada aqui é inventado -- cada texto só aparece depois do evento correspondente.
+        //
+        // Etapa 4 (dossiê, 4.3): o aviso colorido virou uma linha cinza simples -- o
+        // `[confirmar]` do dossiê ("o processamento continua com a tela do celular bloqueada?")
+        // foi checado em routes/generations.py: o download/processamento de cada item roda numa
+        // thread do SERVIDOR (threading.Thread, _run_batch_in_background), independente da
+        // conexão SSE -- travar a tela ou a aba perder a conexão NÃO cancela nem pausa o
+        // processamento, só faz a lista de progresso parar de atualizar na tela até reconectar.
+        // Por isso o texto diz "pode deixar em segundo plano" (fato confirmado no código), mas
+        // NUNCA promete "o ZIP fica pronto no seu histórico depois" -- GenerationHistoryOut
+        // (routes/me.py) deliberadamente não expõe batch_id, então não existe hoje um jeito de
+        // voltar depois e re-achar o link do ZIP pela tela de histórico (só os vídeos individuais
+        // aparecem lá) -- prometer isso seria informação que o produto ainda não entrega.
         const aviso = document.createElement("div");
-        aviso.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] rounded-xl mb-3";
-        aviso.textContent = "O KLANGO.MP4 está preparando os vídeos um por um. Isso pode levar alguns minutos.";
+        aviso.className = "p-3 bg-slate-900/60 border border-slate-800 text-slate-400 rounded-xl mb-3 text-[13px]";
+        aviso.textContent = "Leva alguns minutos. Pode deixar esta aba em segundo plano — o processamento continua normalmente.";
         status.appendChild(aviso);
+
+        // Resumo geral ("2 de 6 prontos") -- separado do aviso acima (que é só a instrução fixa),
+        // atualizado a cada batch_progress. Começa escondido até o primeiro evento chegar.
+        const resumoProgresso = document.createElement("div");
+        resumoProgresso.className = "hidden mb-3 text-[13px] font-bold text-slate-300";
+        status.appendChild(resumoProgresso);
 
         const lista = document.createElement("div");
         lista.className = "space-y-2";
@@ -4546,8 +4564,13 @@ https://..."></textarea>
             if (tipo === "batch_reserved") {
                 batchIdAtual = dados.batch_id;
             } else if (tipo === "item_status" || tipo === "item_progress") {
+                // Etapa 4 (dossiê, 4.3): "Processando e limpando..." (redundante -- já se sabe que
+                // está processando) vira só "Limpando..."; "Baixando... (40%)" vira "Baixando 40%"
+                // (sem reticências antes do percentual, sem parênteses -- mesmo espírito de "Na
+                // fila" perder as reticências na Etapa 4 parte 1).
+                const mensagemBase = (dados.message || "Processando...").replace(/^Processando e /, "").replace(/\.\.\.$/, "");
                 const mensagem = typeof dados.percent === "number"
-                    ? `${dados.message} (${Math.round(dados.percent)}%)`
+                    ? `${mensagemBase} ${Math.round(dados.percent)}%`
                     : (dados.message || "Processando...");
                 atualizarLinha(dados.position, mensagem, "normal");
             } else if (tipo === "item_complete") {
@@ -4569,9 +4592,14 @@ https://..."></textarea>
                     atualizarLinha(dados.position, "Não foi possível preparar este vídeo.", "erro");
                 }
             } else if (tipo === "batch_progress") {
-                aviso.textContent = `${dados.completed + dados.failed} de ${dados.total} vídeos processados (${dados.completed} prontos, ${dados.failed} com erro).`;
+                // Etapa 4 (dossiê, 4.3): resumo geral agora é um elemento PRÓPRIO (resumoProgresso),
+                // separado do aviso fixo acima -- antes esta linha SUBSTITUÍA o aviso inteiro.
+                resumoProgresso.classList.remove("hidden");
+                resumoProgresso.textContent = `${dados.completed + dados.failed} de ${dados.total} prontos`
+                    + (dados.failed > 0 ? ` (${dados.failed} com erro)` : "");
             } else if (tipo === "complete") {
                 aviso.remove();
+                resumoProgresso.remove();
                 rodape.innerHTML = "";
                 const resumo = document.createElement("div");
                 resumo.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-xl";
@@ -4590,6 +4618,7 @@ https://..."></textarea>
                 rodape.appendChild(resumo);
             } else if (tipo === "error") {
                 aviso.remove();
+                resumoProgresso.remove();
                 rodape.innerHTML = "";
                 const erro = document.createElement("div");
                 erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
@@ -4807,10 +4836,17 @@ https://..."></textarea>
         status.className = "mt-4 text-sm";
         status.innerHTML = "";
 
+        // Etapa 4 (dossiê, 4.3): mesmo tratamento do lote de vídeo (ver processarLote() acima) --
+        // aviso cinza simples (processamento roda numa thread do servidor, independente da SSE,
+        // confirmado em routes/audio.py) + resumo geral separado, atualizado por batch_progress.
         const aviso = document.createElement("div");
-        aviso.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] rounded-xl mb-3";
-        aviso.textContent = "O KLANGO.MP4 está extraindo o áudio um por um. Isso pode levar alguns minutos.";
+        aviso.className = "p-3 bg-slate-900/60 border border-slate-800 text-slate-400 rounded-xl mb-3 text-[13px]";
+        aviso.textContent = "Leva alguns minutos. Pode deixar esta aba em segundo plano — o processamento continua normalmente.";
         status.appendChild(aviso);
+
+        const resumoProgresso = document.createElement("div");
+        resumoProgresso.className = "hidden mb-3 text-[13px] font-bold text-slate-300";
+        status.appendChild(resumoProgresso);
 
         const lista = document.createElement("div");
         lista.className = "space-y-2";
@@ -4873,8 +4909,11 @@ https://..."></textarea>
             if (tipo === "batch_reserved") {
                 batchIdAtual = dados.batch_id;
             } else if (tipo === "item_status" || tipo === "item_progress") {
+                // Etapa 4 (dossiê, 4.3): "Baixando... (40%)" vira "Baixando 40%" (sem reticências
+                // antes do percentual, sem parênteses).
+                const mensagemBase = (dados.message || "Processando...").replace(/\.\.\.$/, "");
                 const mensagem = typeof dados.percent === "number"
-                    ? `${dados.message} (${Math.round(dados.percent)}%)`
+                    ? `${mensagemBase} ${Math.round(dados.percent)}%`
                     : (dados.message || "Processando...");
                 atualizarLinha(dados.position, mensagem, "normal");
             } else if (tipo === "item_complete") {
@@ -4900,9 +4939,12 @@ https://..."></textarea>
                     atualizarLinha(dados.position, "Não foi possível extrair o áudio deste vídeo.", "erro");
                 }
             } else if (tipo === "batch_progress") {
-                aviso.textContent = `${dados.completed + dados.failed} de ${dados.total} áudios processados (${dados.completed} prontos, ${dados.failed} com erro).`;
+                resumoProgresso.classList.remove("hidden");
+                resumoProgresso.textContent = `${dados.completed + dados.failed} de ${dados.total} prontos`
+                    + (dados.failed > 0 ? ` (${dados.failed} com erro)` : "");
             } else if (tipo === "complete") {
                 aviso.remove();
+                resumoProgresso.remove();
                 rodape.innerHTML = "";
                 const resumo = document.createElement("div");
                 resumo.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 rounded-xl";
@@ -4921,6 +4963,7 @@ https://..."></textarea>
                 rodape.appendChild(resumo);
             } else if (tipo === "error") {
                 aviso.remove();
+                resumoProgresso.remove();
                 rodape.innerHTML = "";
                 const erro = document.createElement("div");
                 erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";

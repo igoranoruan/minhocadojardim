@@ -14,6 +14,68 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 4 (aviso de processamento + resumo + estados)
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção 4.3 "Aba Vários (lote)". Aprovação do Igor:
+"Sim meu amigo, você tem total autonomia, pode seguir com tudo".
+
+**`[confirmar]` do próprio dossiê, resolvido lendo o backend (`routes/generations.py`,
+`routes/audio.py`):** a dúvida era se o processamento continua rodando com a tela do celular
+bloqueada ou a aba em segundo plano. **Sim, continua** -- tanto o lote de vídeo
+(`_run_batch_in_background`) quanto o de áudio (`routes/audio.py`, mesmo desenho) rodam numa
+THREAD DO SERVIDOR (`threading.Thread`), totalmente independente da conexão SSE que alimenta a
+tela. Travar o celular ou perder a conexão não cancela nem pausa nada -- só faz a lista de
+progresso na tela parar de atualizar até reconectar. **Ressalva que ficou de fora da promessa**:
+`GenerationHistoryOut` (`routes/me.py`) deliberadamente não expõe `batch_id`, então hoje não existe
+um jeito de voltar depois pela tela de histórico e re-achar o link do ZIP de um lote que terminou
+enquanto a pessoa estava longe da tela -- por isso o texto novo diz só "pode deixar em segundo
+plano", nunca promete "o ZIP fica te esperando no histórico" (isso seria prometer um recurso que o
+produto ainda não tem).
+
+**O que mudou:**
+- `static/index.html` (lote de vídeo e de áudio, mesmo tratamento nos dois): o aviso grande colorido
+  ("O KLANGO.MP4 está preparando/extraindo... Isso pode levar alguns minutos.") virou uma linha
+  cinza simples e fixa: "Leva alguns minutos. Pode deixar esta aba em segundo plano — o
+  processamento continua normalmente." Separado dele, um resumo geral NOVO ("N de M prontos",
+  elemento próprio `resumoProgresso`) que só aparece quando o primeiro evento de progresso chega --
+  antes, o resumo SUBSTITUÍA o aviso inteiro (um sumia quando o outro aparecia); agora os dois
+  convivem.
+- Mensagens de status por item: "Baixando... (40%)" -> "Baixando 40%" (sem reticências antes do
+  percentual, sem parênteses); "Processando e limpando..." -> "Limpando..." (texto mudado na
+  origem, em `routes/generations.py::_run_batch_in_background`, já que é um literal de string no
+  backend, não um dado dinâmico -- único ajuste de Python desta etapa, só a mensagem exibida, zero
+  mudança de lógica/fluxo). O lote de áudio usa `services`/`routes/audio.py`, que já dizia
+  "Extraindo o áudio..." (nunca teve o "Processando e limpando..." redundante) -- não precisou de
+  mudança no backend, só o mesmo tratamento de formatação (sem reticências, sem parênteses) no
+  frontend.
+
+**Fora do escopo desta etapa** (ver lista já publicada nas partes 1/2/3): fusão da aba "Um link",
+troca da URL crua por ícone de plataforma + ID curto durante o processamento, botão "Tentar de
+novo".
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK; `ast.parse` em
+      `routes/generations.py` OK.
+- [x] Balanço de `<div>` no arquivo inteiro: mesmo saldo residual de sempre.
+- [x] Leitura de `routes/generations.py` e `routes/audio.py` confirmando o desenho
+      thread-do-servidor-independente-da-SSE para os dois tipos de lote (vídeo e áudio) -- base do
+      `[confirmar]` resolvido acima.
+- [x] Teste de lógica isolado em Node pra função de formatação de mensagem (percentual sem
+      parênteses, sem reticências antes do número; textos sem percentual -- como o aviso do
+      YouTube -- continuam intactos): 5 asserções, todas bateram.
+- [x] `grep` em `tests/` confirma que nenhum teste assertava o texto antigo do aviso colorido ou de
+      "Processando e limpando...".
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind.** Vale o Igor
+      conferir de verdade: rodar um lote de vídeo e de áudio e ver o aviso cinza + o resumo "N de M
+      prontos" aparecendo separados, as mensagens por item ("Baixando 40%", "Limpando..."), e
+      idealmente testar na prática deixar a aba em segundo plano / bloquear o celular no meio de um
+      lote, pra confirmar visualmente que volta mostrando itens prontos (não travado/perdido).
+
+---
+
 ## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 3 (linha compacta + "Colar vários links")
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).

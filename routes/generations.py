@@ -346,7 +346,9 @@ def _run_batch_in_background(
             elif stage == "download":
                 mensagem = "Baixando..."
             else:
-                mensagem = "Processando e limpando..."
+                # Etapa 4 (dossiê, 4.3): "Processando e limpando..." era redundante (já se sabe
+                # que o item está sendo processado) -- vira só "Limpando...".
+                mensagem = "Limpando..."
             tipo_evento = "item_progress" if stage == "processing" else "item_status"
             event_queue.put((tipo_evento, {
                 "position": position, "generation_id": generation_id,
