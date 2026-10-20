@@ -104,15 +104,60 @@
                 </a>
                 <nav class="hidden sm:flex items-center gap-8 text-sm font-medium text-slate-400">
                     <a href="#comoFunciona" onclick="mostrarSecaoSeEscondida('comoFunciona')" class="hover:text-white transition-colors">Como funciona</a>
-                    <a href="#secaoPlanos" class="hover:text-white transition-colors">Planos</a>
+                    <!-- Etapa 3 (dossiê): "Planos" não tinha o mostrarSecaoSeEscondida() que os
+                         outros 3 links da mesma nav já usavam -- pra quem é cliente pago,
+                         #secaoPlanos fica escondido (atualizarVisibilidadeSecaoPlanos) e o link
+                         rolava pra uma seção invisível. Mesmo padrão dos vizinhos, agora corrigido. -->
+                    <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="hover:text-white transition-colors">Planos</a>
                     <a id="navComentariosHeader" href="#comentarios" onclick="mostrarSecaoSeEscondida('comentarios')" class="hover:text-white transition-colors hidden">Comentários</a>
                     <a href="#faq" onclick="mostrarSecaoSeEscondida('faq')" class="hover:text-white transition-colors">Perguntas frequentes</a>
                 </nav>
-                <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
-                    Acesso
-                </button>
+                <!-- Etapa 3 (dossiê, "Painel logado", 4.1): sem sessão continua "Acesso" (abre o
+                     modal de login, de sempre). Com sessão, vira "Minha conta" com um menu (Meu
+                     plano / Ver planos / Sair) -- ver alternarMenuConta()/atualizarVisibilidadeContaHeader()
+                     mais abaixo no script, chamadas de aplicarSessao()/aplicarSemSessao(). -->
+                <div id="headerAcessoBtn">
+                    <button type="button" onclick="abrirAcesso()" class="text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5 shrink-0">
+                        Acesso
+                    </button>
+                </div>
+                <div id="headerContaMenu" class="hidden relative shrink-0">
+                    <button type="button" id="headerContaBtn" onclick="alternarMenuConta()" aria-haspopup="true" aria-expanded="false"
+                        class="h-11 flex items-center gap-1.5 text-sm font-semibold text-slate-300 hover:text-white transition-colors px-3 rounded-lg hover:bg-white/5">
+                        <i class="fa-solid fa-circle-user"></i>
+                        <span>Minha conta</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] transition-transform"></i>
+                    </button>
+                    <div id="headerContaDropdown" class="hidden absolute right-0 top-full mt-2 w-52 rounded-xl border border-slate-800 bg-card shadow-2xl shadow-black/40 overflow-hidden z-40">
+                        <a href="#areaAssinatura" onclick="fecharMenuConta(); irParaMeuPlano(); return false;"
+                            class="h-11 px-4 flex items-center text-[13px] font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+                            <i class="fa-solid fa-layer-group w-5 text-slate-500"></i>Meu plano
+                        </a>
+                        <a href="#secaoPlanos" onclick="fecharMenuConta(); mostrarSecaoSeEscondida('secaoPlanos');"
+                            class="h-11 px-4 flex items-center text-[13px] font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition-colors border-t border-slate-800">
+                            <i class="fa-solid fa-tags w-5 text-slate-500"></i>Ver planos
+                        </a>
+                        <button type="button" onclick="fecharMenuConta(); sair();"
+                            class="w-full h-11 px-4 flex items-center text-[13px] font-semibold text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors border-t border-slate-800">
+                            <i class="fa-solid fa-right-from-bracket w-5 text-slate-500"></i>Sair
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
+
+        <!-- Etapa 3 (dossiê, "Painel logado", 4.1): faixa "N vídeos chegaram pelo atalho" --
+             só aparece com sessão ativa E pelo menos 1 item na fila (atualizado por
+             atualizarBannerFilaAtalho(), chamada de dentro de carregarFilaAtalho() com os MESMOS
+             dados já buscados ali -- nenhuma chamada de rede nova). Clicar rola até a seção do
+             Atalho (#secaoAtalho), que já cuida de mostrar a fila em detalhe. -->
+        <div id="bannerFilaAtalho" class="hidden border-b border-[#19D3AE]/20 bg-[#19D3AE]/10">
+            <a href="#secaoAtalho" onclick="mostrarSecaoSeEscondida('secaoAtalho')" class="max-w-6xl mx-auto px-5 sm:px-8 h-11 flex items-center justify-center gap-2 text-[13px] font-bold text-[#19D3AE] hover:underline">
+                <i class="fa-solid fa-bolt"></i>
+                <span id="bannerFilaAtalhoTexto">—</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
 
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
             <!-- HERO (04/10/2026, refinamento da primeira dobra pedido pelo CÉREBRO por escrito --
@@ -127,6 +172,12 @@
                  seções da página (Como Funciona, Antes/Depois) -- não removido de lá, só daqui.
                  Nenhum id, endpoint ou função JS foi alterado; só HTML/CSS desta seção. -->
             <section class="pt-20 sm:pt-32 pb-14 sm:pb-20 text-center sm:text-left">
+                <!-- Etapa 3 (dossiê, "Painel logado", 4.1): título/subtítulo/tira de passos/mascote
+                     são "hero de venda" -- some pra qualquer sessão logada (grátis ou paga), não só
+                     paga (a diferença por plano é só nas seções de venda MAIS ABAIXO, já cobertas
+                     por SECOES_FUNIL_FRIO_IDS). Quem não tem sessão continua vendo tudo normalmente.
+                     Ver atualizarVisibilidadeHeroVenda(), chamada de aplicarSessao()/aplicarSemSessao(). -->
+                <div id="heroVenda">
                 <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-2xl mx-auto sm:mx-0">
                     Reutilize o conteúdo que já funcionou.
                 </h1>
@@ -172,6 +223,7 @@
                 <div class="mt-6 max-w-xl mx-auto sm:mx-0">
                     <img src="/static/mascote-video.jpg" alt="Mascote do KLANGO.MP4"
                         class="w-full h-auto rounded-xl select-none" draggable="false">
+                </div>
                 </div>
 
                 <!-- Status do plano/limite (reposicionado pra depois do banner e antes do
@@ -616,7 +668,6 @@
                     </div>
 
                     <div id="assinaturaPlano" class="text-xl sm:text-2xl font-extrabold text-white mt-3">—</div>
-                    <div id="assinaturaStatus" class="text-sm text-slate-400 mt-1">—</div>
 
                     <!-- Bloco "X de Y restantes" + "Acesso válido até" -- grid de 1 coluna no
                          mobile (nada aperta/estoura horizontalmente) e 2 no sm+, com divisória só
@@ -634,6 +685,12 @@
                             <div class="min-w-0">
                                 <div class="text-[13px] text-slate-500">Acesso válido até</div>
                                 <div id="assinaturaValidadeData" class="text-base font-extrabold text-[#19D3AE] truncate">—</div>
+                                <!-- Etapa 3 (dossiê, 4.2): até 7 dias pra expirar, destaca em âmbar
+                                     (classe trocada em JS) + este link "Renovar" aparece -- reaproveita
+                                     o MESMO checkout de sempre (abrirModalPagamento), comprando o
+                                     mesmo plano de novo (planos são compra única, sem renovação
+                                     automática -- "Renovar" aqui É comprar de novo). -->
+                                <button type="button" id="assinaturaRenovarBtn" onclick="renovarPlanoAtual()" class="hidden mt-1 text-[13px] font-bold text-amber-400 hover:underline">Renovar</button>
                             </div>
                         </div>
                     </div>
@@ -2252,8 +2309,71 @@
         if (texto) texto.textContent = "Reenviar código";
     }
 
+    // Etapa 3 (dossiê, "Painel logado", 4.1): esconde o "hero de venda" (título, subtítulo, tira de
+    // passos, mascote) pra QUALQUER sessão ativa (grátis ou paga) -- diferente de
+    // atualizarVisibilidadeFunilFrio(), que só esconde pra quem tem plano PAGO. O badge de
+    // status/validade e o formulário de download continuam sempre visíveis, só o texto de venda
+    // some. Chamada de aplicarSessao()/aplicarSemSessao(), cobre login, logout e o carregamento
+    // inicial da página (carregarSessao() sempre chama uma das duas).
+    function atualizarVisibilidadeHeroVenda(logado) {
+        const el = document.getElementById("heroVenda");
+        if (el) el.classList.toggle("hidden", logado);
+    }
+
+    // Etapa 3 (dossiê, 4.1): botão "Acesso" do header vira "Minha conta" (com menu) quando há
+    // sessão -- mesma régua de visibilidade por sessão do hero acima, elemento próprio (nunca
+    // reaproveita o botão de login antigo escondendo/trocando onclick nele).
+    function atualizarVisibilidadeContaHeader(logado) {
+        const btnAcesso = document.getElementById("headerAcessoBtn");
+        const menuConta = document.getElementById("headerContaMenu");
+        if (btnAcesso) btnAcesso.classList.toggle("hidden", logado);
+        if (menuConta) menuConta.classList.toggle("hidden", !logado);
+        if (!logado) fecharMenuConta();
+    }
+
+    function alternarMenuConta() {
+        const dropdown = document.getElementById("headerContaDropdown");
+        const btn = document.getElementById("headerContaBtn");
+        if (!dropdown || !btn) return;
+        const abrindo = dropdown.classList.contains("hidden");
+        dropdown.classList.toggle("hidden", !abrindo);
+        btn.setAttribute("aria-expanded", abrindo ? "true" : "false");
+    }
+
+    function fecharMenuConta() {
+        const dropdown = document.getElementById("headerContaDropdown");
+        const btn = document.getElementById("headerContaBtn");
+        if (dropdown) dropdown.classList.add("hidden");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+    }
+
+    // Fecha o menu ao clicar fora dele ou apertar Esc -- evita deixar um menu aberto "preso" na
+    // tela, mesmo padrão de robustez de qualquer dropdown.
+    document.addEventListener("click", (ev) => {
+        const menuConta = document.getElementById("headerContaMenu");
+        if (menuConta && !menuConta.classList.contains("hidden") && !menuConta.contains(ev.target)) {
+            fecharMenuConta();
+        }
+    });
+    document.addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape") fecharMenuConta();
+    });
+
+    // "Meu plano" do menu da conta: pra quem tem plano pago, rola até o card "Meu acesso"
+    // (#areaAssinatura, já visível nesse caso); pra quem está no Free (sem plano pago ainda), não
+    // existe card pra mostrar -- vai direto pra vitrine de Planos, mesmo destino de "Ver planos".
+    function irParaMeuPlano() {
+        const pago = !!sessaoEmail && !!planoAtualCode && planoAtualCode !== "free" && !!PLANOS[planoAtualCode];
+        const idAlvo = pago ? "areaAssinatura" : "secaoPlanos";
+        mostrarSecaoSeEscondida(idAlvo);
+        const el = document.getElementById(idAlvo);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
     function aplicarSessao(email) {
         sessaoEmail = email;
+        atualizarVisibilidadeHeroVenda(true);
+        atualizarVisibilidadeContaHeader(true);
         document.getElementById("userEmail").value = email;
         document.getElementById("acessoEmailAtual").textContent = email;
         setStatusConta(`Conectado: ${email}`);
@@ -2280,6 +2400,8 @@
 
     function aplicarSemSessao() {
         sessaoEmail = null;
+        atualizarVisibilidadeHeroVenda(false);
+        atualizarVisibilidadeContaHeader(false);
         setStatusConta("Pronto para processar");
         limparStatusContaValidade();
         esconderBatch();
@@ -2393,6 +2515,10 @@
     // existentes (LIMITE_LOTE_POR_PLANO) -- nenhum contador, data ou regra nova é criada aqui.
     // Chamada de dentro de atualizarStatusContaVisual(), logo depois de
     // atualizarVisibilidadeSecaoPlanos() -- não mexe em mais nada daquela função.
+    // Etapa 3 (dossiê, 4.2): a partir de quantos dias faltando pra expirar o card destaca em âmbar
+    // e mostra "Renovar" -- mesmo corte que o dossiê pede (≤7 dias).
+    const DIAS_RENOVACAO_URGENTE = 7;
+
     function atualizarCardAcessoDetalhes(plano, uso, entitlement) {
         const restantesNumeroEl = document.getElementById("assinaturaRestantesNumero");
         const restantesLabelEl = document.getElementById("assinaturaRestantesLabel");
@@ -2400,23 +2526,12 @@
         const usoFracaoEl = document.getElementById("assinaturaUsoFracao");
         const usoBarraEl = document.getElementById("assinaturaUsoBarra");
         const validadeDataEl = document.getElementById("assinaturaValidadeData");
+        const renovarBtnEl = document.getElementById("assinaturaRenovarBtn");
         const renovaWrapEl = document.getElementById("assinaturaRenova");
         const renovaTextoEl = document.getElementById("assinaturaRenovaTexto");
-        const statusDescEl = document.getElementById("assinaturaStatus");
 
         // Seção escondida (ex.: plano free) -- não há card pra preencher.
         if (!restantesNumeroEl) return;
-
-        // Texto secundário logo abaixo do nome do plano: capacidade do lote, já existente em
-        // LIMITE_LOTE_POR_PLANO (mesma constante que já limita o formulário de lote -- não cria
-        // nada novo, só reaproveita pra exibir aqui também).
-        if (statusDescEl) {
-            const limiteLote = plano && LIMITE_LOTE_POR_PLANO[plano.code];
-            // Etapa 1 (dossiê, glossário): "por operação" (jargão) vira "por vez".
-            statusDescEl.textContent = limiteLote
-                ? `Processamento em lote de até ${limiteLote} ${plural(limiteLote, "vídeo", "vídeos")} por vez.`
-                : "—";
-        }
 
         if (uso && typeof uso.remaining === "number" && typeof uso.limit === "number") {
             const periodo = textoPeriodo(uso.period);
@@ -2427,20 +2542,12 @@
             if (usoLabelEl) usoLabelEl.textContent = uso.period === "week" ? "Uso desta semana" : "Uso de hoje";
             if (usoFracaoEl) usoFracaoEl.textContent = `${usados}/${uso.limit}`;
 
+            // Etapa 3 (dossiê, 4.2): "os segmentos não escalam para planos maiores" -- a barra
+            // agora é SEMPRE contínua/proporcional, nunca mais segmentada (era segmentada só até
+            // 20, o que incluía os 3 planos atuais de 5/10/15).
             if (usoBarraEl) {
                 usoBarraEl.innerHTML = "";
-                // Limites pequenos (os 3 planos pagos atuais: 5/10/15) viram uma barra segmentada,
-                // um bloco por unidade -- igual à referência visual enviada pelo Igor. Um limite
-                // maior (se algum dia existir) cai numa barra contínua proporcional, pra nunca
-                // estourar a tela com dezenas de segmentos.
-                const MAX_SEGMENTOS = 20;
-                if (uso.limit > 0 && uso.limit <= MAX_SEGMENTOS) {
-                    for (let i = 0; i < uso.limit; i++) {
-                        const seg = document.createElement("div");
-                        seg.className = "flex-1 h-2 rounded-full " + (i < usados ? "bg-[#19D3AE]" : "bg-slate-800");
-                        usoBarraEl.appendChild(seg);
-                    }
-                } else if (uso.limit > 0) {
+                if (uso.limit > 0) {
                     const trilho = document.createElement("div");
                     trilho.className = "w-full h-2 rounded-full bg-slate-800 overflow-hidden";
                     const preenchido = document.createElement("div");
@@ -2477,10 +2584,34 @@
             if (renovaWrapEl) renovaWrapEl.classList.add("hidden");
         }
 
+        // Etapa 3 (dossiê, 4.2): "acima de 60 dias, mostrar a data; até 7 dias, destacar em âmbar
+        // com botão 'Renovar'" -- formatarDataAcesso() já sempre mostra a data (nunca a contagem
+        // crua de dias que o dossiê reclamava, ver formatarDiasRestantes() só pro badge antigo,
+        // agora aposentado). O que falta é só o destaque de urgência perto do vencimento.
         if (validadeDataEl) {
+            const diasRestantes = entitlement && entitlement.expires_at
+                ? Math.ceil((new Date(entitlement.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                : null;
             validadeDataEl.textContent = entitlement && entitlement.expires_at
                 ? formatarDataAcesso(entitlement.expires_at)
                 : "—";
+
+            const urgente = diasRestantes !== null && !Number.isNaN(diasRestantes) && diasRestantes <= DIAS_RENOVACAO_URGENTE;
+            validadeDataEl.classList.toggle("text-[#19D3AE]", !urgente);
+            validadeDataEl.classList.toggle("text-amber-400", urgente);
+            if (renovarBtnEl) {
+                renovarBtnEl.classList.toggle("hidden", !urgente);
+            }
+        }
+    }
+
+    // Etapa 3 (dossiê, 4.2), botão "Renovar" do card "Meu acesso": planos são compra única, sem
+    // renovação automática (ver checkout) -- "renovar" aqui é comprar o MESMO plano de novo, pelo
+    // MESMO checkout de upgrade (abrirModalPagamento) que já existe e já é testado. Nenhum fluxo
+    // novo de pagamento é criado.
+    function renovarPlanoAtual() {
+        if (planoAtualCode && PLANOS[planoAtualCode]) {
+            abrirModalPagamento(planoAtualCode);
         }
     }
 
@@ -2545,15 +2676,13 @@
         atualizarCardAcessoDetalhes(plano, uso, data.entitlement);
         atualizarVisibilidadeFunilFrio(plano.code);
 
-        const validadeEl = document.getElementById("statusContaValidade");
-        if (validadeEl) {
-            if (data.entitlement && data.entitlement.expires_at) {
-                validadeEl.textContent = formatarDiasRestantes(data.entitlement.expires_at);
-                validadeEl.classList.remove("hidden");
-            } else {
-                limparStatusContaValidade();
-            }
-        }
+        // Etapa 3 (dossiê, 4.2): "a mesma informação aparece 3 vezes no topo" -- #statusContaValidade
+        // ("Expira em N dias", a própria frase que o dossiê reclamava de nunca formatar como data
+        // acima de 60 dias) era a 3ª repetição. Aposentado: a validade agora mora só no card "Meu
+        // acesso" (assinaturaValidadeData, com a mesma regra de urgência ≤7 dias -- ver
+        // atualizarCardAcessoDetalhes()). formatarDiasRestantes() fica sem uso daqui em diante,
+        // intacta, caso precise voltar.
+        limparStatusContaValidade();
 
         atualizarVisibilidadeBatch(plano, uso);
         atualizarVisibilidadeFormComentario(plano);
@@ -4974,6 +5103,10 @@
         // usuário no mesmo navegador, por exemplo) nunca deve ver o token de quem saiu.
         const novo = document.getElementById("atalhoTokenNovo");
         if (novo) novo.classList.add("hidden");
+        // Etapa 3 (dossiê, 4.1): a faixa do topo é sobre a fila de QUEM ESTÁ LOGADO -- sem sessão,
+        // some imediatamente (mesmo raciocínio de esconderBatch/esconderHistorico/esconderIndicacao
+        // logo acima, nunca espera a resposta assíncrona de carregarFilaAtalho de outra sessão).
+        atualizarBannerFilaAtalho(0);
     }
 
     function setStatusAtalhoToken(texto, classe) {
@@ -5157,8 +5290,24 @@
             contador.textContent = temItens
                 ? `${itens.length} ${itens.length === 1 ? "link" : "links"} na fila`
                 : "Fila vazia";
+
+            atualizarBannerFilaAtalho(itens.length);
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    // Etapa 3 (dossiê, 4.1): reaproveita a MESMA contagem que carregarFilaAtalho() já buscou --
+    // nenhum fetch novo, nenhum estado paralelo. plural() de sempre.
+    function atualizarBannerFilaAtalho(quantidade) {
+        const banner = document.getElementById("bannerFilaAtalho");
+        const texto = document.getElementById("bannerFilaAtalhoTexto");
+        if (!banner || !texto) return;
+        if (quantidade > 0) {
+            texto.textContent = `${quantidade} ${plural(quantidade, "vídeo chegou", "vídeos chegaram")} pelo atalho`;
+            banner.classList.remove("hidden");
+        } else {
+            banner.classList.add("hidden");
         }
     }
 
