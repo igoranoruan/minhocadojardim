@@ -405,18 +405,23 @@
                 </div>
 
                 <div class="max-w-xl mx-auto mt-10">
-                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-violet-500/30">
+                    <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/30">
                         <div id="loteNaPraticaItems" class="space-y-3"></div>
 
-                        <button type="button" id="lotePreviewVerMaisBtn" onclick="alternarExpansaoLotePreview()" class="hidden w-full mt-3 h-8 text-violet-400 hover:text-violet-300 font-bold text-xs transition-colors">
+                        <!-- Etapa 2 (dossiê): altura mínima de toque 44px em qualquer botão, mesmo
+                             um terciário/link como este -- h-8 (32px) virou h-11 (44px). -->
+                        <button type="button" id="lotePreviewVerMaisBtn" onclick="alternarExpansaoLotePreview()" class="hidden w-full mt-3 h-11 text-[#19D3AE] hover:text-[#19D3AE]/80 font-bold text-xs transition-colors">
                             Ver mais
                         </button>
 
-                        <button type="button" onclick="adicionarCampoLotePreview()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-violet-500/60 hover:text-violet-400 font-bold text-xs transition-colors">
+                        <button type="button" onclick="adicionarCampoLotePreview()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-xs transition-colors">
                             <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
                         </button>
 
-                        <div class="w-full mt-3 h-12 bg-violet-400/15 border border-violet-400/40 text-violet-300 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
+                        <!-- Etapa 2 (dossiê, 20/10/2026): roxo era usado aqui sem ser VIP -- dossiê
+                             reserva violeta só pro selo/card do plano VIP; este painel de exemplo
+                             ("como funciona o lote") é genérico, então volta pro verde-água padrão. -->
+                        <div class="w-full mt-3 h-12 bg-[#19D3AE]/15 border border-[#19D3AE]/40 text-[#19D3AE] font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
                             <i class="fa-solid fa-gears"></i> Processar e preparar lote
                         </div>
                     </div>
@@ -429,7 +434,7 @@
                          sem onclick -- mesma régua de "sem botão falso" de sempre). Setinha reusa o
                          mesmo padrão visual do divisor em "Antes/Depois". -->
                     <div class="flex justify-center py-2">
-                        <i class="fa-solid fa-circle-arrow-down text-2xl text-violet-400"></i>
+                        <i class="fa-solid fa-circle-arrow-down text-2xl text-[#19D3AE]"></i>
                     </div>
 
                     <div class="bg-card rounded-3xl p-6 sm:p-7 border-[#19D3AE]/40">
@@ -664,9 +669,12 @@
                  Continua escondida/mostrada exatamente como antes, por getElementById, sem
                  depender de ordem no DOM -- ver atualizarVisibilidadeBatch() no script. -->
             <section id="secaoBatch" class="hidden py-10">
-                <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
+                <!-- Etapa 2 (dossiê, 20/10/2026): este card era roxo sem ser a marca VIP -- violeta
+                     volta a ser exclusividade do selo/card do plano VIP; aqui (lote, disponível em
+                     3 planos, não só VIP Batch) é cor primária padrão = verde-água. -->
+                <div class="bg-card rounded-3xl p-7 border-[#19D3AE]/30 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
-                        <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/40 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Processamento em lote</h2>
                             <p id="batchLimiteTexto" class="text-sm text-slate-400 mt-1">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
@@ -683,7 +691,7 @@
                          para esconder algo dele. -->
                     <div class="flex gap-2 mb-4">
                         <button type="button" id="formatoVideoBtnLote" onclick="selecionarFormatoLote('video')"
-                            class="flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-violet-400 text-slate-950 border-violet-400">
+                            class="flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]">
                             <i class="fa-solid fa-film mr-1"></i>Vídeo (MP4)
                         </button>
                         <button type="button" id="formatoAudioBtnLote" onclick="selecionarFormatoLote('audio')"
@@ -695,16 +703,16 @@
 
                     <div class="flex items-center justify-between gap-3 mb-3">
                         <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeo</span>
-                        <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-violet-500/80">—</span>
+                        <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-[#19D3AE]/80">—</span>
                     </div>
 
                     <div id="batchItems" class="space-y-3"></div>
 
-                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-violet-500/60 hover:text-violet-400 font-bold text-xs transition-colors">
+                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-xs transition-colors">
                         <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
                     </button>
 
-                    <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
+                    <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
                     <div id="batchStatus" class="mt-4 text-sm"></div>
                 </div>
             </section>
@@ -729,9 +737,11 @@
                  mutável das funções antigas (planoAtualCode/limiteLoteAtual), só do que a PRÓPRIA
                  resposta trouxer, sempre fresca no momento em que a seção é usada. -->
             <section id="secaoPinterestBoard" class="hidden py-10">
-                <div class="bg-card rounded-3xl p-7 border-violet-500/30 glow-hover">
+                <!-- Etapa 2 (dossiê, 20/10/2026): mesma regra do card de lote acima -- roxo some,
+                     verde-água entra (violeta fica só pro selo/card do plano VIP). -->
+                <div class="bg-card rounded-3xl p-7 border-[#19D3AE]/30 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
-                        <div class="w-11 h-11 shrink-0 rounded-xl bg-violet-950/40 border border-violet-700/40 flex items-center justify-center text-violet-400"><i class="fa-brands fa-pinterest"></i></div>
+                        <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/40 flex items-center justify-center text-[#19D3AE]"><i class="fa-brands fa-pinterest"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Importar pasta do Pinterest</h2>
                             <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha quais fotos e vídeos baixar em lote.</p>
@@ -744,14 +754,14 @@
                         <i class="fa-solid fa-lock text-slate-500 text-xl mb-2"></i>
                         <p class="text-sm text-slate-300 font-bold">Importar pasta do Pinterest é um recurso dos planos com lote.</p>
                         <p class="text-xs text-slate-500 mt-1">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
-                        <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-xs transition-colors">Ver planos</a>
+                        <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-xs transition-colors">Ver planos</a>
                     </div>
 
                     <!-- Estado DESBLOQUEADO (planos com lote: Semanal/Mensal/VIP Batch). -->
                     <div id="pinterestBoardLiberado" class="hidden">
                         <div class="flex flex-col sm:flex-row gap-2 mb-3">
-                            <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.pinterest.com/usuario/pasta/" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-violet-500 focus:outline-none">
-                            <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Listar pasta</button>
+                            <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.pinterest.com/usuario/pasta/" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-[#19D3AE]/60 focus:outline-none">
+                            <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Listar pasta</button>
                         </div>
 
                         <div id="pinterestBoardStatus" class="text-sm"></div>
@@ -759,7 +769,7 @@
                         <div id="pinterestBoardResultado" class="hidden mt-4">
                             <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
                                 <span id="pinterestBoardSelecionados" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">0 selecionados</span>
-                                <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[11px] font-bold uppercase tracking-wider text-violet-400 hover:text-violet-300">Selecionar os primeiros</button>
+                                <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[11px] font-bold uppercase tracking-wider text-[#19D3AE] hover:text-[#19D3AE]/80">Selecionar os primeiros</button>
                             </div>
 
                             <div id="pinterestBoardGrade" class="grid grid-cols-3 gap-2"></div>
@@ -768,7 +778,7 @@
 
                             <div id="pinterestBoardCotaTexto" class="text-xs text-slate-400 mt-4"></div>
 
-                            <button id="pinterestBoardBaixarBtn" type="button" onclick="baixarSelecaoPinterest()" disabled class="w-full mt-3 h-12 bg-violet-400 hover:bg-violet-300 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-download mr-1"></i>Baixar selecionados</button>
+                            <button id="pinterestBoardBaixarBtn" type="button" onclick="baixarSelecaoPinterest()" disabled class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-download mr-1"></i>Baixar selecionados</button>
                         </div>
                     </div>
                 </div>
@@ -2619,7 +2629,8 @@
         if (item.status === "completed" && item.downloadable) {
             badgeClasses = "bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE]";
             badgeLabel = "Disponível";
-            botaoHtml = `<a href="/api/generations/${item.id}/download" class="mt-2.5 w-full h-9 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-bold hover:bg-[#19D3AE]/20 transition-colors"><i class="fa-solid fa-download"></i>Baixar novamente</a>`;
+            // Etapa 2 (dossiê): h-9 (36px) virou h-11 (44px) -- mínimo de toque em qualquer botão.
+            botaoHtml = `<a href="/api/generations/${item.id}/download" class="mt-2.5 w-full h-11 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-bold hover:bg-[#19D3AE]/20 transition-colors"><i class="fa-solid fa-download"></i>Baixar novamente</a>`;
         } else if (item.status === "failed") {
             badgeClasses = "bg-rose-500/10 border border-rose-500/30 text-rose-400";
             badgeLabel = "Falhou";
@@ -3860,7 +3871,7 @@
 
         const url = document.createElement("input");
         url.type = "url";
-        url.className = "batch-url w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 text-xs";
+        url.className = "batch-url w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-xs";
         url.placeholder = "Cole o link do vídeo…";
         url.autocomplete = "off";
         wrapper.appendChild(url);
@@ -3868,7 +3879,7 @@
         const name = document.createElement("input");
         name.type = "text";
         name.maxLength = 80;
-        name.className = "batch-name w-full h-10 mt-2 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-violet-500 text-xs";
+        name.className = "batch-name w-full h-10 mt-2 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-xs";
         name.placeholder = "Nome do arquivo (opcional) — ex.: video_oferta";
         name.autocomplete = "off";
         wrapper.appendChild(name);
@@ -4053,7 +4064,7 @@
         // qual item cada atualização pertence). `rodape` recebe o resumo final ou uma mensagem
         // de erro; nada aqui é inventado -- cada texto só aparece depois do evento correspondente.
         const aviso = document.createElement("div");
-        aviso.className = "p-4 bg-violet-950/30 border border-violet-800/50 text-violet-400 rounded-xl mb-3";
+        aviso.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] rounded-xl mb-3";
         aviso.textContent = "O KLANGO.MP4 está preparando os vídeos um por um. Isso pode levar alguns minutos.";
         status.appendChild(aviso);
 
@@ -4244,7 +4255,7 @@
     // ================================================================================================
     function selecionarFormatoLote(formato) {
         formatoLote = formato;
-        const ativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-violet-400 text-slate-950 border-violet-400";
+        const ativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]";
         const inativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700";
         const btnVideo = document.getElementById("formatoVideoBtnLote");
         const btnAudio = document.getElementById("formatoAudioBtnLote");
@@ -4373,7 +4384,7 @@
         status.innerHTML = "";
 
         const aviso = document.createElement("div");
-        aviso.className = "p-4 bg-violet-950/30 border border-violet-800/50 text-violet-400 rounded-xl mb-3";
+        aviso.className = "p-4 bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] rounded-xl mb-3";
         aviso.textContent = "O KLANGO.MP4 está extraindo o áudio um por um. Isso pode levar alguns minutos.";
         status.appendChild(aviso);
 
@@ -4776,7 +4787,7 @@
             const quadrado = document.createElement("button");
             quadrado.type = "button";
             quadrado.className = "relative aspect-square rounded-xl overflow-hidden border-2 transition-colors " +
-                (selecionado ? "border-violet-400" : "border-slate-700 hover:border-violet-500/60");
+                (selecionado ? "border-[#19D3AE]" : "border-slate-700 hover:border-[#19D3AE]/60");
             quadrado.onclick = () => alternarSelecaoPinterestPin(pin.pin_id);
 
             if (pin.thumbnail_url) {
@@ -4801,7 +4812,7 @@
 
             if (selecionado) {
                 const check = document.createElement("div");
-                check.className = "absolute top-1 right-1 w-6 h-6 rounded-full bg-violet-400 text-slate-950 flex items-center justify-center text-xs";
+                check.className = "absolute top-1 right-1 w-6 h-6 rounded-full bg-[#19D3AE] text-slate-950 flex items-center justify-center text-xs";
                 check.innerHTML = '<i class="fa-solid fa-check"></i>';
                 quadrado.appendChild(check);
             }
