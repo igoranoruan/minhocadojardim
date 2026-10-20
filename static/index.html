@@ -151,7 +151,7 @@
                      desktop (sm:flex-row, seta central reaparece só a partir do sm: via
                      "hidden sm:inline-block") -- mesmo texto/setas de antes, só reagrupado pra nunca
                      estourar a largura no mobile. -->
-                <p class="mt-3 text-xs text-slate-500 flex flex-col sm:flex-row items-center gap-y-1.5 sm:gap-x-1.5 justify-center sm:justify-start">
+                <p class="mt-3 text-[13px] text-slate-500 flex flex-col sm:flex-row items-center gap-y-1.5 sm:gap-x-1.5 justify-center sm:justify-start">
                     <span class="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
                         <span>Encontrou o vídeo</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
                         <span>Cole o link</span>
@@ -178,11 +178,11 @@
                      formulário, por pedido do CÉREBRO -- mesmos ids/classes/lógica de sempre,
                      setStatusConta() e atualizarStatusContaVisual() continuam controlando o
                      conteúdo normalmente, só o lugar no documento mudou). -->
-                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mt-6 mb-7">
+                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-semibold mt-6 mb-7">
                     <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
                     <span id="statusContaTexto">Pronto para processar</span>
                 </div>
-                <div id="statusContaValidade" class="hidden text-[11px] text-slate-500 mt-1.5 mb-4"></div>
+                <div id="statusContaValidade" class="hidden text-[13px] text-slate-500 mt-1.5 mb-4"></div>
 
                 <div class="max-w-3xl mt-2 mx-auto sm:mx-0 text-left">
                     <div class="bg-card p-2.5 rounded-2xl hero-glow">
@@ -206,7 +206,7 @@
                             <div class="order-2 sm:order-3 sm:w-full sm:basis-full">
                                 <input id="filenameInput" type="text" maxlength="80" autocomplete="off"
                                     placeholder="Nome do arquivo (opcional) — ex.: video_oferta"
-                                    class="input-focus w-full h-11 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-xs transition-all focus:border-[#19D3AE]/70">
+                                    class="input-focus w-full h-11 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-[13px] transition-all focus:border-[#19D3AE]/70">
                             </div>
 
                             <button id="downloadButton" onclick="processarIndividual()"
@@ -227,24 +227,24 @@
                              "Ver planos" já usado em #comentarioFormBloqueado. -->
                         <div class="mt-3 flex items-center justify-center gap-2">
                             <button type="button" id="formatoVideoBtn" onclick="selecionarFormatoIndividual('video')"
-                                class="px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#19D3AE]/15 text-[#19D3AE] border border-[#19D3AE]/40">
+                                class="px-4 py-2 rounded-lg font-bold text-[13px] transition-colors bg-[#19D3AE]/15 text-[#19D3AE] border border-[#19D3AE]/40">
                                 <i class="fa-solid fa-film mr-1.5"></i>Vídeo (MP4)
                             </button>
                             <button type="button" id="formatoAudioBtn" onclick="selecionarFormatoIndividual('audio')"
-                                class="px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#060b14] text-slate-400 border border-slate-800 hover:text-slate-200">
+                                class="px-4 py-2 rounded-lg font-bold text-[13px] transition-colors bg-[#060b14] text-slate-400 border border-slate-800 hover:text-slate-200">
                                 <i class="fa-solid fa-music mr-1.5"></i>Só áudio (MP3)
                             </button>
                         </div>
 
                         <div id="audioBloqueadoIndividual" class="hidden mt-3 text-center">
                             <i class="fa-solid fa-lock text-slate-600 mb-1"></i>
-                            <p class="text-xs text-slate-400">Extrair áudio é exclusivo dos planos pagos.</p>
-                            <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-1 text-xs font-bold text-[#19D3AE] hover:underline">Ver planos</a>
+                            <p class="text-[13px] text-slate-400">Extrair áudio é exclusivo dos planos pagos.</p>
+                            <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-1 text-[13px] font-bold text-[#19D3AE] hover:underline">Ver planos</a>
                         </div>
 
-                        <p id="audioContadorIndividual" class="hidden mt-2 text-center text-xs text-slate-500"></p>
+                        <p id="audioContadorIndividual" class="hidden mt-2 text-center text-[13px] text-slate-500"></p>
 
-                        <div id="status" class="mt-3 text-center text-xs sm:text-sm"></div>
+                        <div id="status" class="mt-3 text-center text-[13px] sm:text-sm"></div>
                     </div>
 
                     <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 6 da revisão de UX): prova social
@@ -269,7 +269,7 @@
                          o bloco só aparece se o total passar de LIMIAR_EXIBICAO_STATS_PROCESSADOS
                          (ver carregarEstatisticas) -- número continua real, só não é exibido
                          enquanto ainda for baixo demais para servir como prova social. -->
-                    <p id="statsProcessados" class="hidden mt-6 mb-2 text-xs text-slate-500 text-center">
+                    <p id="statsProcessados" class="hidden mt-6 mb-2 text-[13px] text-slate-500 text-center">
                         <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
                     </p>
                 </div>
@@ -280,8 +280,8 @@
                  não virar "seção de personas". Fica no funil frio (SECOES_FUNIL_FRIO_IDS, ver JS):
                  some pra quem já tem plano pago, igual Antes/Depois e as outras seções de quem ainda
                  não comprou. -->
-            <section id="paraQuemE" class="py-8 border-t section-line text-center">
-                <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-2">PARA QUEM É</p>
+            <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
+                <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-2">PARA QUEM É</p>
                 <h2 class="text-lg sm:text-xl font-extrabold text-white">Feito para quem cria e reaproveita conteúdo.</h2>
                 <p class="mt-2 text-[17px] leading-[1.5] sm:text-sm sm:leading-normal text-slate-500">Criadores · Social Media · Afiliados</p>
             </section>
@@ -295,7 +295,7 @@
                  ao lado do nome do arquivo, reproduzindo a proporção da referência. -->
             <section id="antesDepois" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
+                    <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja a diferença <span class="text-[#19D3AE]">na prática.</span></h2>
                     <p class="mt-3 text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Mesmo vídeo, pronto para seguir no seu fluxo de edição, sem os dados que vieram da plataforma de origem.</p>
                 </div>
@@ -303,36 +303,36 @@
                 <div class="max-w-md mx-auto mt-10 space-y-0">
                     <div class="rounded-2xl p-5 bg-card-soft border-2 border-rose-500/40 text-left">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-950 bg-rose-500 rounded-lg px-3 py-1.5">Antes</span>
+                            <span class="inline-block text-[13px] font-extrabold uppercase tracking-wider text-slate-950 bg-rose-500 rounded-lg px-3 py-1.5">Antes</span>
                             <div class="text-right">
-                                <div class="text-xs font-bold text-slate-200">Arquivo original</div>
-                                <div class="text-[10px] text-slate-500">Direto da plataforma de origem</div>
+                                <div class="text-[13px] font-bold text-slate-200">Arquivo original</div>
+                                <div class="text-[13px] text-slate-500">Direto da plataforma de origem</div>
                             </div>
                         </div>
                         <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-600 bg-slate-800 mb-3">
                             <img src="/static/mascote-luar.jpg" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover grayscale-[40%] brightness-75">
                             <div class="absolute inset-0 bg-slate-950/25"></div>
                             <i class="fa-solid fa-circle-play absolute inset-0 m-auto w-fit h-fit text-4xl text-white drop-shadow"></i>
-                            <span class="absolute bottom-2 right-2 text-[10px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">00:24</span>
+                            <span class="absolute bottom-2 right-2 text-[13px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">00:24</span>
                             <div class="absolute top-2 left-2 w-6 h-6 rounded-full bg-slate-950 flex items-center justify-center"><i class="fa-solid fa-triangle-exclamation text-rose-400 text-xs"></i></div>
                         </div>
                         <div class="flex items-center gap-1.5 mb-4">
                             <i class="fa-solid fa-file text-slate-600 text-xs"></i>
-                            <div class="text-xs font-mono text-slate-400 truncate">video_oferta.mp4</div>
+                            <div class="text-[13px] font-mono text-slate-400 truncate">video_oferta.mp4</div>
                         </div>
                         <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): rótulo só pra
                              deixar explícito que a grade abaixo é PROVA/detalhe técnico, não o
                              argumento principal do card -- nenhum campo foi removido, só ganhou
                              esse cabeçalho acima (mesmo em "Depois", card seguinte). -->
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Detalhes técnicos</div>
-                        <div class="rounded-xl bg-[#050810] border border-slate-800 p-3 space-y-2 text-[11px]">
+                        <div class="text-[13px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Detalhes técnicos</div>
+                        <div class="rounded-xl bg-[#050810] border border-slate-800 p-3 space-y-2 text-[13px]">
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-slate-300">iPhone 13</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-slate-300">São Paulo, Brasil</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-calendar-days w-3.5 text-center"></i>Data de criação</span><span class="text-slate-300">14/08/2026 09:12</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-share-nodes w-3.5 text-center"></i>Plataforma</span><span class="text-slate-300">TikTok</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-fingerprint w-3.5 text-center"></i>Hash (SHA-256)</span><span class="text-slate-300">3f2a8f9c...</span></div>
                         </div>
-                        <ul class="mt-3 space-y-1.5 text-[11px] text-slate-400">
+                        <ul class="mt-3 space-y-1.5 text-[13px] text-slate-400">
                             <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Metadados do dispositivo e da plataforma de origem</li>
                             <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Mesmo hash do arquivo já publicado antes</li>
                             <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Nome de arquivo da plataforma de origem</li>
@@ -345,38 +345,38 @@
 
                     <div class="rounded-2xl p-5 bg-card-soft border-2 border-[#19D3AE]/50 text-left">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="inline-block text-xs font-extrabold uppercase tracking-wider text-slate-950 bg-[#19D3AE] rounded-lg px-3 py-1.5">Depois</span>
+                            <span class="inline-block text-[13px] font-extrabold uppercase tracking-wider text-slate-950 bg-[#19D3AE] rounded-lg px-3 py-1.5">Depois</span>
                             <div class="text-right">
-                                <div class="text-xs font-bold text-white">Arquivo processado</div>
-                                <div class="text-[10px] text-[#19D3AE]">Pelo KLANGO.MP4</div>
+                                <div class="text-[13px] font-bold text-white">Arquivo processado</div>
+                                <div class="text-[13px] text-[#19D3AE]">Pelo KLANGO.MP4</div>
                             </div>
                         </div>
                         <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-[#19D3AE]/40 bg-slate-800 mb-3">
                             <img src="/static/mascote-luar.jpg" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover">
                             <div class="absolute inset-0 bg-[#0a2420]/35"></div>
                             <i class="fa-solid fa-circle-play absolute inset-0 m-auto w-fit h-fit text-4xl text-white drop-shadow"></i>
-                            <span class="absolute bottom-2 right-2 text-[10px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">00:24</span>
+                            <span class="absolute bottom-2 right-2 text-[13px] font-mono bg-black/60 text-white px-1.5 py-0.5 rounded">00:24</span>
                             <div class="absolute top-2 left-2 w-6 h-6 rounded-full bg-slate-950 flex items-center justify-center"><i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i></div>
                         </div>
                         <div class="flex items-center gap-1.5 mb-4">
                             <i class="fa-solid fa-file text-[#19D3AE] text-xs"></i>
-                            <div class="text-xs font-mono text-slate-200 truncate">meu_video.mp4</div>
+                            <div class="text-[13px] font-mono text-slate-200 truncate">meu_video.mp4</div>
                         </div>
-                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Detalhes técnicos</div>
-                        <div class="rounded-xl bg-[#050810] border border-[#19D3AE]/20 p-3 space-y-2 text-[11px]">
+                        <div class="text-[13px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">Detalhes técnicos</div>
+                        <div class="rounded-xl bg-[#050810] border border-[#19D3AE]/20 p-3 space-y-2 text-[13px]">
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-mobile-screen w-3.5 text-center"></i>Dispositivo</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-location-dot w-3.5 text-center"></i>Localização</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-calendar-days w-3.5 text-center"></i>Data de criação</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-share-nodes w-3.5 text-center"></i>Plataforma</span><span class="text-[#19D3AE] font-semibold">Removido</span></div>
                             <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1.5 text-slate-400"><i class="fa-solid fa-fingerprint w-3.5 text-center"></i>Hash (SHA-256)</span><span class="text-[#19D3AE] font-semibold">8c9d4e1a...</span></div>
                         </div>
-                        <ul class="mt-3 space-y-1.5 text-[11px] text-slate-300">
+                        <ul class="mt-3 space-y-1.5 text-[13px] text-slate-300">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Metadados removidos</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Hash novo (SHA-256 recalculado)</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Nome de arquivo personalizável</li>
                         </ul>
                     </div>
-                    <p class="text-center text-[11px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
+                    <p class="text-center text-[13px] text-slate-600 mt-3">Exemplo ilustrativo do que muda no arquivo processado. Aparelho, local, data e nomes são fictícios.</p>
                 </div>
             </section>
 
@@ -401,7 +401,7 @@
                 <div class="max-w-3xl mx-auto text-center">
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
                     <p class="mt-3 text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Pare de repetir o processo vídeo por vídeo: adicione todos de uma vez e baixe tudo pronto pra editar.</p>
-                    <p class="mt-2 text-xs text-slate-500">Disponível nos planos pagos.</p>
+                    <p class="mt-2 text-[13px] text-slate-500">Disponível nos planos pagos.</p>
                 </div>
 
                 <div class="max-w-xl mx-auto mt-10">
@@ -410,11 +410,11 @@
 
                         <!-- Etapa 2 (dossiê): altura mínima de toque 44px em qualquer botão, mesmo
                              um terciário/link como este -- h-8 (32px) virou h-11 (44px). -->
-                        <button type="button" id="lotePreviewVerMaisBtn" onclick="alternarExpansaoLotePreview()" class="hidden w-full mt-3 h-11 text-[#19D3AE] hover:text-[#19D3AE]/80 font-bold text-xs transition-colors">
+                        <button type="button" id="lotePreviewVerMaisBtn" onclick="alternarExpansaoLotePreview()" class="hidden w-full mt-3 h-11 text-[#19D3AE] hover:text-[#19D3AE]/80 font-bold text-[13px] transition-colors">
                             Ver mais
                         </button>
 
-                        <button type="button" onclick="adicionarCampoLotePreview()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-xs transition-colors">
+                        <button type="button" onclick="adicionarCampoLotePreview()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
                             <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
                         </button>
 
@@ -441,27 +441,27 @@
                         <div class="space-y-2.5">
                             <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
                                 <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                                <span class="text-[13px] font-mono text-slate-300 truncate flex-1">video_01.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[13px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
                             </div>
                             <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
                                 <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                                <span class="text-[13px] font-mono text-slate-300 truncate flex-1">video_02.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[13px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
                             </div>
                             <div class="flex items-center gap-2 bg-[#050810] border border-[#19D3AE]/20 rounded-xl px-3 py-2.5">
                                 <i class="fa-solid fa-circle-check text-[#19D3AE] text-xs"></i>
-                                <span class="text-xs font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
-                                <span class="text-[10px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
+                                <span class="text-[13px] font-mono text-slate-300 truncate flex-1">video_03.mp4 <span class="text-[#19D3AE]">· Pronto.</span></span>
+                                <span class="text-[13px] font-bold text-[#19D3AE] border border-[#19D3AE]/30 rounded-lg px-2 py-1 flex items-center gap-1 shrink-0 cursor-default select-none"><i class="fa-solid fa-download"></i>Baixar</span>
                             </div>
                         </div>
-                        <p class="text-center text-[11px] text-slate-500 mt-3">3 de 3 vídeos preparados.</p>
+                        <p class="text-center text-[13px] text-slate-500 mt-3">3 de 3 vídeos preparados.</p>
                         <div class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
                             <i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP
                         </div>
                     </div>
 
-                    <p class="text-center text-[11px] text-slate-600 mt-5 max-w-md mx-auto">Demonstração ilustrativa.</p>
+                    <p class="text-center text-[13px] text-slate-600 mt-5 max-w-md mx-auto">Demonstração ilustrativa.</p>
                     <div class="mt-8">
                         <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
                             class="w-full h-auto rounded-xl select-none" draggable="false">
@@ -473,7 +473,7 @@
             <!-- PROCESSO -->
             <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
+                    <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Do link ao seu editor, sem complicação.</h2>
                 </div>
 
@@ -481,7 +481,7 @@
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">01</span>
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">01</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Cole o link</h3>
                         </div>
                         <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Cole o link do conteúdo que você quer reutilizar.</p>
@@ -490,7 +490,7 @@
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">02</span>
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">02</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Limpa e prepara</h3>
                         </div>
                         <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
@@ -499,7 +499,7 @@
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
-                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-xs font-extrabold">03</span>
+                            <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">03</span>
                             <h3 class="font-bold text-white text-sm sm:text-base">Baixe e reutilize</h3>
                         </div>
                         <p class="text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Baixe o arquivo e leve para seu editor para adaptar e publicar.</p>
@@ -517,19 +517,19 @@
             <!-- PLANOS -->
             <section id="secaoPlanos" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">PLANOS</p>
+                    <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">PLANOS</p>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Escolha o acesso que faz sentido para você.</h2>
                     <p class="text-sm text-slate-400 mt-3">Comece simples e escolha o plano conforme o volume de conteúdo que você processa.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10 items-stretch">
                     <div class="bg-card rounded-3xl p-7 flex flex-col glow-hover">
-                        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
+                        <div class="text-[13px] text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
-                        <div class="text-xs text-slate-500 mt-1">7 dias</div>
+                        <div class="text-[13px] text-slate-500 mt-1">7 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>5 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 5 vídeos, 3/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[13px] text-slate-500">até 5 vídeos, 3/semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 35 gerações no período</li>
                         </ul>
@@ -542,13 +542,13 @@
                     </div>
 
                     <div class="bg-card rounded-3xl p-7 flex flex-col border-[#19D3AE]/70 ring-1 ring-[#19D3AE]/50 relative glow-hover">
-                        <span class="absolute -top-3 right-5 bg-[#19D3AE] text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Recomendado</span>
-                        <div class="text-xs text-[#19D3AE] font-bold uppercase tracking-wider">Mensal</div>
+                        <span class="absolute -top-3 right-5 bg-[#19D3AE] text-slate-950 text-[13px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Recomendado</span>
+                        <div class="text-[13px] text-[#19D3AE] font-bold uppercase tracking-wider">Mensal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 16,90</div>
-                        <div class="text-xs text-slate-500 mt-1">30 dias</div>
+                        <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 5 vídeos, 5/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote<span class="block text-[13px] text-slate-500">até 5 vídeos, 5/semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 300 gerações no período</li>
                         </ul>
@@ -563,13 +563,13 @@
                          setStatusBox/exibirErroDaGeracao, que não tem relação com este plano e não
                          foi tocado). Mesma escala 400/500/700/800/950 do Tailwind, só a cor base. -->
                     <div class="bg-card rounded-3xl p-7 flex flex-col border-violet-500/40 ring-1 ring-violet-500/30 relative glow-hover">
-                        <span class="absolute -top-3 right-5 bg-violet-400 text-slate-950 text-[10px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Maior lote disponível</span>
-                        <div class="text-xs text-violet-400 font-bold uppercase tracking-wider">VIP Batch</div>
+                        <span class="absolute -top-3 right-5 bg-violet-400 text-slate-950 text-[13px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Maior lote disponível</span>
+                        <div class="text-[13px] text-violet-400 font-bold uppercase tracking-wider">VIP Batch</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 29,90</div>
-                        <div class="text-xs text-slate-500 mt-1">30 dias</div>
+                        <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>15 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i><span>Downloads em lote<span class="block text-[11px] text-slate-500">até 15 vídeos, sem limite semanal</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i><span>Downloads em lote<span class="block text-[13px] text-slate-500">até 15 vídeos, sem limite semanal</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Limpeza de metadados e hash</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Até 450 gerações no período</li>
                         </ul>
@@ -606,11 +606,11 @@
                  (mesmas funções, atualizarVisibilidadeSecaoPlanos()); #assinaturaStatus já existia
                  no HTML mas nunca tinha sido preenchido por nenhum JS -- reaproveitado aqui pra
                  descrição do lote, em vez de criar mais um id. -->
-            <section id="areaAssinatura" class="hidden py-8">
+            <section id="areaAssinatura" class="hidden py-16 sm:py-24">
                 <div class="bg-card rounded-3xl p-6 sm:p-7 border border-[#19D3AE]/20">
                     <div class="flex items-start justify-between gap-3">
-                        <div class="text-xs text-slate-500 uppercase tracking-wider font-bold pt-1.5">Meu acesso</div>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[11px] font-extrabold uppercase tracking-wider shrink-0">
+                        <div class="text-[13px] text-slate-500 uppercase tracking-wider font-bold pt-1.5">Meu acesso</div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-extrabold uppercase tracking-wider shrink-0">
                             <span class="w-1.5 h-1.5 rounded-full bg-[#19D3AE]"></span> Ativo
                         </span>
                     </div>
@@ -626,13 +626,13 @@
                             <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group text-sm"></i></div>
                             <div class="min-w-0">
                                 <div id="assinaturaRestantesNumero" class="text-lg font-extrabold text-white leading-tight truncate">—</div>
-                                <div id="assinaturaRestantesLabel" class="text-xs text-slate-500 truncate">—</div>
+                                <div id="assinaturaRestantesLabel" class="text-[13px] text-slate-500 truncate">—</div>
                             </div>
                         </div>
                         <div class="flex items-center gap-3 min-w-0 sm:border-l sm:border-slate-800 sm:pl-4">
                             <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-calendar-check text-sm"></i></div>
                             <div class="min-w-0">
-                                <div class="text-xs text-slate-500">Acesso válido até</div>
+                                <div class="text-[13px] text-slate-500">Acesso válido até</div>
                                 <div id="assinaturaValidadeData" class="text-base font-extrabold text-[#19D3AE] truncate">—</div>
                             </div>
                         </div>
@@ -644,15 +644,15 @@
                          atualizarCardAcessoDetalhes()). -->
                     <div class="mt-5">
                         <div class="flex items-center justify-between gap-2 mb-2">
-                            <span id="assinaturaUsoLabel" class="text-xs font-bold text-slate-400">Uso de hoje</span>
-                            <span id="assinaturaUsoFracao" class="text-xs font-bold text-slate-500 shrink-0">—</span>
+                            <span id="assinaturaUsoLabel" class="text-[13px] font-bold text-slate-400">Uso de hoje</span>
+                            <span id="assinaturaUsoFracao" class="text-[13px] font-bold text-slate-500 shrink-0">—</span>
                         </div>
                         <div id="assinaturaUsoBarra" class="flex gap-1"></div>
                     </div>
 
                     <!-- Só aparece quando o período da cota é conhecido (dia/semana) -- nunca um
                          texto de renovação genérico/inventado (ver atualizarCardAcessoDetalhes()). -->
-                    <div id="assinaturaRenova" class="hidden flex items-center gap-2 mt-4 text-xs text-slate-500">
+                    <div id="assinaturaRenova" class="hidden flex items-center gap-2 mt-4 text-[13px] text-slate-500">
                         <i class="fa-regular fa-clock"></i>
                         <span id="assinaturaRenovaTexto"></span>
                     </div>
@@ -668,7 +668,7 @@
                  Histórico/Indicação); nenhum id, classe ou função mudou -- só a posição no HTML.
                  Continua escondida/mostrada exatamente como antes, por getElementById, sem
                  depender de ordem no DOM -- ver atualizarVisibilidadeBatch() no script. -->
-            <section id="secaoBatch" class="hidden py-10">
+            <section id="secaoBatch" class="hidden py-16 sm:py-24">
                 <!-- Etapa 2 (dossiê, 20/10/2026): este card era roxo sem ser a marca VIP -- violeta
                      volta a ser exclusividade do selo/card do plano VIP; aqui (lote, disponível em
                      3 planos, não só VIP Batch) é cor primária padrão = verde-água. -->
@@ -691,24 +691,24 @@
                          para esconder algo dele. -->
                     <div class="flex gap-2 mb-4">
                         <button type="button" id="formatoVideoBtnLote" onclick="selecionarFormatoLote('video')"
-                            class="flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]">
+                            class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]">
                             <i class="fa-solid fa-film mr-1"></i>Vídeo (MP4)
                         </button>
                         <button type="button" id="formatoAudioBtnLote" onclick="selecionarFormatoLote('audio')"
-                            class="flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700">
+                            class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700">
                             <i class="fa-solid fa-music mr-1"></i>Só áudio (MP3)
                         </button>
                     </div>
-                    <p id="audioContadorLote" class="hidden mb-3 text-center text-xs text-slate-500"></p>
+                    <p id="audioContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
 
                     <div class="flex items-center justify-between gap-3 mb-3">
-                        <span id="batchCount" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeo</span>
-                        <span id="batchPlanoTag" class="text-[10px] font-bold uppercase tracking-wider text-[#19D3AE]/80">—</span>
+                        <span id="batchCount" class="text-[13px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeo</span>
+                        <span id="batchPlanoTag" class="text-[13px] font-bold uppercase tracking-wider text-[#19D3AE]/80">—</span>
                     </div>
 
                     <div id="batchItems" class="space-y-3"></div>
 
-                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-xs transition-colors">
+                    <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
                         <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
                     </button>
 
@@ -736,7 +736,7 @@
                  PRÓPRIO desta seção, nunca no bootstrap antigo) -- não depende de nenhuma variável
                  mutável das funções antigas (planoAtualCode/limiteLoteAtual), só do que a PRÓPRIA
                  resposta trouxer, sempre fresca no momento em que a seção é usada. -->
-            <section id="secaoPinterestBoard" class="hidden py-10">
+            <section id="secaoPinterestBoard" class="hidden py-16 sm:py-24">
                 <!-- Etapa 2 (dossiê, 20/10/2026): mesma regra do card de lote acima -- roxo some,
                      verde-água entra (violeta fica só pro selo/card do plano VIP). -->
                 <div class="bg-card rounded-3xl p-7 border-[#19D3AE]/30 glow-hover">
@@ -753,8 +753,8 @@
                     <div id="pinterestBoardBloqueado" class="hidden rounded-2xl border border-slate-700 bg-[#060b14] p-5 text-center">
                         <i class="fa-solid fa-lock text-slate-500 text-xl mb-2"></i>
                         <p class="text-sm text-slate-300 font-bold">Importar pasta do Pinterest é um recurso dos planos com lote.</p>
-                        <p class="text-xs text-slate-500 mt-1">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
-                        <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-xs transition-colors">Ver planos</a>
+                        <p class="text-[13px] text-slate-500 mt-1">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
+                        <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-[13px] transition-colors">Ver planos</a>
                     </div>
 
                     <!-- Estado DESBLOQUEADO (planos com lote: Semanal/Mensal/VIP Batch). -->
@@ -768,15 +768,15 @@
 
                         <div id="pinterestBoardResultado" class="hidden mt-4">
                             <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                                <span id="pinterestBoardSelecionados" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">0 selecionados</span>
-                                <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[11px] font-bold uppercase tracking-wider text-[#19D3AE] hover:text-[#19D3AE]/80">Selecionar os primeiros</button>
+                                <span id="pinterestBoardSelecionados" class="text-[13px] font-bold uppercase tracking-wider text-slate-500">0 selecionados</span>
+                                <button id="pinterestBoardSelecionarPrimeirosBtn" type="button" onclick="selecionarPrimeirosPinterest()" class="text-[13px] font-bold uppercase tracking-wider text-[#19D3AE] hover:text-[#19D3AE]/80">Selecionar os primeiros</button>
                             </div>
 
                             <div id="pinterestBoardGrade" class="grid grid-cols-3 gap-2"></div>
 
-                            <p id="pinterestBoardMaisAviso" class="hidden text-xs text-slate-500 mt-3">Esta pasta tem mais pins do que o mostrado aqui — só os primeiros itens aparecem.</p>
+                            <p id="pinterestBoardMaisAviso" class="hidden text-[13px] text-slate-500 mt-3">Esta pasta tem mais pins do que o mostrado aqui — só os primeiros itens aparecem.</p>
 
-                            <div id="pinterestBoardCotaTexto" class="text-xs text-slate-400 mt-4"></div>
+                            <div id="pinterestBoardCotaTexto" class="text-[13px] text-slate-400 mt-4"></div>
 
                             <button id="pinterestBoardBaixarBtn" type="button" onclick="baixarSelecaoPinterest()" disabled class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-download mr-1"></i>Baixar selecionados</button>
                         </div>
@@ -801,7 +801,7 @@
                  duplicam nada: inserem as URLs retornadas no MESMO #batchItems e chamam os MESMOS
                  processarLote()/processarLoteAudio() já existentes e testados -- idêntico ao que
                  #secaoPinterestBoard já faz em baixarSelecaoPinterest() logo acima. -->
-            <section id="secaoAtalho" class="hidden py-10">
+            <section id="secaoAtalho" class="hidden py-16 sm:py-24">
                 <div class="bg-card rounded-3xl p-7 glow-hover">
                     <div class="flex items-start gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-share-nodes"></i></div>
@@ -809,8 +809,8 @@
                             <h2 class="text-base font-extrabold text-white">Enviar para o KLANGO</h2>
                             <p class="text-sm text-slate-400 mt-1">Gere seu token pessoal para compartilhar vídeos direto do Instagram, TikTok, Pinterest ou YouTube — sem usar login nem senha nesses apps.</p>
                             <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                                <a href="/atalho-ios" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-apple"></i>Como configurar no iPhone</a>
-                                <a href="/atalho-android" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-android"></i>Como configurar no Android</a>
+                                <a href="/atalho-ios" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-apple"></i>Como configurar no iPhone</a>
+                                <a href="/atalho-android" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-android"></i>Como configurar no Android</a>
                             </div>
                         </div>
                     </div>
@@ -822,32 +822,35 @@
                         </div>
                         <div id="atalhoTokenComToken" class="hidden">
                             <p class="text-sm text-slate-300">Token ativo desde <span id="atalhoTokenCriadoEm">—</span>.</p>
-                            <p id="atalhoTokenUltimoUso" class="text-xs text-slate-500 mt-1">Ainda não foi usado.</p>
+                            <p id="atalhoTokenUltimoUso" class="text-[13px] text-slate-500 mt-1">Ainda não foi usado.</p>
                             <div class="flex flex-col sm:flex-row gap-2 mt-3">
-                                <button type="button" onclick="gerarTokenAtalho()" class="flex-1 h-11 rounded-xl border border-slate-700 bg-[#0a0f1a] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-xs transition-colors"><i class="fa-solid fa-rotate mr-1.5"></i>Gerar novo token</button>
-                                <button type="button" onclick="revogarTokenAtalho()" class="flex-1 h-11 rounded-xl border border-red-900/50 bg-[#0a0f1a] text-red-400 hover:border-red-500/60 hover:bg-red-950/30 font-bold text-xs transition-colors"><i class="fa-solid fa-ban mr-1.5"></i>Revogar token</button>
+                                <button type="button" onclick="gerarTokenAtalho()" class="flex-1 h-11 rounded-xl border border-slate-700 bg-[#0a0f1a] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors"><i class="fa-solid fa-rotate mr-1.5"></i>Gerar novo token</button>
+                                <button type="button" onclick="revogarTokenAtalho()" class="flex-1 h-11 rounded-xl border border-red-900/50 bg-[#0a0f1a] text-red-400 hover:border-red-500/60 hover:bg-red-950/30 font-bold text-[13px] transition-colors"><i class="fa-solid fa-ban mr-1.5"></i>Revogar token</button>
                             </div>
                         </div>
 
                         <!-- Mostrado só UMA VEZ, logo depois de gerar -- o backend nunca guarda nem
                              devolve o valor puro de novo (ver routes/share.py::post_share_token). -->
                         <div id="atalhoTokenNovo" class="hidden mt-4 pt-4 border-t border-slate-800">
-                            <p class="text-xs font-bold text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Copie agora — por segurança, este token não aparece de novo.</p>
+                            <p class="text-[13px] font-bold text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Copie agora — por segurança, este token não aparece de novo.</p>
                             <div class="flex flex-col sm:flex-row gap-2 mt-2">
                                 <input id="atalhoTokenNovoInput" type="text" readonly
-                                    class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-xs"
+                                    class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-[13px]"
                                     onclick="this.select()">
-                                <button id="atalhoTokenCopiarBtn" type="button" onclick="copiarTokenAtalho(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-xs hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap"><i class="fa-solid fa-copy mr-1.5"></i>Copiar</button>
+                                <button id="atalhoTokenCopiarBtn" type="button" onclick="copiarTokenAtalho(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-[13px] hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap"><i class="fa-solid fa-copy mr-1.5"></i>Copiar</button>
                             </div>
                         </div>
 
-                        <div id="atalhoTokenStatus" class="mt-3 text-xs"></div>
+                        <div id="atalhoTokenStatus" class="mt-3 text-[13px]"></div>
                     </div>
 
                     <div class="mt-5">
                         <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                            <span id="atalhoFilaContador" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Fila vazia</span>
-                            <button id="atalhoFilaLimparBtn" type="button" onclick="limparFilaAtalho()" class="hidden text-[11px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-400">Limpar fila</button>
+                            <span id="atalhoFilaContador" class="text-[13px] font-bold uppercase tracking-wider text-slate-500">Fila vazia</span>
+                            <!-- Etapa 2 (dossiê): link terciário também precisa de ≥44px de área de
+                                 toque, mesmo com o texto pequeno -- h-11 inline-flex não muda o
+                                 tamanho visual do texto, só a altura clicável. -->
+                            <button id="atalhoFilaLimparBtn" type="button" onclick="limparFilaAtalho()" class="hidden h-11 inline-flex items-center text-[13px] font-bold uppercase tracking-wider text-slate-500 hover:text-red-400">Limpar fila</button>
                         </div>
                         <div id="atalhoFilaLista" class="space-y-2"></div>
                         <p id="atalhoFilaVazia" class="text-sm text-slate-500">Os links que você compartilhar pelo atalho aparecem aqui.</p>
@@ -857,10 +860,10 @@
                              estreito comum) -- verificado com um mockup renderizado via Playwright
                              nessa largura antes de escrever aqui. -->
                         <div id="atalhoFilaBotoes" class="hidden grid grid-cols-2 gap-2 mt-3">
-                            <button id="atalhoFilaVideoBtn" type="button" onclick="enviarFilaParaLote('video')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors"><i class="fa-solid fa-film mr-1.5"></i>Baixar vídeos</button>
-                            <button id="atalhoFilaAudioBtn" type="button" onclick="enviarFilaParaLote('audio')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm leading-tight transition-colors"><i class="fa-solid fa-music mr-1.5"></i>Extrair áudios</button>
+                            <button id="atalhoFilaVideoBtn" type="button" onclick="enviarFilaParaLote('video')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-[13px] sm:text-sm leading-tight transition-colors"><i class="fa-solid fa-film mr-1.5"></i>Baixar vídeos</button>
+                            <button id="atalhoFilaAudioBtn" type="button" onclick="enviarFilaParaLote('audio')" class="flex items-center justify-center text-center px-2 py-3 bg-[#19D3AE] hover:brightness-110 text-slate-950 font-extrabold rounded-xl text-[13px] sm:text-sm leading-tight transition-colors"><i class="fa-solid fa-music mr-1.5"></i>Extrair áudios</button>
                         </div>
-                        <div id="atalhoFilaStatus" class="mt-2 text-xs"></div>
+                        <div id="atalhoFilaStatus" class="mt-2 text-[13px]"></div>
                     </div>
                 </div>
             </section>
@@ -870,7 +873,7 @@
                  exige sessão autenticada (routes/me.py::get_generations_history), diferente de
                  /api/me/status, que também aceita a identidade Free anônima. Por isso esta seção
                  só é mostrada/carregada em aplicarSessao(), nunca em aplicarSemSessao(). -->
-            <section id="secaoHistorico" class="hidden py-8">
+            <section id="secaoHistorico" class="hidden py-16 sm:py-24">
                 <div class="bg-card rounded-3xl p-7 glow-hover">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-clock-rotate-left"></i></div>
@@ -891,7 +894,7 @@
                          que pode haver mais; depois de clicado, carrega até 20 (HISTORICO_LIMITE_MAXIMO)
                          e some. -->
                     <button id="historicoVerTodosBtn" type="button" onclick="carregarHistoricoGeracoes(true)"
-                        class="hidden w-full mt-3 h-11 rounded-xl border border-slate-700 text-slate-300 hover:border-[#19D3AE]/50 hover:text-[#19D3AE] font-bold text-xs transition-colors">
+                        class="hidden w-full mt-3 h-11 rounded-xl border border-slate-700 text-slate-300 hover:border-[#19D3AE]/50 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
                         Ver todos os downloads
                     </button>
                 </div>
@@ -910,7 +913,7 @@
                  em vez de só trocar o texto) -- ver copiarLinkIndicacao() no script. Mascote não
                  incluída aqui: mesma situação em aberto da Home (ver histórico de commits de hoje),
                  fora do escopo desta etapa. -->
-            <section id="secaoIndicacao" class="hidden py-8">
+            <section id="secaoIndicacao" class="hidden py-16 sm:py-24">
                 <div class="bg-card rounded-3xl p-7 glow-hover">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gift"></i></div>
@@ -921,9 +924,9 @@
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2">
                         <input id="indicacaoLinkInput" type="text" readonly
-                            class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-xs"
+                            class="w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white text-[13px]"
                             onclick="this.select()">
-                        <button id="indicacaoCopiarBtn" type="button" onclick="copiarLinkIndicacao(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-xs hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap">
+                        <button id="indicacaoCopiarBtn" type="button" onclick="copiarLinkIndicacao(this)" class="h-11 px-5 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold text-[13px] hover:bg-[#19D3AE]/20 transition-colors whitespace-nowrap">
                             <i class="fa-solid fa-copy mr-1.5"></i>Copiar link
                         </button>
                     </div>
@@ -932,15 +935,15 @@
                         <h3 class="text-sm font-bold text-white mb-4">Como funciona?</h3>
                         <div class="space-y-3">
                             <div class="flex items-start gap-3">
-                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[11px] font-extrabold">1</span>
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">1</span>
                                 <p class="text-sm text-slate-400 leading-relaxed pt-0.5">Você compartilha seu link</p>
                             </div>
                             <div class="flex items-start gap-3">
-                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[11px] font-extrabold">2</span>
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">2</span>
                                 <p class="text-sm text-slate-400 leading-relaxed pt-0.5">A pessoa assina um plano</p>
                             </div>
                             <div class="flex items-start gap-3">
-                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[11px] font-extrabold">3</span>
+                                <span class="shrink-0 w-6 h-6 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">3</span>
                                 <p class="text-sm text-slate-400 leading-relaxed pt-0.5">Você ganha 7 dias extras automaticamente</p>
                             </div>
                         </div>
@@ -976,7 +979,7 @@
                  no JS é quem de fato decide, e cuida também dos dois links de nav (header/rodapé). -->
             <section id="comentarios" class="py-16 sm:py-24 border-t section-line hidden">
                 <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
+                    <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
                     <h2 id="comentariosTitulo" class="text-2xl sm:text-3xl font-extrabold text-white">Primeiros usuários do KLANGO.MP4</h2>
                     <p id="comentariosSubtitulo" class="mt-3 text-[18px] leading-[1.55] sm:text-sm sm:leading-relaxed text-slate-400">Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.</p>
                 </div>
@@ -997,12 +1000,12 @@
                                 class="w-full mt-2 h-11 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-[.99] transition-all">
                                 <i class="fa-solid fa-paper-plane"></i> Comentar
                             </button>
-                            <div id="comentarioStatus" class="mt-2 text-xs text-center"></div>
+                            <div id="comentarioStatus" class="mt-2 text-[13px] text-center"></div>
                         </div>
                         <div id="comentarioFormBloqueado" class="text-center py-2">
                             <i class="fa-solid fa-lock text-slate-600 mb-2"></i>
                             <p class="text-sm text-slate-400">Só quem tem um plano pago ativo pode comentar.</p>
-                            <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-2 text-xs font-bold text-[#19D3AE] hover:underline">Ver planos</a>
+                            <a href="#secaoPlanos" onclick="mostrarSecaoSeEscondida('secaoPlanos')" class="inline-block mt-2 text-[13px] font-bold text-[#19D3AE] hover:underline">Ver planos</a>
                         </div>
                     </div>
                 </div>
@@ -1012,7 +1015,7 @@
             <section id="faq" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto">
                     <div class="text-center mb-10">
-                        <p class="text-[#19D3AE] text-xs font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
+                        <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
                         <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Perguntas frequentes</h2>
                     </div>
 
@@ -1140,7 +1143,7 @@
                 <div class="order-3 sm:order-1">
                     <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mt-5 mb-2.5">Siga nas redes sociais</div>
+                    <div class="text-[13px] font-bold uppercase tracking-wider text-slate-500 mt-5 mb-2.5">Siga nas redes sociais</div>
                     <div class="flex items-center gap-2.5">
                         <a href="https://www.instagram.com/klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no Instagram" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-instagram text-sm"></i></a>
                         <a href="https://www.tiktok.com/@klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no TikTok" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-tiktok text-sm"></i></a>
@@ -1148,7 +1151,7 @@
                 </div>
 
                 <div class="order-1 sm:order-2 sm:text-right">
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Produto</div>
+                    <div class="text-[13px] font-bold uppercase tracking-wider text-slate-500 mb-3">Produto</div>
                     <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
                         <button type="button" onclick="abrirAcesso()" class="hover:text-white transition-colors w-fit sm:self-end text-left">Acesso</button>
                         <a href="#secaoPlanos" class="hover:text-white transition-colors w-fit">Planos</a>
@@ -1159,7 +1162,7 @@
                 </div>
 
                 <div class="order-2 sm:order-3 sm:text-right">
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-3">Legal</div>
+                    <div class="text-[13px] font-bold uppercase tracking-wider text-slate-500 mb-3">Legal</div>
                     <nav class="flex flex-col gap-2 text-slate-400 sm:items-end">
                         <a href="/termos" class="hover:text-white transition-colors w-fit">Termos de Uso</a>
                         <a href="/privacidade" class="hover:text-white transition-colors w-fit">Política de Privacidade</a>
@@ -1175,7 +1178,7 @@
                  disso, nenhum arquivo novo foi criado só pra esta seção. -->
 
             <div class="border-t border-slate-800/70">
-                <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 text-xs text-slate-600 text-center sm:text-left">© 2026 KLANGO.MP4</div>
+                <div class="max-w-6xl mx-auto px-5 sm:px-8 py-5 text-[13px] text-slate-600 text-center sm:text-left">© 2026 KLANGO.MP4</div>
             </div>
         </footer>
     </div>
@@ -1192,7 +1195,7 @@
             <div class="w-9 h-9 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gift text-sm"></i></div>
             <div class="min-w-0 flex-1">
                 <div class="text-sm font-extrabold text-white">Sua indicação deu certo! 🎉</div>
-                <div id="indicacaoToastTexto" class="text-xs text-slate-400 mt-0.5 leading-relaxed">—</div>
+                <div id="indicacaoToastTexto" class="text-[13px] text-slate-400 mt-0.5 leading-relaxed">—</div>
             </div>
             <button type="button" onclick="esconderToastIndicacao()" class="shrink-0 text-slate-500 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
         </div>
@@ -1236,25 +1239,25 @@
                 <div class="grid grid-cols-3 gap-2 mb-5">
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
                         <i class="fa-solid fa-envelope text-[#19D3AE]"></i>
-                        <span class="text-[11px] text-slate-400 leading-tight">Sem senha</span>
+                        <span class="text-[13px] text-slate-400 leading-tight">Sem senha</span>
                     </div>
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
                         <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
-                        <span class="text-[11px] text-slate-400 leading-tight">Acesso em segundos</span>
+                        <span class="text-[13px] text-slate-400 leading-tight">Acesso em segundos</span>
                     </div>
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
                         <i class="fa-solid fa-shield-halved text-[#19D3AE]"></i>
-                        <span class="text-[11px] text-slate-400 leading-tight">Seus dados protegidos</span>
+                        <span class="text-[13px] text-slate-400 leading-tight">Seus dados protegidos</span>
                     </div>
                 </div>
 
-                <label for="userEmail" class="block text-xs font-semibold text-slate-400 mb-1.5">E-mail</label>
+                <label for="userEmail" class="block text-[13px] font-semibold text-slate-400 mb-1.5">E-mail</label>
                 <div class="relative">
                     <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
                     <input id="userEmail" type="email" autocomplete="email" placeholder="seu@email.com" onkeydown="if (event.key === 'Enter') pedirCodigo()" class="input-focus w-full h-12 pl-11 pr-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-sm">
                 </div>
                 <button id="acessoEnviarBtn" type="button" onclick="pedirCodigo()" class="w-full mt-3 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2">Enviar código<i class="fa-solid fa-arrow-right text-xs"></i></button>
-                <p class="text-center text-[11px] text-slate-500 mt-3 leading-relaxed">Enviaremos um código de 6 dígitos para confirmar que é você.</p>
+                <p class="text-center text-[13px] text-slate-500 mt-3 leading-relaxed">Enviaremos um código de 6 dígitos para confirmar que é você.</p>
             </div>
 
             <!-- Passo 2: código (04/10/2026: ilustração decorativa (CSS puro, sem imagem) + campo de
@@ -1287,16 +1290,19 @@
                 </div>
 
                 <button id="acessoConfirmarBtn" type="button" onclick="confirmarCodigo()" class="w-full mt-5 h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2">Entrar<i class="fa-solid fa-arrow-right text-xs"></i></button>
-                <div class="mt-3 flex items-center justify-between text-xs">
-                    <button id="acessoReenviarBtn" type="button" onclick="pedirCodigo()" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-rotate-right text-[11px]"></i><span id="acessoReenviarTexto">Reenviar código</span></button>
-                    <button type="button" onclick="voltarParaEmail()" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-envelope text-[11px]"></i>Trocar e-mail</button>
+                <!-- Etapa 2 (dossiê): os dois links abaixo não tinham altura nenhuma (ficavam do
+                     tamanho natural do texto, bem abaixo de 44px de toque) -- h-11 acrescentado,
+                     texto/ícone do mesmo tamanho de sempre. -->
+                <div class="mt-3 flex items-center justify-between text-[13px]">
+                    <button id="acessoReenviarBtn" type="button" onclick="pedirCodigo()" class="h-11 text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-rotate-right text-[11px]"></i><span id="acessoReenviarTexto">Reenviar código</span></button>
+                    <button type="button" onclick="voltarParaEmail()" class="h-11 text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-envelope text-[11px]"></i>Trocar e-mail</button>
                 </div>
 
                 <div class="mt-5 bg-card-soft rounded-xl p-3.5 flex items-start gap-3 text-left">
                     <i class="fa-solid fa-shield-halved text-[#19D3AE] mt-0.5"></i>
                     <div>
-                        <p class="text-xs font-bold text-white">Não recebeu o código?</p>
-                        <p class="text-[11px] text-slate-500 mt-0.5">Verifique sua caixa de entrada (e spam).</p>
+                        <p class="text-[13px] font-bold text-white">Não recebeu o código?</p>
+                        <p class="text-[13px] text-slate-500 mt-0.5">Verifique sua caixa de entrada (e spam).</p>
                     </div>
                 </div>
             </div>
@@ -1315,7 +1321,7 @@
                     </div>
                 </div>
                 <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-3">Você está conectado!</h3>
-                <p class="inline-flex items-center gap-1.5 mb-5 px-3 py-1.5 rounded-full bg-[#060b14] border border-slate-800 text-xs text-slate-300">
+                <p class="inline-flex items-center gap-1.5 mb-5 px-3 py-1.5 rounded-full bg-[#060b14] border border-slate-800 text-[13px] text-slate-300">
                     <i class="fa-solid fa-envelope text-[10px] text-slate-500"></i><strong id="acessoEmailAtual" class="text-slate-200 font-normal"></strong>
                 </p>
 
@@ -1323,31 +1329,31 @@
                     <div class="bg-card-soft rounded-xl p-3 flex items-center gap-3">
                         <div class="w-9 h-9 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-play text-xs"></i></div>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-white">Pronto para processar</p>
-                            <p class="text-[11px] text-slate-500">Baixe, limpe e reutilize seus vídeos.</p>
+                            <p class="text-[13px] font-bold text-white">Pronto para processar</p>
+                            <p class="text-[13px] text-slate-500">Baixe, limpe e reutilize seus vídeos.</p>
                         </div>
                     </div>
                     <div class="bg-card-soft rounded-xl p-3 flex items-center gap-3">
                         <div class="w-9 h-9 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-chart-simple text-xs"></i></div>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-white">Seus limites atualizados</p>
-                            <p class="text-[11px] text-slate-500">Acesse seu plano e acompanhe o uso.</p>
+                            <p class="text-[13px] font-bold text-white">Seus limites atualizados</p>
+                            <p class="text-[13px] text-slate-500">Acesse seu plano e acompanhe o uso.</p>
                         </div>
                     </div>
                     <div class="bg-card-soft rounded-xl p-3 flex items-center gap-3">
                         <div class="w-9 h-9 shrink-0 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gear text-xs"></i></div>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-white">Todas as funções liberadas</p>
-                            <p class="text-[11px] text-slate-500">Conforme o seu plano atual.</p>
+                            <p class="text-[13px] font-bold text-white">Todas as funções liberadas</p>
+                            <p class="text-[13px] text-slate-500">Conforme o seu plano atual.</p>
                         </div>
                     </div>
                 </div>
 
                 <button type="button" onclick="fecharAcesso()" class="w-full h-12 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-sm flex items-center justify-center gap-2">Concluído<i class="fa-solid fa-arrow-right text-xs"></i></button>
-                <button type="button" onclick="sair()" class="w-full mt-3 text-xs text-slate-500 hover:text-slate-300 transition-colors">Sair da conta</button>
+                <button type="button" onclick="sair()" class="w-full mt-3 text-[13px] text-slate-500 hover:text-slate-300 transition-colors">Sair da conta</button>
             </div>
 
-            <div id="acessoMensagem" class="mt-3 text-xs text-center min-h-[1rem] text-slate-400" role="status"></div>
+            <div id="acessoMensagem" class="mt-3 text-[13px] text-center min-h-[1rem] text-slate-400" role="status"></div>
         </div>
     </div>
 
@@ -1387,7 +1393,7 @@
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-wallet text-[#19D3AE]"></i></div>
                         <div>
                             <h3 id="modalTitulo" class="text-xl font-bold text-white leading-tight">Escolha como pagar</h3>
-                            <p class="text-xs text-slate-500">Finalize seu acesso de forma rápida e segura</p>
+                            <p class="text-[13px] text-slate-500">Finalize seu acesso de forma rápida e segura</p>
                         </div>
                     </div>
 
@@ -1404,11 +1410,11 @@
                     <div class="flex flex-col sm:flex-row gap-4 mb-5">
                         <div class="flex-1 bg-[#060b14] border border-slate-800 rounded-2xl p-5">
                             <div class="flex justify-between items-center gap-2">
-                                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Plano escolhido</span>
-                                <strong id="modalPlano" class="text-[11px] whitespace-nowrap bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold px-2.5 py-1 rounded-full">—</strong>
+                                <span class="text-[13px] font-bold uppercase tracking-wider text-slate-500">Plano escolhido</span>
+                                <strong id="modalPlano" class="text-[13px] whitespace-nowrap bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] font-bold px-2.5 py-1 rounded-full">—</strong>
                             </div>
                             <strong id="modalValor" class="block mt-3 text-2xl sm:text-3xl font-extrabold text-[#19D3AE]">—</strong>
-                            <ul class="space-y-1.5 mt-4 text-xs text-slate-400">
+                            <ul class="space-y-1.5 mt-4 text-[13px] text-slate-400">
                                 <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Pagamento único</li>
                                 <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i>Sem renovação automática</li>
                                 <!-- Texto final vem de PLANOS[plano].detalhes (último item, já real e
@@ -1430,14 +1436,14 @@
                             class="w-full sm:w-32 h-32 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
                     </div>
 
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Forma de pagamento</h4>
+                    <h4 class="text-[13px] font-bold uppercase tracking-wider text-slate-500 mb-2">Forma de pagamento</h4>
                     <!-- 04/10/2026, ajuste fino: mb-4 (1rem) -> mb-3 (0.75rem), ~25% a menos, a
                          pedido do Igor -- só reduz o espaço vazio antes do conteúdo do Brick
                          (que começa com "Meios de pagamento", já desenhado pelo SDK), sem colar
                          as seções. -->
                     <div id="metodoPagamentoSwitch" class="grid grid-cols-2 gap-2 mb-3">
-                        <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all"><i class="fa-solid fa-qrcode mr-1"></i> PIX</button>
-                        <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO</button>
+                        <button id="metodoPixBtn" onclick="trocarMetodoPagamento('pix')" class="py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-[13px] font-extrabold transition-all"><i class="fa-solid fa-qrcode mr-1"></i> PIX</button>
+                        <button id="metodoCartaoBtn" onclick="trocarMetodoPagamento('credit_card')" class="py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-[13px] font-extrabold transition-all"><i class="fa-solid fa-credit-card mr-1"></i> CARTÃO</button>
                     </div>
 
                     <!-- O Payment Brick (MercadoPago.js) é montado aqui dentro -- um único container reutilizado
@@ -1446,19 +1452,19 @@
                          formulário de cartão são desenhados pelo próprio Brick -- não recriamos essa UI aqui.
                          Ver ressalva técnica (1) no comentário do topo do modal. -->
                     <div id="paymentBrickContainer" class="min-h-[4rem]"></div>
-                    <div id="pagamentoStatus" class="mt-3 text-xs text-slate-400"></div>
+                    <div id="pagamentoStatus" class="mt-3 text-[13px] text-slate-400"></div>
 
                     <!-- Bloco de segurança: HTML/CSS real (nunca imagem), como pedido. -->
                     <div class="flex items-center gap-3 mt-4 p-3.5 rounded-xl border border-slate-800 bg-[#060b14]">
                         <i class="fa-solid fa-lock text-[#19D3AE]"></i>
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-bold text-white">Pagamento seguro</p>
-                            <p class="text-[11px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
+                            <p class="text-[13px] font-bold text-white">Pagamento seguro</p>
+                            <p class="text-[13px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
                         </div>
                         <i class="fa-solid fa-shield-halved text-slate-600"></i>
                     </div>
 
-                    <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
+                    <p class="text-[13px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
                 </div>
 
                 <!-- COLUNA DIREITA (~40%): redução de objeções, nunca um segundo formulário. -->
@@ -1467,35 +1473,35 @@
                         <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
                         <h4 class="text-sm font-bold text-white">Por que escolher o KLANGO.MP4?</h4>
                     </div>
-                    <p class="text-xs text-slate-500 mb-5 leading-relaxed">Mais controle, mais segurança e total liberdade para reutilizar seus vídeos.</p>
+                    <p class="text-[13px] text-slate-500 mb-5 leading-relaxed">Mais controle, mais segurança e total liberdade para reutilizar seus vídeos.</p>
 
                     <ul class="space-y-4 text-sm">
                         <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
                             <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-shield-halved text-[#19D3AE] text-xs"></i></div>
                             <div>
-                                <p class="font-bold text-white text-xs">Vídeos limpos de metadados</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Mais privacidade e segurança para o seu conteúdo.</p>
+                                <p class="font-bold text-white text-[13px]">Vídeos limpos de metadados</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">Mais privacidade e segurança para o seu conteúdo.</p>
                             </div>
                         </li>
                         <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
                             <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i></div>
                             <div>
-                                <p class="font-bold text-white text-xs">Processamento rápido</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Seu vídeo pronto em poucos minutos.</p>
+                                <p class="font-bold text-white text-[13px]">Processamento rápido</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">Seu vídeo pronto em poucos minutos.</p>
                             </div>
                         </li>
                         <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
                             <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i></div>
                             <div>
-                                <p class="font-bold text-white text-xs">Suporte a várias plataformas</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">TikTok, Instagram, YouTube Shorts e muito mais.</p>
+                                <p class="font-bold text-white text-[13px]">Suporte a várias plataformas</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">TikTok, Instagram, YouTube Shorts e muito mais.</p>
                             </div>
                         </li>
                         <li class="flex items-start gap-3">
                             <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-infinity text-[#19D3AE] text-xs"></i></div>
                             <div>
-                                <p class="font-bold text-white text-xs">Ideal para criadores e afiliados</p>
-                                <p class="text-[11px] text-slate-500 mt-0.5">Mais praticidade para o seu dia a dia.</p>
+                                <p class="font-bold text-white text-[13px]">Ideal para criadores e afiliados</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">Mais praticidade para o seu dia a dia.</p>
                             </div>
                         </li>
                     </ul>
@@ -1503,21 +1509,21 @@
                     <div class="flex items-center gap-3 mt-5 p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
                         <i class="fa-solid fa-lock text-[#19D3AE]"></i>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-white">Pagamento seguro</p>
-                            <p class="text-[11px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
+                            <p class="text-[13px] font-bold text-white">Pagamento seguro</p>
+                            <p class="text-[13px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 mt-3">
                         <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
                             <i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i>
-                            <p class="text-xs font-bold text-white mt-1.5">Acesso imediato</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Após a confirmação do pagamento.</p>
+                            <p class="text-[13px] font-bold text-white mt-1.5">Acesso imediato</p>
+                            <p class="text-[13px] text-slate-500 mt-0.5">Após a confirmação do pagamento.</p>
                         </div>
                         <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
                             <i class="fa-solid fa-headset text-[#19D3AE] text-xs"></i>
-                            <p class="text-xs font-bold text-white mt-1.5">Suporte</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Estamos aqui para te ajudar.</p>
+                            <p class="text-[13px] font-bold text-white mt-1.5">Suporte</p>
+                            <p class="text-[13px] text-slate-500 mt-0.5">Estamos aqui para te ajudar.</p>
                         </div>
                     </div>
                 </div>
@@ -1921,7 +1927,7 @@
 
         if (comentario.is_example) {
             const selo = document.createElement("span");
-            selo.className = "text-[10px] font-bold uppercase tracking-wider text-slate-500 border border-slate-700 rounded-full px-2 py-0.5";
+            selo.className = "text-[13px] font-bold uppercase tracking-wider text-slate-500 border border-slate-700 rounded-full px-2 py-0.5";
             selo.textContent = "Exemplo";
             topo.appendChild(selo);
         }
@@ -2074,9 +2080,9 @@
         textoEl.textContent = texto;
 
         if (tipo === "vip") {
-            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-violet-950/60 border border-violet-800/40 text-violet-400 text-xs font-semibold mb-4";
+            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-violet-950/60 border border-violet-800/40 text-violet-400 text-[13px] font-semibold mb-4";
         } else {
-            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-semibold mb-4";
+            badge.className = "inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-semibold mb-4";
         }
     }
 
@@ -2090,7 +2096,7 @@
             error: "p-3 bg-red-950/40 border border-red-800/50 text-red-400 rounded-xl animate-fade"
         };
 
-        status.className = "mt-4 text-center text-xs sm:text-sm";
+        status.className = "mt-4 text-center text-[13px] sm:text-sm";
         status.innerHTML = `<div class="${classes[type]}">${message}</div>`;
     }
 
@@ -2145,7 +2151,7 @@
         const cores = { erro: "text-red-400", sucesso: "text-[#19D3AE]", normal: "text-slate-400" };
 
         el.textContent = texto;
-        el.className = `mt-3 text-xs text-center min-h-[1rem] ${cores[tipo] || cores.normal}`;
+        el.className = `mt-3 text-[13px] text-center min-h-[1rem] ${cores[tipo] || cores.normal}`;
     }
 
     function mostrarPassoAcesso(passo) {
@@ -2360,7 +2366,7 @@
         upgrades.forEach((codigo) => {
             const botao = document.createElement("button");
             botao.type = "button";
-            botao.className = "h-11 px-5 rounded-xl border border-[#19D3AE]/40 text-[#19D3AE] hover:bg-[#19D3AE]/15 hover:border-[#19D3AE] font-bold text-xs transition-colors whitespace-nowrap flex-1 sm:flex-none";
+            botao.className = "h-11 px-5 rounded-xl border border-[#19D3AE]/40 text-[#19D3AE] hover:bg-[#19D3AE]/15 hover:border-[#19D3AE] font-bold text-[13px] transition-colors whitespace-nowrap flex-1 sm:flex-none";
             botao.textContent = `Fazer upgrade para ${PLANOS[codigo].nome}`;
             botao.onclick = () => abrirModalPagamento(codigo);
             assinaturaUpgrade.appendChild(botao);
@@ -2630,7 +2636,7 @@
             badgeClasses = "bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE]";
             badgeLabel = "Disponível";
             // Etapa 2 (dossiê): h-9 (36px) virou h-11 (44px) -- mínimo de toque em qualquer botão.
-            botaoHtml = `<a href="/api/generations/${item.id}/download" class="mt-2.5 w-full h-11 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-xs font-bold hover:bg-[#19D3AE]/20 transition-colors"><i class="fa-solid fa-download"></i>Baixar novamente</a>`;
+            botaoHtml = `<a href="/api/generations/${item.id}/download" class="mt-2.5 w-full h-11 inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-bold hover:bg-[#19D3AE]/20 transition-colors"><i class="fa-solid fa-download"></i>Baixar novamente</a>`;
         } else if (item.status === "failed") {
             badgeClasses = "bg-rose-500/10 border border-rose-500/30 text-rose-400";
             badgeLabel = "Falhou";
@@ -2648,10 +2654,10 @@
                         <i class="${icone} text-slate-500"></i>
                         <div class="min-w-0">
                             <div class="text-sm text-white truncate">${_escapeHtml(nome)}</div>
-                            <div class="text-xs text-slate-500">${data}</div>
+                            <div class="text-[13px] text-slate-500">${data}</div>
                         </div>
                     </div>
-                    <span class="shrink-0 text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${badgeClasses}">${badgeLabel}</span>
+                    <span class="shrink-0 text-[13px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full whitespace-nowrap ${badgeClasses}">${badgeLabel}</span>
                 </div>
                 ${botaoHtml}
             </div>`;
@@ -2902,7 +2908,7 @@
         const el = document.getElementById("pagamentoStatus");
         const cores = { erro: "text-red-400", sucesso: "text-[#19D3AE]", normal: "text-slate-400" };
         el.textContent = texto;
-        el.className = `mt-3 text-xs ${cores[tipo] || cores.normal}`;
+        el.className = `mt-3 text-[13px] ${cores[tipo] || cores.normal}`;
     }
 
     // Só troca o TEXTO exibido quando o checkout recebe 401 -- não distingue "nunca logou" de
@@ -2961,7 +2967,7 @@
         // comentário em PLANOS/detalhes acima. escapeHtml por padrão, mesma regra de sempre, mesmo
         // "detalhes" sendo sempre texto nosso (nunca entrada de usuário).
         document.getElementById("modalDescricao").innerHTML = info.detalhes
-            .map((item) => `<span class="inline-block bg-[#060b14] border border-slate-800 rounded-full px-2.5 py-1 text-[10px] text-slate-300">${escapeHtml(item)}</span>`)
+            .map((item) => `<span class="inline-block bg-[#060b14] border border-slate-800 rounded-full px-2.5 py-1 text-[13px] text-slate-300">${escapeHtml(item)}</span>`)
             .join("");
         // 04/10/2026: o checklist do card do plano (ver modal) mostra "Acesso por N dias" como 3º
         // item -- texto real, tirado do último item de PLANOS[plano].detalhes (sempre "acesso por
@@ -2997,11 +3003,11 @@
         // cor azul/roxa: o método selecionado usa o verde/turquesa oficial da marca (PIX) ou um
         // destaque neutro em branco (cartão), para diferenciar sem sair da paleta aprovada.
         if (tipo === "pix") {
-            pixBtn.className = "py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-xs font-extrabold transition-all";
-            cartaoBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all";
+            pixBtn.className = "py-3 rounded-xl border border-[#19D3AE] bg-[#19D3AE]/40 text-[#19D3AE] text-[13px] font-extrabold transition-all";
+            cartaoBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-[13px] font-extrabold transition-all";
         } else {
-            cartaoBtn.className = "py-3 rounded-xl border border-white/40 bg-white/5 text-white text-xs font-extrabold transition-all";
-            pixBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-xs font-extrabold transition-all";
+            cartaoBtn.className = "py-3 rounded-xl border border-white/40 bg-white/5 text-white text-[13px] font-extrabold transition-all";
+            pixBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-[13px] font-extrabold transition-all";
         }
 
         // Troca a imagem da mascote junto com o método (ver comentário no <img id="modalMascoteImg">).
@@ -3299,12 +3305,12 @@
                     document.getElementById("paymentBrickContainer").innerHTML =
                         `<div class="bg-[#060b14] border border-slate-800 rounded-2xl p-5">` +
                         `<p class="text-sm font-bold text-white mb-1">Pague com PIX</p>` +
-                        `<p class="text-xs text-slate-500 mb-4">Escaneie o QR Code com o app do seu banco ou copie o código PIX.</p>` +
+                        `<p class="text-[13px] text-slate-500 mb-4">Escaneie o QR Code com o app do seu banco ou copie o código PIX.</p>` +
                         `<div class="flex flex-col sm:flex-row items-center gap-4">` +
                         `<div class="bg-white rounded-xl p-3 flex items-center justify-center shrink-0"><img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code Pix" class="w-40 h-40 rounded-lg"></div>` +
                         `<div class="relative w-full">` +
-                        `<input id="pixCopiaCola" type="text" readonly value="${escapeHtml(data.qr_code || "")}" class="w-full bg-[#0b1220] border border-slate-800 text-[10px] p-3 pr-[4.5rem] rounded-xl text-slate-300 text-center sm:text-left focus:outline-none select-all">` +
-                        `<button type="button" onclick="copiarCodigoPix(this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[10px] font-bold hover:bg-[#19D3AE]/20 transition-colors">Copiar</button>` +
+                        `<input id="pixCopiaCola" type="text" readonly value="${escapeHtml(data.qr_code || "")}" class="w-full bg-[#0b1220] border border-slate-800 text-[13px] p-3 pr-[4.5rem] rounded-xl text-slate-300 text-center sm:text-left focus:outline-none select-all">` +
+                        `<button type="button" onclick="copiarCodigoPix(this)" class="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-bold hover:bg-[#19D3AE]/20 transition-colors">Copiar</button>` +
                         `</div>` +
                         `</div>` +
                         `</div>`;
@@ -3516,7 +3522,7 @@
 
         setStatusBox(
             '<div class="flex flex-col items-center gap-2 text-[#19D3AE]">' +
-            `<span id="progressoTexto" class="text-xs sm:text-sm">${escapeHtml(mensagem || "Processando...")} (${percentArredondado}%)</span>` +
+            `<span id="progressoTexto" class="text-[13px] sm:text-sm">${escapeHtml(mensagem || "Processando...")} (${percentArredondado}%)</span>` +
             '<div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">' +
             `<div id="progressoBarra" class="h-full bg-gradient-cyber transition-all" style="width: ${percentArredondado}%"></div>` +
             '</div>' +
@@ -3543,13 +3549,13 @@
 
         const message = document.createElement("span");
         message.className =
-            "text-[#19D3AE] font-bold flex items-center gap-2 text-xs sm:text-sm";
+            "text-[#19D3AE] font-bold flex items-center gap-2 text-[13px] sm:text-sm";
         message.innerHTML =
             '<i class="fa-solid fa-circle-check"></i> Arquivo preparado com sucesso.';
 
         const downloadButton = document.createElement("button");
         downloadButton.className =
-            "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
+            "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-[13px] sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
         downloadButton.innerHTML =
             '<i class="fa-solid fa-file-arrow-down"></i> Baixar arquivo';
 
@@ -3580,7 +3586,7 @@
             if (planoAtualCode === "vip_batch") {
                 setStatusBox(
                     '<p class="font-bold">Você atingiu seu limite diário do VIP Batch.</p>' +
-                    '<p class="text-xs mt-1">Ele renova amanhã.</p>',
+                    '<p class="text-[13px] mt-1">Ele renova amanhã.</p>',
                     "warning"
                 );
                 return;
@@ -3588,9 +3594,9 @@
             if (planoAtualCode === "weekly" || planoAtualCode === "monthly") {
                 setStatusBox(
                     '<p class="font-bold mb-1">Limite diário atingido.</p>' +
-                    '<p class="text-xs mb-3">Faça upgrade para continuar processando hoje.</p>' +
+                    '<p class="text-[13px] mb-3">Faça upgrade para continuar processando hoje.</p>' +
                     '<button onclick="document.getElementById(\'areaAssinatura\').scrollIntoView({behavior:\'smooth\'})" ' +
-                    'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Meu acesso</button>',
+                    'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-[13px] rounded-xl shadow-md">Meu acesso</button>',
                     "warning"
                 );
                 return;
@@ -3599,9 +3605,9 @@
             // (dossiê, glossário): "gerações" (jargão) vira "vídeos".
             setStatusBox(
                 '<p class="font-bold mb-1">Limite de vídeos atingido.</p>' +
-                '<p class="text-xs mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
+                '<p class="text-[13px] mb-3">Escolha um plano para continuar processando seus vídeos.</p>' +
                 '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
-                'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-[13px] rounded-xl shadow-md">Ver planos</button>',
                 "warning"
             );
             return;
@@ -3637,8 +3643,8 @@
     function selecionarFormatoIndividual(formato) {
         formatoIndividual = formato;
 
-        const ativo = "px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#19D3AE]/15 text-[#19D3AE] border border-[#19D3AE]/40";
-        const inativo = "px-4 py-2 rounded-lg font-bold text-xs transition-colors bg-[#060b14] text-slate-400 border border-slate-800 hover:text-slate-200";
+        const ativo = "px-4 py-2 rounded-lg font-bold text-[13px] transition-colors bg-[#19D3AE]/15 text-[#19D3AE] border border-[#19D3AE]/40";
+        const inativo = "px-4 py-2 rounded-lg font-bold text-[13px] transition-colors bg-[#060b14] text-slate-400 border border-slate-800 hover:text-slate-200";
         document.getElementById("formatoVideoBtn").className = formato === "video" ? ativo : inativo;
         document.getElementById("formatoAudioBtn").className = formato === "audio" ? ativo : inativo;
 
@@ -3729,7 +3735,7 @@
             setStatusBox(
                 '<p class="font-bold mb-1">Extrair áudio é exclusivo dos planos pagos.</p>' +
                 '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
-                'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-[13px] rounded-xl shadow-md">Ver planos</button>',
                 "warning"
             );
             return;
@@ -3758,7 +3764,7 @@
                     setStatusBox(
                         '<p class="font-bold mb-1">' + escapeHtml(dados.detail || "Extrair áudio é exclusivo dos planos pagos.") + '</p>' +
                         '<button onclick="document.getElementById(\'secaoPlanos\').scrollIntoView({behavior:\'smooth\'})" ' +
-                        'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-xs rounded-xl shadow-md">Ver planos</button>',
+                        'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-[13px] rounded-xl shadow-md">Ver planos</button>',
                         "warning"
                     );
                 } else if (response.status === 429 || response.status === 409) {
@@ -3797,13 +3803,13 @@
 
         const message = document.createElement("span");
         message.className =
-            "text-[#19D3AE] font-bold flex items-center gap-2 text-xs sm:text-sm";
+            "text-[#19D3AE] font-bold flex items-center gap-2 text-[13px] sm:text-sm";
         message.innerHTML =
             '<i class="fa-solid fa-circle-check"></i> Áudio extraído com sucesso.';
 
         const downloadButton = document.createElement("button");
         downloadButton.className =
-            "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
+            "w-full sm:w-auto py-2.5 px-6 bg-gradient-cyber text-gray-950 font-extrabold rounded-xl transition-all text-[13px] sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:opacity-90";
         downloadButton.innerHTML =
             '<i class="fa-solid fa-file-arrow-down"></i> Baixar MP3';
 
@@ -3850,14 +3856,14 @@
         top.className = "flex items-center justify-between gap-3 mb-2";
 
         const label = document.createElement("div");
-        label.className = "batch-label text-[11px] font-extrabold uppercase tracking-wider text-slate-400";
+        label.className = "batch-label text-[13px] font-extrabold uppercase tracking-wider text-slate-400";
         label.textContent = `VÍDEO ${String(index).padStart(2, "0")}`;
         top.appendChild(label);
 
         if (index > 1) {
             const remove = document.createElement("button");
             remove.type = "button";
-            remove.className = "text-slate-600 hover:text-red-400 text-xs px-2 py-1";
+            remove.className = "text-slate-600 hover:text-red-400 text-[13px] px-2 py-1";
             remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
             remove.title = "Remover vídeo";
             remove.onclick = () => {
@@ -3871,7 +3877,7 @@
 
         const url = document.createElement("input");
         url.type = "url";
-        url.className = "batch-url w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-xs";
+        url.className = "batch-url w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]";
         url.placeholder = "Cole o link do vídeo…";
         url.autocomplete = "off";
         wrapper.appendChild(url);
@@ -3879,7 +3885,7 @@
         const name = document.createElement("input");
         name.type = "text";
         name.maxLength = 80;
-        name.className = "batch-name w-full h-10 mt-2 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-xs";
+        name.className = "batch-name w-full h-10 mt-2 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]";
         name.placeholder = "Nome do arquivo (opcional) — ex.: video_oferta";
         name.autocomplete = "off";
         wrapper.appendChild(name);
@@ -3934,7 +3940,7 @@
         input.type = "text";
         input.disabled = true;
         input.placeholder = placeholder;
-        input.className = "w-full h-11 pl-10 pr-4 bg-[#050810] border border-slate-800 rounded-xl text-slate-600 placeholder-slate-600 text-xs cursor-not-allowed";
+        input.className = "w-full h-11 pl-10 pr-4 bg-[#050810] border border-slate-800 rounded-xl text-slate-600 placeholder-slate-600 text-[13px] cursor-not-allowed";
         wrap.appendChild(input);
 
         return wrap;
@@ -3948,14 +3954,14 @@
         top.className = "flex items-center justify-between gap-3 mb-2";
 
         const label = document.createElement("div");
-        label.className = "batch-label-preview text-[11px] font-extrabold uppercase tracking-wider text-slate-400";
+        label.className = "batch-label-preview text-[13px] font-extrabold uppercase tracking-wider text-slate-400";
         label.textContent = `VÍDEO ${String(index).padStart(2, "0")}`;
         top.appendChild(label);
 
         if (index > 1) {
             const remove = document.createElement("button");
             remove.type = "button";
-            remove.className = "text-slate-600 hover:text-red-400 text-xs px-2 py-1";
+            remove.className = "text-slate-600 hover:text-red-400 text-[13px] px-2 py-1";
             remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
             remove.title = "Remover vídeo";
             remove.onclick = () => {
@@ -4041,7 +4047,7 @@
 
         if (!entries.length) {
             status.textContent = "Adicione pelo menos um link de vídeo.";
-            status.className = "mt-4 text-xs text-red-400";
+            status.className = "mt-4 text-[13px] text-red-400";
             return;
         }
 
@@ -4049,7 +4055,7 @@
         if (entries.length > max) {
             // Etapa 1 (dossiê, glossário): "por operação" (jargão) vira "por vez".
             status.textContent = `Este plano aceita no máximo ${max} ${plural(max, "vídeo", "vídeos")} por vez no lote.`;
-            status.className = "mt-4 text-xs text-red-400";
+            status.className = "mt-4 text-[13px] text-red-400";
             return;
         }
 
@@ -4080,12 +4086,12 @@
             info.className = "min-w-0";
 
             const nomeExibido = document.createElement("div");
-            nomeExibido.className = "text-slate-300 break-all text-xs font-semibold";
+            nomeExibido.className = "text-slate-300 break-all text-[13px] font-semibold";
             nomeExibido.textContent = `${position}. ${entry.filename || entry.url}`;
             info.appendChild(nomeExibido);
 
             const statusTexto = document.createElement("div");
-            statusTexto.className = "text-[11px] text-slate-500 mt-1";
+            statusTexto.className = "text-[13px] text-slate-500 mt-1";
             statusTexto.textContent = "Na fila...";
             info.appendChild(statusTexto);
 
@@ -4110,7 +4116,7 @@
             const linha = linhas.get(position);
             if (!linha) return;
             linha.statusTexto.textContent = texto;
-            linha.statusTexto.className = "text-[11px] mt-1 " +
+            linha.statusTexto.className = "text-[13px] mt-1 " +
                 (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-[#19D3AE]" : "text-slate-500");
         }
 
@@ -4142,7 +4148,7 @@
                         link.target = "_blank";
                         link.rel = "noopener";
                         link.download = dados.filename || "video_klango.mp4";
-                        link.className = "text-[#19D3AE] font-bold whitespace-nowrap text-xs";
+                        link.className = "text-[#19D3AE] font-bold whitespace-nowrap text-[13px]";
                         link.innerHTML = '<i class="fa-solid fa-file-arrow-down mr-1"></i>Baixar';
                         linha.acao.innerHTML = "";
                         linha.acao.appendChild(link);
@@ -4165,7 +4171,7 @@
                     const zipLink = document.createElement("a");
                     zipLink.href = `/api/batches/${batchIdAtual}/download`;
                     zipLink.download = "klango_lote.zip";
-                    zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
+                    zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-[13px] sm:text-sm";
                     zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
                     resumo.appendChild(zipLink);
                 }
@@ -4174,7 +4180,7 @@
                 aviso.remove();
                 rodape.innerHTML = "";
                 const erro = document.createElement("div");
-                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
                 erro.textContent = dados.detail || "Não foi possível processar o lote.";
                 rodape.appendChild(erro);
             }
@@ -4216,7 +4222,7 @@
                 try { data = await response.json(); } catch (err) { /* corpo pode não ser JSON */ }
                 aviso.remove();
                 const erro = document.createElement("div");
-                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
                 if (response.status === 401) {
                     erro.textContent = mensagemSessaoExpiradaCheckout();
                     abrirAcesso();
@@ -4231,7 +4237,7 @@
         } catch (err) {
             aviso.remove();
             const erro = document.createElement("div");
-            erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+            erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
             erro.textContent = "Erro ao se conectar ao servidor.";
             rodape.appendChild(erro);
         } finally {
@@ -4255,8 +4261,8 @@
     // ================================================================================================
     function selecionarFormatoLote(formato) {
         formatoLote = formato;
-        const ativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]";
-        const inativo = "flex-1 h-10 rounded-xl border text-xs font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700";
+        const ativo = "flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]";
+        const inativo = "flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#060b14] text-slate-400 border-slate-700";
         const btnVideo = document.getElementById("formatoVideoBtnLote");
         const btnAudio = document.getElementById("formatoAudioBtnLote");
         if (btnVideo) btnVideo.className = formato === "video" ? ativo : inativo;
@@ -4373,7 +4379,7 @@
 
         if (!entries.length) {
             status.textContent = "Adicione pelo menos um link de vídeo.";
-            status.className = "mt-4 text-xs text-red-400";
+            status.className = "mt-4 text-[13px] text-red-400";
             return;
         }
 
@@ -4400,12 +4406,12 @@
             info.className = "min-w-0";
 
             const nomeExibido = document.createElement("div");
-            nomeExibido.className = "text-slate-300 break-all text-xs font-semibold";
+            nomeExibido.className = "text-slate-300 break-all text-[13px] font-semibold";
             nomeExibido.textContent = `${position}. ${entry.filename || entry.url}`;
             info.appendChild(nomeExibido);
 
             const statusTexto = document.createElement("div");
-            statusTexto.className = "text-[11px] text-slate-500 mt-1";
+            statusTexto.className = "text-[13px] text-slate-500 mt-1";
             statusTexto.textContent = "Na fila...";
             info.appendChild(statusTexto);
 
@@ -4430,7 +4436,7 @@
             const linha = linhas.get(position);
             if (!linha) return;
             linha.statusTexto.textContent = texto;
-            linha.statusTexto.className = "text-[11px] mt-1 " +
+            linha.statusTexto.className = "text-[13px] mt-1 " +
                 (tipo === "erro" ? "text-red-400" : tipo === "sucesso" ? "text-[#19D3AE]" :
                     tipo === "aviso" ? "text-amber-400" : "text-slate-500");
         }
@@ -4463,7 +4469,7 @@
                         link.target = "_blank";
                         link.rel = "noopener";
                         link.download = dados.filename || "audio_klango.mp3";
-                        link.className = "text-[#19D3AE] font-bold whitespace-nowrap text-xs";
+                        link.className = "text-[#19D3AE] font-bold whitespace-nowrap text-[13px]";
                         link.innerHTML = '<i class="fa-solid fa-file-arrow-down mr-1"></i>Baixar';
                         linha.acao.innerHTML = "";
                         linha.acao.appendChild(link);
@@ -4490,7 +4496,7 @@
                     const zipLink = document.createElement("a");
                     zipLink.href = `/api/audio/batches/${batchIdAtual}/download`;
                     zipLink.download = "klango_audios.zip";
-                    zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-xs sm:text-sm";
+                    zipLink.className = "inline-flex items-center justify-center gap-2 mt-3 w-full py-3 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl text-[13px] sm:text-sm";
                     zipLink.innerHTML = '<i class="fa-solid fa-file-zipper"></i> Baixar tudo em ZIP';
                     resumo.appendChild(zipLink);
                 }
@@ -4499,7 +4505,7 @@
                 aviso.remove();
                 rodape.innerHTML = "";
                 const erro = document.createElement("div");
-                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
                 erro.textContent = dados.detail || "Não foi possível processar o lote de áudio.";
                 rodape.appendChild(erro);
             }
@@ -4538,7 +4544,7 @@
                 try { data = await response.json(); } catch (err) { /* corpo pode não ser JSON */ }
                 aviso.remove();
                 const erro = document.createElement("div");
-                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+                erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
                 if (response.status === 401) {
                     erro.textContent = mensagemSessaoExpiradaCheckout();
                     abrirAcesso();
@@ -4553,7 +4559,7 @@
         } catch (err) {
             aviso.remove();
             const erro = document.createElement("div");
-            erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-xs";
+            erro.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
             erro.textContent = "Erro ao se conectar ao servidor.";
             rodape.appendChild(erro);
         } finally {
@@ -4722,12 +4728,12 @@
         // texto fixo.
         if (!pinterestBoardSemTeto && pinterestBoardLimiteSelecao <= 0) {
             cotaEl.textContent = "Você atingiu seu limite diário de vídeos. Volte amanhã para importar desta pasta.";
-            cotaEl.className = "text-xs text-amber-400 mt-4";
+            cotaEl.className = "text-[13px] text-amber-400 mt-4";
             baixarBtn.disabled = true;
             return;
         }
 
-        cotaEl.className = "text-xs text-slate-400 mt-4";
+        cotaEl.className = "text-[13px] text-slate-400 mt-4";
         cotaEl.textContent = pinterestBoardSemTeto
             ? (selecionados > 0 ? `Vai usar ${selecionados} ${plural(selecionados, "vídeo", "vídeos")}. Sem limite nesta conta.` : "Sem limite nesta conta para esta importação.")
             : selecionados > 0
@@ -4806,7 +4812,10 @@
 
             // Selo indicativo (não bloqueia mais seleção -- só identifica o tipo do pin).
             const selo = document.createElement("div");
-            selo.className = "absolute bottom-1 left-1 right-1 text-center text-[9px] font-bold uppercase tracking-wider bg-slate-950/80 text-slate-400 rounded px-1 py-0.5";
+            // Etapa 2 (dossiê): piso de 13px em qualquer texto legível -- text-[9px] era o único
+            // caso abaixo disso no arquivo. Selo pequeno sobre a miniatura do Pinterest; ponto de
+            // maior risco visual desta fatia (grade de 3 colunas, badge compacto) -- pedir conferência.
+            selo.className = "absolute bottom-1 left-1 right-1 text-center text-[13px] font-bold uppercase tracking-wider bg-slate-950/80 text-slate-400 rounded px-1 py-0.5";
             selo.textContent = pin.has_video ? "Vídeo" : "Foto";
             quadrado.appendChild(selo);
 
@@ -4971,14 +4980,14 @@
         const el = document.getElementById("atalhoTokenStatus");
         if (!el) return;
         el.textContent = texto || "";
-        el.className = `mt-3 text-xs ${classe || "text-slate-500"}`;
+        el.className = `mt-3 text-[13px] ${classe || "text-slate-500"}`;
     }
 
     function setStatusAtalhoFila(texto, classe) {
         const el = document.getElementById("atalhoFilaStatus");
         if (!el) return;
         el.textContent = texto || "";
-        el.className = `mt-2 text-xs ${classe || "text-slate-500"}`;
+        el.className = `mt-2 text-[13px] ${classe || "text-slate-500"}`;
     }
 
     async function carregarAtalho() {
@@ -5108,14 +5117,14 @@
         linha.appendChild(icone);
 
         const url = document.createElement("span");
-        url.className = "flex-1 min-w-0 truncate text-xs text-slate-300";
+        url.className = "flex-1 min-w-0 truncate text-[13px] text-slate-300";
         url.textContent = item.url; // textContent, nunca innerHTML -- é conteúdo que veio de outro app.
         url.title = item.url;
         linha.appendChild(url);
 
         const remover = document.createElement("button");
         remover.type = "button";
-        remover.className = "shrink-0 text-slate-600 hover:text-red-400 text-xs px-2 py-1";
+        remover.className = "shrink-0 text-slate-600 hover:text-red-400 text-[13px] px-2 py-1";
         remover.innerHTML = '<i class="fa-solid fa-trash"></i>';
         remover.title = "Remover da fila";
         remover.onclick = () => removerItemFilaAtalho(item.id);
