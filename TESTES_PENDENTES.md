@@ -14,6 +14,89 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Home: bug do "Ver planos" pra cliente pago + copy dos planos + carrossel mobile
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Feedback do Igor logo depois de usar o site de verdade pelo celular, já logado como
+cliente VIP Batch (prints anexados na conversa). 4 pedidos, confirmados por ele antes de eu mexer
+em qualquer coisa.
+
+### 1 e 2 (mesma causa raiz) -- "Ver planos" force-mostrava a vitrine pra quem já é cliente pago
+**Bug real, não visual:** existe uma função correta (`irParaMeuPlano()`) que decide entre rolar até
+`#areaAssinatura` ("Meu acesso", pra quem já tem plano pago) ou `#secaoPlanos` (a vitrine de 3
+cards, pra quem é Free) -- usada corretamente só pelo item "Meu plano" do menu "Minha conta". Todos
+os OUTROS links/botões "Ver planos"/"Planos" da página (nav do header, item "Ver planos" do mesmo
+menu, CTAs de bloqueio de áudio/Pinterest/comentário, link do rodapé) chamavam
+`mostrarSecaoSeEscondida('secaoPlanos')` direto -- que só REMOVE a classe "hidden" da vitrine, sem
+checar se o usuário já é pago. Como `atualizarVisibilidadeSecaoPlanos()` esconde a vitrine (e
+mostra "Meu acesso" no lugar) só quando o status real do plano chega do servidor, o efeito prático
+era: clicar em qualquer um desses links forçava a vitrine a reaparecer (poluindo a tela) **e**,
+como a vitrine e "Meu acesso" se excluem mutuamente, escondia "Meu acesso" -- que é onde mora a
+validade do plano -- até o próximo recarregamento de status real (F5, ou qualquer ação que chame
+`carregarStatusConta()` de novo). Isso explica os dois problemas relatados (vitrine não sumia +
+validade do plano não aparecia) com uma causa única.
+
+**O que mudou:** todos os 7 lugares que levavam pra Planos agora chamam `irParaMeuPlano()` (a
+mesma função que já funcionava certo em "Meu plano"):
+- Nav do header (`static/index.html`, link "Planos").
+- Item "Ver planos" do menu "Minha conta".
+- CTA de bloqueio: extrair áudio sem plano pago.
+- CTA de bloqueio: importar pasta do Pinterest sem plano com lote.
+- CTA de bloqueio: comentar sem plano pago.
+- Link "Planos" do rodapé -- esse nem tinha handler nenhum antes (bug equivalente, mas ainda mais
+  antigo: pra cliente pago, o clique só pulava via âncora de URL pra uma seção escondida, sem fazer
+  nada visível).
+
+Os 3 CTAs de bloqueio continuam só aparecendo pra quem NÃO tem o plano necessário (não mudou
+comportamento nenhum pra eles, já que nesse caso a vitrine já estava corretamente visível) -- a
+troca ali é só por consistência/defesa (nunca erra, em nenhum estado de plano).
+
+**Nota sobre a validade do plano:** uma vez corrigido o bug acima, a validade volta a aparecer --
+mas como uma DATA ("Acesso válido até DD/MM/AAAA", com destaque e botão "Renovar" quando faltar
+≤7 dias), não como contagem de dias crua. Isso foi uma decisão sua de uma etapa anterior (Etapa 3,
+dossiê 4.2) pra não repetir a mesma informação de formas diferentes -- avisado a você antes de
+mexer, e você confirmou que resolve.
+
+### 3 -- copy dos planos atualizada
+As 3 listas de recursos (Semanal/Mensal/VIP Batch) ganharam 2 mudanças, iguais nos 3 planos (as 3
+têm exatamente os mesmos recursos, só a cota muda -- conferido em `services/plans.py` e
+`services/audio_usage.py::_require_paid_plan`, que checa `plan.paid` genericamente, não por plano
+específico):
+- "Downloads em lote" virou "Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube"
+  (mesmo texto já usado em outros lugares da página pra essas 4 plataformas).
+- Nova linha: "Extração de áudio (MP3) incluída".
+
+### 4 -- carrossel horizontal no mobile
+A grade de 3 cards (`grid grid-cols-1 md:grid-cols-3`, empilhada verticalmente no mobile) virou um
+carrossel horizontal com scroll-snap abaixo do breakpoint `md` (768px): o card Mensal centralizado
+ao carregar a página, com as bordas do Semanal e do VIP Batch visíveis dos dois lados (arrastável
+com o dedo). Acima de 768px nada muda -- volta a ser o grid de 3 colunas de sempre. Centralização
+inicial feita por `centralizarCarrosselPlanos()`, chamada uma vez no `DOMContentLoaded`, só em
+telas mobile (`scrollIntoView` instantâneo, não suave, já que acontece antes de qualquer interação).
+
+### O que foi verificado
+- [x] HTML inteiro passa por um parser real (`html.parser.HTMLParser`): zero tags desbalanceadas.
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Teste de lógica isolado em Node para `irParaMeuPlano()` (DOM simulado à mão): 6 asserções --
+      cliente VIP logado rola pra "Meu acesso" e NUNCA força a vitrine a aparecer; Free logado e
+      visitante deslogado continuam indo pra vitrine normalmente (comportamento de sempre
+      preservado). Todas bateram.
+- [x] `grep` confirma que nenhum link/botão da página ainda chama
+      `mostrarSecaoSeEscondida('secaoPlanos')` diretamente -- os 7 lugares usam `irParaMeuPlano()`.
+- [x] `tests/test_frontend.py::test_planos_conforme_especificacao` continua passando:
+      `html.count("Downloads em lote") == 3` não quebrou (o texto "Downloads em lote" continua
+      aparecendo literalmente 3 vezes, só com texto adicional depois -- a contagem não mudou).
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Teste de verdade no celular -- mesma limitação de sempre, sandbox sem navegador real.**
+      Vale o Igor conferir: logado como VIP, clicar em "Ver planos" (menu "Minha conta") e no link
+      "Planos" do rodapé e confirmar que vai direto pro card "Meu acesso" (com a validade
+      aparecendo), sem a vitrine de 3 cards aparecer; arrastar o carrossel de planos no mobile (pra
+      quem ainda não é pago, ou simulando) e ver o Mensal centralizado com as pontas visíveis; ler a
+      copy nova dos 3 planos.
+
+---
+
 ## Página de instalação do Atalho no iPhone (/atalho-ios) -- ajustes pós-teste do Igor
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).
