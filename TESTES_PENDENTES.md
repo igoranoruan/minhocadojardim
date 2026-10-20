@@ -14,6 +14,102 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 1 (textos/contadores do lote e do Pinterest)
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção 4.3 "Aba Vários (lote)" + 4.4 "Aba Pasta do
+Pinterest". Aprovação do Igor: "Pode prosseguir".
+
+**Recorte desta parte:** o dossiê pede, entre outras coisas, mesclar as 3 ferramentas de download
+(link único / lote / Pinterest) num card só com 3 abas -- a mudança estrutural de maior risco deste
+projeto até aqui (envolve relocar seções com `id` referenciado por âncora/`mostrarSecaoSeEscondida()`,
+ou construir um seletor de abas por cima das 3 seções existentes sem mover nada). Separei essa
+decisão (ver "Fora do escopo" abaixo) do que já dava pra fazer com segurança: os textos/contadores
+do card de lote e do card do Pinterest, que o dossiê também pede e não dependem da fusão em abas.
+
+**O que mudou (tudo em `static/index.html`):**
+- Removido o selo de plano (`#batchPlanoTag`, ex.: "VIP BATCH" ao lado do contador) do card de
+  lote -- pedido explícito do dossiê ("Sem selo de plano aqui"). O contador agora é texto normal:
+  "N vídeos · até M por vez" (ou "· sem limite por vez nesta conta" pra admin), no lugar de "N de M
+  vídeo(s)" + selo.
+- Botão principal do lote (`#batchButton`) ganhou rótulo dinâmico: "Baixar N vídeos" (ou "Baixar N
+  áudios" no formato áudio), no lugar do texto fixo "Processar e preparar lote"/"Processar e
+  extrair áudio do lote" -- atualizado a cada item adicionado/removido e a cada troca de formato
+  (função nova `atualizarTextoBotaoLote()`, chamada de `atualizarContagemLote()` e de
+  `atualizarVisibilidadeAudioLote()`, nos mesmos pontos que já atualizavam o botão).
+- Novo contador "Vai usar N dos seus M vídeos de hoje."/"Você usou seus M vídeos de hoje. Amanhã
+  libera de novo." para o lote de VÍDEO (`#videoContadorLote`, função nova
+  `atualizarContadorVideoLoteTexto()`) -- o lote de ÁUDIO já tinha esse texto desde a Parte B
+  (`#audioContadorLote`); o de vídeo usava só "N de M vídeos" sem falar da cota diária. Usa o
+  mesmo dado que já chega em `/api/me/status` (`uso.remaining`/`uso.limit`, quando `period ===
+  "day"`) -- nenhuma chamada de rede nova.
+- Painel de exemplo público "Lote na Prática" (`#loteNaPraticaItems`, card travado/cadeado):
+  rótulo do botão estático atualizado de "Processar e preparar lote" para "Baixar vídeos", só para
+  acompanhar o rótulo real (não lê contagem nenhuma, é mock fixo).
+- "Na fila..." -> "Na fila" (sem reticências) nos status por item do lote de vídeo e do lote de
+  áudio durante o processamento -- eco do trabalho de unificação de estados já sinalizado (não
+  terminado) na Etapa 2.
+- Pinterest (`#secaoPinterestBoard`): placeholder do campo de link de
+  "https://www.pinterest.com/usuario/pasta/" (URL de exemplo completa) para "Link da pasta do
+  Pinterest"; botão "Listar pasta" -> "Ver o que tem na pasta"; texto de intro simplificado para
+  "Cole o link de uma pasta pública e escolha o que baixar." (cor já era verde-água desde a Etapa
+  2, altura do campo já era 48px -- o dossiê cita "~40px", mas o código real já estava em 48px;
+  nenhuma das duas precisava de mudança). O contador de consumo do Pinterest ("Vai usar N dos seus
+  M vídeos de hoje.") já estava correto desde antes desta etapa -- conferido, não alterado.
+
+**Fora do escopo desta parte (catalogado, não esquecido):**
+- **Card único "Baixar" com 3 abas** (fusão de #secaoBatch, #secaoPinterestBoard e o formulário de
+  link único). Ainda não decidi nem propus ao Igor a estratégia de execução -- minha inclinação é
+  por um seletor de abas que só alterna `hidden` nas 3 seções já existentes, sem mover nenhum nó do
+  DOM (evita quebrar âncoras `#secaoBatch`/`#secaoPinterestBoard` e chamadas de
+  `mostrarSecaoSeEscondida()` que já apontam pra esses ids), mas isso precisa ser confirmado antes
+  de mexer -- é a mudança estrutural de maior risco do projeto até aqui.
+- **Linha compacta por vídeo** (substituir o bloco atual de ~170px por item por uma linha só, com
+  link pequeno "+ nome" pra revelar o campo de nome sob demanda) -- não implementado, requer
+  reescrever `criarCampoLote()`.
+- **"Colar vários links"** (textarea que vira uma linha por vídeo) -- recurso novo, não existe
+  ainda.
+- Durante o processamento: trocar a URL crua (com `?xtok=`/`?mdxt=`) por ícone de plataforma + ID
+  curto ou nome dado pelo usuário (URL completa só no title/tooltip); separar "Processando e
+  limpando… (100%)" em passos distintos ("Baixando 40%" -> "Limpando…" -> "Pronto"); resumo geral
+  no topo da lista ("2 de 6 prontos"); aviso de processamento rebaixado para linha cinza simples
+  ("Leva alguns minutos. Pode deixar esta tela aberta.") -- o `[confirmar]` do próprio dossiê aqui
+  (o processamento continua com a tela do celular bloqueada?) ainda não foi verificado contra o
+  fluxo real de SSE do backend, então não troquei o aviso por um texto que pode estar prometendo
+  algo que não é verdade.
+- **Botão "Tentar de novo" em item que falhou** -- mesma lacuna já sinalizada e deixada de fora na
+  Etapa 2 ("Esse botão pode bugar o aplicativo? ... pode deixar de fora"): continua sem endpoint de
+  backend para reprocessar um único item de um lote (`grep` confirmado de novo nesta etapa, nenhum
+  resultado novo em `routes/`/`services/`). Mantenho fora até esse endpoint existir ou você decidir
+  diferente.
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Testes de lógica isolados em Node (document/elementos simulados à mão -- sandbox sem
+      pip/npm/Playwright nesta sessão): `atualizarContagemLote()` (texto normal e "sem teto",
+      singular/plural, chamando os 3 contadores/botão certos), `atualizarContadorVideoLoteTexto()`
+      (texto normal, saldo esgotado, contador escondido quando a cota ainda não chegou),
+      `atualizarTextoBotaoLote()` (vídeo x áudio, singular x plural), e a lógica nova de
+      `atualizarVisibilidadeBatch()` que guarda o saldo diário (`uso.remaining`/`uso.limit`) em
+      `loteVideoRestanteHoje`/`loteVideoLimiteHoje` -- cobrindo VIP Batch, Semanal, conta admin
+      (`unlimited: true`), Free (`period: "week"`, cai pro fallback) e `uso` nulo. Confirmado que
+      `atualizarContadorAudioLoteTexto()` (não tocada) continua com o mesmo resultado de antes
+      (teste de regressão). Todos bateram o esperado.
+- [x] `grep` confirma que nenhum teste em `tests/` dependia de `batchPlanoTag`, do texto "Processar
+      e preparar lote"/"Processar e extrair áudio do lote", de "Na fila..." (com reticências) ou de
+      "Listar pasta".
+- [x] Balanço de tags `<div>` no arquivo inteiro conferido antes/depois (mesmo saldo residual
+      pré-existente de sempre, nenhum novo desbalanceamento -- só troquei um `<span>` por um `<p>`,
+      nenhum `<div>` novo).
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind.** Vale o Igor
+      conferir de verdade: adicionar/remover vídeos no lote e ver o contador/botão mudarem juntos
+      ("3 vídeos · até 5 por vez" / "Baixar 3 vídeos"), trocar pra "Só áudio" e ver o botão virar
+      "Baixar N áudios", e abrir a aba do Pinterest pra ver o placeholder/botão/texto novos.
+
+---
+
 ## Etapa 3 da revisão de UX/copy -- Painel logado (header, hero, faixa do atalho, Meu acesso)
 **Status:** Implementado e commitado na `main` (`11285eb`); `pytest -q` pelo GitHub Actions confirmado.
 **Branch:** `main` (direto).

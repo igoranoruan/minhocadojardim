@@ -445,7 +445,8 @@
                  O botão "Adicionar vídeo" é REAL (adicionarCampoLotePreview()): quem clica vê a
                  tela ganhar mais uma linha travada, sem nunca liberar o campo. Acima de
                  LOTE_PREVIEW_VISIVEL_PADRAO linhas, o excesso fica atrás de "Ver mais/Ver menos"
-                 (alternarExpansaoLotePreview()). "Processar e preparar lote" continua sem onclick
+                 (alternarExpansaoLotePreview()). "Baixar vídeos" (Etapa 4, 20/10/2026 -- renomeado
+                 pra acompanhar o rótulo dinâmico do botão real) continua sem onclick
                  (cursor-default select-none, mesma régua de "sem botão falso" de sempre). Posição:
                  depois de Antes/Depois (pedido do CÉREBRO, 05/10/2026) -- mesmo id
                  (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS). -->
@@ -474,7 +475,7 @@
                              reserva violeta só pro selo/card do plano VIP; este painel de exemplo
                              ("como funciona o lote") é genérico, então volta pro verde-água padrão. -->
                         <div class="w-full mt-3 h-12 bg-[#19D3AE]/15 border border-[#19D3AE]/40 text-[#19D3AE] font-extrabold rounded-xl text-sm flex items-center justify-center gap-1.5 cursor-default select-none">
-                            <i class="fa-solid fa-gears"></i> Processar e preparar lote
+                            <i class="fa-solid fa-gears"></i> Baixar vídeos
                         </div>
                     </div>
 
@@ -759,9 +760,11 @@
                     <p id="audioContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
 
                     <div class="flex items-center justify-between gap-3 mb-3">
-                        <span id="batchCount" class="text-[13px] font-bold uppercase tracking-wider text-slate-500">1 de 1 vídeo</span>
-                        <span id="batchPlanoTag" class="text-[13px] font-bold uppercase tracking-wider text-[#19D3AE]/80">—</span>
+                        <!-- Etapa 4 (dossiê, 4.3): selo de plano ("VIP BATCH" etc.) removido daqui --
+                             contador em texto normal, sem selo. -->
+                        <span id="batchCount" class="text-[13px] font-semibold text-slate-400">1 vídeo · até 1 por vez</span>
                     </div>
+                    <p id="videoContadorLote" class="hidden mb-3 text-center text-[13px] text-slate-500"></p>
 
                     <div id="batchItems" class="space-y-3"></div>
 
@@ -769,7 +772,7 @@
                         <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
                     </button>
 
-                    <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote</button>
+                    <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Baixar 1 vídeo</button>
                     <div id="batchStatus" class="mt-4 text-sm"></div>
                 </div>
             </section>
@@ -801,7 +804,7 @@
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/40 flex items-center justify-center text-[#19D3AE]"><i class="fa-brands fa-pinterest"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Importar pasta do Pinterest</h2>
-                            <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha quais fotos e vídeos baixar em lote.</p>
+                            <p class="text-sm text-slate-400 mt-1">Cole o link de uma pasta pública e escolha o que baixar.</p>
                         </div>
                     </div>
 
@@ -817,8 +820,8 @@
                     <!-- Estado DESBLOQUEADO (planos com lote: Semanal/Mensal/VIP Batch). -->
                     <div id="pinterestBoardLiberado" class="hidden">
                         <div class="flex flex-col sm:flex-row gap-2 mb-3">
-                            <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.pinterest.com/usuario/pasta/" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-[#19D3AE]/60 focus:outline-none">
-                            <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Listar pasta</button>
+                            <input id="pinterestBoardUrl" type="url" inputmode="url" autocomplete="off" placeholder="Link da pasta do Pinterest" class="flex-1 h-12 px-4 rounded-xl bg-[#060b14] border border-slate-700 text-sm text-white placeholder:text-slate-600 focus:border-[#19D3AE]/60 focus:outline-none">
+                            <button id="pinterestBoardListarBtn" type="button" onclick="listarPastaPinterest()" class="h-12 px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors whitespace-nowrap"><i class="fa-solid fa-magnifying-glass mr-1"></i>Ver o que tem na pasta</button>
                         </div>
 
                         <div id="pinterestBoardStatus" class="text-sm"></div>
@@ -2185,6 +2188,12 @@
     // config.py -- 15 fixo, não escala por plano, diferente de Plan.limit que é 5/10/15). Guardado à
     // parte (nunca hardcoded "15" no texto) pra nunca destoar se esse número mudar um dia.
     let loteAudioLimiteHoje = 15;
+    // Etapa 4 (dossiê, 4.3): mesmo papel de loteAudioRestanteHoje/loteAudioLimiteHoje, mas pro
+    // lote de VÍDEO -- saldo diário de gerações (Plan.limit), que já vem em /api/me/status (uso),
+    // nunca uma chamada de rede própria (ver atualizarVisibilidadeBatch()). Começa "sem teto" (alto)
+    // pra nunca mostrar "0 de 0" antes do primeiro /api/me/status responder.
+    let loteVideoRestanteHoje = Number.MAX_SAFE_INTEGER;
+    let loteVideoLimiteHoje = 0;
 
     async function chamarAuth(caminho, opcoes = {}) {
         const res = await fetch(`/api/auth/${caminho}`, {
@@ -2708,8 +2717,19 @@
         const secao = document.getElementById("secaoBatch");
         if (secao) secao.classList.toggle("hidden", limiteLoteAtual <= 0);
 
-        const tag = document.getElementById("batchPlanoTag");
-        if (tag) tag.textContent = plano.name || "—";
+        // Etapa 4 (dossiê, 4.3): selo de plano (ex.: "VIP BATCH", #batchPlanoTag) removido --
+        // o contador agora é só texto normal (ver atualizarContagemLote()). Saldo diário de
+        // vídeos (mesma "uso" do card "Meu acesso"/topo da página) guardado aqui pro texto
+        // "Vai usar N dos seus M vídeos de hoje." (equivalente ao que o lote de áudio já tinha
+        // via /api/audio/allowance -- aqui não precisa de chamada de rede própria, o dado já
+        // veio em /api/me/status).
+        if (uso && uso.period === "day" && typeof uso.remaining === "number" && typeof uso.limit === "number") {
+            loteVideoRestanteHoje = semTeto ? Number.MAX_SAFE_INTEGER : uso.remaining;
+            loteVideoLimiteHoje = uso.limit;
+        } else {
+            loteVideoRestanteHoje = Number.MAX_SAFE_INTEGER;
+            loteVideoLimiteHoje = 0;
+        }
 
         const limiteTexto = document.getElementById("batchLimiteTexto");
         if (limiteTexto && limiteLoteAtual > 0 && formatoLote !== "audio") {
@@ -3958,10 +3978,11 @@
         const items = document.querySelectorAll(".batch-item");
         const count = items.length;
         const max = limiteLoteAtual || 1;
-        // Etapa 1 (dossiê): "1 VÍDEOS (sem limite nesta conta)" -- plural(n, ...) nunca mais fixo.
+        // Etapa 4 (dossiê, 4.3): "1 de 1 vídeo" (confuso com 1 item só) + selo de plano ao lado
+        // viram um único texto normal, sem selo: "N vídeos · até M por vez".
         document.getElementById("batchCount").textContent = loteSemTeto
-            ? `${count} ${plural(count, "vídeo", "vídeos")} (sem limite nesta conta)`
-            : `${count} de ${max} ${plural(max, "vídeo", "vídeos")}`;
+            ? `${count} ${plural(count, "vídeo", "vídeos")} · sem limite por vez nesta conta`
+            : `${count} ${plural(count, "vídeo", "vídeos")} · até ${max} por vez`;
         const addButton = document.getElementById("batchAddButton");
         addButton.disabled = count >= max;
         addButton.classList.toggle("opacity-40", count >= max);
@@ -3975,6 +3996,45 @@
         // chamada só na troca de formato/plano), senão cada clique em "Adicionar vídeo" geraria
         // uma chamada de rede inútil.
         atualizarContadorAudioLoteTexto();
+        // Etapa 4 (dossiê, 4.3): mesma ideia, mas pro lote de VÍDEO ("Vai usar N dos seus M
+        // vídeos de hoje.") -- saldo já conhecido via /api/me/status (ver atualizarVisibilidadeBatch()).
+        atualizarContadorVideoLoteTexto();
+        // Etapa 4 (dossiê, 4.3): "Processar e preparar lote"/"Processar e extrair áudio do lote"
+        // (jargão, estático) vira "Baixar N vídeos"/"Baixar N áudios" (dinâmico, pedido do CÉREBRO).
+        atualizarTextoBotaoLote(count);
+    }
+
+    // Mesmo papel de atualizarContadorAudioLoteTexto(), mas pro lote de VÍDEO -- no-op quando
+    // formatoLote !== "video" ou quando o plano atual não tem cota diária conhecida ainda
+    // (loteVideoLimiteHoje <= 0, estado inicial antes do primeiro /api/me/status responder).
+    function atualizarContadorVideoLoteTexto() {
+        if (formatoLote !== "video") return;
+        const contador = document.getElementById("videoContadorLote");
+        if (!contador) return;
+        if (loteVideoLimiteHoje <= 0) {
+            contador.classList.add("hidden");
+            return;
+        }
+        const count = document.querySelectorAll(".batch-item").length;
+        const usados = Math.min(count, loteVideoRestanteHoje);
+        contador.classList.remove("hidden");
+        contador.textContent = loteVideoRestanteHoje > 0
+            ? `Vai usar ${usados} dos seus ${loteVideoLimiteHoje} ${plural(loteVideoLimiteHoje, "vídeo", "vídeos")} de hoje.`
+            : `Você usou seus ${loteVideoLimiteHoje} ${plural(loteVideoLimiteHoje, "vídeo", "vídeos")} de hoje. Amanhã libera de novo.`;
+    }
+
+    // Etapa 4 (dossiê, 4.3): rótulo dinâmico do botão principal do lote -- "Baixar N vídeos" ou
+    // "Baixar N áudios", nunca mais o texto estático "Processar e preparar lote"/"Processar e
+    // extrair áudio do lote". Só mexe no innerHTML (nunca em disabled/opacity -- isso continua
+    // sendo decisão exclusiva de quem já chamava este ponto antes: atualizarContagemLote() e
+    // atualizarVisibilidadeAudioLote()).
+    function atualizarTextoBotaoLote(count) {
+        const button = document.getElementById("batchButton");
+        if (!button) return;
+        const n = typeof count === "number" ? count : document.querySelectorAll(".batch-item").length;
+        button.innerHTML = formatoLote === "audio"
+            ? `<i class="fa-solid fa-music mr-1"></i>Baixar ${n} ${plural(n, "áudio", "áudios")}`
+            : `<i class="fa-solid fa-gears mr-1"></i>Baixar ${n} ${plural(n, "vídeo", "vídeos")}`;
     }
 
     function criarCampoLote(index) {
@@ -4221,7 +4281,7 @@
 
             const statusTexto = document.createElement("div");
             statusTexto.className = "text-[13px] text-slate-500 mt-1";
-            statusTexto.textContent = "Na fila...";
+            statusTexto.textContent = "Na fila";
             info.appendChild(statusTexto);
 
             row.appendChild(info);
@@ -4372,7 +4432,8 @@
         } finally {
             button.disabled = false;
             button.classList.remove("opacity-60", "cursor-not-allowed");
-            button.innerHTML = '<i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote';
+            // Etapa 4 (dossiê, 4.3): rótulo volta dinâmico ("Baixar N vídeos") via
+            // atualizarContagemLote() -> atualizarTextoBotaoLote(), nunca mais texto fixo aqui.
             atualizarContagemLote();
         }
     }
@@ -4437,8 +4498,11 @@
             if (button) {
                 button.disabled = false;
                 button.classList.remove("opacity-40", "cursor-not-allowed");
-                button.innerHTML = '<i class="fa-solid fa-gears mr-1"></i>Processar e preparar lote';
             }
+            // Etapa 4 (dossiê, 4.3): rótulo dinâmico ("Baixar N vídeos") -- também cobre o vídeo
+            // ficar escondido/sem contador do audio toggle aqui.
+            atualizarContadorVideoLoteTexto();
+            atualizarTextoBotaoLote();
             return;
         }
         // SEMPRE limiteLotePlano aqui (nunca limiteLoteAtual, que vira "sem limite" pro admin só
@@ -4469,7 +4533,9 @@
             loteAudioLimiteHoje = dados.limit;
             atualizarContadorAudioLoteTexto();
             if (button) {
-                button.innerHTML = '<i class="fa-solid fa-music mr-1"></i>Processar e extrair áudio do lote';
+                // Etapa 4 (dossiê, 4.3): "Processar e extrair áudio do lote" (estático) vira
+                // "Baixar N áudios" (dinâmico).
+                atualizarTextoBotaoLote();
                 const semSaldo = loteAudioRestanteHoje <= 0;
                 button.disabled = semSaldo;
                 button.classList.toggle("opacity-40", semSaldo);
@@ -4541,7 +4607,7 @@
 
             const statusTexto = document.createElement("div");
             statusTexto.className = "text-[13px] text-slate-500 mt-1";
-            statusTexto.textContent = "Na fila...";
+            statusTexto.textContent = "Na fila";
             info.appendChild(statusTexto);
 
             row.appendChild(info);
