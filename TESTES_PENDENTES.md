@@ -14,6 +14,63 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 3 (linha compacta + "Colar vários links")
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção 4.3 "Aba Vários (lote)". Aprovação do Igor:
+"Sim meu amigo, você tem total autonomia, pode seguir com tudo".
+
+**O que mudou (tudo em `static/index.html`, dentro da aba "Vários (lote)" do card "Baixar em
+lote"):**
+- Linha compacta por vídeo (`criarCampoLote()`): o bloco antigo (rótulo "VÍDEO 01" numa linha,
+  campo de link embaixo, campo de nome SEMPRE visível embaixo disso -- ~170px por item) virou uma
+  linha só: número (`01`) + campo de link + lixeira. O campo de nome começa escondido atrás de um
+  link pequeno "+ nome", revelado só quando alguém clica (função nova `revelarNomeLote()` também
+  usada por `baixarSelecaoPinterest()`, pra nunca esconder um nome já sugerido pelo título do pin
+  do Pinterest). Nenhuma classe usada por outro código mudou (`.batch-item`/`.batch-url`/
+  `.batch-name` continuam exatamente iguais -- só o layout ao redor).
+- Novo botão "Colar vários links" ao lado de "Adicionar vídeo": abre uma textarea onde cada linha
+  não vazia vira um vídeo do lote de uma vez, no lugar de clicar em "Adicionar vídeo" repetidas
+  vezes. Respeita o MESMO teto de itens por vez do plano que "Adicionar vídeo" já respeitava --
+  links além do teto são descartados (nunca adicionados silenciosamente além do limite), com um
+  aviso contando quantos ficaram de fora. Se só existir a linha vazia inicial (nunca tocada), o
+  colar substitui em vez de empilhar em cima dela.
+- O painel de demonstração pública "Lote na Prática" (`criarCampoLotePreview()`, função SEPARADA,
+  nunca compartilhada com a de verdade) não foi tocado -- continua no formato antigo ("VÍDEO 01" +
+  campo de nome sempre visível). É cosmético (card travado/exemplo, não funcional) -- fica
+  catalogado como inconsistência visual menor, não uma mudança funcional pendente.
+
+**Fora do escopo desta etapa** (ver lista já publicada nas partes 1/2): fusão da aba "Um link",
+separação dos passos de processamento, resumo "N de M prontos", aviso de processamento rebaixado,
+botão "Tentar de novo".
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Balanço de `<div>`/`<section>` no arquivo inteiro: mesmo saldo residual de sempre, nenhum
+      desbalanceamento novo.
+- [x] Testes de lógica isolados em Node, desta vez com um DOM falso próprio (sandbox sem
+      jsdom/Playwright nesta sessão -- `createElement`/`appendChild`/`querySelector(All)`/
+      `classList`/`remove()` reimplementados à mão, só o suficiente pras funções testadas), 21
+      asserções cobrindo: forma da linha compacta (rótulo só o número, campo de nome escondido,
+      lixeira escondida só no item 1), clique em "+ nome" revela o campo e esconde o link,
+      `revelarNomeLote()` revelando um nome pré-preenchido (cenário do Pinterest),
+      `renumerarCamposLote()` renumerando certo depois de remover um item do meio, "Colar vários
+      links" substituindo a linha vazia inicial com 3 links (ignorando linhas em branco), e
+      respeitando o teto do plano (descarta o excedente com aviso, nunca ultrapassa o limite).
+      Todos bateram o esperado (2 cenários de teste mal montados por mim na primeira tentativa
+      foram corrigidos e re-testados antes de fechar esta etapa).
+- [x] `grep` confirma que nenhum teste em `tests/` dependia do formato antigo do rótulo
+      ("VÍDEO 01") ou das classes novas.
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind.** Vale o Igor
+      conferir de verdade: adicionar/remover vídeos e ver a linha compacta (número + link +
+      lixeira), clicar em "+ nome" e ver o campo aparecer, usar "Colar vários links" com uma lista
+      de verdade, e conferir que um nome vindo do Pinterest já aparece revelado (sem precisar
+      clicar em "+ nome").
+
+---
+
 ## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 2 (card único "Baixar em lote", com abas)
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).

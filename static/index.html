@@ -799,9 +799,28 @@
 
                             <div id="batchItems" class="space-y-3"></div>
 
-                            <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="w-full mt-3 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
-                                <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
-                            </button>
+                            <div class="flex gap-2 mt-3">
+                                <button id="batchAddButton" type="button" onclick="adicionarCampoLote()" class="flex-1 h-11 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors">
+                                    <i class="fa-solid fa-plus mr-1"></i> Adicionar vídeo
+                                </button>
+                                <!-- Etapa 4 (dossiê, 4.3): "Colar vários links" -- cola uma lista
+                                     (1 link por linha) em vez de clicar em "Adicionar vídeo" um
+                                     por um. Ver abrirColarVariosLote()/confirmarColarVariosLote(). -->
+                                <button id="batchColarVariosBtn" type="button" onclick="abrirColarVariosLote()" class="h-11 px-4 rounded-xl border border-slate-700 bg-[#060b14] text-slate-300 hover:border-[#19D3AE]/60 hover:text-[#19D3AE] font-bold text-[13px] transition-colors whitespace-nowrap">
+                                    <i class="fa-solid fa-paste mr-1"></i> Colar vários links
+                                </button>
+                            </div>
+
+                            <div id="batchColarVariosPainel" class="hidden mt-3 p-3 rounded-xl border border-slate-800 bg-[#050810]">
+                                <p class="text-[13px] text-slate-400 mb-2">Cole um link por linha.</p>
+                                <textarea id="batchColarVariosTexto" rows="5" class="w-full px-3 py-2 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]" placeholder="https://...
+https://...
+https://..."></textarea>
+                                <div class="flex gap-2 mt-2">
+                                    <button type="button" onclick="confirmarColarVariosLote()" class="h-10 px-4 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-[13px] transition-colors">Adicionar</button>
+                                    <button type="button" onclick="fecharColarVariosLote()" class="h-10 px-4 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 font-bold text-[13px] transition-colors">Cancelar</button>
+                                </div>
+                            </div>
 
                             <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Baixar 1 vídeo</button>
                             <div id="batchStatus" class="mt-4 text-sm"></div>
@@ -4143,59 +4162,157 @@
             : `<i class="fa-solid fa-gears mr-1"></i>Baixar ${n} ${plural(n, "vídeo", "vídeos")}`;
     }
 
+    // Etapa 4 (dossiê, 4.3): "linha compacta por vídeo" -- o bloco antigo (rótulo "VÍDEO 01" numa
+    // linha, campo de link embaixo, campo de nome sempre visível embaixo disso, ~170px por item)
+    // vira uma linha só (número + campo de link + lixeira), com o campo de nome escondido atrás de
+    // um link pequeno "+ nome" (revelado sob demanda, só quando alguém realmente quer nomear o
+    // arquivo). Nenhuma classe usada por outras funções mudou (.batch-item/.batch-url/.batch-name
+    // continuam exatamente iguais -- só o layout ao redor).
     function criarCampoLote(index) {
         const wrapper = document.createElement("div");
-        wrapper.className = "batch-item bg-[#060b14] border border-slate-800 rounded-xl p-3";
+        wrapper.className = "batch-item bg-[#060b14] border border-slate-800 rounded-xl p-2.5";
 
         const top = document.createElement("div");
-        top.className = "flex items-center justify-between gap-3 mb-2";
+        top.className = "flex items-center gap-2";
 
-        const label = document.createElement("div");
-        label.className = "batch-label text-[13px] font-extrabold uppercase tracking-wider text-slate-400";
-        label.textContent = `VÍDEO ${String(index).padStart(2, "0")}`;
+        const label = document.createElement("span");
+        label.className = "batch-label shrink-0 w-6 text-center text-[13px] font-extrabold text-slate-500";
+        label.textContent = String(index).padStart(2, "0");
         top.appendChild(label);
-
-        if (index > 1) {
-            const remove = document.createElement("button");
-            remove.type = "button";
-            remove.className = "text-slate-600 hover:text-red-400 text-[13px] px-2 py-1";
-            remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
-            remove.title = "Remover vídeo";
-            remove.onclick = () => {
-                wrapper.remove();
-                renumerarCamposLote();
-            };
-            top.appendChild(remove);
-        }
-
-        wrapper.appendChild(top);
 
         const url = document.createElement("input");
         url.type = "url";
-        url.className = "batch-url w-full h-11 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]";
+        url.className = "batch-url min-w-0 flex-1 h-11 px-3 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]";
         url.placeholder = "Cole o link do vídeo…";
         url.autocomplete = "off";
-        wrapper.appendChild(url);
+        top.appendChild(url);
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "shrink-0 text-slate-600 hover:text-red-400 text-[13px] px-2 py-1" + (index > 1 ? "" : " hidden");
+        remove.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        remove.title = "Remover vídeo";
+        remove.onclick = () => {
+            wrapper.remove();
+            renumerarCamposLote();
+        };
+        top.appendChild(remove);
+
+        wrapper.appendChild(top);
+
+        const nomeToggle = document.createElement("button");
+        nomeToggle.type = "button";
+        nomeToggle.className = "batch-name-toggle mt-1.5 ml-8 text-[13px] font-bold text-slate-500 hover:text-[#19D3AE]";
+        nomeToggle.textContent = "+ nome";
 
         const name = document.createElement("input");
         name.type = "text";
         name.maxLength = 80;
-        name.className = "batch-name w-full h-10 mt-2 px-4 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]";
+        name.className = "batch-name hidden w-full mt-1.5 h-10 px-3 bg-[#050810] border border-slate-800 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-[#19D3AE]/60 text-[13px]";
         name.placeholder = "Nome do arquivo (opcional) — ex.: video_oferta";
         name.autocomplete = "off";
+
+        nomeToggle.onclick = () => {
+            nomeToggle.classList.add("hidden");
+            name.classList.remove("hidden");
+            name.focus();
+        };
+
+        wrapper.appendChild(nomeToggle);
         wrapper.appendChild(name);
 
         return wrapper;
     }
 
+    // Revela o campo de nome (e esconde o link "+ nome") quando algum código já preencheu um nome
+    // de arquivo programaticamente (ex.: sugerirNomeArquivoPinterest()) -- nunca deixa um valor já
+    // preenchido escondido atrás do "+ nome".
+    function revelarNomeLote(campo) {
+        if (!campo) return;
+        const toggle = campo.querySelector(".batch-name-toggle");
+        const name = campo.querySelector(".batch-name");
+        if (toggle) toggle.classList.add("hidden");
+        if (name) name.classList.remove("hidden");
+    }
+
     function renumerarCamposLote() {
         document.querySelectorAll(".batch-item").forEach((item, index) => {
             const label = item.querySelector(".batch-label");
-            if (label) label.textContent = `VÍDEO ${String(index + 1).padStart(2, "0")}`;
+            if (label) label.textContent = String(index + 1).padStart(2, "0");
             const remove = item.querySelector("button[title=\"Remover vídeo\"]");
             if (remove) remove.classList.toggle("hidden", index === 0);
         });
         atualizarContagemLote();
+    }
+
+    // Etapa 4 (dossiê, 4.3): "Colar vários links" -- cada linha não vazia da textarea vira um
+    // vídeo do lote, no lugar de clicar em "Adicionar vídeo" repetidas vezes. Respeita o MESMO
+    // teto de itens por vez do plano (limiteLoteAtual) que adicionarCampoLote() já respeitava --
+    // links além do teto são descartados (nunca adicionados além do limite), com um aviso de
+    // quantos ficaram de fora.
+    function abrirColarVariosLote() {
+        const painel = document.getElementById("batchColarVariosPainel");
+        const texto = document.getElementById("batchColarVariosTexto");
+        if (!painel) return;
+        painel.classList.remove("hidden");
+        if (texto) {
+            texto.value = "";
+            texto.focus();
+        }
+    }
+
+    function fecharColarVariosLote() {
+        const painel = document.getElementById("batchColarVariosPainel");
+        if (painel) painel.classList.add("hidden");
+    }
+
+    function confirmarColarVariosLote() {
+        const texto = document.getElementById("batchColarVariosTexto");
+        const container = document.getElementById("batchItems");
+        if (!texto || !container) return;
+
+        const linhas = texto.value.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+        if (!linhas.length) {
+            fecharColarVariosLote();
+            return;
+        }
+
+        // Se só existir 1 item e ele ainda estiver vazio (estado inicial, nunca tocado),
+        // substitui em vez de empilhar em cima de uma linha em branco.
+        const itensAtuais = Array.from(container.querySelectorAll(".batch-item"));
+        const primeiroVazio = itensAtuais.length === 1 &&
+            !(itensAtuais[0].querySelector(".batch-url") || {}).value;
+        if (primeiroVazio) {
+            container.innerHTML = "";
+        }
+
+        const max = limiteLoteAtual || 1;
+        let countAtual = container.querySelectorAll(".batch-item").length;
+        let adicionados = 0;
+        let descartados = 0;
+
+        for (const link of linhas) {
+            if (countAtual >= max) {
+                descartados++;
+                continue;
+            }
+            countAtual++;
+            const campo = criarCampoLote(countAtual);
+            const urlField = campo.querySelector(".batch-url");
+            if (urlField) urlField.value = link;
+            container.appendChild(campo);
+            adicionados++;
+        }
+
+        renumerarCamposLote();
+        fecharColarVariosLote();
+
+        const status = document.getElementById("batchStatus");
+        if (status) {
+            status.innerHTML = descartados > 0
+                ? `<div class="p-3 rounded-xl bg-amber-950/30 border border-amber-800/50 text-amber-400 text-[13px]">${adicionados} ${plural(adicionados, "vídeo adicionado", "vídeos adicionados")}. ${descartados} ${plural(descartados, "link não coube", "links não couberam")} no limite de ${max} por vez.</div>`
+                : "";
+        }
     }
 
     function adicionarCampoLote() {
@@ -5247,7 +5364,11 @@
             const urlField = campo.querySelector(".batch-url");
             if (urlField) urlField.value = pin.pin_url;
             const nameField = campo.querySelector(".batch-name");
-            if (nameField) nameField.value = sugerirNomeArquivoPinterest(pin.title);
+            const nomeSugerido = sugerirNomeArquivoPinterest(pin.title);
+            if (nameField) nameField.value = nomeSugerido;
+            // Etapa 4 (dossiê, 4.3): o campo de nome agora começa escondido atrás de "+ nome"
+            // (linha compacta por vídeo) -- um nome já sugerido nunca pode ficar escondido.
+            if (nomeSugerido) revelarNomeLote(campo);
             container.appendChild(campo);
         });
 
