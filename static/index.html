@@ -2172,6 +2172,46 @@ https://..."></textarea>
         return null;
     }
 
+    // Etapa 4 (dossiê, 4.3): durante o processamento em lote, a URL crua (geralmente com
+    // parâmetros de rastreio tipo ?xtok=/?mdxt=) deixa de aparecer na linha -- vira um
+    // identificador curto (ex.: "Reel DenfGW7x"), com a URL completa só no title/tooltip.
+    // Usado apenas para exibição: o valor de fato enviado ao backend continua sendo entry.url,
+    // sem nenhuma mudança.
+    function gerarRotuloCurtoUrl(valorUrl, plataforma) {
+        let caminho = [];
+        let parametroV = null;
+        try {
+            const u = new URL(valorUrl);
+            caminho = u.pathname.split("/").filter(Boolean);
+            parametroV = u.searchParams.get("v");
+        } catch (_) {
+            return "Link colado";
+        }
+
+        if (plataforma === "instagram") {
+            const tipo = caminho[0] === "reel" ? "Reel" : caminho[0] === "tv" ? "IGTV" : caminho[0] === "p" ? "Post" : "Vídeo";
+            const id = caminho[1] || caminho[0];
+            return id ? `${tipo} ${id}` : "Vídeo do Instagram";
+        }
+        if (plataforma === "tiktok") {
+            const idx = caminho.indexOf("video");
+            const id = idx >= 0 ? caminho[idx + 1] : caminho[caminho.length - 1];
+            return id ? `Vídeo ${id}` : "Vídeo do TikTok";
+        }
+        if (plataforma === "youtube") {
+            const id = parametroV || caminho[caminho.length - 1];
+            return id ? `Vídeo ${id}` : "Vídeo do YouTube";
+        }
+        if (plataforma === "pinterest") {
+            const idx = caminho.indexOf("pin");
+            const id = idx >= 0 ? caminho[idx + 1] : caminho[caminho.length - 1];
+            return id ? `Pin ${id}` : "Pin do Pinterest";
+        }
+
+        const ultimo = caminho[caminho.length - 1];
+        return ultimo ? `Vídeo ${ultimo.slice(0, 16)}` : "Link colado";
+    }
+
     function atualizarIconePlataforma() {
         const icone = document.getElementById("urlPlatformIcon");
         if (!icone) return;
@@ -4516,8 +4556,18 @@ https://..."></textarea>
             info.className = "min-w-0";
 
             const nomeExibido = document.createElement("div");
-            nomeExibido.className = "text-slate-300 break-all text-[13px] font-semibold";
-            nomeExibido.textContent = `${position}. ${entry.filename || entry.url}`;
+            nomeExibido.className = "text-slate-300 break-all text-[13px] font-semibold flex items-center gap-1.5";
+            // URL completa só no tooltip (dossiê, 4.3) -- nunca mais exibida crua na linha.
+            nomeExibido.title = entry.url;
+            const plataformaItem = detectarPlataformaCliente(entry.url);
+            if (plataformaItem) {
+                const iconePlataforma = document.createElement("i");
+                iconePlataforma.className = ICONE_FONTAWESOME_POR_PLATAFORMA[plataformaItem] + " text-slate-500 shrink-0";
+                nomeExibido.appendChild(iconePlataforma);
+            }
+            const nomeExibidoTexto = document.createElement("span");
+            nomeExibidoTexto.textContent = `${position}. ${entry.filename || gerarRotuloCurtoUrl(entry.url, plataformaItem)}`;
+            nomeExibido.appendChild(nomeExibidoTexto);
             info.appendChild(nomeExibido);
 
             const statusTexto = document.createElement("div");
@@ -4860,8 +4910,18 @@ https://..."></textarea>
             info.className = "min-w-0";
 
             const nomeExibido = document.createElement("div");
-            nomeExibido.className = "text-slate-300 break-all text-[13px] font-semibold";
-            nomeExibido.textContent = `${position}. ${entry.filename || entry.url}`;
+            nomeExibido.className = "text-slate-300 break-all text-[13px] font-semibold flex items-center gap-1.5";
+            // URL completa só no tooltip (dossiê, 4.3) -- nunca mais exibida crua na linha.
+            nomeExibido.title = entry.url;
+            const plataformaItem = detectarPlataformaCliente(entry.url);
+            if (plataformaItem) {
+                const iconePlataforma = document.createElement("i");
+                iconePlataforma.className = ICONE_FONTAWESOME_POR_PLATAFORMA[plataformaItem] + " text-slate-500 shrink-0";
+                nomeExibido.appendChild(iconePlataforma);
+            }
+            const nomeExibidoTexto = document.createElement("span");
+            nomeExibidoTexto.textContent = `${position}. ${entry.filename || gerarRotuloCurtoUrl(entry.url, plataformaItem)}`;
+            nomeExibido.appendChild(nomeExibidoTexto);
             info.appendChild(nomeExibido);
 
             const statusTexto = document.createElement("div");

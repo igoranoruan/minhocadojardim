@@ -14,6 +14,57 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 5 (ícone de plataforma + ID curto no lote)
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção 4.3 "Aba Vários (lote)" -- item que tinha
+ficado de fora nas partes 1-4 ("Fora do escopo desta etapa" listava explicitamente). Aprovação do
+Igor: "Sim meu amigo, você tem total autonomia, pode seguir com tudo", reforçada pelo pedido de
+continuar adiantando o que desse enquanto ele estava fora do computador.
+
+**O que mudou:**
+- `static/index.html`, função nova `gerarRotuloCurtoUrl(url, plataforma)`: gera um identificador
+  curto a partir da URL (ex.: "Reel DenfGW7x" para Instagram, "Pin 123..." para Pinterest, "Vídeo
+  ..." para TikTok/YouTube/qualquer outro domínio), reaproveitando a detecção de plataforma que já
+  existia (`DOMINIOS_PLATAFORMA`, `detectarPlataformaCliente`, `ICONE_FONTAWESOME_POR_PLATAFORMA`)
+  -- a mesma usada hoje só no ícone do campo de link avulso.
+- Nas linhas de progresso do lote (vídeo em `processarLote()` e áudio em `processarLoteAudio()`,
+  mesmo tratamento nos dois): a URL crua (que muitas vezes vem com `?xtok=`/`?mdxt=` de rastreio)
+  deixou de aparecer em texto na linha. No lugar: um ícone da plataforma (quando reconhecida) +
+  o nome dado pelo usuário (se ele preencheu um) ou o identificador curto gerado. A URL completa
+  continua acessível via `title` (tooltip ao passar o mouse/segurar no celular) no próprio elemento
+  da linha -- nada foi escondido de vez, só tirado da exibição direta.
+- O valor de fato enviado ao backend (`entry.url`) não mudou em nada -- é só uma mudança de
+  exibição no HTML/JS do cliente.
+
+**Fora do escopo desta etapa** (ver lista já publicada nas partes 1-4): fusão da aba "Um link",
+botão "Tentar de novo" (continua bloqueado por falta de endpoint de retry individual no backend).
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Balanço de `<div>`/`<section>` no arquivo inteiro: mesmo saldo residual de sempre (`<div>`:
+      301 abre / 298 fecha, igual antes desta etapa; `<section>`: 13/13).
+- [x] Teste de lógica isolado em Node para `gerarRotuloCurtoUrl()`: 10 asserções cobrindo Instagram
+      (reel/post/IGTV), TikTok, YouTube (link `watch?v=` e link curto `youtu.be`), Pinterest,
+      domínio desconhecido (cai no genérico truncado) e URL inválida -- todas bateram.
+- [x] Teste de lógica isolado (fake DOM) para a construção da linha (ícone + rótulo + tooltip):
+      8 asserções confirmando que (a) a URL completa fica em `title`; (b) o ícone da plataforma
+      aparece com a classe certa quando reconhecida; (c) nome dado pelo usuário tem prioridade sobre
+      o rótulo gerado, mas o ícone continua aparecendo; (d) plataforma não reconhecida não gera
+      ícone e cai no rótulo genérico -- todas bateram.
+- [x] `grep` em `tests/` confirma que nenhum teste assertava o formato antigo
+      (`${position}. ${entry.filename || entry.url}`) ou o texto da linha de exibição.
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind/navegador de
+      verdade.** Vale o Igor conferir rodando um lote de verdade com links de plataformas
+      diferentes (Instagram, TikTok, YouTube, Pinterest) e um link de domínio não reconhecido, e
+      checando: o ícone aparece certo por plataforma, o texto fica curto e legível (sem a URL
+      rastreada aparecendo crua), o nome que ele mesmo digitar continua tendo prioridade, e passar o
+      mouse (ou segurar no celular) mostra a URL completa no tooltip.
+
+---
+
 ## Etapa 4 da revisão de UX/copy -- Card Baixar, parte 4 (aviso de processamento + resumo + estados)
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).
