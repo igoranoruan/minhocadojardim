@@ -14,6 +14,60 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Etapa 3 da revisão de UX/copy -- Painel logado (header, hero, faixa do atalho, Meu acesso)
+**Status:** Implementado e commitado na `main` (`11285eb`); `pytest -q` pelo GitHub Actions confirmado.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção "Painel logado" (4.1 "Nova estrutura da página
+logada" + 4.2 "Plano e limite"). Aprovação do Igor: "Pode seguir para próxima etapa".
+
+**[confirmar] da seção 4.2, resolvido sem perguntar:** a dúvida era se "Sem limite de itens por
+operação nesta conta" (texto do card de lote) é um bug de conta admin ou um texto real pra todo
+cliente VIP Batch. Conferido em `services/plans.py`: VIP Batch tem `batch_limit=None` (operações de
+lote ilimitadas) por desenho do plano -- não é exclusividade de admin. A isenção de admin
+(`_is_admin`/`loteSemTeto`) é outra coisa, já corretamente isolada só pra conta de teste. Nenhuma
+mudança de texto necessária.
+
+**O que mudou (tudo em `static/index.html`):**
+- Header: "Acesso" vira "Minha conta" (menu: Meu plano / Ver planos / Sair) quando há sessão ativa;
+  sem sessão continua "Acesso" como sempre. Corrigido de passagem: o link "Planos" da nav não tinha
+  o `mostrarSecaoSeEscondida()` que os outros 3 já tinham -- rolava pra uma seção invisível pra
+  cliente pago.
+- Hero de venda (título, subtítulo, tira de passos, mascote) escondido pra qualquer sessão ativa
+  (grátis ou paga) -- diferente do funil frio existente, que só escondia pra quem já pagou. Badge
+  de status e formulário continuam sempre visíveis.
+- Faixa "N vídeos chegaram pelo atalho" no topo, só com itens na fila -- reaproveita a contagem que
+  a seção do Atalho já busca.
+- Card "Meu acesso": removida a linha duplicada de capacidade de lote; barra de uso sempre
+  contínua (nunca mais segmentada); destaque âmbar + botão "Renovar" quando faltam ≤7 dias pra
+  expirar (reaproveita o checkout de upgrade, comprando o mesmo plano de novo). Aposentado o badge
+  "Expira em N dias" do topo da página (3ª repetição da mesma informação).
+
+**Fora do escopo** (por desenho do dossiê, não esquecimento): o card único "Baixar" com 3 abas
+(Um link / Vários / Pinterest) é Etapa 4 -- nenhuma das 3 ferramentas foi movida/mesclada aqui.
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
+- [x] Testes de lógica isolados em Node (document/elementos simulados à mão -- sandbox sem
+      pip/npm/Playwright nesta sessão) para as 9 funções novas/alteradas: toggle do hero por
+      sessão, abrir/fechar do menu da conta (incl. `aria-expanded`), "Meu plano" indo pro alvo
+      certo (card pago vs vitrine Free), barra sempre contínua, destaque âmbar + "Renovar" no
+      limiar de 7 dias, `renovarPlanoAtual()` chamando o checkout com o plano certo, texto/
+      visibilidade da faixa do atalho com `plural()` correto -- todos bateram o esperado.
+- [x] `grep` confirma que nenhum teste em `tests/` dependia dos elementos removidos/renomeados
+      (`assinaturaStatus`, `statusContaValidade`, `headerAcessoBtn`).
+- [x] Balanço de tags `<div>` no arquivo inteiro conferido antes/depois (mesmo saldo residual
+      pré-existente, nenhum novo desbalanceamento introduzido).
+- [x] `pytest -q` = 0 failed pelo GitHub Actions (commit `11285eb`, confirmado).
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind.** Esta etapa mexeu
+      em comportamento visível mais do que as anteriores (um componente de menu novo, uma faixa
+      nova, textos que somem/aparecem por sessão) -- vale a pena o Igor testar de verdade: entrar
+      logado, ver o header virar "Minha conta", abrir o menu (Meu plano/Ver planos/Sair), ver o
+      hero de venda sumir, e -- se tiver como simular uma conta perto do vencimento -- conferir o
+      destaque âmbar e o botão "Renovar" no card.
+
+---
+
 ## Etapa 1 da revisão de UX/copy -- Correções rápidas de texto
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).
