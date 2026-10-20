@@ -72,7 +72,7 @@ depois, conforme pedido):**
       `atualizarContadorAudioLoteTexto()` produz "Vai usar 1 dos seus 15 áudios de hoje."/"Você
       usou seus 15 áudios de hoje..."; nenhum emoji 🎬/🎵 restante no HTML; botões da fila mostram
       os ícones Font Awesome certos.
-- [ ] `pytest -q` = 0 failed pelo GitHub Actions (confirmar antes de considerar fechado).
+- [x] `pytest -q` = 0 failed pelo GitHub Actions (commit `cf2be5d`, confirmado).
 - [ ] **Prints antes/depois (390px e desktop) -- NÃO foi possível produzir no sandbox.** O sandbox
       bloqueia toda saída de rede externa além de alguns registries (`npm`, `pip`): `cdn.tailwindcss.com`,
       `fonts.googleapis.com` e `cdnjs.cloudflare.com` (Font Awesome) deram `ERR_TUNNEL_CONNECTION_FAILED`
@@ -84,6 +84,67 @@ depois, conforme pedido):**
       390px e desktop) nos pontos: cabeçalho/rodapé sem "Comentários", seção Comunidade ausente,
       botões da fila do atalho com ícone (sem emoji), "Meu acesso" mostrando "Seu limite volta
       amanhã/na próxima semana", contador do lote sem "1 vídeos"/"1 extrações".
+
+---
+
+## Etapa 2 da revisão de UX/copy -- Fundamentos visuais (parte 1: cores e toque mínimo)
+**Status:** Implementado e commitado na `main` (`17eef27`); `pytest -q` pelo GitHub Actions confirmado.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Dossiê de UX e Copy do KLANGO.MP4, seção "Fundamentos visuais" (Etapa 2, "baixo risco mas
+toca tudo"). Aprovação do Igor: "Pode seguir para etapa 2 meu amigo" (sem [confirmar] pendente --
+esta seção do dossiê não tinha nenhum). Primeira fatia: só os itens mecânicos/objetivos, que dá pra
+conferir sem precisar ver a página renderizada (CSS/classe presente ou não, altura de um botão em
+px) -- deixei de fora, de propósito, a parte que depende de julgamento visual (ver "Fica para a
+próxima fatia" abaixo).
+
+**O que mudou (tudo em `static/index.html`):**
+- **Cores -- roxo (violet) só na marca do plano VIP:** o dossiê reserva violeta exclusivamente para
+  o selo/card do plano VIP Batch; o resto do site deve usar verde-água (`#19D3AE`), a cor primária.
+  Corrigido: o card/seção de processamento em lote (`#secaoBatch`), o card de importar pasta do
+  Pinterest (`#secaoPinterestBoard`), o painel de exemplo "como funciona o lote" (seção pública), o
+  toggle de formato vídeo/áudio do lote (HTML estático e a função `selecionarFormatoLote()`), os
+  avisos de "preparando os vídeos um por um" (lote de vídeo e de áudio), os campos de URL/nome de
+  cada item do lote, e o destaque de item selecionado na grade do Pinterest. Confirmado que o card
+  do plano VIP (seção Planos) e o badge de `setStatusConta(..., "vip")` já usavam violeta
+  corretamente (só aparecem quando o plano É o VIP) -- nenhum dos dois foi tocado.
+- **Altura mínima de toque (44px) em botões abaixo disso:** "Ver mais" do painel de exemplo do lote
+  (h-8/32px -> h-11/44px) e "Baixar novamente" da lista de downloads (h-9/36px -> h-11/44px). Os
+  botões "Gerar novo token"/"Revogar token", citados no dossiê como ~36px, já estavam em h-11 (44px)
+  no código atual -- nenhuma mudança necessária ali (dossiê parece ter sido escrito contra uma
+  versão anterior).
+
+**Fica para a próxima fatia de Etapa 2 (ainda não tocado, precisa de escopo/conferência antes):**
+- **Escala tipográfica:** o dossiê define 5 papéis de texto (título hero, título de seção, título de
+  card, corpo, label) com tamanho/peso fixos. O arquivo tem hoje ~300+ ocorrências espalhadas de
+  `text-xs`/`text-sm`/`text-[9px..18px]` -- cada uma precisa de um julgamento (qual papel ela cumpre
+  de verdade) que não dá pra fazer com segurança sem ver a página renderizada, e o Tailwind CDN
+  continua bloqueado neste sandbox (mesma limitação da Etapa 1). Proposta: ou eu faço em sub-lotes
+  menores por seção (com o Igor conferindo cada um no navegador dele antes do próximo) ou o Igor
+  prefere revisar o resultado todo de uma vez ao final -- preciso da decisão dele antes de avançar
+  aqui.
+- **Espaçamento:** gap entre seções (64px mobile/96px desktop) e padding interno de card (20px/24px)
+  -- mesma dependência de conferência visual acima.
+- **Estados de processamento:** unificar os 5 estados (Na fila/Baixando/Pronto/Erro/Expirado) com a
+  mesma cor/ícone nas 4 superfícies que os usam (lote de vídeo, lote de áudio, Pinterest, fila do
+  atalho) -- ainda não catalogado em detalhe.
+- **Links terciários sem altura de toque definida:** "Limpar fila" e "Trocar e-mail" não têm classe
+  `h-*` nenhuma (ficam do tamanho natural do texto, bem abaixo de 44px) -- diferente dos botões
+  acima, que tinham uma altura explícita curta, esses não têm altura nenhuma, então a correção exige
+  adicionar padding/área de toque sem alterar o tamanho visual do texto (jeito de fazer isso com
+  segurança ainda não decidido).
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK, antes e depois de cada edição.
+- [x] `grep` confirma: nenhum `violet` restante fora do card do plano VIP (linhas 563-575) e do
+      badge já corretamente escopado de `setStatusConta()`.
+- [x] Nenhum teste em `tests/` referenciava as classes `violet`/alturas alteradas (`grep` vazio).
+- [x] `pytest -q` = 0 failed pelo GitHub Actions (commit `17eef27`, confirmado).
+- [ ] **Prints antes/depois -- mesma limitação da Etapa 1, não produzidos no sandbox.** Mudança
+      desta fatia é só cor (classe trocada) e altura de 3 botões -- baixo risco de ter saído
+      diferente do esperado, mas uma conferência visual rápida do Igor (lote, Pinterest, lista de
+      downloads) continua valendo, especialmente pra confirmar que o verde-água não ficou esbranquiçado
+      ou mal contrastado em algum desses fundos escuros.
 
 ---
 
