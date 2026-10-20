@@ -608,13 +608,22 @@
                      seja, o container passou a recortar tudo que vaza verticalmente, cortando o topo
                      dos selos. "pt-4" aqui reserva espaço de sobra acima dos cards (mais que os
                      0.75rem do "-top-3") só dentro da área rolável, pra o selo caber inteiro sem ser
-                     cortado -- md:pt-0 desfaz isso no desktop, onde o problema não existe. -->
+                     cortado -- md:pt-0 desfaz isso no desktop, onde o problema não existe.
+
+                     Ajuste adicional (2ª rodada do mesmo dia, revisão de conversão pedida pelo
+                     Igor): cada <ul> de bullets tinha "flex-1", esticando a lista pra preencher a
+                     MESMA altura nos 3 cards -- faz sentido no grid de desktop (os 3 cards lado a
+                     lado, "Acesso X" alinhado na mesma linha nos 3). No carrossel mobile, porém, só
+                     1 card aparece por vez (não tem com quem alinhar), e sobrava um vão vazio no
+                     meio do card antes do parágrafo/botão. Virou "md:flex-1" -- no mobile a lista
+                     some assim que termina (sem vão), no desktop o alinhamento entre os 3 continua
+                     igual. -->
                 <div class="flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory md:snap-none gap-5 mt-10 items-stretch px-[9%] md:px-0 md:grid-cols-3 pt-4 md:pt-0 pb-2 md:pb-0">
                     <div class="shrink-0 w-[82%] md:w-auto snap-center bg-card rounded-3xl p-7 flex flex-col glow-hover">
                         <div class="text-[13px] text-slate-400 font-bold uppercase tracking-wider">Semanal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">7 dias</div>
-                        <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>7 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 7 vídeos, 3/semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Extração de áudio (MP3) incluída</li>
@@ -634,7 +643,7 @@
                         <div class="text-[13px] text-[#19D3AE] font-bold uppercase tracking-wider">Mensal</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 16,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
-                        <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 10 vídeos, 5/semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Extração de áudio (MP3) incluída</li>
@@ -656,7 +665,7 @@
                         <div class="text-[13px] text-violet-400 font-bold uppercase tracking-wider">VIP Batch</div>
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 29,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
-                        <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
+                        <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>15 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 15 vídeos, sem limite semanal</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Extração de áudio (MP3) incluída</li>
