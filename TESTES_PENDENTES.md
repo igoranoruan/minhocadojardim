@@ -38,8 +38,13 @@ continuar adiantando o que desse enquanto ele estava fora do computador.
 - O valor de fato enviado ao backend (`entry.url`) não mudou em nada -- é só uma mudança de
   exibição no HTML/JS do cliente.
 
-**Fora do escopo desta etapa** (ver lista já publicada nas partes 1-4): fusão da aba "Um link",
-botão "Tentar de novo" (continua bloqueado por falta de endpoint de retry individual no backend).
+**Fora do escopo desta etapa** (ver lista já publicada nas partes 1-4): fusão da aba "Um link".
+
+**Decisão do Igor (20/10/2026):** o botão "Tentar de novo" em item que falhou no lote pode ficar de
+fora -- confirmado de novo, mesma posição já tomada lá na Etapa 2 ("Esse botão pode bugar o
+aplicativo? ... pode deixar de fora"). Deixa de ser um item pendente de decisão/endpoint e passa a
+ser uma exclusão de escopo definitiva; não deve voltar a ser levantado a menos que ele mude de
+ideia.
 
 ### O que foi verificado
 - [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK.
