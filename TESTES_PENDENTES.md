@@ -15,7 +15,8 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 ---
 
 ## Carrossel de planos no mobile: selo "Recomendado"/"Maior lote disponível" cortado no topo
-**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Status:** Implementado, commitado na `main` e **`pytest -q` confirmado verde** pelo GitHub
+Actions. Deploy confirmado `live` no Render.
 **Branch:** `main` (direto).
 **Data:** 20/10/2026
 **Origem:** Igor testou o carrossel (commit `c1244ef`) numa aba anônima de verdade -- a copy e o
@@ -43,10 +44,9 @@ card Mensal e o selo "Recomendado" cortado/sobrepondo no topo.
 - [x] Mudança é só de classes CSS (Tailwind) num `<div>` existente -- nenhum HTML, JS ou Python
       tocado, então nenhum teste existente (`test_frontend.py`, `test_static_pages.py`) depende
       dessas classes.
-- [ ] **Limitação do sandbox:** o ambiente do Claude não tem rede liberada para instalar
-      fastapi/pytest agora (falha de DNS mesmo em domínios liberados, tentado 2x) -- a suíte
-      completa roda sozinha no GitHub Actions a cada push; falta confirmar "0 failed" lá (deve
-      aparecer em poucos minutos, sem precisar do Igor).
+- [x] **Limitação do sandbox:** o ambiente do Claude não teve rede liberada para instalar
+      fastapi/pytest localmente -- a suíte completa rodou sozinha no GitHub Actions, "0 failed"
+      confirmado.
 - [ ] **Só dá pra confirmar visualmente num celular de verdade:** o raciocínio do overflow-x/
       overflow-y é uma explicação técnica sólida e bem conhecida do CSS, mas o Claude não tem como
       renderizar o carrossel num navegador real aqui dentro -- pedir pro Igor conferir de novo
@@ -55,7 +55,10 @@ card Mensal e o selo "Recomendado" cortado/sobrepondo no topo.
 ---
 
 ## Cota diária de Semanal/Mensal aumentada; teto de lote acompanha
-**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Status:** Implementado, commitado na `main` e **`pytest -q` confirmado verde** pelo GitHub
+Actions (depois de 3 rodadas de ajuste -- o grep inicial não pegou vários arquivos de teste que
+fixavam os números antigos do produto em asserções, não só em comentários; ver histórico de
+commits `5f76bcf`→`d122b3f`→`03789ad`→`028ad5c`). Deploy no Render confirmado `live`.
 **Branch:** `main` (direto).
 **Data:** 20/10/2026
 **Origem:** Pedido do Igor (decisão de produto/preço): com o Atalho do iOS/Android facilitando o
@@ -99,9 +102,10 @@ diária (15 gerações/dia) -- o único diferencial numérico restante do VIP Ba
       tinha os números antigos hardcoded fora dos arquivos já corrigidos -- a lógica de negócio
       (`services/usage.py`) lê `Plan.limit`/`Plan.max_batch_size` dinamicamente, nenhuma mensagem
       de erro precisou mudar.
-- [ ] **Limitação do sandbox:** o ambiente do Claude não tem rede liberada pra instalar
-      fastapi/pytest agora (falha de DNS mesmo em domínios liberados, tentado 3x) -- a suíte
-      completa roda sozinha no GitHub Actions a cada push; falta confirmar "0 failed" lá.
+- [x] **Limitação do sandbox:** o ambiente do Claude não teve rede liberada pra instalar
+      fastapi/pytest localmente (falha de DNS mesmo em domínios liberados) -- a suíte completa
+      rodou sozinha no GitHub Actions a cada push, confirmando **0 failed** no commit final
+      (`028ad5c`), depois de 3 rodadas de correção de testes que ainda tinham os números antigos.
 
 ---
 
