@@ -148,6 +148,66 @@ próxima fatia" abaixo).
 
 ---
 
+## Etapa 2 da revisão de UX/copy -- Fundamentos visuais (parte 2: piso tipográfico, gap, toque)
+**Status:** Implementado e commitado na `main` (`e716a33`); `pytest -q` pelo GitHub Actions confirmado.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Mesma fonte da parte 1. Igor escolheu (quando perguntado como preferia seguir) fazer o
+resto da Etapa 2 de uma vez e revisar o resultado completo no final, em vez de sub-lotes com
+conferência a cada um.
+
+**O que mudou (tudo em `static/index.html`):**
+- **Piso de 13px em texto legível** (dossiê: "nada abaixo de 13px"): `text-[9px]` (1), `text-[10px]`
+  (23), `text-[11px]` (52) e `text-xs`/12px (171) -- total de 247 ocorrências revisadas uma a uma
+  por grep antes da troca em lote; 225 viraram `text-[13px]`, 22 ficaram como estavam por serem
+  dimensionamento de ícone Font Awesome isolado (isento pelo dossiê) -- lista completa conferida
+  manualmente (setas do "como funciona", cadeado do campo desabilitado, ícones de
+  reenviar/trocar e-mail, check do Pinterest selecionado, check de "Pagamento único"/"Sem renovação
+  automática").
+- **Gap entre seções (64px mobile / 96px desktop):** as 7 seções que ainda usavam `py-8`/`py-10`
+  (`#paraQuemE`, `#areaAssinatura`, `#secaoBatch`, `#secaoPinterestBoard`, `#secaoAtalho`,
+  `#secaoHistorico`, `#secaoIndicacao`) foram unificadas para `py-16 sm:py-24`, igual às outras 6
+  que já estavam certas.
+- **Toque mínimo (44px) em links terciários sem altura definida:** "Limpar fila", "Reenviar código"
+  e "Trocar e-mail" ganharam `h-11 inline-flex items-center` (visual do texto/ícone inalterado, só
+  a área clicável). "Ver todos os downloads" já estava correto.
+
+**Catalogado, mas NÃO alterado nesta fatia (decisão pendente do Igor):**
+- **Padding interno dos cards (dossiê pede 20/24px):** hoje a maioria usa 28px fixo (`p-7`) ou
+  24/28px responsivo (`p-6 sm:p-7`) -- só um card (linha 988) já está no padrão exato. Mudar ~15
+  cards de uma vez, vários com selos em posição `absolute` (ex.: "Recomendado", "Maior lote
+  disponível"), é um risco real de colisão visual que só dá pra checar olhando a página de verdade
+  -- não mudei às cegas.
+- **Altura única de campo de texto (dossiê pede 52px):** o campo de URL do hero (o mais importante
+  e mais testado do site) está em `h-14`/56px; outros campos estão em `h-11`/44px ou `h-12`/48px.
+  Unificar em 52px exige reduzir o campo principal, que é o elemento de maior visibilidade do site
+  -- preferi não arriscar isso sem conferência visual.
+- **5 estados de processamento (Na fila/Em andamento/Pronto/Erro/Expirado):** as duas filas de lote
+  (vídeo e áudio) já usam as MESMAS cores (verde-água = sucesso, vermelho = erro, cinza = na
+  fila/processando) e os mesmos textos entre si -- não há inconsistência de cor pra corrigir ali.
+  A diferença real pro dossiê é de redação ("Na fila..." em vez de "Na fila", "Pronto." em vez de
+  "Pronto") e, principalmente, que o dossiê pede um estado de ERRO com link "Tentar de novo" e um
+  de EXPIRADO com link "Processar de novo" -- **isso não existe hoje** (um item que falha só mostra
+  o texto de erro, sem botão de tentar de novo). Adicionar esse botão é lógica nova (teria que
+  reenviar aquele item específico pro backend), não só estilo -- não implementei sem confirmar que
+  está dentro do escopo "só visual" desta etapa. Pinterest e fila do atalho ainda não comparados em
+  detalhe com os dois lotes.
+
+### O que foi verificado
+- [x] Sintaxe do único bloco `<script>` inline (`node --check`) OK antes e depois de cada lote de
+      substituição.
+- [x] `grep`, depois de cada substituição em massa, confirma que as 22 exceções de ícone
+      permaneceram exatamente como estavam.
+- [x] Nenhum teste em `tests/` referencia as classes de espaçamento/tamanho/altura alteradas.
+- [x] `pytest -q` = 0 failed pelo GitHub Actions (commit `e716a33`, confirmado).
+- [ ] **Prints antes/depois -- mesma limitação de sempre, sandbox sem Tailwind.** Esta fatia mexeu
+      em 225 pontos de tamanho de fonte (todos +1px ou mais, nunca redução) e no espaçamento entre
+      7 seções (todos aumentando o espaço em branco, nunca diminuindo) -- mudanças de baixo risco
+      de quebra, mas numerosas o bastante para merecer uma passada visual geral do Igor pela home
+      inteira (não só pontos específicos como nas etapas anteriores).
+
+---
+
 ## Etapa 8 -- "Enviar para o KLANGO" no Android: PWA instalável + Web Share Target
 **Status:** Concluído e confirmado pelo Igor num Android real (17/10/2026): instalou o PWA via
 Chrome, compartilhou um link do Instagram escolhendo "KLANGO.MP4" na folha de compartilhamento --
