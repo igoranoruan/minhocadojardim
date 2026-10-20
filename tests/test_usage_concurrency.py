@@ -59,7 +59,7 @@ def test_varias_threads_com_saldo_parcial_reservam_exatamente_o_saldo(factory, s
 def test_plano_pago_diario_tambem_e_protegido(factory, session, maker):
     usuario = factory.user()
     give(factory, session, usuario, "weekly")
-    consume(session, usuario, 4, now=NOW)  # 4 de 5
+    consume(session, usuario, 9, now=NOW)  # 9 de 10 (20/10/2026: cota subiu)
     ok, erros = _separar(_reservar_em_paralelo(maker, usuario, 4))
     assert (len(ok), len(erros)) == (1, 3)
     assert get_allowance(session, usuario.id, now=NOW).remaining == 0

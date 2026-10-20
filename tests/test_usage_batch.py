@@ -360,8 +360,9 @@ def test_cota_de_operacoes_de_batch_e_independente_da_cota_de_videos(
     usuario = factory.user()
     give(factory, session, usuario, "weekly")
 
-    # 1 operação de batch pode consumir várias gerações.
-    _lote(session, usuario, "lote-1", 5)
+    # 1 operação de batch pode consumir várias gerações (20/10/2026: teto do Semanal subiu
+    # pra 10 -- usa o lote cheio pra esgotar o saldo de vídeos/dia nesta asserção).
+    _lote(session, usuario, "lote-1", 10)
 
     batch_allowance = get_batch_allowance(
         session,
