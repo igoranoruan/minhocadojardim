@@ -131,18 +131,18 @@ def test_send_to_batch_preenche_ate_o_teto_do_plano(auth_client, session, factor
     from database.types import utcnow
 
     usuario = factory.user()
-    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 5
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 10 (20/10/2026)
     login_directly(auth_client, session, usuario)
-    for i in range(7):
+    for i in range(11):
         add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
 
     resposta = auth_client.post("/api/share/queue/send-to-batch")
     assert resposta.status_code == 200
     corpo = resposta.json()
-    assert corpo["sent_count"] == 5
-    assert corpo["max_batch_size"] == 5
-    assert corpo["remaining_pending"] == 2
-    assert len(corpo["urls"]) == 5
+    assert corpo["sent_count"] == 10
+    assert corpo["max_batch_size"] == 10
+    assert corpo["remaining_pending"] == 1
+    assert len(corpo["urls"]) == 10
 
 
 # 17/10/2026 (aprovação do CÉREBRO, ajuste #2 -- botão "Extrair áudios"): `?formato=audio` nunca
@@ -186,16 +186,16 @@ def test_send_to_batch_formato_video_continua_usando_so_o_teto_do_plano(auth_cli
     from database.types import utcnow
 
     usuario = factory.user()
-    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 5
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 10 (20/10/2026)
     login_directly(auth_client, session, usuario)
-    for i in range(7):
+    for i in range(11):
         add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
 
     resposta = auth_client.post("/api/share/queue/send-to-batch?formato=video")
     assert resposta.status_code == 200
     corpo = resposta.json()
-    assert corpo["sent_count"] == 5
-    assert corpo["remaining_pending"] == 2
+    assert corpo["sent_count"] == 10
+    assert corpo["remaining_pending"] == 1
 
 
 def test_rotas_de_fila_exigem_sessao(engine):
