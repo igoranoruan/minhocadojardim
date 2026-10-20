@@ -615,11 +615,11 @@
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 9,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">7 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 10 vídeos, 3/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>7 gerações/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 7 vídeos, 3/semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Extração de áudio (MP3) incluída</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 70 gerações no período</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 49 gerações no período</li>
                         </ul>
                         <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): frase de
                              posicionamento -- ajuda a responder "qual desses planos é pra mim" sem
@@ -635,11 +635,11 @@
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 16,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>15 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 15 vídeos, 5/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 10 vídeos, 5/semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Extração de áudio (MP3) incluída</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 450 gerações no período</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 300 gerações no período</li>
                         </ul>
                         <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Para quem cria e reaproveita conteúdo com frequência.</p>
                         <button onclick="abrirModalPagamento('monthly')" class="mt-3 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Acesso mensal</button>
@@ -670,11 +670,13 @@
                 <!-- 02/10/2026 (3ª rodada): "Nomes personalizados por vídeo" (2ª rodada) foi
                      considerado fraco demais pelo Igor -- não comunica "vale a pena pagar". Virou
                      "Até X gerações no período", calculado direto da própria cota já exibida no
-                     card (gerações/dia x dias de validade do plano: 5x7=35, 10x30=300, 15x30=450 --
-                     ver services/plans.py) -- não é feature nova, só torna explícito o salto real
-                     de volume vs. o Free (5 gerações/semana), que é o argumento mais forte que o
-                     produto já tem. A caixinha do Free acima da grade (2ª rodada) também foi
-                     removida a pedido do Igor. -->
+                     card (gerações/dia x dias de validade do plano -- ver services/plans.py). A
+                     caixinha do Free acima da grade (2ª rodada) também foi removida a pedido do
+                     Igor.
+
+                     20/10/2026 (2ª rodada do mesmo dia): cota diária revista de novo (Semanal
+                     5->10->7, Mensal 10->15->10, VIP sem mudança) -- fórmula atual: 7x7=49,
+                     10x30=300, 15x30=450. -->
             </section>
 
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
@@ -1198,6 +1200,15 @@ https://..."></textarea>
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quantas gerações grátis eu tenho?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sem pagar nada, você tem 5 gerações por semana (sem downloads em lote). Os planos pagos aumentam esse limite e liberam o processamento em lote.</div>
                         </details>
+                    </div>
+
+                    <!-- 20/10/2026 (pedido do Igor): FAQ tinha 16 perguntas empilhadas, ocupando
+                         "muita parte do site" na rolagem -- as 5 primeiras acima (intro, objeção de
+                         preço, plataformas, confiança/detecção, cota grátis) são as mais relevantes
+                         pra decisão de compra e ficam sempre visíveis; o resto mora aqui, escondido
+                         até o clique em "Ver mais perguntas" (alternarFaqMais(), perto de
+                         centralizarCarrosselPlanos() no <script>). -->
+                    <div id="faqMais" class="hidden space-y-3 mt-3">
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que o YouTube demora mais que as outras plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O YouTube tem uma camada extra de proteção contra automação, então o download de lá passa por uma conexão adicional antes de chegar até você — por isso pode levar até 2 minutos, bem mais que TikTok, Instagram e Pinterest. É normal: não significa erro, só aguarde na tela de processamento.</div>
@@ -1262,6 +1273,12 @@ https://..."></textarea>
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o acesso?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sem senha. Você informa seu e-mail, recebe um código de 6 dígitos e usa esse código para entrar.</div>
                         </details>
+                    </div>
+
+                    <div class="mt-5 text-center">
+                        <button type="button" id="faqToggleBtn" onclick="alternarFaqMais()" class="text-sm font-bold text-[#19D3AE] hover:underline inline-flex items-center gap-1.5 mx-auto">
+                            <span>Ver mais perguntas</span><i class="fa-solid fa-chevron-down text-xs"></i>
+                        </button>
                     </div>
                 </div>
             </section>
@@ -1695,11 +1712,11 @@ https://..."></textarea>
     const PLANOS = {
         weekly: {
             nome: "Semanal",
-            detalhes: ["10 gerações/dia", "lote de até 10 (3/semana)", "acesso por 7 dias"]
+            detalhes: ["7 gerações/dia", "lote de até 7 (3/semana)", "acesso por 7 dias"]
         },
         monthly: {
             nome: "Mensal",
-            detalhes: ["15 gerações/dia", "lote de até 15 (5/semana)", "acesso por 30 dias"]
+            detalhes: ["10 gerações/dia", "lote de até 10 (5/semana)", "acesso por 30 dias"]
         },
         vip_batch: {
             nome: "VIP Batch",
@@ -1857,6 +1874,26 @@ https://..."></textarea>
         if (!window.matchMedia("(max-width: 767px)").matches) return;
         const cardMensal = document.getElementById("planoMensalCard");
         if (cardMensal) cardMensal.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
+    }
+
+    // FAQ "ver mais/ver menos" (20/10/2026, pedido do Igor): a seção tinha 16 perguntas
+    // empilhadas, ocupando muito espaço de rolagem -- as 5 primeiras ficam sempre visíveis
+    // (#faq .space-y-3 original) e o restante mora em #faqMais, escondido até o clique.
+    function alternarFaqMais() {
+        const mais = document.getElementById("faqMais");
+        const botao = document.getElementById("faqToggleBtn");
+        if (!mais || !botao) return;
+        const estavaEscondido = mais.classList.contains("hidden");
+        mais.classList.toggle("hidden");
+        botao.querySelector("span").textContent = estavaEscondido ? "Ver menos" : "Ver mais perguntas";
+        botao.querySelector("i").className = estavaEscondido
+            ? "fa-solid fa-chevron-up text-xs"
+            : "fa-solid fa-chevron-down text-xs";
+        if (!estavaEscondido) {
+            // fechando: rola de volta pro topo da seção, senão o usuário fica "perdido" lá
+            // embaixo, olhando pra uma seção que encolheu debaixo dele.
+            document.getElementById("faq")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     }
 
     // Etapa 1 da revisão de UX/copy (19/10/2026, decisão do Igor, dossiê 3.10): esconde a seção

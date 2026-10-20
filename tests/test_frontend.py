@@ -18,10 +18,11 @@ def test_hero_aprovado():
 def test_planos_conforme_especificacao():
     html = _html()
     assert "R$ 9,90" in html and "R$ 16,90" in html and "R$ 29,90" in html
-    # 20/10/2026 (pedido do Igor): cotas diárias de Semanal/Mensal subiram -- o teto de operações
-    # de batch POR SEMANA (não testado por string aqui) é quem segue diferenciando os planos.
-    assert "10 gerações/dia" in html   # Semanal
-    assert "15 gerações/dia" in html   # Mensal e VIP Batch (mesmo número, lotes diferentes)
+    # 20/10/2026 (pedido do Igor, 2ª rodada do mesmo dia): cota diária revista pra manter Semanal <
+    # Mensal < VIP Batch também no número diário (não só no teto de lote).
+    assert "7 gerações/dia" in html    # Semanal
+    assert "10 gerações/dia" in html   # Mensal
+    assert "15 gerações/dia" in html   # VIP Batch
     assert "ilimitado" not in html.lower()  # nenhum plano é ilimitado
 
     # Os valores antigos (pré-Etapa 4.1) não podem ter sobrado em nenhum lugar da página.

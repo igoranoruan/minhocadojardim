@@ -14,6 +14,71 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Cota diária revista de novo (2ª rodada do dia) + FAQ "ver mais/ver menos"
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+
+### Parte 1: cota diária de Semanal/Mensal revisada de novo
+**Origem:** Depois de ver os cards no celular (print anexado, confirmando que o carrossel e as
+cotas da 1ª rodada já estavam no ar), Igor achou o salto grande demais e pediu pra reduzir de
+novo -- e perguntou explicitamente minha opinião de produto/venda, deixando a decisão final comigo
+("sua decisão vai ser mantida").
+
+**Minha recomendação (implementada):**
+| Plano | Gerações/dia | Itens por lote | Lotes/semana (sem mudança) |
+|---|---|---|---|
+| Semanal | 10 → **7** | 10 → **7** | 3 |
+| Mensal | 15 → **10** (valor original, antes de qualquer mudança no dia) | 15 → **10** | 5 |
+| VIP Batch | 15 (sem mudança) | 15 (sem mudança) | ilimitado |
+
+**Por quê:** a 1ª rodada do dia deixou Mensal e VIP Batch com a MESMA cota diária (15), sobrando só
+o lote ilimitado como diferencial do VIP -- isso enfraquece o degrau de preço Mensal (R$16,90) →
+VIP (R$29,90), quase 2x mais caro por uma diferença só perceptível pra quem já usa lote pesado.
+Com Semanal 7 < Mensal 10 < VIP 15, os 3 planos voltam a ter uma progressão clara tanto no uso
+avulso (que ficou mais fácil com o Atalho) quanto no lote, o que facilita a decisão "qual plano é
+pra mim" e dá motivo concreto pra evoluir de plano conforme o uso cresce -- sem abrir mão do ganho
+real que os Atalhos trouxeram (7 e 10/dia ainda são bem mais que os 5/10 originais... exceto o
+Mensal, que voltou exatamente ao valor original de 10, já que era o que fazia mais sentido como
+meio-termo saudável entre Semanal e VIP).
+
+- **`services/plans.py`** -- `WEEKLY_PLAN.limit`/`max_batch_size` = 7; `MONTHLY_PLAN.limit`/
+  `max_batch_size` = 10. `batch_limit` (operações/semana) de nenhum plano foi tocado novamente.
+- **`static/index.html`** -- copy dos cards de Semanal/Mensal e modal de pagamento recalculados
+  (Até 49/300 gerações no período -- Mensal volta ao valor original de 300).
+- **13 arquivos de teste** com os números da 1ª rodada (10/15) ajustados pra 7/10, repetindo a
+  mesma varredura guiada pelo CI da rodada anterior (catálogo de planos, `/api/me/status`, reserva
+  avulsa, lote de vídeo e de áudio, fila de compartilhamento, concorrência, stacking de planos).
+
+### Parte 2: FAQ "ver mais perguntas" / "ver menos"
+**Origem:** Igor reportou que a seção de Perguntas Frequentes (16 perguntas empilhadas) estava
+"pegando muita parte do site" na rolagem -- pediu pra mostrar 3 a 5 por padrão com um botão "ver
+mais" que revela o resto, e "ver menos" pra recolher de novo.
+
+**O que mudou (`static/index.html`, seção `#faq`):**
+- As 5 primeiras perguntas (intro, objeção de preço, plataformas compatíveis, confiança/detecção,
+  cota grátis -- as mais relevantes pra decisão de compra, nessa ordem desde rodadas anteriores de
+  UX) continuam sempre visíveis.
+- As outras 11 perguntas foram movidas pra dentro de `<div id="faqMais" class="hidden ...">`,
+  reveladas só ao clicar em "Ver mais perguntas".
+- Nova função `alternarFaqMais()`: alterna a classe `hidden`, troca o texto/ícone do botão entre
+  "Ver mais perguntas" (seta pra baixo) e "Ver menos" (seta pra cima), e ao fechar rola de volta
+  pro topo da seção FAQ (senão o usuário fica olhando pra uma área que encolheu debaixo dele).
+
+### O que foi verificado
+- [x] HTML de `static/index.html` passa por um parser real (`html.parser.HTMLParser`): zero tags
+      desbalanceadas, zero erros.
+- [x] O `<script>` principal (onde `alternarFaqMais()` foi adicionada) passa por `node --check`:
+      zero erros de sintaxe.
+- [x] `ast.parse` confirma sintaxe válida em `services/plans.py` e nos 13 arquivos de teste.
+- [ ] **Limitação do sandbox:** sem rede liberada pra instalar fastapi/pytest localmente -- a suíte
+      completa roda sozinha no GitHub Actions a cada push; falta confirmar "0 failed" lá.
+- [ ] **Só dá pra confirmar visualmente num celular de verdade:** o toggle do FAQ (abre/fecha,
+      texto do botão, scroll ao fechar) e os novos números de cota nos cards -- pedir pro Igor
+      conferir antes de considerar fechado.
+
+---
+
 ## Carrossel de planos no mobile: selo "Recomendado"/"Maior lote disponível" cortado no topo
 **Status:** Implementado, commitado na `main` e **`pytest -q` confirmado verde** pelo GitHub
 Actions. Deploy confirmado `live` no Render.

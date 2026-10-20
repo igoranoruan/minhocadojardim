@@ -1,10 +1,10 @@
 """Reserva de lote e consumo das cotas de gerações e operações de batch.
 
-Regras comerciais (atualizado 20/10/2026, pedido do Igor -- tetos diários de Semanal/Mensal
-subiram; o que segue diferenciando os planos agora é só o teto de OPERAÇÕES de batch por semana):
+Regras comerciais (atualizado 20/10/2026, pedido do Igor, 2ª rodada do mesmo dia -- teto diário
+revisto de novo pra manter Semanal < Mensal < VIP Batch também no número diário):
 - Free: não usa batch.
-- Semanal: 10 gerações/dia, 3 operações de batch/semana, máximo 10 vídeos por operação.
-- Mensal: 15 gerações/dia, 5 operações de batch/semana, máximo 15 vídeos por operação.
+- Semanal: 7 gerações/dia, 3 operações de batch/semana, máximo 7 vídeos por operação.
+- Mensal: 10 gerações/dia, 5 operações de batch/semana, máximo 10 vídeos por operação.
 - VIP Batch: 15 gerações/dia, operações de batch ilimitadas, máximo 15 vídeos por operação.
 
 Batch usa a MESMA cota de gerações do plano: 1 geração por vídeo.
@@ -360,9 +360,9 @@ def test_cota_de_operacoes_de_batch_e_independente_da_cota_de_videos(
     usuario = factory.user()
     give(factory, session, usuario, "weekly")
 
-    # 1 operação de batch pode consumir várias gerações (20/10/2026: teto do Semanal subiu
-    # pra 10 -- usa o lote cheio pra esgotar o saldo de vídeos/dia nesta asserção).
-    _lote(session, usuario, "lote-1", 10)
+    # 1 operação de batch pode consumir várias gerações (20/10/2026: teto do Semanal é 7 --
+    # usa o lote cheio pra esgotar o saldo de vídeos/dia nesta asserção).
+    _lote(session, usuario, "lote-1", 7)
 
     batch_allowance = get_batch_allowance(
         session,
@@ -504,7 +504,7 @@ def test_lote_nao_e_reduzido_para_caber_no_saldo(vip, session):
     ).remaining == 2
 
 
-def test_semanal_exemplo_do_produto_10_disponiveis_permite_1_ou_10(
+def test_semanal_exemplo_do_produto_7_disponiveis_permite_1_ou_7(
     factory,
     session,
 ):
@@ -522,7 +522,7 @@ def test_semanal_exemplo_do_produto_10_disponiveis_permite_1_ou_10(
         session,
         usuario.id,
         now=NOW,
-    ).remaining == 9
+    ).remaining == 6
 
     outro = factory.user()
     give(factory, session, outro, "weekly")
@@ -530,9 +530,9 @@ def test_semanal_exemplo_do_produto_10_disponiveis_permite_1_ou_10(
     assert _lote(
         session,
         outro,
-        "lote-10",
-        10,
-    ).item_count == 10
+        "lote-7",
+        7,
+    ).item_count == 7
 
     assert get_allowance(
         session,
@@ -551,7 +551,7 @@ def test_semanal_exemplo_do_produto_2_disponiveis_lote_de_3_e_recusado_lote_de_2
     consume(
         session,
         usuario,
-        8,
+        5,
         now=NOW,
     )
 
@@ -563,7 +563,7 @@ def test_semanal_exemplo_do_produto_2_disponiveis_lote_de_3_e_recusado_lote_de_2
             3,
         )
 
-    assert _n(session, Generation) == 8
+    assert _n(session, Generation) == 5
 
     assert _lote(
         session,
@@ -573,7 +573,7 @@ def test_semanal_exemplo_do_produto_2_disponiveis_lote_de_3_e_recusado_lote_de_2
     ).item_count == 2
 
 
-def test_mensal_exemplo_do_produto_maximo_diario_15_lote_maximo_15(
+def test_mensal_exemplo_do_produto_maximo_diario_10_lote_maximo_10(
     factory,
     session,
 ):
@@ -583,9 +583,9 @@ def test_mensal_exemplo_do_produto_maximo_diario_15_lote_maximo_15(
     assert _lote(
         session,
         usuario,
-        "quinze",
-        15,
-    ).item_count == 15
+        "dez",
+        10,
+    ).item_count == 10
 
     assert get_allowance(
         session,
@@ -597,8 +597,8 @@ def test_mensal_exemplo_do_produto_maximo_diario_15_lote_maximo_15(
         _lote(
             session,
             usuario,
-            "dezesseis",
-            16,
+            "onze",
+            11,
         )
 
 

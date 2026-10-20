@@ -212,15 +212,15 @@ def test_send_to_batch_respeita_o_teto_do_plano_e_mantem_o_excedente_na_fila(fac
 
 def test_send_to_batch_pega_os_itens_mais_antigos_primeiro(factory, session):
     usuario = factory.user()
-    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 10 (20/10/2026)
-    for i in range(11):
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 7 (20/10/2026)
+    for i in range(8):
         add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
 
     resultado = send_to_batch(session, usuario)
-    assert resultado.urls == [f"https://www.tiktok.com/@a/video/{i}" for i in range(10)]
+    assert resultado.urls == [f"https://www.tiktok.com/@a/video/{i}" for i in range(7)]
     restantes = [item.url for item in list_queue(session, usuario)]
     assert restantes == [
-        "https://www.tiktok.com/@a/video/10",
+        "https://www.tiktok.com/@a/video/7",
     ]
 
 
@@ -253,12 +253,12 @@ def test_send_to_batch_com_max_items_menor_que_o_teto_do_plano_respeita_o_menor(
 
 def test_send_to_batch_com_max_items_maior_que_o_teto_do_plano_nao_libera_mais_que_o_plano(factory, session):
     usuario = factory.user()
-    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 10 (20/10/2026)
-    for i in range(12):
+    give(factory, session, usuario, "weekly", now=utcnow())  # max_batch_size = 7 (20/10/2026)
+    for i in range(9):
         add_to_queue(session, usuario, url=f"https://www.tiktok.com/@a/video/{i}", text=None)
 
     resultado = send_to_batch(session, usuario, max_items=100)  # saldo de áudio bem maior que o plano
-    assert resultado.sent_count == 10  # ainda trava no teto do plano, max_items nunca AUMENTA o limite
+    assert resultado.sent_count == 7  # ainda trava no teto do plano, max_items nunca AUMENTA o limite
     assert len(list_queue(session, usuario)) == 2
 
 

@@ -6,14 +6,16 @@ Cada vídeo processado consome 1 geração.
 
 A cota de gerações é:
 - Free: 5 gerações por semana.
-- Semanal: 10 gerações por dia.
-- Mensal: 15 gerações por dia.
+- Semanal: 7 gerações por dia.
+- Mensal: 10 gerações por dia.
 - VIP Batch: 15 gerações por dia.
 
-(Atualizado em 20/10/2026, pedido do Igor: com o Atalho do iOS/Android facilitando o download
-avulso, fazia sentido subir o teto diário de Semanal/Mensal -- o limite de operações de batch POR
-SEMANA, abaixo, continua o mesmo de antes; é ele que segue diferenciando os planos entre si, não
-mais o teto diário.)
+(Atualizado em 20/10/2026, 2ª rodada, pedido do Igor: a 1ª rodada do mesmo dia tinha subido o teto
+diário de Semanal/Mensal para 10/15 -- empatando Mensal com o VIP Batch na cota diária. Igor
+reconsiderou e pediu um teto mais conservador (Semanal 7, Mensal 10, de volta ao valor original),
+restaurando a separação visível entre os 3 planos pagos: Semanal < Mensal < VIP Batch tanto na
+cota diária quanto no teto de itens por lote. O limite de operações de batch POR SEMANA não mudou
+em nenhuma das duas rodadas.)
 
 Batch possui duas dimensões independentes:
 1. `max_batch_size`: quantidade máxima de vídeos em uma única operação.
@@ -21,8 +23,8 @@ Batch possui duas dimensões independentes:
 
 Regras de batch:
 - Free: não pode usar batch.
-- Semanal: 3 operações de batch por semana, até 10 vídeos por operação.
-- Mensal: 5 operações de batch por semana, até 15 vídeos por operação.
+- Semanal: 3 operações de batch por semana, até 7 vídeos por operação.
+- Mensal: 5 operações de batch por semana, até 10 vídeos por operação.
 - VIP Batch: operações ilimitadas, até 15 vídeos por operação.
 
 `batch_limit=None` significa operações de batch ilimitadas.
@@ -78,9 +80,9 @@ WEEKLY_PLAN = Plan(
     "Semanal",
     990,
     7,
-    10,
+    7,
     "day",
-    max_batch_size=10,
+    max_batch_size=7,
     batch_limit=3,
     batch_period="week",
 )
@@ -90,9 +92,9 @@ MONTHLY_PLAN = Plan(
     "Mensal",
     1690,
     30,
-    15,
+    10,
     "day",
-    max_batch_size=15,
+    max_batch_size=10,
     batch_limit=5,
     batch_period="week",
 )

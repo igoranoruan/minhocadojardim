@@ -96,8 +96,8 @@ def test_usuario_free_recebe_evento_error_audio_not_allowed(auth_client, factory
 def test_lote_maior_que_o_teto_do_plano_recebe_invalid_audio_batch_size(auth_client, factory, session):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
-    give(factory, session, usuario, "weekly", now=resolve_now())  # weekly: max 10 por lote (20/10/2026)
-    urls = [f"https://www.tiktok.com/@a/{i}" for i in range(11)]
+    give(factory, session, usuario, "weekly", now=resolve_now())  # weekly: max 7 por lote (20/10/2026)
+    urls = [f"https://www.tiktok.com/@a/{i}" for i in range(8)]
     resposta = auth_client.post("/api/audio/batch", json=_body("r1", urls))
     eventos = _eventos(resposta)
     assert eventos[-1][0] == "error"
