@@ -14,6 +14,43 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Páginas do Atalho (iOS e Android): espaçamento de texto corrigido em 2 lugares
+**Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
+**Branch:** `main` (direto).
+**Data:** 20/10/2026
+**Origem:** Feedback do Igor testando `/atalho-android` pelo celular (prints anexados).
+
+**O que mudou (`static/atalho-android.html` e `static/atalho-ios.html`):**
+1. **Texto pequeno colado no título "Instalação"** (Android) -- mesmo bug já corrigido no iOS na
+   rodada anterior (margem negativa `-mt-1` encostando o texto de apoio no título): trocado por
+   `mt-2`, igual à página do iOS.
+2. **"Problemas comuns" colado na caixa "Teste compartilhando"** -- em ambas as páginas. No Android
+   nunca existiu uma seção entre os 3 cards de instalação e "Problemas comuns", então mesmo com os
+   2.25rem padrão do `h2` (CSS da página) o espaço ficava visualmente apertado. No iOS, esse mesmo
+   problema **passou a existir só agora**, como efeito colateral de ter escondido a seção
+   "Configurar manualmente" na rodada anterior (antes havia um `<details>` inteiro entre os cards e
+   "Problemas comuns"; agora "Problemas comuns" vem direto depois dos cards, igual o Android) --
+   corrigido proativamente nas duas páginas antes do Igor precisar reportar separadamente. Ambos os
+   `<h2>Problemas comuns</h2>` ganharam `!mt-14` (3,5rem), só neles.
+
+### O que foi verificado
+- [x] HTML de ambas as páginas passa por um parser real (`html.parser.HTMLParser`): zero tags
+      desbalanceadas, zero erros.
+- [x] `grep` confirma que `tests/test_static_pages.py` não assertava nada sobre essas classes
+      (as asserções existentes continuam de pé sem alteração).
+- [ ] `pytest -q` pelo GitHub Actions -- a confirmar após o push.
+- [ ] **Teste de verdade no celular -- mesma limitação de sempre.** Vale conferir visualmente as
+      duas páginas (`/atalho-android` e `/atalho-ios`) depois do deploy.
+
+**Nota separada (ainda em aberto):** Igor reportou que os ajustes dos PLANOS da home (commit
+`c1244ef` -- carrossel mobile + copy nova) ainda não apareciam pra ele nos testes, mesmo com o
+deploy confirmado como "live" no Render minutos antes. Conferido: nenhum deploy mais recente
+sobrescreveu esse commit, e o deploy daquele commit está mesmo no ar. Suspeita de cache do
+navegador (Safari no iPhone é conhecido por isso) -- pedi pro Igor tentar de novo numa aba nova/
+anônima antes de eu investigar mais a fundo um possível bug real.
+
+---
+
 ## Home: bug do "Ver planos" pra cliente pago + copy dos planos + carrossel mobile
 **Status:** Implementado e commitado na `main`; `pytest -q` pelo GitHub Actions a confirmar.
 **Branch:** `main` (direto).

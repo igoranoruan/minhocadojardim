@@ -85,7 +85,7 @@
                  routes/share_target.py). Por isso NÃO existe um botão "Em breve"/link pra gerar
                  aqui: a instalação depende só do menu do Chrome, sempre disponível. -->
             <h2 class="!mt-0">Instalação</h2>
-            <p class="text-xs text-slate-500 -mt-1 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>Funciona no Chrome do Android (a maioria dos aparelhos já vem com ele). Outros navegadores podem não oferecer a opção "Instalar app".</p>
+            <p class="text-xs text-slate-500 mt-2 mb-1"><i class="fa-solid fa-circle-info mr-1"></i>Funciona no Chrome do Android (a maioria dos aparelhos já vem com ele). Outros navegadores podem não oferecer a opção "Instalar app".</p>
 
             <div class="rapido-grade">
                 <div class="rapido-card">
@@ -109,7 +109,11 @@
                 </div>
             </div>
 
-            <h2>Problemas comuns</h2>
+            <!-- Espaçamento extra (20/10/2026, pedido do Igor): o h2 normal já tem margin-top de
+                 2.25rem (ver <style> acima), mas vindo direto depois dos 3 cards de instalação
+                 (.rapido-grade, sem nenhuma seção entre eles), isso ainda ficava visualmente colado
+                 -- !mt-14 (3.5rem) dá mais respiro aqui especificamente. -->
+            <h2 class="!mt-14">Problemas comuns</h2>
             <ul class="text-sm">
                 <li><strong>Não aparece "Instalar app" no menu do Chrome:</strong> confirme que está usando o Chrome (não outro navegador) e que já visitou <code>klango.site</code> pelo menos uma vez antes de procurar a opção.</li>
                 <li><strong>"KLANGO.MP4" não aparece na lista de compartilhar:</strong> o app precisa estar instalado (passo 2) -- só ter o site salvo como favorito/atalho de navegador não é a mesma coisa.</li>
