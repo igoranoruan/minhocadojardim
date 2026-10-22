@@ -39,10 +39,10 @@ def _entitlement_semanal(factory, usuario):
     )
 
 
-def _files(tmp_path):
-    download_path = tmp_path / "baixado.mp4"
+def _files(diretorio):
+    download_path = diretorio / "baixado.mp4"
     download_path.write_bytes(b"x")
-    output_path = tmp_path / "saida.mp4"
+    output_path = diretorio / "saida.mp4"
     output_path.write_bytes(b"y")
     return download_path, output_path
 
@@ -99,10 +99,10 @@ def test_resposta_e_text_event_stream_com_no_store(auth_client, factory, session
 
 
 # ============================================================================ sucesso
-def test_sucesso_sequencia_status_progress_complete(auth_client, factory, session, tmp_path):
+def test_sucesso_sequencia_status_progress_complete(auth_client, factory, session, same_fs_tmp_path):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
-    download_path, output_path = _files(tmp_path)
+    download_path, output_path = _files(same_fs_tmp_path)
 
     def process_video_com_progresso(path, *, on_progress=None):
         if on_progress:
@@ -134,14 +134,14 @@ def test_sucesso_sequencia_status_progress_complete(auth_client, factory, sessio
     assert corpo["size_bytes"] == 321
 
 
-def test_youtube_tem_mensagem_de_download_diferenciada(auth_client, factory, session, tmp_path):
+def test_youtube_tem_mensagem_de_download_diferenciada(auth_client, factory, session, same_fs_tmp_path):
     """YouTube passa pelo proxy residencial (bem mais lento que as outras plataformas -- ver
     YtDlpDownloader._apply_youtube_proxy) -- sem um aviso específico o usuário via "Baixando seu
     vídeo..." parado por mais de um minuto e achava que tinha travado (relato real, 02/10/2026).
     A plataforma vem da URL (detect_platform), não do retorno mockado de download_video."""
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
-    download_path, output_path = _files(tmp_path)
+    download_path, output_path = _files(same_fs_tmp_path)
 
     with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path, platform=Platform.YOUTUBE)), \
          patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
@@ -156,7 +156,7 @@ def test_youtube_tem_mensagem_de_download_diferenciada(auth_client, factory, ses
 
 
 # ============================================================================ ownership
-def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, tmp_path):
+def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, same_fs_tmp_path):
     """Prova que user_id/email/account_id no corpo nunca controlam ownership. Precisa de um plano
     PAGO vigente para `dono` -- sem ele, a identidade efetiva seria a Free do dispositivo (nova
     regra), não a sessão, e o teste deixaria de exercitar o caminho que ele quer provar."""
@@ -164,7 +164,7 @@ def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, tm
     outro = factory.user()
     login_directly(auth_client, session, dono)
     _entitlement_semanal(factory, dono)
-    download_path, output_path = _files(tmp_path)
+    download_path, output_path = _files(same_fs_tmp_path)
 
     with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
          patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
@@ -180,7 +180,7 @@ def test_identidade_vem_da_sessao_nao_do_corpo(auth_client, factory, session, tm
     assert linha.user_id == dono.id  # os campos extras no corpo são ignorados pelo Pydantic
 
 
-def test_um_usuario_nao_consome_cota_de_outro(auth_client, factory, session, tmp_path):
+def test_um_usuario_nao_consome_cota_de_outro(auth_client, factory, session, same_fs_tmp_path):
     """Precisa de um plano PAGO vigente para `usuario_a` -- sem ele, a cota consumida seria a da
     identidade Free do dispositivo (nova regra), não a da conta `usuario_a` em si, e o teste
     deixaria de provar isolamento entre CONTAS."""
@@ -188,7 +188,7 @@ def test_um_usuario_nao_consome_cota_de_outro(auth_client, factory, session, tmp
     usuario_b = factory.user()
     login_directly(auth_client, session, usuario_a)
     _entitlement_semanal(factory, usuario_a)
-    download_path, output_path = _files(tmp_path)
+    download_path, output_path = _files(same_fs_tmp_path)
 
     with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
          patch("services.generation_flow.process_video", return_value=fake_processing_result(output_path)):
@@ -253,9 +253,9 @@ def test_download_falha_vira_evento_error_e_nao_vaza_detalhe_tecnico(auth_client
     assert "/caminho/interno" not in resposta.text
 
 
-def test_processamento_falha_vira_evento_error(auth_client, factory, session, tmp_path):
+def test_processamento_falha_vira_evento_error(auth_client, factory, session, same_fs_tmp_path):
     login_directly(auth_client, session, factory.user())
-    download_path, _ = _files(tmp_path)
+    download_path, _ = _files(same_fs_tmp_path)
     with patch("services.generation_flow.download_video", return_value=fake_download_result(download_path)), \
          patch("services.generation_flow.process_video", side_effect=FfmpegFailedError("falha")):
         resposta = auth_client.post("/api/generations", json={"url": "https://www.tiktok.com/@a/video/1"})

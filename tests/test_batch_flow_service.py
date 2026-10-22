@@ -14,12 +14,12 @@ from services.generation_flow import GenerationPersistenceError, run_batch
 from services.usage import complete_generation, fail_generation, get_batch_allowance, reserve_batch
 
 
-def _arquivos(tmp_path, n):
+def _arquivos(diretorio, n):
     pares = []
     for i in range(n):
-        d = tmp_path / f"baixado{i}.mp4"
+        d = diretorio / f"baixado{i}.mp4"
         d.write_bytes(b"x")
-        o = tmp_path / f"saida{i}.mp4"
+        o = diretorio / f"saida{i}.mp4"
         o.write_bytes(b"y")
         pares.append((d, o))
     return pares
@@ -32,10 +32,10 @@ def _reservar(factory, session, usuario, size, request_id="lote-1", plan="weekly
 
 
 # ============================================================================ sucesso / sequencial
-def test_todos_os_itens_completam_com_sucesso(factory, session, tmp_path):
+def test_todos_os_itens_completam_com_sucesso(factory, session, same_fs_tmp_path):
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=3)
-    pares_arquivo = _arquivos(tmp_path, 3)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 3)
     urls = [f"https://www.tiktok.com/@a/video/{i}" for i in range(3)]
     items = list(zip(reservation.generation_ids, urls))
 
@@ -52,13 +52,13 @@ def test_todos_os_itens_completam_com_sucesso(factory, session, tmp_path):
     assert [r.outcome.output_sha256 for r in resultados] == ["a" * 64, "b" * 64, "c" * 64]
 
 
-def test_processamento_e_sequencial_um_item_por_vez(factory, session, tmp_path):
+def test_processamento_e_sequencial_um_item_por_vez(factory, session, same_fs_tmp_path):
     """download_video só deve ser chamado a próxima vez depois que o item anterior já terminou --
     comprovado indiretamente pela ORDEM determinística dos side_effects (uma lista, não side
     effects concorrentes) e pelo número exato de chamadas (nem mais, nem menos)."""
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=2)
-    pares_arquivo = _arquivos(tmp_path, 2)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 2)
     items = list(zip(reservation.generation_ids, ["https://www.tiktok.com/@a/1", "https://www.tiktok.com/@a/2"]))
 
     with patch("services.generation_flow.download_video", side_effect=[fake_download_result(d) for d, _ in pares_arquivo]) as mock_download, \
@@ -70,10 +70,10 @@ def test_processamento_e_sequencial_um_item_por_vez(factory, session, tmp_path):
 
 
 # ============================================================================ isolamento de falha
-def test_falha_de_um_item_nao_cancela_os_demais(factory, session, tmp_path):
+def test_falha_de_um_item_nao_cancela_os_demais(factory, session, same_fs_tmp_path):
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=3)
-    pares_arquivo = _arquivos(tmp_path, 3)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 3)
     items = list(zip(reservation.generation_ids, [f"https://www.tiktok.com/@a/{i}" for i in range(3)]))
 
     download_side_effect = [
@@ -108,12 +108,12 @@ def test_falha_de_item_nao_devolve_a_vaga_de_operacao_de_lote(factory, session, 
     assert depois.used == antes.used  # nada mudou: a operação já tinha sido gasta na reserva
 
 
-def test_falha_de_item_libera_a_cota_de_video_apenas_daquele_item(factory, session, tmp_path):
+def test_falha_de_item_libera_a_cota_de_video_apenas_daquele_item(factory, session, same_fs_tmp_path):
     from services.usage import get_allowance
 
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=2)
-    pares_arquivo = _arquivos(tmp_path, 1)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 1)
     items = list(zip(reservation.generation_ids, ["https://www.tiktok.com/@a/1", "https://www.tiktok.com/@a/2"]))
 
     with patch("services.generation_flow.download_video", side_effect=[DownloadFailedError("falhou"), fake_download_result(pares_arquivo[0][0])]), \
@@ -125,10 +125,10 @@ def test_falha_de_item_libera_a_cota_de_video_apenas_daquele_item(factory, sessi
 
 
 # ============================================================================ falha sistêmica de persistência
-def test_falha_de_persistencia_aborta_o_restante_do_lote(factory, session, tmp_path):
+def test_falha_de_persistencia_aborta_o_restante_do_lote(factory, session, same_fs_tmp_path):
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=3)
-    pares_arquivo = _arquivos(tmp_path, 3)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 3)
     items = list(zip(reservation.generation_ids, [f"https://www.tiktok.com/@a/{i}" for i in range(3)]))
 
     with patch("services.generation_flow.download_video", side_effect=[fake_download_result(d) for d, _ in pares_arquivo]), \
@@ -140,10 +140,10 @@ def test_falha_de_persistencia_aborta_o_restante_do_lote(factory, session, tmp_p
 
 
 # ============================================================================ reexecução idempotente (replay de lote)
-def test_item_ja_completed_nao_e_reprocessado(factory, session, tmp_path):
+def test_item_ja_completed_nao_e_reprocessado(factory, session, same_fs_tmp_path):
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=2)
-    pares_arquivo = _arquivos(tmp_path, 2)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 2)
     gen_id_1, gen_id_2 = reservation.generation_ids
 
     # simula que o item 1 já foi processado numa tentativa anterior (ex.: processo caiu depois)
@@ -177,10 +177,10 @@ def test_item_ja_failed_e_relatado_sem_reprocessar(factory, session, tmp_path):
 
 
 # ============================================================================ callback de progresso
-def test_on_item_progress_recebe_posicao_e_generation_id_corretos(factory, session, tmp_path):
+def test_on_item_progress_recebe_posicao_e_generation_id_corretos(factory, session, same_fs_tmp_path):
     usuario = factory.user()
     reservation = _reservar(factory, session, usuario, size=2)
-    pares_arquivo = _arquivos(tmp_path, 2)
+    pares_arquivo = _arquivos(same_fs_tmp_path, 2)
     items = list(zip(reservation.generation_ids, ["https://www.tiktok.com/@a/1", "https://www.tiktok.com/@a/2"]))
     chamadas = []
 

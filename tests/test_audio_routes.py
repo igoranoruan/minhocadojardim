@@ -24,10 +24,10 @@ def _entitlement_pago(factory, usuario, plan_code="weekly"):
     )
 
 
-def _arquivos(tmp_path):
-    baixado = tmp_path / "fonte.m4a"
+def _arquivos(diretorio):
+    baixado = diretorio / "fonte.m4a"
     baixado.write_bytes(b"fonte de audio")
-    saida = tmp_path / "saida.mp3"
+    saida = diretorio / "saida.mp3"
     saida.write_bytes(b"mp3 processado")
     return baixado, saida
 
@@ -64,11 +64,11 @@ def test_extract_para_free_tambem_e_bloqueado_com_403_e_nao_grava_nada(auth_clie
 
 
 # ============================================================================ sucesso
-def test_extracao_com_sucesso_devolve_200_e_atualiza_o_saldo(auth_client, factory, session, tmp_path):
+def test_extracao_com_sucesso_devolve_200_e_atualiza_o_saldo(auth_client, factory, session, same_fs_tmp_path):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
     _entitlement_pago(factory, usuario)
-    baixado, saida = _arquivos(tmp_path)
+    baixado, saida = _arquivos(same_fs_tmp_path)
 
     with patch(
         "services.audio_flow.download_audio_source",
@@ -93,11 +93,11 @@ def test_extracao_com_sucesso_devolve_200_e_atualiza_o_saldo(auth_client, factor
     assert session.query(Generation).count() == 0
 
 
-def test_saldo_via_allowance_reflete_extracoes_ja_feitas(auth_client, factory, session, tmp_path):
+def test_saldo_via_allowance_reflete_extracoes_ja_feitas(auth_client, factory, session, same_fs_tmp_path):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
     _entitlement_pago(factory, usuario)
-    baixado, saida = _arquivos(tmp_path)
+    baixado, saida = _arquivos(same_fs_tmp_path)
 
     with patch("services.audio_flow.download_audio_source", return_value=fake_audio_download_result(baixado)), \
          patch("services.audio_flow.process_audio", return_value=fake_audio_processing_result(saida)):
@@ -138,11 +138,11 @@ def test_operacao_de_audio_em_andamento_devolve_409(auth_client, factory, sessio
 
 
 # ============================================================================ vídeo sem áudio / falha não conta
-def test_video_sem_audio_devolve_mensagem_exata_e_nao_consome_o_limite(auth_client, factory, session, tmp_path):
+def test_video_sem_audio_devolve_mensagem_exata_e_nao_consome_o_limite(auth_client, factory, session, same_fs_tmp_path):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
     _entitlement_pago(factory, usuario)
-    baixado, _ = _arquivos(tmp_path)
+    baixado, _ = _arquivos(same_fs_tmp_path)
 
     with patch("services.audio_flow.download_audio_source", return_value=fake_audio_download_result(baixado)), \
          patch("services.audio_flow.process_audio", side_effect=NoAudioStreamError("sem stream de áudio")):
@@ -175,11 +175,11 @@ def test_erro_de_download_nao_vaza_detalhe_tecnico(auth_client, factory, session
 
 
 # ============================================================================ download do MP3
-def test_download_do_mp3_tem_content_type_e_nome_corretos(auth_client, factory, session, tmp_path):
+def test_download_do_mp3_tem_content_type_e_nome_corretos(auth_client, factory, session, same_fs_tmp_path):
     usuario = factory.user()
     login_directly(auth_client, session, usuario)
     _entitlement_pago(factory, usuario)
-    baixado, saida = _arquivos(tmp_path)
+    baixado, saida = _arquivos(same_fs_tmp_path)
 
     with patch("services.audio_flow.download_audio_source", return_value=fake_audio_download_result(baixado)), \
          patch("services.audio_flow.process_audio", return_value=fake_audio_processing_result(saida)):
@@ -194,12 +194,12 @@ def test_download_do_mp3_tem_content_type_e_nome_corretos(auth_client, factory, 
     assert resposta.content == b"mp3 processado"
 
 
-def test_download_de_extracao_de_outro_usuario_devolve_404_generico(auth_client, factory, session, tmp_path):
+def test_download_de_extracao_de_outro_usuario_devolve_404_generico(auth_client, factory, session, same_fs_tmp_path):
     dono = factory.user()
     outro = factory.user()
     _entitlement_pago(factory, dono)
     _entitlement_pago(factory, outro)
-    baixado, saida = _arquivos(tmp_path)
+    baixado, saida = _arquivos(same_fs_tmp_path)
 
     login_directly(auth_client, session, dono)
     with patch("services.audio_flow.download_audio_source", return_value=fake_audio_download_result(baixado)), \

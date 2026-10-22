@@ -3,6 +3,8 @@
 Cada teste recebe um SQLite temporário criado pelas MIGRATIONS reais (alembic upgrade),
 não por create_all. Assim os testes validam o mesmo schema que vai para produção.
 """
+import shutil
+import uuid
 from dataclasses import replace
 from datetime import date, timedelta
 from pathlib import Path
@@ -36,6 +38,33 @@ def make_alembic_config(db_url: str) -> Config:
 @pytest.fixture()
 def db_url(tmp_path) -> str:
     return f"sqlite:///{(tmp_path / 'teste.db').as_posix()}"
+
+
+# 22/10/2026 (CI quebrado, achado durante o reajuste de preços dos planos -- sem relação com
+# preço): o pytest, no GitHub Actions, migrou pra imagem Ubuntu 26 (aviso de deprecação do runner
+# a partir de 19/10/2026) e o diretório temporário padrão (usado pela fixture `tmp_path` do
+# próprio pytest) passou a ficar num filesystem DIFERENTE do checkout do projeto. Isso quebra
+# services/result_storage.py::save(), que usa Path.rename() DE PROPÓSITO (sem copiar bytes -- ver
+# comentário lá e em config.py) para mover o resultado pronto pra dentro de RESULT_STORAGE_DIR
+# ("./tmp/results", dentro do checkout) -- rename só funciona dentro do MESMO filesystem; entre
+# filesystems diferentes, vira OSError "Invalid cross-device link" (Errno 18).
+#
+# same_fs_tmp_path existe só para os testes que simulam um arquivo "pronto" que o próprio código
+# de produção depois MOVE via rename() pra dentro de RESULT_STORAGE_DIR/PROCESSING_TEMP_DIR (ambos
+# sob "./tmp/", no checkout) -- nunca para os que só leem/escrevem bytes sem mover (esses
+# continuam usando a `tmp_path` normal do pytest, sem problema nenhum). Cada teste ganha um
+# subdiretório próprio (uuid4, apagado no teardown) dentro de "./tmp/test-scratch" -- já coberto
+# pelo "tmp/" do .gitignore, igual PROCESSING_TEMP_DIR/RESULT_STORAGE_DIR.
+@pytest.fixture()
+def same_fs_tmp_path() -> Path:
+    base = PROJECT_ROOT / "tmp" / "test-scratch"
+    base.mkdir(parents=True, exist_ok=True)
+    diretorio = base / uuid.uuid4().hex
+    diretorio.mkdir()
+    try:
+        yield diretorio
+    finally:
+        shutil.rmtree(diretorio, ignore_errors=True)
 
 
 @pytest.fixture()
