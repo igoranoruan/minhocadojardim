@@ -40,9 +40,11 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
             # exemplos) e 0011 (comments.approved, moderação prévia -- aprovação do CÉREBRO,
             # 06/10/2026); 0012 (audio_batches/audio_extractions, extração de áudio -- autorização
             # do CÉREBRO, 11/10/2026); 0013 (share_tokens/share_queue_items, atalho "Enviar para o
-            # KLANGO" -- autorização do CÉREBRO, 15/10/2026) -- teste atualizado nesta data só pra
+            # KLANGO" -- autorização do CÉREBRO, 15/10/2026); 0014 (cancela Payments "pending" com
+            # o preço antigo de antes do reajuste de 22/10/2026 -- migration de DADO, nenhuma
+            # tabela/coluna nova, aprovação do Igor) -- teste atualizado nesta data só pra
             # acompanhar o head real, sem nenhuma mudança de regra de negócio.
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0013"
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0014"
     finally:
         eng.dispose()
 
