@@ -17,7 +17,8 @@ def test_hero_aprovado():
 
 def test_planos_conforme_especificacao():
     html = _html()
-    assert "R$ 9,90" in html and "R$ 16,90" in html and "R$ 29,90" in html
+    # 22/10/2026 (pedido do Igor): reajuste de preço, só valor -- limites continuam iguais.
+    assert "R$ 14,90" in html and "R$ 27,90" in html and "R$ 47,90" in html
     # 20/10/2026 (pedido do Igor, 2ª rodada do mesmo dia): cota diária revista pra manter Semanal <
     # Mensal < VIP Batch também no número diário (não só no teto de lote).
     assert "7 gerações/dia" in html    # Semanal

@@ -14,6 +14,77 @@ responsividade, o app Atalhos) continua precisando do Igor, exatamente como ante
 
 ---
 
+## Reajuste de preços dos planos pagos
+**Status:** Implementado e commitado na `main`. Aguardando confirmação do CI (GitHub Actions).
+**Branch:** `main` (direto).
+**Data:** 22/10/2026
+
+**Origem:** Pedido e aprovação explícita do Igor -- só preço e textos; nenhum limite/regra de uso
+mudou.
+
+**Novos preços:**
+| Plano | Antes | Depois | `price_cents` |
+|---|---|---|---|
+| Semanal | R$ 9,90 | **R$ 14,90** | 990 → 1490 |
+| Mensal | R$ 16,90 | **R$ 27,90** | 1690 → 2790 |
+| VIP Batch | R$ 29,90 | **R$ 47,90** | 2990 → 4790 |
+| Free | R$ 0,00 | sem mudança | 0 |
+
+**Pontos de atenção verificados ANTES de implementar (pedido explícito do Igor), nenhum exigiu
+mudança de código:**
+- **Pagamento pendente criado com preço antigo, pago depois do deploy:** `payments/service.py::create_payment`
+  já grava `amount_cents=plan.price_cents` no próprio `Payment` no momento da CRIAÇÃO (nunca
+  recalculado depois) -- `payments/gateway.py::charge` sempre usa `payment.amount_cents` (o valor
+  congelado), nunca relê o catálogo. Na conciliação do webhook
+  (`payments/gateway.py::reconcile_webhook_payment`), a decisão de `grant_entitlement` depende só
+  do status autoritativo do Mercado Pago e de `payment.plan_code` -- em nenhum momento o valor pago
+  é recomparado contra `plan.price_cents` atual. Ou seja: um PIX gerado antes do reajuste e pago
+  depois continua cobrando e sendo aprovado pelo valor ANTIGO, sem risco de recusa. Nenhuma mudança
+  de código foi necessária para isso.
+- **Upgrade de plano (Semanal → Mensal/VIP):** o botão de upgrade chama o mesmo
+  `create_payment`/`abrirModalPagamento`, que sempre lê o preço atual do catálogo
+  (`services.plans.get_plan`) no momento da nova compra -- já usa os preços novos automaticamente,
+  sem precisar de nenhum caso especial. A regra de troca imediata (commit `a828681`,
+  `grant_entitlement` encerrando o acesso vigente na hora) não depende de preço em nenhum ponto, só
+  de `plan_code` -- não foi tocada e continua intacta.
+- Nenhuma mudança em Mercado Pago, webhook, autenticação, migrations ou limites de uso -- só o
+  catálogo de preços (`services/plans.py`) e a vitrine (`static/index.html` + testes).
+
+**O que mudou:**
+- **`services/plans.py`** -- `price_cents` de `WEEKLY_PLAN`/`MONTHLY_PLAN`/`VIP_BATCH_PLAN`
+  atualizados; docstring do módulo documenta o reajuste (data, motivo, valores antes/depois) e os
+  dois pontos de atenção verificados acima.
+- **`static/index.html`** -- os 3 cards de preço da vitrine de Planos ("R$ 9,90"/"R$ 16,90"/
+  "R$ 29,90" → "R$ 14,90"/"R$ 27,90"/"R$ 47,90"). Nenhum outro lugar do site tinha preço hardcoded
+  (o modal de pagamento já busca o preço real do servidor, nunca duplica o valor em JS) -- conferido
+  por busca em `static/atalho-ios.html`/`static/atalho-android.html` também (sem menção a preço em
+  nenhum dos dois). Não havia texto tipo "menos de R$X por dia" no site -- nada a ajustar nessa
+  frente.
+- **5 arquivos de teste** com os preços antigos: `tests/test_plans_catalog.py` (3 testes, inclusive
+  nome da função, renomeado pra refletir o novo valor), `tests/test_frontend.py` (1 assert),
+  `tests/test_payments_gateway.py` (1 teste + docstring), `tests/test_payments_routes.py` (2
+  asserts). **Deixados intactos de propósito** (uso genérico de `990` como valor de fixture
+  qualquer, não ligado ao catálogo real -- conferido lendo o contexto de cada um):
+  `tests/test_db_constraints.py`, `tests/test_db_schema.py`, `tests/conftest.py`.
+
+### O que foi verificado
+- [x] `ast.parse` confirma sintaxe válida em `services/plans.py` e nos 5 arquivos de teste
+      alterados.
+- [x] HTML de `static/index.html` passa por um parser real (`html.parser.HTMLParser`): zero tags
+      desbalanceadas, zero erros.
+- [x] Busca em todo o repositório (`.py`/`.html`/`.md`) confirma que nenhum valor antigo (990,
+      1690, 2990, "9,90", "16,90", "29,90") restou fora de fixtures genéricas intencionalmente
+      deixadas intactas e de uma entrada antiga (histórica) deste próprio arquivo, sobre uma
+      decisão de cota de um reajuste anterior (não de preço).
+- [ ] **Limitação do sandbox:** sem rede liberada pra instalar fastapi/pytest localmente -- a suíte
+      completa roda sozinha no GitHub Actions; ainda não confirmada "0 failed" no momento em que
+      este arquivo foi escrito (ver atualização mais recente no topo deste documento, se houver).
+- [ ] **Só dá pra confirmar visualmente num celular/navegador de verdade:** os 3 cards de preço no
+      klango.site mostrando R$ 14,90 / R$ 27,90 / R$ 47,90 depois do deploy -- pedir pro Igor
+      conferir (ou o Claude confirmar via leitura da página publicada) antes de considerar fechado.
+
+---
+
 ## Padronização de fonte + carrosséis horizontais (Antes/Depois e Lote na Prática) + "Clipadores"
 **Status:** Implementado e commitado na `main`. Sem mudança de Python/backend desta vez (só HTML/
 CSS/JS) -- aguardando confirmação do CI (que ainda cobre o front-end via `test_frontend.py`).

@@ -47,7 +47,7 @@ def test_criacao_feliz_devolve_dados_publicos_sem_external_reference(auth_client
     assert corpo["plan_code"] == "weekly"
     assert corpo["method"] == "pix"
     assert corpo["status"] == "pending"
-    assert corpo["amount_cents"] == 990  # WEEKLY_PLAN.price_cents
+    assert corpo["amount_cents"] == 1490  # WEEKLY_PLAN.price_cents
     assert "external_reference" not in corpo
     assert "external_reference" not in resposta.text
 
@@ -63,7 +63,7 @@ def test_preco_nao_e_manipulavel_pelo_cliente(auth_client, factory, session):
     )
 
     assert resposta.status_code == 200
-    assert resposta.json()["amount_cents"] == 1690  # MONTHLY_PLAN.price_cents, nunca 1
+    assert resposta.json()["amount_cents"] == 2790  # MONTHLY_PLAN.price_cents, nunca 1
 
 
 def test_plano_inexistente_recebe_422(auth_client, factory, session):

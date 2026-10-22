@@ -37,7 +37,7 @@ def _brick_pix(**overrides):
 
 
 def test_transaction_amount_convertido_com_decimal_a_partir_do_catalogo(factory, session):
-    """WEEKLY_PLAN.price_cents == 990 -> transaction_amount == 9.90 (reais), nunca centavos."""
+    """WEEKLY_PLAN.price_cents == 1490 -> transaction_amount == 14.90 (reais), nunca centavos."""
     usuario = factory.user()
     payment = create_payment(session, user_id=usuario.id, plan_code="weekly", method="credit_card")
 
@@ -45,7 +45,7 @@ def test_transaction_amount_convertido_com_decimal_a_partir_do_catalogo(factory,
         charge(session, payment, method="credit_card", brick_data=_brick_cartao())
 
     payload_enviado = mock_cliente.call_args.args[0]
-    assert payload_enviado["transaction_amount"] == 9.90
+    assert payload_enviado["transaction_amount"] == 14.90
 
 
 def test_external_reference_do_payment_e_enviado_ao_mercado_pago(factory, session):

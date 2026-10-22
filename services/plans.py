@@ -17,6 +17,21 @@ restaurando a separação visível entre os 3 planos pagos: Semanal < Mensal < V
 cota diária quanto no teto de itens por lote. O limite de operações de batch POR SEMANA não mudou
 em nenhuma das duas rodadas.)
 
+Preços (reajustados em 22/10/2026, pedido e aprovação do Igor -- só valor/copy, NENHUM limite ou
+regra de negócio mudou nesta rodada):
+- Semanal: R$ 9,90 -> R$ 14,90 (price_cents 990 -> 1490)
+- Mensal: R$ 16,90 -> R$ 27,90 (price_cents 1690 -> 2790)
+- VIP Batch: R$ 29,90 -> R$ 47,90 (price_cents 2990 -> 4790)
+- Free: sem mudança (sempre R$ 0,00).
+
+payments/service.py::create_payment lê price_cents daqui e grava o valor no próprio Payment no
+momento da criação (Payment.amount_cents) -- nunca recalculado depois. Então um Payment "pending"
+criado ANTES deste reajuste (ex.: PIX gerado com o preço antigo, pago só depois do deploy) continua
+cobrando e sendo conciliado pelo valor ANTIGO, congelado em Payment.amount_cents; a reconciliação
+do webhook (payments/gateway.py::reconcile_webhook_payment) decide grant_entitlement só pelo status
+do Mercado Pago e por payment.plan_code -- nunca recompara o valor pago contra o catálogo atual.
+Confirmado em código antes deste reajuste (nenhuma mudança necessária para isso continuar valendo).
+
 Batch possui duas dimensões independentes:
 1. `max_batch_size`: quantidade máxima de vídeos em uma única operação.
 2. `batch_limit`: quantidade máxima de operações de batch por período.
@@ -78,7 +93,7 @@ FREE_PLAN = Plan(
 WEEKLY_PLAN = Plan(
     WEEKLY,
     "Semanal",
-    990,
+    1490,
     7,
     7,
     "day",
@@ -90,7 +105,7 @@ WEEKLY_PLAN = Plan(
 MONTHLY_PLAN = Plan(
     MONTHLY,
     "Mensal",
-    1690,
+    2790,
     30,
     10,
     "day",
@@ -102,7 +117,7 @@ MONTHLY_PLAN = Plan(
 VIP_BATCH_PLAN = Plan(
     VIP_BATCH,
     "VIP Batch",
-    2990,
+    4790,
     30,
     15,
     "day",
