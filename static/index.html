@@ -57,7 +57,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeIn .25s ease-out forwards; }
         @media (max-width: 640px) {
-            .hero-title { font-size: 2.25rem; line-height: 1.06; }
+            /* 26/10/2026 (ETAPA A): título do hero ficou mais compacto no mobile (text-3xl em vez
+               de text-4xl) pra caber "Processar e baixar" sem rolar em 390x844 -- esta regra força
+               o MESMO valor (1.875rem = text-3xl), já que ela tem a mesma especificidade da classe
+               Tailwind e pode ganhar dependendo da ordem de injeção do CDN; sem isso o título podia
+               voltar a aparecer com o tamanho antigo (2.25rem) independente do texto/classe usados. */
+            .hero-title { font-size: 1.875rem; line-height: 1.1; }
         }
 
         /* ---- Direção visual final: grid discreto + glow ambiental de profundidade ----
@@ -183,84 +188,50 @@
                  em MP4 / Sem anúncios" removido por duplicar informação que já aparece em outras
                  seções da página (Como Funciona, Antes/Depois) -- não removido de lá, só daqui.
                  Nenhum id, endpoint ou função JS foi alterado; só HTML/CSS desta seção. -->
-            <section class="pt-20 sm:pt-32 pb-14 sm:pb-20 text-center sm:text-left">
-                <!-- Etapa 3 (dossiê, "Painel logado", 4.1): título/subtítulo/tira de passos/mascote
-                     são "hero de venda" -- some pra qualquer sessão logada (grátis ou paga), não só
-                     paga (a diferença por plano é só nas seções de venda MAIS ABAIXO, já cobertas
-                     por SECOES_FUNIL_FRIO_IDS). Quem não tem sessão continua vendo tudo normalmente.
-                     Ver atualizarVisibilidadeHeroVenda(), chamada de aplicarSessao()/aplicarSemSessao(). -->
-                <div id="heroVenda">
-                <!-- 26/10/2026 (pedido do Igor, revisão de conversão da página de vendas): reescrita
-                     do Hero -- título, subtítulo, 3 benefícios em ícone, 2 botões (Testar grátis /
-                     Ver planos) e a linha de preço. "1 toque" no título em turquesa (destaque de
-                     marca, igual o resto do site). -->
-                <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-2xl mx-auto sm:mx-0">
-                    Baixe, limpe e reaproveite vídeos em <span class="text-[#19D3AE]">1 toque</span>.
-                </h1>
+            <!-- 26/10/2026 (ETAPA A, pedido do Igor -- "ajustes finais do site"): hero reorganizado.
+                 Nova ordem (igual no mobile e no desktop, só o CSS muda de 1 coluna empilhada pra 2
+                 colunas lado a lado a partir de lg:): título -> subtítulo -> FORMULÁRIO (com selo de
+                 status e contador grudados nele) -> linha de preço/planos -> chips de benefício ->
+                 animação. Os 2 botões antigos do hero ("Testar grátis"/"Ver planos") saíram -- o
+                 formulário já é a chamada principal, e "ver planos" virou link de texto na linha de
+                 preço (mesma função irParaMeuPlano() de sempre). Pra caber o botão "Processar e
+                 baixar" sem rolar em 390x844, o padding-top/título/subtítulo ficaram mais compactos
+                 no mobile (sm: volta ao espaçamento de antes). -->
+            <section class="pt-6 sm:pt-32 pb-14 sm:pb-20 text-center sm:text-left">
+                <div class="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
+                    <div>
+                        <!-- Etapa 3 (dossiê, "Painel logado", 4.1): título/subtítulo/linha de
+                             preço/chips/animação são "hero de venda" -- somem pra qualquer sessão
+                             logada (grátis ou paga), não só paga (a diferença por plano é só nas
+                             seções de venda MAIS ABAIXO, já cobertas por SECOES_FUNIL_FRIO_IDS). Quem
+                             não tem sessão continua vendo tudo normalmente. Agora são DOIS blocos com
+                             a MESMA classe "heroVenda" (não mais um único id) -- o formulário ficou
+                             no meio dos dois e precisa continuar sempre visível. Ver
+                             atualizarVisibilidadeHeroVenda() (usa querySelectorAll(".heroVenda")),
+                             chamada de aplicarSessao()/aplicarSemSessao(). -->
+                        <div class="heroVenda">
+                            <!-- 26/10/2026 (ETAPA A): título sem "limpe," (simplificado) e subtítulo
+                                 citando as 4 plataformas, pedido exato do Igor. -->
+                            <h1 class="hero-title text-3xl sm:text-5xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white max-w-2xl mx-auto sm:mx-0">
+                                Baixe e reaproveite vídeos em <span class="text-[#19D3AE]">1 toque</span>.
+                            </h1>
 
-                <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
-                    Cole o link ou compartilhe direto do app: o KLANGO entrega um MP4 novo, sem metadados e com o nome que você escolher.
-                </p>
+                            <p class="mt-3 sm:mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
+                                Cole o link do TikTok, Instagram, YouTube ou Pinterest e receba um MP4 novo.
+                            </p>
+                        </div>
 
-                <!-- 26/10/2026: 3 benefícios em ícone, substituindo a tira de passos anterior
-                     ("Encontrou o vídeo -> Cole o link -> ..."), por pedido do Igor. Ícones de marca
-                     (fa-brands) na 3ª linha seguem o mesmo precedente já usado no resto do site
-                     (ICONE_FONTAWESOME_POR_PLATAFORMA, seletor de plataforma) -- nunca um logo
-                     desenhado/gerado, só o ícone padrão do Font Awesome. -->
-                <ul class="mt-5 flex flex-col sm:flex-row flex-wrap items-center sm:items-start justify-center sm:justify-start gap-x-5 gap-y-2 text-[13px] text-slate-400">
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Vários vídeos de uma vez</li>
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-mobile-screen-button text-[#19D3AE] text-xs"></i>Atalho direto do celular</li>
-                    <li class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
-                        <i class="fa-brands fa-tiktok text-[#19D3AE] text-xs"></i><i class="fa-brands fa-instagram text-[#19D3AE] text-xs"></i><i class="fa-brands fa-youtube text-[#19D3AE] text-xs"></i><i class="fa-brands fa-pinterest text-[#19D3AE] text-xs"></i>
-                        <span>TikTok, Instagram, YouTube Shorts e Pinterest</span>
-                    </li>
-                </ul>
+                        <!-- Status do plano/limite + formulário: SEMPRE visíveis (inclusive logado),
+                             ficam entre os dois blocos "heroVenda" (título/subtítulo acima, linha de
+                             preço/chips/animação abaixo), satisfazendo a ordem pedida pelo Igor. -->
+                        <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-semibold mt-4 sm:mt-6 mb-4 sm:mb-7">
+                            <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
+                            <span id="statusContaTexto">Pronto para processar</span>
+                        </div>
+                        <div id="statusContaValidade" class="hidden text-[13px] text-slate-500 mt-1.5 mb-4"></div>
 
-                <!-- 26/10/2026: 2 CTAs -- "Testar grátis" rola até o formulário de download (sempre
-                     usável sem plano pago, 5 gerações grátis/semana, ver FAQ) e foca o campo de link;
-                     "Ver planos" reaproveita EXATAMENTE o mesmo padrão (href+onclick) já usado nos
-                     outros links "Ver planos" da página (irParaMeuPlano(), ver header/rodapé/FAQ). -->
-                <div class="mt-7 flex flex-col sm:flex-row items-center sm:items-start gap-3 justify-center sm:justify-start">
-                    <button type="button" onclick="focarFormularioDownload()" class="w-full sm:w-auto h-14 px-7 flex items-center justify-center bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] text-sm shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
-                        Testar grátis
-                    </button>
-                    <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="w-full sm:w-auto h-14 px-7 flex items-center justify-center rounded-xl border border-slate-700 text-slate-200 font-bold text-sm hover:border-[#19D3AE]/50 hover:text-white transition-colors">
-                        Ver planos
-                    </a>
-                </div>
-                <p class="mt-3 text-[13px] text-slate-500">A partir de R$ 14,90 · 5 vídeos grátis por semana</p>
-
-                <!-- 26/10/2026: animação de marca (mesma usada no rodapé dos vídeos processados pelo
-                     KLANGO, pra quem já viu o rodapé num Reels/TikTok reconhecer a marca aqui) --
-                     autoplay mudo/em loop/sem controles, com a foto da mascote como pôster/fallback
-                     (igual já era antes desta mudança) enquanto o navegador não consegue tocar o
-                     vídeo. AINDA PENDENTE: o Igor precisa anexar os 2 arquivos
-                     (klango_rodape_animado.mp4 + a versão .webm transparente) -- os <source> abaixo
-                     já apontam pro nome final deles em /static/; assim que os arquivos chegarem,
-                     basta salvá-los em static/ com esse nome exato, sem precisar tocar neste HTML de
-                     novo. Até lá, nenhum <source> carrega e o `poster` (mascote-video.jpg) continua
-                     aparecendo normalmente -- nunca fica em branco. -->
-                <div class="mt-6 max-w-xl mx-auto sm:mx-0">
-                    <video class="w-full h-auto rounded-xl select-none" autoplay muted playsinline loop
-                        poster="/static/mascote-video.jpg" aria-label="Animação do KLANGO.MP4">
-                        <source src="/static/klango_rodape_animado.webm" type="video/webm">
-                        <source src="/static/klango_rodape_animado.mp4" type="video/mp4">
-                    </video>
-                </div>
-                </div>
-
-                <!-- Status do plano/limite (reposicionado pra depois do banner e antes do
-                     formulário, por pedido do CÉREBRO -- mesmos ids/classes/lógica de sempre,
-                     setStatusConta() e atualizarStatusContaVisual() continuam controlando o
-                     conteúdo normalmente, só o lugar no documento mudou). -->
-                <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-semibold mt-6 mb-7">
-                    <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
-                    <span id="statusContaTexto">Pronto para processar</span>
-                </div>
-                <div id="statusContaValidade" class="hidden text-[13px] text-slate-500 mt-1.5 mb-4"></div>
-
-                <div class="max-w-3xl mt-2 mx-auto sm:mx-0 text-left">
-                    <div class="bg-card p-2.5 rounded-2xl hero-glow">
+                        <div class="max-w-3xl mt-2 mx-auto sm:mx-0 text-left">
+                            <div class="bg-card p-2.5 rounded-2xl hero-glow">
                         <!-- 06/10/2026 (rodada FINAL de conversão, correção PRIORITÁRIA pedida pelo
                              CÉREBRO): ordem visual/semântica passa a ser link -> nome -> botão (antes
                              o campo de nome vinha depois do botão). Resolvido só com CSS order, sem
@@ -347,6 +318,49 @@
                     <p id="statsProcessados" class="hidden mt-6 mb-2 text-[13px] text-slate-500 text-center">
                         <i class="fa-solid fa-chart-simple text-[#19D3AE] mr-1.5"></i><span id="statsProcessadosNumero"></span> vídeos já processados no KLANGO.MP4
                     </p>
+                </div>
+
+                        <!-- 26/10/2026 (ETAPA A): segundo bloco "heroVenda" -- linha de preço (com
+                             "ver planos" como link de texto, reaproveitando irParaMeuPlano()) + os 3
+                             chips de benefício (texto/ícones idênticos ao que já existia, só
+                             reposicionados pra depois da linha de preço, por pedido do Igor). -->
+                        <div class="heroVenda">
+                            <p class="mt-3 text-[13px] text-slate-500">
+                                5 vídeos grátis por semana · sem cartão ·
+                                <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="font-bold text-[#19D3AE] hover:underline">ver planos</a>
+                            </p>
+
+                            <ul class="mt-5 flex flex-col sm:flex-row flex-wrap items-center sm:items-start justify-center sm:justify-start gap-x-5 gap-y-2 text-[13px] text-slate-400">
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Vários vídeos de uma vez</li>
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-mobile-screen-button text-[#19D3AE] text-xs"></i>Atalho direto do celular</li>
+                                <li class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                                    <i class="fa-brands fa-tiktok text-[#19D3AE] text-xs"></i><i class="fa-brands fa-instagram text-[#19D3AE] text-xs"></i><i class="fa-brands fa-youtube text-[#19D3AE] text-xs"></i><i class="fa-brands fa-pinterest text-[#19D3AE] text-xs"></i>
+                                    <span>TikTok, Instagram, YouTube Shorts e Pinterest</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 26/10/2026 (ETAPA A): coluna direita (>=lg:) com a animação de marca (mesma
+                         usada no rodapé dos vídeos processados pelo KLANGO, pra quem já viu o rodapé
+                         num Reels/TikTok reconhecer a marca aqui) -- autoplay mudo/em loop/sem
+                         controles, com a foto da mascote como pôster/fallback enquanto o navegador
+                         não consegue tocar o vídeo (a <img> antiga da mascote saiu daqui, só segue
+                         como poster=). No mobile (sem grid de 2 colunas) ela cai pro final, depois dos
+                         chips, exatamente a ordem pedida. AINDA PENDENTE: o Igor precisa anexar os 2
+                         arquivos (klango_rodape_animado.mp4 + a versão .webm transparente) -- os
+                         <source> abaixo já apontam pro nome final deles em /static/; assim que os
+                         arquivos chegarem, basta salvá-los em static/ com esse nome exato, sem
+                         precisar tocar neste HTML de novo. Até lá, nenhum <source> carrega e o
+                         `poster` (mascote-video.jpg) continua aparecendo normalmente -- nunca fica em
+                         branco. -->
+                    <div class="heroVenda mt-6 lg:mt-0 max-w-xl mx-auto sm:mx-0 lg:max-w-none">
+                        <video class="w-full h-auto rounded-xl select-none" autoplay muted playsinline loop
+                            poster="/static/mascote-video.jpg" aria-label="Animação do KLANGO.MP4">
+                            <source src="/static/klango_rodape_animado_transparente.webm" type="video/webm">
+                            <source src="/static/klango_rodape_animado.mp4" type="video/mp4">
+                        </video>
+                    </div>
                 </div>
             </section>
 
@@ -2688,8 +2702,7 @@ https://..."></textarea>
     // some. Chamada de aplicarSessao()/aplicarSemSessao(), cobre login, logout e o carregamento
     // inicial da página (carregarSessao() sempre chama uma das duas).
     function atualizarVisibilidadeHeroVenda(logado) {
-        const el = document.getElementById("heroVenda");
-        if (el) el.classList.toggle("hidden", logado);
+        document.querySelectorAll(".heroVenda").forEach((el) => el.classList.toggle("hidden", logado));
     }
 
     // Etapa 3 (dossiê, 4.1): botão "Acesso" do header vira "Minha conta" (com menu) quando há

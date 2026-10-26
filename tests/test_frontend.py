@@ -11,12 +11,23 @@ def _html() -> str:
 
 def test_hero_aprovado():
     html = _html()
-    # 26/10/2026 (pedido do Igor, rodada de conversão): Hero reescrito -- título/subtítulo novos
-    # ("Reutilize o conteúdo que já funcionou." não existe mais na página).
-    assert "Baixe, limpe e reaproveite vídeos em" in html
+    # 26/10/2026 (ETAPA A, pedido do Igor -- "ajustes finais do site"): título/subtítulo do hero
+    # reescritos de novo -- "Baixe, limpe e reaproveite..." não existe mais na página; os 2 botões
+    # antigos do hero ("Testar grátis"/"Ver planos") saíram, o formulário é a chamada principal.
+    assert "Baixe e reaproveite vídeos em" in html
     assert "1 toque" in html
-    assert "o KLANGO entrega um MP4 novo, sem metadados e com o nome que você escolher." in html
+    assert "Cole o link do TikTok, Instagram, YouTube ou Pinterest e receba um MP4 novo." in html
     assert "Agora é com você." in html
+
+    # Linha de preço nova, com "ver planos" como link de texto (reaproveita irParaMeuPlano()).
+    assert "5 vídeos grátis por semana · sem cartão ·" in html
+
+    # Animação: <source> apontam pros nomes finais pedidos pelo Igor (arquivos ainda não anexados
+    # neste ambiente -- ver relato da etapa -- mas o HTML já está pronto pra quando chegarem).
+    assert "/static/klango_rodape_animado.mp4" in html
+    assert "/static/klango_rodape_animado_transparente.webm" in html
+    # poster segue sendo a mascote (nunca uma <img> solta exibindo a foto no hero)
+    assert 'poster="/static/mascote-video.jpg"' in html
 
 
 def test_planos_conforme_especificacao():
