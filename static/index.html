@@ -228,13 +228,21 @@
                             <!-- 26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"):
                                  título/subtítulo reescritos de novo -- agora o argumento central é
                                  "sem anúncio e sem metadados" (destaque em turquesa só na 2ª
-                                 metade), não mais "1 toque". -->
+                                 metade), não mais "1 toque".
+                                 26/10/2026 (auditoria "refinamento final", aprovação explícita do
+                                 Igor): "sem anúncio" virou "sem anúncios no site" -- deixa claro que
+                                 é o SITE que não tem publicidade, sem sugerir que o KLANGO remove
+                                 anúncios incorporados ao próprio vídeo. "sem metadados" virou "sem
+                                 metadados da origem" (mais específico, mesmo destaque em turquesa).
+                                 Subtítulo encurtado: as 4 plataformas já aparecem nos ícones/selo de
+                                 compatibilidade logo abaixo do formulário, então citar os nomes aqui
+                                 de novo ficou redundante. -->
                             <h1 class="hero-title text-3xl sm:text-5xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white max-w-2xl mx-auto sm:mx-0">
-                                Baixe vídeos sem anúncio e <span class="text-[#19D3AE]">sem metadados</span>.
+                                Baixe vídeos sem anúncios no site e <span class="text-[#19D3AE]">sem metadados da origem</span>.
                             </h1>
 
                             <p class="mt-3 sm:mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
-                                Cole o link do TikTok, Reels, Shorts ou Pinterest, escolha o nome do arquivo e receba um MP4 pronto pra editar.
+                                Cole um link, escolha o nome do arquivo e receba seu MP4 pronto para editar.
                             </p>
                         </div>
 
@@ -267,8 +275,15 @@
                             </div>
 
                             <div class="order-2 sm:order-3 sm:w-full sm:basis-full">
+                                <!-- 26/10/2026 (auditoria "refinamento final", aprovação explícita do
+                                     Igor): placeholder encurtado -- o exemplo de nome de arquivo
+                                     saiu daqui e das 2 trocas em selecionarFormatoIndividual() (campo
+                                     já é autoexplicativo; sem exemplo não corre risco de truncar em
+                                     telas pequenas). Escopo só deste campo (#filenameInput) -- os
+                                     placeholders equivalentes do fluxo de lote não foram tocados.
+                                     Nada da validação/maxlength/lógica de nomeação automática mudou. -->
                                 <input id="filenameInput" type="text" maxlength="80" autocomplete="off"
-                                    placeholder="Nome do arquivo (opcional) — ex.: video_oferta"
+                                    placeholder="Nome do arquivo (opcional)"
                                     class="input-focus w-full h-11 px-4 bg-[#060b14] border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none text-[13px] transition-all focus:border-[#19D3AE]/70">
                             </div>
 
@@ -439,114 +454,14 @@
                 <p class="mt-8 text-base sm:text-lg font-extrabold text-white">O KLANGO resolve isso em um lugar só.</p>
             </section>
 
-            <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
-                 CÉREBRO; vídeo em vez dos 2 cartões desde a ETAPA B1; título/corpo reescritos em
-                 26/10/2026, ETAPA B2, pedido do Igor -- "copy final do site"). -->
-            <section id="antesDepois" class="py-16 sm:py-24 border-t section-line">
-                <div class="max-w-3xl mx-auto text-center">
-                    <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja o que muda no arquivo.</h2>
-                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos (ver comentário
-                         grande em #secaoPlanos) -- "text-sm" direto, sem o bump pra 18px no mobile. -->
-                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Mesmo vídeo, num MP4 novo: sem os dados da plataforma de origem, com hash novo e o nome que você escolher.</p>
-                </div>
-
-                <!-- Moldura padrão de vídeo da página (bg-card-soft + overflow-hidden rounded-2xl),
-                     SEM autoplay (abaixo da dobra) -- preload="none" até o
-                     IntersectionObserver de inicializarReprodutorDeVideos() aproximar a seção da
-                     tela (rootMargin 300px), então ele próprio troca pra reprodução real. -->
-                <div class="max-w-[560px] mx-auto mt-10 bg-card-soft overflow-hidden rounded-2xl">
-                    <video class="block w-full h-auto select-none" muted playsinline loop disablepictureinpicture
-                        preload="none" style="aspect-ratio:1/1"
-                        poster="/static/klango_antes_depois_poster.jpg" aria-label="Antes e depois do KLANGO.MP4">
-                        <source src="/static/klango_antes_depois.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <p class="text-center text-[13px] text-slate-600 mt-3 max-w-md mx-auto">Exemplo ilustrativo. Aparelho, local, data e nomes são fictícios.</p>
-            </section>
-
-            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; redesenhada em 05/10/2026;
-                 reescrita em 26/10/2026, ETAPA B1/B2, pedido do Igor -- "copy final do site"): a
-                 caixa de exemplo (campos travados + lista video_01..03 + "Baixar tudo em ZIP") e o
-                 vídeo antigo (klango_lote.mp4) saíram -- no lugar, um único vídeo
-                 (klango_corrida.mp4) seguido pelas 2 caixas de comparação "Um por um × De uma vez",
-                 que ANTES eram uma seção própria (#umPorUmDeUmaVez, removida -- ver
-                 SECOES_FUNIL_FRIO_IDS logo abaixo no script, já sem essa id) e o botão "Ver planos".
-                 Mesmo id (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS). -->
-            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
-                <div class="max-w-3xl mx-auto text-center">
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
-                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
-                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Cole os links, escolha o nome de cada arquivo e deixe a fila rodar. No fim, baixe tudo em ZIP ou um por um.</p>
-                    <p class="mt-2 text-[13px] text-slate-500">Disponível nos planos pagos.</p>
-                </div>
-
-                <!-- Moldura padrão de vídeo da página, SEM autoplay (abaixo da dobra) --
-                     preload="none" até o IntersectionObserver de inicializarReprodutorDeVideos()
-                     aproximar a seção da tela. -->
-                <div class="max-w-[560px] mx-auto mt-10 bg-card-soft overflow-hidden rounded-2xl">
-                    <video class="block w-full h-auto select-none" muted playsinline loop disablepictureinpicture
-                        preload="none" style="aspect-ratio:1/1"
-                        poster="/static/klango_corrida_poster.jpg" aria-label="Vários vídeos baixados de uma vez pelo KLANGO.MP4">
-                        <source src="/static/klango_corrida.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <p class="text-center text-[13px] text-slate-600 mt-3 max-w-md mx-auto">Exemplo ilustrativo.</p>
-
-                <!-- UM POR UM × DE UMA VEZ (26/10/2026, pedido do Igor -- rodada de conversão;
-                     movida pra dentro de "Lote na prática" em 26/10/2026, ETAPA B1): comparação
-                     simples, só visual/qualitativa -- SEM nenhum número de tempo ("economiza X
-                     minutos"), porque esse tempo nunca foi medido de verdade no sistema (pedido
-                     explícito do Igor: só usar número de duração se realmente medido). -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-3xl mx-auto">
-                    <div class="bg-card-soft rounded-2xl p-6 border border-slate-800">
-                        <div class="text-[13px] font-extrabold uppercase tracking-wider text-slate-500 mb-4">Um por um</div>
-                        <ul class="space-y-2.5 text-sm text-slate-400">
-                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Cola 1 link por vez</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Espera terminar pra começar o próximo</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Renomeia cada arquivo depois</li>
-                        </ul>
-                    </div>
-                    <div class="bg-card-soft rounded-2xl p-6 border-2 border-[#19D3AE]/50">
-                        <div class="text-[13px] font-extrabold uppercase tracking-wider text-[#19D3AE] mb-4">De uma vez</div>
-                        <ul class="space-y-2.5 text-sm text-slate-300">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Cola todos os links juntos</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>A fila roda sozinha</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Escolhe o nome de cada arquivo antes de baixar</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- 26/10/2026 (ETAPA B2, pedido do Igor): botão "Ver planos" explícito ao fim da
-                     seção -- mesmo padrão (href+onclick) já usado nos outros links "Ver planos" da
-                     página (irParaMeuPlano()). -->
-                <div class="flex justify-center mt-8">
-                    <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors">Ver planos</a>
-                </div>
-            </section>
-
-            <!-- FEITO PRA (26/10/2026, pedido do Igor -- rodada de conversão): reposicionada pra cá
-                 (antes ficava logo depois do Hero, como "PARA QUEM É") e expandida de 1 linha de tags
-                 pra chips/cards, com a lista completa que o Igor pediu -- "Afiliados" volta a
-                 aparecer (não é contradição com a troca por "Clipadores" de 20/10/2026: agora os
-                 dois convivem lado a lado, junto com os públicos novos que o Igor adicionou). Mesmo
-                 id (#paraQuemE) preservado -- só textoconteúdo mudou, SECOES_FUNIL_FRIO_IDS continua
-                 funcionando sem precisar trocar esse nome. Eyebrow "FEITO PRA" virou título de
-                 verdade em 26/10/2026 (ETAPA B2, pedido do Igor) -- chips inalterados. -->
-            <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Feito pra quem trabalha com vídeo.</h2>
-                <div class="flex flex-wrap items-center justify-center gap-2.5 mt-6 max-w-2xl mx-auto">
-                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Clipadores</span>
-                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Social medias</span>
-                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Criadores de conteúdo</span>
-                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Afiliados</span>
-                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Páginas de corte e de memes</span>
-                </div>
-            </section>
-
             <!-- PROCESSO (26/10/2026, ETAPA B2, pedido do Igor -- "copy final do site": os 3
                  passos ganharam texto novo e o bloco de fechamento que havia depois deles saiu --
-                 os 3 cards já fecham a explicação sozinhos). -->
+                 os 3 cards já fecham a explicação sozinhos.
+                 26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): seção
+                 movida pra logo depois de "voceSeReconhece" -- antes ficava entre "Para quem é" e
+                 "Planos". Mesmo id (#comoFunciona), mesmo conteúdo -- só a posição no documento
+                 mudou. Âncoras (#comoFunciona no menu/rodapé/JS) continuam funcionando porque
+                 apontam pro id, não pra posição. -->
             <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
@@ -584,6 +499,108 @@
                 </div>
             </section>
 
+            <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
+                 CÉREBRO; vídeo em vez dos 2 cartões desde a ETAPA B1; título/corpo reescritos em
+                 26/10/2026, ETAPA B2, pedido do Igor -- "copy final do site"). -->
+            <section id="antesDepois" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja o que muda no arquivo.</h2>
+                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos (ver comentário
+                         grande em #secaoPlanos) -- "text-sm" direto, sem o bump pra 18px no mobile.
+                         26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor):
+                         texto encurtado -- "com hash novo" saiu porque dava a entender que o hash
+                         novo por si só garante anonimato/impede identificar a origem, o que não é
+                         uma afirmação que o processamento comprova. -->
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Um novo MP4, sem os metadados da origem e com o nome que você escolher.</p>
+                </div>
+
+                <!-- Moldura padrão de vídeo da página (bg-card-soft + overflow-hidden rounded-2xl),
+                     SEM autoplay (abaixo da dobra) -- preload="none" até o
+                     IntersectionObserver de inicializarReprodutorDeVideos() aproximar a seção da
+                     tela (rootMargin 300px), então ele próprio troca pra reprodução real. -->
+                <div class="max-w-[560px] mx-auto mt-10 bg-card-soft overflow-hidden rounded-2xl">
+                    <video class="block w-full h-auto select-none" muted playsinline loop disablepictureinpicture
+                        preload="none" style="aspect-ratio:1/1"
+                        poster="/static/klango_antes_depois_poster.jpg" aria-label="Antes e depois do KLANGO.MP4">
+                        <source src="/static/klango_antes_depois.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <p class="text-center text-[13px] text-slate-600 mt-3 max-w-md mx-auto">Exemplo ilustrativo. Aparelho, local, data e nomes são fictícios.</p>
+            </section>
+
+            <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; redesenhada em 05/10/2026;
+                 reescrita em 26/10/2026, ETAPA B1/B2, pedido do Igor -- "copy final do site"): a
+                 caixa de exemplo (campos travados + lista video_01..03 + "Baixar tudo em ZIP") e o
+                 vídeo antigo (klango_lote.mp4) saíram -- no lugar, um único vídeo
+                 (klango_corrida.mp4) seguido pelas 2 caixas de comparação "Um por um × De uma vez",
+                 que ANTES eram uma seção própria (#umPorUmDeUmaVez, removida -- ver
+                 SECOES_FUNIL_FRIO_IDS logo abaixo no script, já sem essa id) e o botão "Ver planos".
+                 Mesmo id (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS). -->
+            <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
+                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos.
+                         26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor):
+                         texto encurtado. -->
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Processe vários links e baixe os arquivos em ZIP ou individualmente.</p>
+                    <p class="mt-2 text-[13px] text-slate-500">Disponível nos planos pagos.</p>
+                </div>
+
+                <!-- Moldura padrão de vídeo da página, SEM autoplay (abaixo da dobra) --
+                     preload="none" até o IntersectionObserver de inicializarReprodutorDeVideos()
+                     aproximar a seção da tela. -->
+                <div class="max-w-[560px] mx-auto mt-10 bg-card-soft overflow-hidden rounded-2xl">
+                    <video class="block w-full h-auto select-none" muted playsinline loop disablepictureinpicture
+                        preload="none" style="aspect-ratio:1/1"
+                        poster="/static/klango_corrida_poster.jpg" aria-label="Vários vídeos baixados de uma vez pelo KLANGO.MP4">
+                        <source src="/static/klango_corrida.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <p class="text-center text-[13px] text-slate-600 mt-3 max-w-md mx-auto">Exemplo ilustrativo.</p>
+
+                <!-- UM POR UM × DE UMA VEZ: as 2 caixas de comparação estática saíram em
+                     26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor,
+                     condicionada a confirmar que o vídeo acima já demonstra os dois fluxos com
+                     clareza) -- confirmado por inspeção de frames do próprio klango_corrida.mp4:
+                     o vídeo mostra lado a lado os blocos "UM POR UM" (preenche 1 link por vez,
+                     espera terminar) e "DE UMA VEZ" (todos os links de uma vez, nomes escolhidos
+                     antes, termina com "Baixar ZIP"), com os mesmos rótulos e a mesma mensagem
+                     das caixas removidas. Nada do texto/bullet foi reaproveitado em outro lugar;
+                     se o vídeo não carregar (preload="none", poster estático até entrar na tela),
+                     a seção continua com o título + legenda + botão "Ver planos" abaixo. -->
+
+                <!-- 26/10/2026 (ETAPA B2, pedido do Igor): botão "Ver planos" explícito ao fim da
+                     seção -- mesmo padrão (href+onclick) já usado nos outros links "Ver planos" da
+                     página (irParaMeuPlano()). -->
+                <div class="flex justify-center mt-8">
+                    <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors">Ver planos</a>
+                </div>
+            </section>
+
+            <!-- FEITO PRA (26/10/2026, pedido do Igor -- rodada de conversão): reposicionada pra cá
+                 (antes ficava logo depois do Hero, como "PARA QUEM É") e expandida de 1 linha de tags
+                 pra chips/cards, com a lista completa que o Igor pediu -- "Afiliados" volta a
+                 aparecer (não é contradição com a troca por "Clipadores" de 20/10/2026: agora os
+                 dois convivem lado a lado, junto com os públicos novos que o Igor adicionou). Mesmo
+                 id (#paraQuemE) preservado -- só textoconteúdo mudou, SECOES_FUNIL_FRIO_IDS continua
+                 funcionando sem precisar trocar esse nome. Eyebrow "FEITO PRA" virou título de
+                 verdade em 26/10/2026 (ETAPA B2, pedido do Igor) -- chips inalterados. -->
+            <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Feito pra quem trabalha com vídeo.</h2>
+                <!-- 26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor):
+                     chips mais compactos -- padding vertical reduzido (py-2 -> py-1.5) e fonte
+                     alinhada ao padrão já usado nos chips do Hero (text-[13px] em vez de text-sm).
+                     Conteúdo/ordem dos públicos não mudou. -->
+                <div class="flex flex-wrap items-center justify-center gap-2.5 mt-6 max-w-2xl mx-auto">
+                    <span class="px-3.5 py-1.5 rounded-full bg-card-soft border border-slate-800 text-[13px] text-slate-300">Clipadores</span>
+                    <span class="px-3.5 py-1.5 rounded-full bg-card-soft border border-slate-800 text-[13px] text-slate-300">Social medias</span>
+                    <span class="px-3.5 py-1.5 rounded-full bg-card-soft border border-slate-800 text-[13px] text-slate-300">Criadores de conteúdo</span>
+                    <span class="px-3.5 py-1.5 rounded-full bg-card-soft border border-slate-800 text-[13px] text-slate-300">Afiliados</span>
+                    <span class="px-3.5 py-1.5 rounded-full bg-card-soft border border-slate-800 text-[13px] text-slate-300">Páginas de corte e de memes</span>
+                </div>
+            </section>
+
             <!-- PLANOS -->
             <!-- 20/10/2026 (pedido do Igor, "Padronização de tamanho de fonte"): Igor marcou o
                  tamanho das fontes usadas aqui em Planos (subtítulo "Comece simples..." em
@@ -607,8 +624,12 @@
                     <!-- 22/10/2026 (pedido do Igor, revisão de copy): subtítulo mais direto --
                          "conforme o volume que você processa" é meio abstrato; a nova versão já
                          aponta pro que de fato diferencia os 3 cards logo abaixo (testar sem
-                         compromisso vs. ritmo semanal vs. volume sem limite). -->
-                    <p class="text-sm text-slate-400 mt-3">Do teste rápido ao volume sem limite — um plano pra cada ritmo de produção.</p>
+                         compromisso vs. ritmo semanal vs. volume sem limite).
+                         26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor):
+                         "volume sem limite" saiu -- nenhum plano é de uso ilimitado (todos têm
+                         limite diário/semanal/por período em services/plans.py), então a frase
+                         podia sugerir o contrário. -->
+                    <p class="text-sm text-slate-400 mt-3">Do teste grátis ao processamento em lote: escolha o plano ideal para sua rotina.</p>
                 </div>
 
                 <!-- 20/10/2026 (pedido do Igor): no mobile, os 3 cards empilhados davam sensação de
@@ -1168,10 +1189,13 @@ https://..."></textarea>
             </section>
 
             <!-- FAQ (26/10/2026, ETAPA B3, pedido do Igor -- "copy final do site": reduzida de 19
-                 perguntas pra 12 sempre visíveis + 2 em "Ver mais perguntas", na ordem exata que o
-                 Igor pediu -- respostas juntadas a partir das perguntas antigas, sem inventar
-                 informação nova; nenhuma pergunta/resposta nova fora as 2 que o próprio Igor
-                 escreveu (itens 3 e 6, abaixo). -->
+                 perguntas pra 12 sempre visíveis + 2 em "Ver mais perguntas".
+                 26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor,
+                 substitui a decisão de quantidade acima -- decisão mais recente prevalece): só 5
+                 perguntas ficam sempre visíveis agora, na ordem que o Igor especificou; as outras
+                 9 (as 7 que antes eram sempre visíveis + as 2 que já estavam em "Ver mais") foram
+                 pra dentro de #faqMais, sem perder nenhuma pergunta/resposta -- nenhum texto foi
+                 reescrito nesta etapa, só a ordem/posição mudou. -->
             <section id="faq" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto">
                     <div class="text-center mb-10">
@@ -1194,14 +1218,26 @@ https://..."></textarea>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">5 vídeos por semana, um por vez, sem cartão. Lote e áudio (MP3) são dos planos pagos.</div>
                         </details>
                         <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Qual plano devo escolher?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Depende do seu ritmo: o Semanal é pra uma semana de muito volume, o Mensal é pra quem posta toda semana, e o VIP Batch é pra quem processa lote todo dia.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Nos planos pagos, você pode enviar vários vídeos de uma vez, dar um nome diferente para cada arquivo e baixar os resultados todos de uma vez ou individualmente, como preferir. A quantidade de vídeos por operação e por semana varia conforme o plano contratado.</div>
                         </details>
-                        <!-- Item 6: texto exato passado pelo Igor. -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funcionam o pagamento e a validade do plano?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão, processado pelo Mercado Pago — não existe cobrança automática nem renovação. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano); depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
+                        </details>
+                    </div>
+
+                    <!-- "Ver mais perguntas": as 9 que saíram da lista sempre visível (26/10/2026,
+                         auditoria "refinamento final") + as 2 que já estavam aqui -- nenhuma
+                         removida, só reposicionadas. Mecanismo de expandir/recolher
+                         (alternarFaqMais(), perto de centralizarCarrosselPlanos() no <script>)
+                         não mudou. -->
+                    <div id="faqMais" class="hidden space-y-3 mt-3">
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Qual plano devo escolher?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Depende do seu ritmo: o Semanal é pra uma semana de muito volume, o Mensal é pra quem posta toda semana, e o VIP Batch é pra quem processa lote todo dia.</div>
+                        </details>
+                        <!-- Item 6 (numeração da ETAPA B3): texto exato passado pelo Igor. -->
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso escolher o nome dos arquivos?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. Você digita o nome antes de baixar; no lote, um nome por vídeo. Se deixar em branco, o arquivo sai com um nome automático.</div>
@@ -1218,24 +1254,15 @@ https://..."></textarea>
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Meus vídeos ficam guardados? Por quanto tempo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo processado fica disponível para download por tempo limitado, por até 30 minutos depois de pronto. Após esse período, o acesso ao download expira e será necessário processar o vídeo novamente para baixá-lo. Não usamos seu vídeo para nenhum outro fim.</div>
                         </details>
-                        <!-- Item 10: resposta atual, sem mudar (pedido explícito do Igor). -->
+                        <!-- Item 10 (numeração da ETAPA B3): resposta atual, sem mudar (pedido explícito do Igor). -->
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
                         </details>
                         <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funcionam o pagamento e a validade do plano?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão, processado pelo Mercado Pago — não existe cobrança automática nem renovação. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano); depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">E se der problema no pagamento ou no vídeo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Em caso de cobrança indevida ou problema comprovado no processamento, entre em contato em <strong class="text-slate-200">contato@klango.site</strong> para solicitar o reembolso. Cada caso é avaliado individualmente.</div>
                         </details>
-                    </div>
-
-                    <!-- "Ver mais perguntas": só as 2 que o Igor pediu nesta etapa (alternarFaqMais(),
-                         perto de centralizarCarrosselPlanos() no <script>). -->
-                    <div id="faqMais" class="hidden space-y-3 mt-3">
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que muda tecnicamente no arquivo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo não é só copiado: removemos todo metadado original do arquivo (dados EXIF, informações de criação, capítulos) via FFmpeg, e o resultado final sempre ganha um hash (SHA-256) novo, diferente do arquivo original. Quando o vídeo já está num formato compatível, reaproveitamos os dados sem perda de qualidade; quando não está, recodificamos para gerar uma versão nova. Em ambos os casos, o que sai é sempre um MP4 novo, com metadado limpo, pronto para edição.</div>
@@ -1347,8 +1374,12 @@ https://..."></textarea>
              valores "order-*" (sem o prefixo sm:) mudaram; a ordem no DESKTOP (sm:order-*) continua
              exatamente a mesma de antes (Marca, Produto, Legal), já que o pedido foi só sobre o
              mobile. -->
+        <!-- 26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): padding
+             vertical do rodapé reduzido (py-12/py-14 -> py-10/py-12, gap-10 -> gap-8). Nenhum
+             link, texto legal (Termos/Privacidade) ou elemento de marca foi removido -- só o
+             espaço em volta deles encolheu. -->
         <footer class="border-t border-slate-800/70 mt-8">
-            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-12 sm:py-14 grid grid-cols-1 sm:grid-cols-3 gap-10 text-sm">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-10 sm:py-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
                 <div class="order-3 sm:order-1">
                     <div class="font-extrabold text-white text-base">KLANGO.MP4</div>
                     <div class="text-slate-500 mt-1.5 text-sm leading-relaxed">Baixe. Prepare. Adapte. Publique.</div>
@@ -1942,7 +1973,7 @@ https://..."></textarea>
         if (!mais || !botao) return;
         const estavaEscondido = mais.classList.contains("hidden");
         mais.classList.toggle("hidden");
-        botao.querySelector("span").textContent = estavaEscondido ? "Ver menos" : "Ver mais perguntas";
+        botao.querySelector("span").textContent = estavaEscondido ? "Ver menos perguntas" : "Ver mais perguntas";
         botao.querySelector("i").className = estavaEscondido
             ? "fa-solid fa-chevron-up text-xs"
             : "fa-solid fa-chevron-down text-xs";
@@ -4123,10 +4154,10 @@ https://..."></textarea>
         const filenameInput = document.getElementById("filenameInput");
         const downloadButton = document.getElementById("downloadButton");
         if (formato === "audio") {
-            filenameInput.placeholder = "Nome do arquivo (opcional) — ex.: audio_oferta";
+            filenameInput.placeholder = "Nome do arquivo (opcional)";
             downloadButton.innerHTML = '<i class="fa-solid fa-music"></i> Extrair áudio';
         } else {
-            filenameInput.placeholder = "Nome do arquivo (opcional) — ex.: video_oferta";
+            filenameInput.placeholder = "Nome do arquivo (opcional)";
             downloadButton.innerHTML = '<i class="fa-solid fa-download"></i> Processar e baixar';
         }
 

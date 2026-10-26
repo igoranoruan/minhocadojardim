@@ -1,3 +1,5 @@
+import re
+
 from fastapi.testclient import TestClient
 
 from main import app
@@ -15,9 +17,13 @@ def test_hero_aprovado():
     # reescritos de novo -- "Baixe e reaproveite vídeos em 1 toque." não existe mais na página; os
     # 2 botões antigos do hero ("Testar grátis"/"Ver planos") saíram, o formulário é a chamada
     # principal.
-    assert "Baixe vídeos sem anúncio e" in html
-    assert "sem metadados" in html
-    assert "Cole o link do TikTok, Reels, Shorts ou Pinterest, escolha o nome do arquivo e receba um MP4 pronto pra editar." in html
+    # 26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): "sem anúncio" virou
+    # "sem anúncios no site" (deixa claro que é o site, não o vídeo, que não tem publicidade);
+    # "sem metadados" virou "sem metadados da origem"; subtítulo encurtado -- as 4 plataformas já
+    # aparecem nos ícones/chip "TikTok · Reels · Shorts · Pinterest" logo abaixo do formulário.
+    assert "Baixe vídeos sem anúncios no site e" in html
+    assert "sem metadados da origem" in html
+    assert "Cole um link, escolha o nome do arquivo e receba seu MP4 pronto para editar." in html
 
     # Linha de preço nova, com "um por vez" e "ver planos" como link de texto (reaproveita
     # irParaMeuPlano()).
@@ -48,11 +54,16 @@ def test_assets_antigos_da_mascote_nao_tem_mais_referencia():
     assert "klango_rodape_animado" not in html
 
 
-def test_secao_lote_usa_video_da_corrida_e_absorve_um_por_um_de_uma_vez():
+def test_secao_lote_usa_video_da_corrida_sem_caixas_estaticas():
     """26/10/2026 (ETAPA B1, pedido do Igor -- "copy final do site"): a caixa de exemplo (campos
     travados + lista video_01..03 + "Baixar tudo em ZIP") e o vídeo antigo (klango_lote.mp4) saíram
-    da seção de Lote -- no lugar, o vídeo da corrida, seguido pelas 2 caixas "Um por um × De uma
-    vez", que deixaram de ser uma seção própria (#umPorUmDeUmaVez removida)."""
+    da seção de Lote -- no lugar, o vídeo da corrida (#umPorUmDeUmaVez deixou de ser uma seção
+    própria).
+    26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor, condicionada): as 2
+    caixas de comparação "Um por um × De uma vez" (que tinham entrado na ETAPA B1 dentro de
+    #loteNaPratica) saíram de vez -- o vídeo da corrida já demonstra os dois fluxos lado a lado
+    com os mesmos rótulos (confirmado por inspeção visual dos frames do próprio arquivo antes
+    da mudança)."""
     html = _html()
     assert "/static/klango_corrida.mp4" in html
     assert 'poster="/static/klango_corrida_poster.jpg"' in html
@@ -66,14 +77,14 @@ def test_secao_lote_usa_video_da_corrida_e_absorve_um_por_um_de_uma_vez():
     inicio = html.index("const SECOES_FUNIL_FRIO_IDS")
     fim = html.index(";", inicio)
     assert "umPorUmDeUmaVez" not in html[inicio:fim]
-    # as 2 caixas de comparação continuam na página, agora dentro de #loteNaPratica
-    # (textos atualizados na ETAPA B2, pedido do Igor -- "copy final do site")
-    assert "Cola 1 link por vez" in html
-    assert "Espera terminar pra começar o próximo" in html
-    assert "Renomeia cada arquivo depois" in html
-    assert "Cola todos os links juntos" in html
-    assert "A fila roda sozinha" in html
-    assert "Escolhe o nome de cada arquivo antes de baixar" in html
+
+    # as 2 caixas de comparação saíram da página nesta etapa -- o vídeo já cobre a mensagem.
+    assert "Cola 1 link por vez" not in html
+    assert "Espera terminar pra começar o próximo" not in html
+    assert "Renomeia cada arquivo depois" not in html
+    assert "Cola todos os links juntos" not in html
+    assert "A fila roda sozinha" not in html
+    assert "Escolhe o nome de cada arquivo antes de baixar" not in html
 
 
 def test_secao_antes_depois_usa_video_em_vez_do_carrossel_de_cartoes():
@@ -105,20 +116,17 @@ def test_secao_voce_se_reconhece_aprovada():
 
 
 def test_secao_antes_depois_textos_aprovados():
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): texto encurtado --
+    "com hash novo" saiu (dava a entender que isso por si só garante anonimato)."""
     html = _html()
     assert "Veja o que muda no arquivo." in html
-    assert (
-        "Mesmo vídeo, num MP4 novo: sem os dados da plataforma de origem, com hash novo e o nome que você escolher."
-        in html
-    )
+    assert "Um novo MP4, sem os metadados da origem e com o nome que você escolher." in html
 
 
 def test_secao_lote_textos_e_botao_ver_planos_aprovados():
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): texto encurtado."""
     html = _html()
-    assert (
-        "Cole os links, escolha o nome de cada arquivo e deixe a fila rodar. No fim, baixe tudo em ZIP ou um por um."
-        in html
-    )
+    assert "Processe vários links e baixe os arquivos em ZIP ou individualmente." in html
     assert "Disponível nos planos pagos." in html
     assert ">Ver planos<" in html
 
@@ -198,36 +206,48 @@ def test_planos_conforme_especificacao():
     assert html.count("Downloads em lote") == 3
 
 
-def test_faq_reduzido_a_12_perguntas_na_ordem_certa():
-    """26/10/2026 (ETAPA B3, pedido do Igor -- "copy final do site"): FAQ reduzido de 19 perguntas
-    pra 12 sempre visíveis (nesta ordem exata) + 2 em "Ver mais perguntas"."""
+def test_faq_cinco_perguntas_sempre_visiveis_na_ordem_certa():
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor -- substitui a
+    decisão anterior da ETAPA B3 de 12 sempre visíveis): só 5 perguntas ficam sempre visíveis
+    agora, nesta ordem exata; as outras 9 (nenhuma removida) ficam dentro de #faqMais, atrás do
+    "Ver mais perguntas"."""
     html = _html()
     inicio = html.index('<section id="faq"')
-    fim = html.index("</section>", inicio)
-    faq_html = html[inicio:fim]
+    fim_visiveis = html.index('id="faqMais"', inicio)
+    fim_secao = html.index("</section>", inicio)
+    visiveis_html = html[inicio:fim_visiveis]
+    mais_html = html[fim_visiveis:fim_secao]
 
-    perguntas_em_ordem = [
+    perguntas_sempre_visiveis = [
         "O que é o KLANGO.MP4 e como funciona?",
         "Quais plataformas são compatíveis?",
         "O que posso fazer no plano grátis?",
-        "Qual plano devo escolher?",
         "Como funciona o lote?",
+        "Como funcionam o pagamento e a validade do plano?",
+    ]
+    posicoes = [visiveis_html.index(p) for p in perguntas_sempre_visiveis]
+    assert posicoes == sorted(posicoes)
+    # nenhuma das 5 pode aparecer de novo dentro de "Ver mais" (senão duplicou)
+    for pergunta in perguntas_sempre_visiveis:
+        assert pergunta not in mais_html
+
+    # As outras 9 perguntas da ETAPA B3 + as 2 que já existiam em "Ver mais": nenhuma foi
+    # removida, só reposicionada pra dentro de #faqMais.
+    perguntas_em_ver_mais = [
+        "Qual plano devo escolher?",
         "Posso escolher o nome dos arquivos?",
         "Funciona no celular? Preciso instalar algo?",
         "O KLANGO pede acesso às minhas redes sociais?",
         "Meus vídeos ficam guardados? Por quanto tempo?",
         "O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?",
-        "Como funcionam o pagamento e a validade do plano?",
         "E se der problema no pagamento ou no vídeo?",
+        "O que muda tecnicamente no arquivo?",
+        "Por que o YouTube demora mais?",
     ]
-    posicoes = [faq_html.index(p) for p in perguntas_em_ordem]
-    assert posicoes == sorted(posicoes)
+    for pergunta in perguntas_em_ver_mais:
+        assert pergunta in mais_html
 
-    # "Ver mais perguntas": só as 2 que sobraram desta rodada.
-    assert "O que muda tecnicamente no arquivo?" in faq_html
-    assert "Por que o YouTube demora mais?" in faq_html
-
-    # Perguntas antigas que saíram do FAQ (não cobertas pelas 12 + 2 acima).
+    # Perguntas antigas que já tinham saído do FAQ na ETAPA B3 (continuam fora).
     for pergunta_antiga in (
         "Por que usar o KLANGO.MP4 em vez de uma ferramenta gratuita?",
         "Quantas gerações grátis eu tenho?",
@@ -244,7 +264,18 @@ def test_faq_reduzido_a_12_perguntas_na_ordem_certa():
         "Como funciona o processamento em lote?",
         "Como funciona o acesso?",
     ):
-        assert pergunta_antiga not in faq_html
+        assert pergunta_antiga not in html[inicio:fim_secao]
+
+
+def test_faq_toggle_texto_alterna_para_ver_menos_perguntas():
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): ao expandir, o
+    botão deve mudar para "Ver menos perguntas" (antes só virava "Ver menos").
+    26/10/2026 (validação pré-publicação, aprovação explícita do Igor): teste reforçado -- antes
+    só conferia se as 2 strings apareciam em algum lugar da função, sem checar o lado certo do
+    ternário; agora confere a expressão exata, então uma inversão acidental do ternário faria o
+    teste falhar."""
+    html = _html()
+    assert 'estavaEscondido ? "Ver menos perguntas" : "Ver mais perguntas"' in html
 
 
 def test_comunidade_movida_pra_depois_do_faq_com_texto_novo():
@@ -385,6 +416,19 @@ def test_free_sempre_ve_os_dois_botoes_de_formato():
     assert "Só áudio (MP3)" in html
 
 
+def test_filename_input_tem_placeholder_curto():
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): placeholder do
+    campo individual (#filenameInput) encurtado pra "Nome do arquivo (opcional)" (sem exemplo), no
+    HTML inicial e nas 2 trocas de selecionarFormatoIndividual() (vídeo/áudio). Escopo só deste
+    campo -- os placeholders do fluxo de lote (campoTravado) não foram alterados nesta etapa."""
+    html = _html()
+    assert 'id="filenameInput"\n' in html or 'id="filenameInput" ' in html
+    assert 'placeholder="Nome do arquivo (opcional)"' in html
+    corpo = re.search(r"function selecionarFormatoIndividual\(formato\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert corpo.count('placeholder = "Nome do arquivo (opcional)"') == 2
+    assert "ex.:" not in corpo
+
+
 def test_bloco_de_cadeado_do_audio_individual_usa_a_mensagem_exata():
     html = _html()
     assert 'id="audioBloqueadoIndividual"' in html
@@ -396,7 +440,9 @@ def test_extracao_de_audio_usa_a_rota_sincrona_nova_sem_sse():
     assert '"/api/audio/extract"' in html
     assert '"/api/audio/allowance"' in html
     assert "/api/audio/${dados.extraction_id}/download" in html
-    assert 'placeholder="Nome do arquivo (opcional)"' not in html
+    # 26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): o placeholder
+    # voltou a ser o texto curto "Nome do arquivo (opcional)" (sem "— ex.: video_oferta"/"—
+    # ex.: audio_oferta") -- ver test_filename_input_tem_placeholder_curto.
 
 
 def test_barra_de_progresso_nao_recria_o_dom_a_cada_evento():
@@ -455,3 +501,22 @@ def test_lote_de_video_continua_usando_as_rotas_de_sempre():
     assert '"/api/download-batch"' in html
     assert "/api/batches/${batchIdAtual}/download" in html
     assert 'zipLink.download = "klango_lote.zip"' in html
+
+
+def test_ordem_das_secoes_do_funil_frio():
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): "Como funciona"
+    passou a vir logo depois de "voceSeReconhece" (dores), antes de "Antes e depois" -- as demais
+    seções mantiveram a ordem relativa que já tinham."""
+    html = _html()
+    ids_em_ordem = [
+        "voceSeReconhece",
+        "comoFunciona",
+        "antesDepois",
+        "loteNaPratica",
+        "paraQuemE",
+        "secaoPlanos",
+        "faq",
+        "ctaFinal",
+    ]
+    posicoes = [html.index(f'<section id="{i}"') for i in ids_em_ordem]
+    assert posicoes == sorted(posicoes)
