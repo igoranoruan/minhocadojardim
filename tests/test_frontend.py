@@ -11,7 +11,11 @@ def _html() -> str:
 
 def test_hero_aprovado():
     html = _html()
-    assert "Reutilize o conteúdo que já funcionou." in html
+    # 26/10/2026 (pedido do Igor, rodada de conversão): Hero reescrito -- título/subtítulo novos
+    # ("Reutilize o conteúdo que já funcionou." não existe mais na página).
+    assert "Baixe, limpe e reaproveite vídeos em" in html
+    assert "1 toque" in html
+    assert "o KLANGO entrega um MP4 novo, sem metadados e com o nome que você escolher." in html
     assert "Agora é com você." in html
 
 

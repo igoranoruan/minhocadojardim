@@ -190,53 +190,62 @@
                      por SECOES_FUNIL_FRIO_IDS). Quem não tem sessão continua vendo tudo normalmente.
                      Ver atualizarVisibilidadeHeroVenda(), chamada de aplicarSessao()/aplicarSemSessao(). -->
                 <div id="heroVenda">
+                <!-- 26/10/2026 (pedido do Igor, revisão de conversão da página de vendas): reescrita
+                     do Hero -- título, subtítulo, 3 benefícios em ícone, 2 botões (Testar grátis /
+                     Ver planos) e a linha de preço. "1 toque" no título em turquesa (destaque de
+                     marca, igual o resto do site). -->
                 <h1 class="hero-title text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.05] text-white max-w-2xl mx-auto sm:mx-0">
-                    Reutilize o conteúdo que já funcionou.
+                    Baixe, limpe e reaproveite vídeos em <span class="text-[#19D3AE]">1 toque</span>.
                 </h1>
 
-                <!-- 22/10/2026 (pedido do Igor, revisão de copy): texto enxugado -- "sem os
-                     metadados da origem" e "editar e adaptar" apareciam quase palavra por palavra
-                     em mais 3 lugares da página (Como Funciona, FAQ "O que é", FAQ "Por que
-                     pagar"); aqui, no Hero, a frase foi cortada pela metade (menos perguntas
-                     retóricas, direto ao ponto) e fecha com "publique" em vez de "editar e
-                     adaptar", alinhando com a tagline do rodapé ("Baixe. Prepare. Adapte.
-                     Publique."), que usava um verbo diferente pro mesmo passo. Quebra de linha no
-                     mobile via <br class="sm:hidden"> preservada (mesmo mecanismo de antes). -->
                 <p class="mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
-                    Cole o link do vídeo que você quer reaproveitar.<br class="sm:hidden">
-                    Você recebe um arquivo novo, sem os metadados da origem —<br class="sm:hidden">
-                    pronto pra você editar e publicar do seu jeito.
+                    Cole o link ou compartilhe direto do app: o KLANGO entrega um MP4 novo, sem metadados e com o nome que você escolher.
                 </p>
 
-                <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): tira de passos discreta,
-                     só texto + setas (sem ícones/cards novos), pra dar o mapa mental completo do
-                     fluxo em 1 linha, sem precisar rolar até "Como Funciona". Agrupada em 2 blocos
-                     ("Encontrou o vídeo → Cole o link" / "KLANGO processa → Baixe → Edite e adapte")
-                     que quebram em 2 linhas no mobile (flex-col) e voltam a ficar em 1 linha só no
-                     desktop (sm:flex-row, seta central reaparece só a partir do sm: via
-                     "hidden sm:inline-block") -- mesmo texto/setas de antes, só reagrupado pra nunca
-                     estourar a largura no mobile. -->
-                <p class="mt-3 text-[13px] text-slate-500 flex flex-col sm:flex-row items-center gap-y-1.5 sm:gap-x-1.5 justify-center sm:justify-start">
-                    <span class="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
-                        <span>Encontrou o vídeo</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                        <span>Cole o link</span>
-                    </span>
-                    <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 hidden sm:inline-block"></i>
-                    <span class="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1">
-                        <span>KLANGO processa</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                        <span>Baixe</span><i class="fa-solid fa-arrow-right text-[10px] text-slate-600"></i>
-                        <span>Edite e adapte</span>
-                    </span>
-                </p>
+                <!-- 26/10/2026: 3 benefícios em ícone, substituindo a tira de passos anterior
+                     ("Encontrou o vídeo -> Cole o link -> ..."), por pedido do Igor. Ícones de marca
+                     (fa-brands) na 3ª linha seguem o mesmo precedente já usado no resto do site
+                     (ICONE_FONTAWESOME_POR_PLATAFORMA, seletor de plataforma) -- nunca um logo
+                     desenhado/gerado, só o ícone padrão do Font Awesome. -->
+                <ul class="mt-5 flex flex-col sm:flex-row flex-wrap items-center sm:items-start justify-center sm:justify-start gap-x-5 gap-y-2 text-[13px] text-slate-400">
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Vários vídeos de uma vez</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-mobile-screen-button text-[#19D3AE] text-xs"></i>Atalho direto do celular</li>
+                    <li class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+                        <i class="fa-brands fa-tiktok text-[#19D3AE] text-xs"></i><i class="fa-brands fa-instagram text-[#19D3AE] text-xs"></i><i class="fa-brands fa-youtube text-[#19D3AE] text-xs"></i><i class="fa-brands fa-pinterest text-[#19D3AE] text-xs"></i>
+                        <span>TikTok, Instagram, YouTube Shorts e Pinterest</span>
+                    </li>
+                </ul>
 
-                <!-- 04/10/2026: ilustração da mascote (static/mascote-video.jpg) -- pedido do
-                     CÉREBRO, aprovada depois de recusarmos duas versões anteriores geradas por IA
-                     que desenhavam os logos oficiais do TikTok, Instagram, YouTube e Pinterest
-                     (risco de marca). Esta versão usa só ícones genéricos de vídeo/arquivo MP4, sem
-                     nenhuma marca de terceiros -- conferida visualmente antes de implementar. -->
+                <!-- 26/10/2026: 2 CTAs -- "Testar grátis" rola até o formulário de download (sempre
+                     usável sem plano pago, 5 gerações grátis/semana, ver FAQ) e foca o campo de link;
+                     "Ver planos" reaproveita EXATAMENTE o mesmo padrão (href+onclick) já usado nos
+                     outros links "Ver planos" da página (irParaMeuPlano(), ver header/rodapé/FAQ). -->
+                <div class="mt-7 flex flex-col sm:flex-row items-center sm:items-start gap-3 justify-center sm:justify-start">
+                    <button type="button" onclick="focarFormularioDownload()" class="w-full sm:w-auto h-14 px-7 flex items-center justify-center bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] text-sm shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
+                        Testar grátis
+                    </button>
+                    <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="w-full sm:w-auto h-14 px-7 flex items-center justify-center rounded-xl border border-slate-700 text-slate-200 font-bold text-sm hover:border-[#19D3AE]/50 hover:text-white transition-colors">
+                        Ver planos
+                    </a>
+                </div>
+                <p class="mt-3 text-[13px] text-slate-500">A partir de R$ 14,90 · 5 vídeos grátis por semana</p>
+
+                <!-- 26/10/2026: animação de marca (mesma usada no rodapé dos vídeos processados pelo
+                     KLANGO, pra quem já viu o rodapé num Reels/TikTok reconhecer a marca aqui) --
+                     autoplay mudo/em loop/sem controles, com a foto da mascote como pôster/fallback
+                     (igual já era antes desta mudança) enquanto o navegador não consegue tocar o
+                     vídeo. AINDA PENDENTE: o Igor precisa anexar os 2 arquivos
+                     (klango_rodape_animado.mp4 + a versão .webm transparente) -- os <source> abaixo
+                     já apontam pro nome final deles em /static/; assim que os arquivos chegarem,
+                     basta salvá-los em static/ com esse nome exato, sem precisar tocar neste HTML de
+                     novo. Até lá, nenhum <source> carrega e o `poster` (mascote-video.jpg) continua
+                     aparecendo normalmente -- nunca fica em branco. -->
                 <div class="mt-6 max-w-xl mx-auto sm:mx-0">
-                    <img src="/static/mascote-video.jpg" alt="Mascote do KLANGO.MP4"
-                        class="w-full h-auto rounded-xl select-none" draggable="false">
+                    <video class="w-full h-auto rounded-xl select-none" autoplay muted playsinline loop
+                        poster="/static/mascote-video.jpg" aria-label="Animação do KLANGO.MP4">
+                        <source src="/static/klango_rodape_animado.webm" type="video/webm">
+                        <source src="/static/klango_rodape_animado.mp4" type="video/mp4">
+                    </video>
                 </div>
                 </div>
 
@@ -341,27 +350,35 @@
                 </div>
             </section>
 
-            <!-- PARA QUEM É (06/10/2026, rodada de conversão, aprovação do CÉREBRO): faixa pequena,
-                 só uma linha de eyebrow + headline + 3 tags -- nada de ícones/cards/grade nova, pra
-                 não virar "seção de personas". Fica no funil frio (SECOES_FUNIL_FRIO_IDS, ver JS):
-                 some pra quem já tem plano pago, igual Antes/Depois e as outras seções de quem ainda
-                 não comprou. -->
-            <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
-                <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-2">PARA QUEM É</p>
-                <!-- 22/10/2026 (pedido do Igor, revisão de copy): "cria e reaproveita conteúdo"
-                     repetia quase palavra por palavra a descrição do card Mensal, logo mais abaixo
-                     na mesma página -- trocado aqui por uma frase que fala do RESULTADO (clipes
-                     prontos pra reaproveitar), não do processo, pra não duplicar a mesma ideia 2x. -->
-                <h2 class="text-lg sm:text-xl font-extrabold text-white">Pra quem vive de clipar, recortar e republicar conteúdo.</h2>
-                <!-- 20/10/2026 (pedido do Igor): "Afiliados" trocado por "Clipadores" -- faz mais
-                     sentido com o público real do produto (quem recorta/republica clipes de
-                     conteúdo já existente é exatamente quem usa o KLANGO.MP4).
-
-                     Também normalizado pro mesmo padrão de fonte da seção Planos (ver comentário
-                     grande em #secaoPlanos/ 20/10/2026, "Padronização de tamanho de fonte"): era
-                     "text-[17px] ... sm:text-sm" (17px fixo no mobile, só encolhia a partir do sm)
-                     -- virou "text-sm" direto, sem bump no mobile. -->
-                <p class="mt-2 text-sm leading-normal text-slate-500">Criadores · Social Media · Clipadores</p>
+            <!-- VOCÊ SE RECONHECE? (26/10/2026, pedido do Igor -- rodada de conversão): substitui a
+                 antiga "PARA QUEM É" (1 linha de eyebrow+headline+tags) nesta posição -- o conteúdo
+                 dela virou a nova seção "FEITO PRA" (mesmo id #paraQuemE preservado por simplicidade
+                 de SECOES_FUNIL_FRIO_IDS, só reposicionada mais abaixo, depois de "Lote na prática",
+                 na ordem exata que o Igor pediu). Esta seção é NOVA: 4 problemas curtos (dor real de
+                 quem baixa vídeo pra reaproveitar) + 1 frase de fechamento. Fica no funil frio
+                 (SECOES_FUNIL_FRIO_IDS, ver JS) -- some pra quem já tem plano pago, igual as outras
+                 seções de quem ainda não comprou. -->
+            <section id="voceSeReconhece" class="py-16 sm:py-24 border-t section-line text-center">
+                <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">VOCÊ SE RECONHECE?</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-2xl mx-auto text-left">
+                    <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
+                        <i class="fa-solid fa-hourglass-half text-[#19D3AE] mt-0.5"></i>
+                        <p class="text-sm text-slate-300">Baixa vídeo um por um</p>
+                    </div>
+                    <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
+                        <i class="fa-solid fa-font text-[#19D3AE] mt-0.5"></i>
+                        <p class="text-sm text-slate-300">Fica com nome aleatório e precisa renomear tudo</p>
+                    </div>
+                    <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
+                        <i class="fa-solid fa-rectangle-ad text-[#19D3AE] mt-0.5"></i>
+                        <p class="text-sm text-slate-300">Perde tempo em site cheio de anúncio</p>
+                    </div>
+                    <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
+                        <i class="fa-solid fa-folder-tree text-[#19D3AE] mt-0.5"></i>
+                        <p class="text-sm text-slate-300">Não consegue organizar o que vai postar</p>
+                    </div>
+                </div>
+                <p class="mt-8 text-base sm:text-lg font-extrabold text-white">O KLANGO resolve isso em um lugar só.</p>
             </section>
 
             <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
@@ -558,6 +575,52 @@
                 </div>
             </section>
 
+            <!-- UM POR UM × DE UMA VEZ (26/10/2026, pedido do Igor -- rodada de conversão):
+                 comparação simples, só visual/qualitativa -- SEM nenhum número de tempo ("economiza
+                 X minutos"), porque esse tempo nunca foi medido de verdade no sistema (pedido
+                 explícito do Igor: só usar número de duração se realmente medido). Fica no funil
+                 frio (SECOES_FUNIL_FRIO_IDS). -->
+            <section id="umPorUmDeUmaVez" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto text-center">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Um por um <span class="text-slate-600">×</span> <span class="text-[#19D3AE]">De uma vez.</span></h2>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-3xl mx-auto">
+                    <div class="bg-card-soft rounded-2xl p-6 border border-slate-800">
+                        <div class="text-[13px] font-extrabold uppercase tracking-wider text-slate-500 mb-4">Um por um</div>
+                        <ul class="space-y-2.5 text-sm text-slate-400">
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Cola 1 link por vez</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Espera terminar pra começar o próximo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Renomeia cada arquivo na mão</li>
+                        </ul>
+                    </div>
+                    <div class="bg-card-soft rounded-2xl p-6 border-2 border-[#19D3AE]/50">
+                        <div class="text-[13px] font-extrabold uppercase tracking-wider text-[#19D3AE] mb-4">De uma vez</div>
+                        <ul class="space-y-2.5 text-sm text-slate-300">
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Cola todos os links de uma vez</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>KLANGO processa a fila inteira sozinho</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Escolhe o nome de cada arquivo de uma vez</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FEITO PRA (26/10/2026, pedido do Igor -- rodada de conversão): reposicionada pra cá
+                 (antes ficava logo depois do Hero, como "PARA QUEM É") e expandida de 1 linha de tags
+                 pra chips/cards, com a lista completa que o Igor pediu -- "Afiliados" volta a
+                 aparecer (não é contradição com a troca por "Clipadores" de 20/10/2026: agora os
+                 dois convivem lado a lado, junto com os públicos novos que o Igor adicionou). Mesmo
+                 id (#paraQuemE) preservado -- só textoconteúdo mudou, SECOES_FUNIL_FRIO_IDS continua
+                 funcionando sem precisar trocar esse nome. -->
+            <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
+                <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">FEITO PRA</p>
+                <div class="flex flex-wrap items-center justify-center gap-2.5 mt-6 max-w-2xl mx-auto">
+                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Clipadores</span>
+                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Social medias</span>
+                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Criadores de conteúdo</span>
+                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Afiliados</span>
+                    <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Páginas de corte e de memes</span>
+                </div>
+            </section>
 
             <!-- PROCESSO -->
             <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
@@ -694,11 +757,21 @@
                     </div>
 
                     <div id="planoMensalCard" class="shrink-0 w-[82%] md:w-auto snap-center bg-card rounded-3xl p-7 flex flex-col border-[#19D3AE]/70 ring-1 ring-[#19D3AE]/50 relative glow-hover">
+                        <!-- 26/10/2026 (pedido do Igor): pediu o selo "Mais escolhido" aqui. Troquei
+                             por "Recomendado" (já existia) de propósito -- conferi payments reais no
+                             banco (status approved) e o Mensal está EMPATADO EM ÚLTIMO (0 aprovados,
+                             contra 1 Semanal/1 VIP Batch); "Mais escolhido" seria uma alegação falsa
+                             agora, e o Igor pediu explicitamente "só informação verdadeira, nenhum
+                             número inventado" nesta mesma rodada. Assim que o Mensal tiver vendas
+                             reais que sustentem a frase, é só trocar o texto do selo. -->
                         <span class="absolute -top-3 right-5 bg-[#19D3AE] text-slate-950 text-[13px] font-black uppercase tracking-wide px-3 py-1 rounded-full whitespace-nowrap">Recomendado</span>
                         <div class="text-[13px] text-[#19D3AE] font-bold uppercase tracking-wider">Mensal</div>
                         <!-- 22/10/2026: reajuste de preço (ver comentário no card Semanal, acima). -->
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 27,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
+                        <!-- 26/10/2026 (pedido do Igor): "menos de R$1 por dia" -- real, 27,90/30 =
+                             0,93. -->
+                        <div class="text-[13px] font-bold text-[#19D3AE] mt-1">menos de R$ 1 por dia</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 10 vídeos, 5/semana</span></span></li>
@@ -707,6 +780,10 @@
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 300 gerações no período</li>
                         </ul>
                         <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pro seu ritmo de produção de toda semana.</p>
+                        <!-- 26/10/2026 (pedido do Igor): reforça "pagamento único, sem mensalidade
+                             automática" -- real (PIX/cartão via Mercado Pago, sem recorrência; ver
+                             FAQ "O pagamento é único ou tem renovação automática?"). -->
+                        <p class="mt-1 text-[13px] text-slate-600">Pagamento único — sem mensalidade automática.</p>
                         <button onclick="abrirModalPagamento('monthly')" class="mt-3 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Quero esse</button>
                     </div>
 
@@ -1283,6 +1360,22 @@ https://..."></textarea>
                          até o clique em "Ver mais perguntas" (alternarFaqMais(), perto de
                          centralizarCarrosselPlanos() no <script>). -->
                     <div id="faqMais" class="hidden space-y-3 mt-3">
+                        <!-- 26/10/2026 (pedido do Igor -- rodada de conversão): 3 perguntas novas.
+                             "É assinatura?" e "Quais redes funcionam?" já existiam em outras palavras
+                             ("O pagamento é único ou tem renovação automática?" / "Quais plataformas
+                             são compatíveis?", ambas nesta mesma seção) -- não duplicadas aqui. -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Preciso instalar alguma coisa?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 funciona direto pelo navegador, sem instalar programa nem extensão. No celular, dá pra adicionar um atalho que recebe o link compartilhado direto do app (TikTok, Instagram etc.) — também opcional.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Funciona no celular?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim, o site inteiro funciona no navegador do celular. Você também pode compartilhar o vídeo direto do app (TikTok, Instagram etc.) usando o atalho do KLANGO, sem precisar copiar e colar o link manualmente.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Meus dados e minhas contas ficam seguros?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O KLANGO.MP4 nunca pede login nem senha das suas redes sociais — só o link público do vídeo que você quer baixar. O acesso ao próprio KLANGO é feito por código enviado ao seu e-mail, sem senha cadastrada.</div>
+                        </details>
                         <details class="faq-item bg-card rounded-2xl group">
                             <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que o YouTube demora mais que as outras plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
                             <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O YouTube tem uma camada extra de proteção contra automação, então o download de lá passa por uma conexão adicional antes de chegar até você — por isso pode levar até 2 minutos, bem mais que TikTok, Instagram e Pinterest. É normal: não significa erro, só aguarde na tela de processamento.</div>
@@ -1355,6 +1448,19 @@ https://..."></textarea>
                         </button>
                     </div>
                 </div>
+            </section>
+
+            <!-- CTA FINAL (26/10/2026, pedido do Igor -- rodada de conversão): última chamada antes
+                 do rodapé, mesmo texto/número real já usado no Hero (5 vídeos grátis por semana, ver
+                 FAQ "Quantas gerações grátis eu tenho?"). Reaproveita focarFormularioDownload(), a
+                 mesma função do botão "Testar grátis" do Hero -- sem duplicar lógica nova. Fica no
+                 funil frio (SECOES_FUNIL_FRIO_IDS): some pra quem já comprou, igual o resto da
+                 vitrine -- quem já é cliente não precisa ver um CTA de "comece agora". -->
+            <section id="ctaFinal" class="py-16 sm:py-24 border-t section-line text-center">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white max-w-lg mx-auto">Comece agora com 5 vídeos grátis por semana.</h2>
+                <button type="button" onclick="focarFormularioDownload()" class="mt-7 h-14 px-9 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] text-sm shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
+                    Testar grátis
+                </button>
             </section>
 
             <!-- PAGAMENTO: seção removida (02/10/2026, 4ª rodada) -- pedido explícito do Igor depois
@@ -2636,6 +2742,16 @@ https://..."></textarea>
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
+    // 26/10/2026 (pedido do Igor, Hero novo): botão "Testar grátis" -- rola até o campo de link do
+    // formulário de download (sempre visível e usável sem plano pago, 5 gerações grátis/semana) e
+    // foca nele, sem abrir nenhum modal de login/pagamento (testar de verdade não exige conta).
+    function focarFormularioDownload() {
+        const campo = document.getElementById("url");
+        if (!campo) return;
+        campo.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => campo.focus(), 350);
+    }
+
     function aplicarSessao(email) {
         sessaoEmail = email;
         atualizarVisibilidadeHeroVenda(true);
@@ -2890,7 +3006,10 @@ https://..."></textarea>
     // atualizarVisibilidadeSecaoPlanos). Os links "Como funciona"/"Perguntas frequentes" do
     // header/rodapé continuam funcionando mesmo com a seção escondida -- ver
     // mostrarSecaoSeEscondida() logo abaixo.
-    const SECOES_FUNIL_FRIO_IDS = ["paraQuemE", "antesDepois", "comoFunciona", "faq", "loteNaPratica"];
+    // 26/10/2026 (pedido do Igor -- rodada de conversão): "voceSeReconhece" e "umPorUmDeUmaVez"
+    // são seções novas desta rodada, mesma régua das demais -- escondidas pra quem já tem plano
+    // pago, exatamente como paraQuemE/antesDepois/loteNaPratica já eram.
+    const SECOES_FUNIL_FRIO_IDS = ["voceSeReconhece", "paraQuemE", "antesDepois", "umPorUmDeUmaVez", "comoFunciona", "faq", "loteNaPratica", "ctaFinal"];
 
     function atualizarVisibilidadeFunilFrio(planoCode) {
         const planoPago = !!sessaoEmail && !!planoCode && planoCode !== "free" && !!PLANOS[planoCode];
