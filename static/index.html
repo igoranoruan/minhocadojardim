@@ -1633,25 +1633,25 @@ https://..."></textarea>
          (ver submeterPagamento), sem nenhuma logo sobreposta nele, para não arriscar invalidar a
          leitura do código. -->
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
-        <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): bloco "Por que escolher
-             o KLANGO.MP4?" (coluna direita inteira) removido -- modal virou 1 coluna só
-             (max-w-5xl -> max-w-2xl, grid de 2 colunas desfeito). Nenhuma lógica de pagamento
-             tocada: só o checkout em si (agora a única coluna) continua, com os mesmos ids de
-             sempre. -->
-        <div class="bg-card w-full max-w-2xl rounded-3xl border border-[#19D3AE]/20 relative shadow-2xl shadow-[#19D3AE]/5 max-h-[92vh] overflow-y-auto">
+        <!-- 26/10/2026 (pedido do Igor, desfazendo a mudança da ETAPA B4 do mesmo dia): bloco "Por
+             que escolher o KLANGO.MP4?" e a estrutura de 2 colunas voltaram -- Igor achou que a
+             versão de 1 coluna perdeu informação útil (os 4 itens com título+subtítulo da coluna
+             direita). Nenhuma lógica de pagamento tocada nesta reversão: Brick, troca de método,
+             submissão -- tudo com os mesmos ids de sempre. -->
+        <div class="bg-card w-full max-w-5xl rounded-3xl border border-[#19D3AE]/20 relative shadow-2xl shadow-[#19D3AE]/5 max-h-[92vh] overflow-y-auto">
             <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-500 hover:text-white transition-colors z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
 
-            <div class="grid grid-cols-1">
-                <div class="p-6 sm:p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-5">
+                <!-- COLUNA ESQUERDA (~60%): checkout em si -->
+                <div class="lg:col-span-3 p-6 sm:p-8 lg:border-r lg:border-slate-800/80">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-wallet text-[#19D3AE]"></i></div>
                         <div>
-                            <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): título
-                                 e subtítulo reescritos; #modalTitulo preservado (mesmo id, mesmo
-                                 preenchimento via JS em abrirModalPagamento(), só o texto padrão
-                                 mudou). -->
-                            <h3 id="modalTitulo" class="text-xl font-bold text-white leading-tight">Finalize seu acesso</h3>
-                            <p class="text-[13px] text-slate-500">Confira o plano e escolha como pagar.</p>
+                            <!-- 26/10/2026 (pedido do Igor): título/subtítulo voltaram ao texto
+                                 anterior à ETAPA B4; #modalTitulo preservado (mesmo id, mesmo
+                                 preenchimento via JS em abrirModalPagamento()). -->
+                            <h3 id="modalTitulo" class="text-xl font-bold text-white leading-tight">Escolha como pagar</h3>
+                            <p class="text-[13px] text-slate-500">Finalize seu acesso de forma rápida e segura</p>
                         </div>
                     </div>
 
@@ -1694,8 +1694,12 @@ https://..."></textarea>
                              mascote pelas novas ilustrações no estilo do rodapé (mesmo tamanho
                              700x570, anexadas no commit e77ab46) -- só os nomes dos arquivos
                              mudaram (ver trocarMetodoPagamento() para os 2 nomes), nenhuma lógica de
-                             pagamento/troca de método foi tocada. -->
-                        <img id="modalMascoteImg" src="/static/klango_pix.jpg" alt=""
+                             pagamento/troca de método foi tocada.
+                             26/10/2026 (pedido do Igor, mais tarde no mesmo dia): voltou pras fotos
+                             antigas da mascote (mascote-pix.jpg/mascote-cartao.jpg) -- Igor não
+                             gostou das ilustrações novas. Arquivos klango_pix.jpg/klango_cartao.jpg
+                             continuam em static/, não apagados. -->
+                        <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt=""
                             class="w-full sm:w-32 h-32 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
                     </div>
 
@@ -1718,17 +1722,73 @@ https://..."></textarea>
                     <div id="pagamentoStatus" class="mt-3 text-[13px] text-slate-400"></div>
 
                     <!-- Bloco de segurança: HTML/CSS real (nunca imagem), como pedido.
-                         26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): texto da
-                         linha reescrito; "O pagamento é único..." (linha solta abaixo) removida por
-                         ficar redundante com o checklist do card do plano, acima ("Pagamento
-                         único"/"Sem renovação automática"), e com este mesmo bloco. -->
+                         26/10/2026 (pedido do Igor): texto e a linha "O pagamento é único..."
+                         voltaram ao estado anterior à ETAPA B4. -->
                     <div class="flex items-center gap-3 mt-4 p-3.5 rounded-xl border border-slate-800 bg-[#060b14]">
                         <i class="fa-solid fa-lock text-[#19D3AE]"></i>
                         <div class="flex-1 min-w-0">
                             <p class="text-[13px] font-bold text-white">Pagamento seguro</p>
-                            <p class="text-[13px] text-slate-500">Processado pelo Mercado Pago. O acesso é liberado assim que o pagamento confirma.</p>
+                            <p class="text-[13px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
                         </div>
                         <i class="fa-solid fa-shield-halved text-slate-600"></i>
+                    </div>
+
+                    <p class="text-[13px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
+                </div>
+
+                <!-- COLUNA DIREITA (~40%): redução de objeções, nunca um segundo formulário.
+                     26/10/2026 (pedido do Igor, desfazendo a remoção da ETAPA B4 do mesmo dia):
+                     bloco restaurado -- Igor achou que os 4 itens com título+subtítulo eram
+                     informação útil que fazia falta. -->
+                <div class="lg:col-span-2 p-6 sm:p-8 bg-[#060b14]/60 rounded-b-3xl lg:rounded-bl-none lg:rounded-r-3xl">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
+                        <h4 class="text-sm font-bold text-white">Por que escolher o KLANGO.MP4?</h4>
+                    </div>
+                    <p class="text-[13px] text-slate-500 mb-5 leading-relaxed">Mais controle, mais segurança e total liberdade para reutilizar seus vídeos.</p>
+
+                    <ul class="space-y-4 text-sm">
+                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-shield-halved text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-[13px]">Vídeos limpos de metadados</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">Mais privacidade e segurança para o seu conteúdo.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-[13px]">Processamento rápido</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">Seu vídeo pronto em poucos minutos.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-[13px]">Suporte a várias plataformas</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">TikTok, Instagram, YouTube Shorts e muito mais.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-infinity text-[#19D3AE] text-xs"></i></div>
+                            <div>
+                                <p class="font-bold text-white text-[13px]">Ideal para criadores e clipadores</p>
+                                <p class="text-[13px] text-slate-500 mt-0.5">Mais praticidade para o seu dia a dia.</p>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div class="grid grid-cols-2 gap-3 mt-5">
+                        <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
+                            <i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i>
+                            <p class="text-[13px] font-bold text-white mt-1.5">Acesso imediato</p>
+                            <p class="text-[13px] text-slate-500 mt-0.5">Após a confirmação do pagamento.</p>
+                        </div>
+                        <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
+                            <i class="fa-solid fa-headset text-[#19D3AE] text-xs"></i>
+                            <p class="text-[13px] font-bold text-white mt-1.5">Suporte</p>
+                            <p class="text-[13px] text-slate-500 mt-0.5">Estamos aqui para te ajudar.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3516,7 +3576,7 @@ https://..."></textarea>
         // Troca a imagem da mascote junto com o método (ver comentário no <img id="modalMascoteImg">).
         const mascoteImgEl = document.getElementById("modalMascoteImg");
         if (mascoteImgEl) {
-            mascoteImgEl.src = tipo === "pix" ? "/static/klango_pix.jpg" : "/static/klango_cartao.jpg";
+            mascoteImgEl.src = tipo === "pix" ? "/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg";
         }
 
         await criarPaymentEMontarBrick(tipo);

@@ -42,15 +42,18 @@ def test_hero_aprovado():
 
 
 def test_assets_antigos_da_mascote_nao_tem_mais_referencia():
-    """26/10/2026 (ETAPA A): as fotos/animação antigas da mascote (topo, Lote, modal de pagamento)
-    foram trocadas pelas novas ilustrações/animações no estilo do rodapé -- os arquivos antigos
-    continuam em static/ (não apagados, por pedido do Igor), mas nenhuma referência a eles pode
-    sobrar no HTML/JS servido."""
+    """26/10/2026 (ETAPA A): as fotos/animação antigas da mascote (topo, Lote) foram trocadas
+    pelas novas ilustrações/animações no estilo do rodapé -- os arquivos antigos continuam em
+    static/ (não apagados, por pedido do Igor), mas nenhuma referência a eles pode sobrar no
+    HTML/JS servido.
+    26/10/2026 (pedido do Igor, revertendo a ETAPA A do mesmo dia só para o modal de pagamento):
+    Igor não gostou das ilustrações novas do modal e pediu para voltar às fotos antigas da
+    mascote (mascote-pix.jpg/mascote-cartao.jpg) -- por isso essas 2 saíram desta lista de
+    "não pode mais aparecer" (ver test_modal_de_pagamento_usa_as_fotos_da_mascote, que confirma
+    que elas voltaram a aparecer no modal)."""
     html = _html()
     assert "mascote-video.jpg" not in html
     assert "mascote-lote.jpg" not in html
-    assert "mascote-pix.jpg" not in html
-    assert "mascote-cartao.jpg" not in html
     assert "klango_rodape_animado" not in html
 
 
@@ -157,10 +160,13 @@ def test_script_unico_de_reproducao_de_videos():
     assert "pausarVideosSeReducedMotion" not in html
 
 
-def test_modal_de_pagamento_usa_as_novas_ilustracoes():
+def test_modal_de_pagamento_usa_as_fotos_da_mascote():
+    # 26/10/2026 (pedido do Igor, revertendo a ETAPA A do mesmo dia): Igor não gostou das
+    # ilustrações novas (klango_pix.jpg/klango_cartao.jpg) e pediu para voltar às fotos antigas
+    # da mascote. Os arquivos klango_*.jpg continuam em static/, só não são mais referenciados.
     html = _html()
-    assert 'src="/static/klango_pix.jpg"' in html
-    assert '/static/klango_pix.jpg" : "/static/klango_cartao.jpg"' in html
+    assert 'src="/static/mascote-pix.jpg"' in html
+    assert '/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg"' in html
 
 
 def test_planos_conforme_especificacao():
@@ -314,16 +320,18 @@ def test_login_textos_aprovados():
 
 
 def test_modal_de_pagamento_textos_e_estrutura_aprovados():
-    """26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): título/subtítulo novos; bloco
-    "Por que escolher o KLANGO.MP4?" (coluna direita inteira) removido -- lógica de pagamento
-    (métodos, Brick, submissão) não foi tocada, só textos/estrutura/CSS do modal."""
+    """26/10/2026 (pedido do Igor, revertendo a ETAPA B4 do mesmo dia): Igor achou que a versão de
+    1 coluna perdeu informação útil e pediu para voltar título/subtítulo/textos/coluna de volta ao
+    estado anterior -- lógica de pagamento (métodos, Brick, submissão) não foi tocada, só
+    textos/estrutura/CSS do modal."""
     html = _html()
-    assert "Finalize seu acesso" in html
-    assert "Confira o plano e escolha como pagar." in html
-    assert "Processado pelo Mercado Pago. O acesso é liberado assim que o pagamento confirma." in html
-    assert "Por que escolher o KLANGO.MP4?" not in html
-    assert "Vídeos limpos de metadados" not in html
-    assert "Ideal para criadores e clipadores" not in html
+    assert "Escolha como pagar" in html
+    assert "Finalize seu acesso de forma rápida e segura" in html
+    assert "Processado com segurança pelo Mercado Pago." in html
+    assert "O pagamento é único. Não há cobrança automática nem renovação." in html
+    assert "Por que escolher o KLANGO.MP4?" in html
+    assert "Vídeos limpos de metadados" in html
+    assert "Ideal para criadores e clipadores" in html
     assert 'id="paymentBrickContainer"' in html
     assert 'id="metodoPixBtn"' in html
     assert 'id="metodoCartaoBtn"' in html
