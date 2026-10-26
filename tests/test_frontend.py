@@ -11,16 +11,22 @@ def _html() -> str:
 
 def test_hero_aprovado():
     html = _html()
-    # 26/10/2026 (ETAPA A, pedido do Igor -- "ajustes finais do site"): título/subtítulo do hero
-    # reescritos de novo -- "Baixe, limpe e reaproveite..." não existe mais na página; os 2 botões
-    # antigos do hero ("Testar grátis"/"Ver planos") saíram, o formulário é a chamada principal.
-    assert "Baixe e reaproveite vídeos em" in html
-    assert "1 toque" in html
-    assert "Cole o link do TikTok, Instagram, YouTube ou Pinterest e receba um MP4 novo." in html
-    assert "Agora é com você." in html
+    # 26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): título/subtítulo do hero
+    # reescritos de novo -- "Baixe e reaproveite vídeos em 1 toque." não existe mais na página; os
+    # 2 botões antigos do hero ("Testar grátis"/"Ver planos") saíram, o formulário é a chamada
+    # principal.
+    assert "Baixe vídeos sem anúncio e" in html
+    assert "sem metadados" in html
+    assert "Cole o link do TikTok, Reels, Shorts ou Pinterest, escolha o nome do arquivo e receba um MP4 pronto pra editar." in html
 
-    # Linha de preço nova, com "ver planos" como link de texto (reaproveita irParaMeuPlano()).
-    assert "5 vídeos grátis por semana · sem cartão ·" in html
+    # Linha de preço nova, com "um por vez" e "ver planos" como link de texto (reaproveita
+    # irParaMeuPlano()).
+    assert "5 vídeos grátis por semana · um por vez · sem cartão ·" in html
+
+    # Chips novos do topo (ETAPA B2) -- "Atalho direto do celular" saiu.
+    assert "Sem anúncio" in html
+    assert "Lote nos planos pagos" in html
+    assert "TikTok · Reels · Shorts · Pinterest" in html
 
     # Animação do topo: 2 arquivos, um por tamanho de tela (ETAPA B1).
     assert "/static/klango_hero.mp4" in html
@@ -61,8 +67,13 @@ def test_secao_lote_usa_video_da_corrida_e_absorve_um_por_um_de_uma_vez():
     fim = html.index(";", inicio)
     assert "umPorUmDeUmaVez" not in html[inicio:fim]
     # as 2 caixas de comparação continuam na página, agora dentro de #loteNaPratica
+    # (textos atualizados na ETAPA B2, pedido do Igor -- "copy final do site")
     assert "Cola 1 link por vez" in html
-    assert "Cola todos os links de uma vez" in html
+    assert "Espera terminar pra começar o próximo" in html
+    assert "Renomeia cada arquivo depois" in html
+    assert "Cola todos os links juntos" in html
+    assert "A fila roda sozinha" in html
+    assert "Escolhe o nome de cada arquivo antes de baixar" in html
 
 
 def test_secao_antes_depois_usa_video_em_vez_do_carrossel_de_cartoes():
@@ -73,6 +84,62 @@ def test_secao_antes_depois_usa_video_em_vez_do_carrossel_de_cartoes():
     assert "iPhone 13" not in html
     assert "São Paulo, Brasil" not in html
     assert "3f2a8f9c" not in html
+
+
+def test_secao_voce_se_reconhece_aprovada():
+    """26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): eyebrow virou pergunta-título;
+    4 caixas (dor + 2ª linha turquesa com a solução); a dor sobre organizar o que vai postar saiu,
+    substituída por uma sobre metadados."""
+    html = _html()
+    assert "Ainda perde tempo baixando vídeo um por um?" in html
+    assert "Baixa um vídeo por vez" in html
+    assert "Nos planos pagos, cola vários links e baixa tudo junto." in html
+    assert "Arquivo com nome sem sentido" in html
+    assert "Você escolhe o nome antes de baixar." in html
+    assert "Site cheio de anúncio e pop-up" in html
+    assert "No KLANGO não tem anúncio." in html
+    assert "Vídeo vem com os dados da origem" in html
+    assert "Sai um MP4 novo, sem os metadados." in html
+    assert "Não consegue organizar o que vai postar" not in html
+    assert "O KLANGO resolve isso em um lugar só." in html
+
+
+def test_secao_antes_depois_textos_aprovados():
+    html = _html()
+    assert "Veja o que muda no arquivo." in html
+    assert (
+        "Mesmo vídeo, num MP4 novo: sem os dados da plataforma de origem, com hash novo e o nome que você escolher."
+        in html
+    )
+
+
+def test_secao_lote_textos_e_botao_ver_planos_aprovados():
+    html = _html()
+    assert (
+        "Cole os links, escolha o nome de cada arquivo e deixe a fila rodar. No fim, baixe tudo em ZIP ou um por um."
+        in html
+    )
+    assert "Disponível nos planos pagos." in html
+    assert ">Ver planos<" in html
+
+
+def test_secao_feito_pra_titulo_aprovado():
+    html = _html()
+    assert "Feito pra quem trabalha com vídeo." in html
+
+
+def test_secao_como_funciona_textos_aprovados():
+    """26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): os 3 passos ganharam texto
+    novo e o bloco de fechamento que havia depois deles saiu."""
+    html = _html()
+    assert "O KLANGO prepara" in html
+    assert "Baixe e edite" in html
+    assert "Cole o link do vídeo ou compartilhe direto do app pelo atalho do celular." in html
+    assert "Baixa, remove os metadados e gera um MP4 novo, com hash novo." in html
+    assert "Baixe com o nome que você escolheu e leve pro seu editor." in html
+    assert "Limpa e prepara" not in html
+    assert "Baixe e publique" not in html
+    assert "Agora é com você." not in html
 
 
 def test_script_unico_de_reproducao_de_videos():

@@ -225,14 +225,16 @@
                              atualizarVisibilidadeHeroVenda() (usa querySelectorAll(".heroVenda")),
                              chamada de aplicarSessao()/aplicarSemSessao(). -->
                         <div class="heroVenda">
-                            <!-- 26/10/2026 (ETAPA A): título sem "limpe," (simplificado) e subtítulo
-                                 citando as 4 plataformas, pedido exato do Igor. -->
+                            <!-- 26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"):
+                                 título/subtítulo reescritos de novo -- agora o argumento central é
+                                 "sem anúncio e sem metadados" (destaque em turquesa só na 2ª
+                                 metade), não mais "1 toque". -->
                             <h1 class="hero-title text-3xl sm:text-5xl lg:text-5xl font-extrabold tracking-tight leading-[1.1] text-white max-w-2xl mx-auto sm:mx-0">
-                                Baixe e reaproveite vídeos em <span class="text-[#19D3AE]">1 toque</span>.
+                                Baixe vídeos sem anúncio e <span class="text-[#19D3AE]">sem metadados</span>.
                             </h1>
 
                             <p class="mt-3 sm:mt-6 text-slate-400 text-sm sm:text-base leading-relaxed max-w-xl sm:max-w-2xl mx-auto sm:mx-0">
-                                Cole o link do TikTok, Instagram, YouTube ou Pinterest e receba um MP4 novo.
+                                Cole o link do TikTok, Reels, Shorts ou Pinterest, escolha o nome do arquivo e receba um MP4 pronto pra editar.
                             </p>
                         </div>
 
@@ -335,22 +337,25 @@
                     </p>
                 </div>
 
-                        <!-- 26/10/2026 (ETAPA A): segundo bloco "heroVenda" -- linha de preço (com
-                             "ver planos" como link de texto, reaproveitando irParaMeuPlano()) + os 3
-                             chips de benefício (texto/ícones idênticos ao que já existia, só
-                             reposicionados pra depois da linha de preço, por pedido do Igor). -->
+                        <!-- 26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): linha de
+                             preço ganhou "um por vez" (deixa claro que o lote é só dos planos pagos
+                             já aqui no topo); os 3 chips foram trocados -- "Sem anúncio" e "Lote nos
+                             planos pagos" no lugar de "Vários vídeos de uma vez"/"Atalho direto do
+                             celular" (o atalho não é mais destaque do topo), e o chip de redes passa
+                             a citar os FORMATOS (Reels, Shorts) em vez dos nomes dos apps duplicados
+                             (TikTok/Instagram/YouTube/Pinterest já são o próprio ícone ao lado). -->
                         <div class="heroVenda">
                             <p class="mt-3 text-[13px] text-slate-500">
-                                5 vídeos grátis por semana · sem cartão ·
+                                5 vídeos grátis por semana · um por vez · sem cartão ·
                                 <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="font-bold text-[#19D3AE] hover:underline">ver planos</a>
                             </p>
 
                             <ul class="mt-5 flex flex-col sm:flex-row flex-wrap items-center sm:items-start justify-center sm:justify-start gap-x-5 gap-y-2 text-[13px] text-slate-400">
-                                <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Vários vídeos de uma vez</li>
-                                <li class="flex items-center gap-2"><i class="fa-solid fa-mobile-screen-button text-[#19D3AE] text-xs"></i>Atalho direto do celular</li>
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-ban text-[#19D3AE] text-xs"></i>Sem anúncio</li>
+                                <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Lote nos planos pagos</li>
                                 <li class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
                                     <i class="fa-brands fa-tiktok text-[#19D3AE] text-xs"></i><i class="fa-brands fa-instagram text-[#19D3AE] text-xs"></i><i class="fa-brands fa-youtube text-[#19D3AE] text-xs"></i><i class="fa-brands fa-pinterest text-[#19D3AE] text-xs"></i>
-                                    <span>TikTok, Instagram, YouTube Shorts e Pinterest</span>
+                                    <span>TikTok · Reels · Shorts · Pinterest</span>
                                 </li>
                             </ul>
                         </div>
@@ -394,43 +399,56 @@
                  quem baixa vídeo pra reaproveitar) + 1 frase de fechamento. Fica no funil frio
                  (SECOES_FUNIL_FRIO_IDS, ver JS) -- some pra quem já tem plano pago, igual as outras
                  seções de quem ainda não comprou. -->
+            <!-- 26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): o eyebrow curto
+                 acima do título virou a própria pergunta-título; as 4 caixas ganham uma 2ª linha
+                 turquesa (a solução/contraste) abaixo da dor -- a 4ª dor antiga, sobre organização
+                 do que vai ser postado, saiu, substituída por uma sobre metadados, que faltava
+                 nesta lista apesar de ser um argumento central do produto (ver Antes/Depois). -->
             <section id="voceSeReconhece" class="py-16 sm:py-24 border-t section-line text-center">
-                <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">VOCÊ SE RECONHECE?</p>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white max-w-xl mx-auto">Ainda perde tempo baixando vídeo um por um?</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-2xl mx-auto text-left">
                     <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
                         <i class="fa-solid fa-hourglass-half text-[#19D3AE] mt-0.5"></i>
-                        <p class="text-sm text-slate-300">Baixa vídeo um por um</p>
+                        <div>
+                            <p class="text-sm text-slate-300">Baixa um vídeo por vez</p>
+                            <p class="text-[13px] text-[#19D3AE] mt-1">Nos planos pagos, cola vários links e baixa tudo junto.</p>
+                        </div>
                     </div>
                     <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
                         <i class="fa-solid fa-font text-[#19D3AE] mt-0.5"></i>
-                        <p class="text-sm text-slate-300">Fica com nome aleatório e precisa renomear tudo</p>
+                        <div>
+                            <p class="text-sm text-slate-300">Arquivo com nome sem sentido</p>
+                            <p class="text-[13px] text-[#19D3AE] mt-1">Você escolhe o nome antes de baixar.</p>
+                        </div>
                     </div>
                     <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
                         <i class="fa-solid fa-rectangle-ad text-[#19D3AE] mt-0.5"></i>
-                        <p class="text-sm text-slate-300">Perde tempo em site cheio de anúncio</p>
+                        <div>
+                            <p class="text-sm text-slate-300">Site cheio de anúncio e pop-up</p>
+                            <p class="text-[13px] text-[#19D3AE] mt-1">No KLANGO não tem anúncio.</p>
+                        </div>
                     </div>
                     <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
-                        <i class="fa-solid fa-folder-tree text-[#19D3AE] mt-0.5"></i>
-                        <p class="text-sm text-slate-300">Não consegue organizar o que vai postar</p>
+                        <i class="fa-solid fa-fingerprint text-[#19D3AE] mt-0.5"></i>
+                        <div>
+                            <p class="text-sm text-slate-300">Vídeo vem com os dados da origem</p>
+                            <p class="text-[13px] text-[#19D3AE] mt-1">Sai um MP4 novo, sem os metadados.</p>
+                        </div>
                     </div>
                 </div>
                 <p class="mt-8 text-base sm:text-lg font-extrabold text-white">O KLANGO resolve isso em um lugar só.</p>
             </section>
 
             <!-- ANTES/DEPOIS (04/10/2026, Etapa 2 da adaptação ao layout de referência enviado pelo
-                 CÉREBRO; substituída em 26/10/2026, ETAPA B1, pedido do Igor -- "copy final do
-                 site"): os 2 cartões lado a lado (carrossel Antes/Depois, com a grade de detalhes
-                 técnicos fictícios) saíram -- no lugar, um único vídeo (klango_antes_depois.mp4)
-                 mostrando a diferença na prática. Texto do título/corpo (Etapa B2) ainda não foi
-                 atualizado nesta etapa -- só a troca do carrossel pelo vídeo, por pedido explícito
-                 do Igor (uma etapa por commit). -->
+                 CÉREBRO; vídeo em vez dos 2 cartões desde a ETAPA B1; título/corpo reescritos em
+                 26/10/2026, ETAPA B2, pedido do Igor -- "copy final do site"). -->
             <section id="antesDepois" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">ANTES / DEPOIS</p>
-                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja a diferença <span class="text-[#19D3AE]">na prática.</span></h2>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Veja o que muda no arquivo.</h2>
                     <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos (ver comentário
                          grande em #secaoPlanos) -- "text-sm" direto, sem o bump pra 18px no mobile. -->
-                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Mesmo vídeo, pronto para seguir no seu fluxo de edição, sem os dados que vieram da plataforma de origem.</p>
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Mesmo vídeo, num MP4 novo: sem os dados da plataforma de origem, com hash novo e o nome que você escolher.</p>
                 </div>
 
                 <!-- Moldura padrão de vídeo da página (bg-card-soft + overflow-hidden rounded-2xl),
@@ -448,20 +466,18 @@
             </section>
 
             <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; redesenhada em 05/10/2026;
-                 reescrita em 26/10/2026, ETAPA B1, pedido do Igor -- "copy final do site"): a
+                 reescrita em 26/10/2026, ETAPA B1/B2, pedido do Igor -- "copy final do site"): a
                  caixa de exemplo (campos travados + lista video_01..03 + "Baixar tudo em ZIP") e o
                  vídeo antigo (klango_lote.mp4) saíram -- no lugar, um único vídeo
                  (klango_corrida.mp4) seguido pelas 2 caixas de comparação "Um por um × De uma vez",
                  que ANTES eram uma seção própria (#umPorUmDeUmaVez, removida -- ver
-                 SECOES_FUNIL_FRIO_IDS logo abaixo no script, já sem essa id). Texto das 2 caixas e
-                 do título/subtítulo desta seção ainda são os ANTIGOS nesta etapa -- a Etapa B2
-                 atualiza (pedido explícito do Igor: uma etapa por commit). Mesmo id
-                 (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS). -->
+                 SECOES_FUNIL_FRIO_IDS logo abaixo no script, já sem essa id) e o botão "Ver planos".
+                 Mesmo id (#loteNaPratica), mesma lógica de visibilidade (SECOES_FUNIL_FRIO_IDS). -->
             <section id="loteNaPratica" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
                     <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
-                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Pare de repetir o processo vídeo por vídeo: adicione todos de uma vez e baixe tudo pronto pra editar.</p>
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Cole os links, escolha o nome de cada arquivo e deixe a fila rodar. No fim, baixe tudo em ZIP ou um por um.</p>
                     <p class="mt-2 text-[13px] text-slate-500">Disponível nos planos pagos.</p>
                 </div>
 
@@ -488,17 +504,24 @@
                         <ul class="space-y-2.5 text-sm text-slate-400">
                             <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Cola 1 link por vez</li>
                             <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Espera terminar pra começar o próximo</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Renomeia cada arquivo na mão</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-xmark text-rose-400 mt-0.5"></i>Renomeia cada arquivo depois</li>
                         </ul>
                     </div>
                     <div class="bg-card-soft rounded-2xl p-6 border-2 border-[#19D3AE]/50">
                         <div class="text-[13px] font-extrabold uppercase tracking-wider text-[#19D3AE] mb-4">De uma vez</div>
                         <ul class="space-y-2.5 text-sm text-slate-300">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Cola todos os links de uma vez</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>KLANGO processa a fila inteira sozinho</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Escolhe o nome de cada arquivo de uma vez</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Cola todos os links juntos</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>A fila roda sozinha</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Escolhe o nome de cada arquivo antes de baixar</li>
                         </ul>
                     </div>
+                </div>
+
+                <!-- 26/10/2026 (ETAPA B2, pedido do Igor): botão "Ver planos" explícito ao fim da
+                     seção -- mesmo padrão (href+onclick) já usado nos outros links "Ver planos" da
+                     página (irParaMeuPlano()). -->
+                <div class="flex justify-center mt-8">
+                    <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-sm transition-colors">Ver planos</a>
                 </div>
             </section>
 
@@ -508,9 +531,10 @@
                  aparecer (não é contradição com a troca por "Clipadores" de 20/10/2026: agora os
                  dois convivem lado a lado, junto com os públicos novos que o Igor adicionou). Mesmo
                  id (#paraQuemE) preservado -- só textoconteúdo mudou, SECOES_FUNIL_FRIO_IDS continua
-                 funcionando sem precisar trocar esse nome. -->
+                 funcionando sem precisar trocar esse nome. Eyebrow "FEITO PRA" virou título de
+                 verdade em 26/10/2026 (ETAPA B2, pedido do Igor) -- chips inalterados. -->
             <section id="paraQuemE" class="py-16 sm:py-24 border-t section-line text-center">
-                <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">FEITO PRA</p>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Feito pra quem trabalha com vídeo.</h2>
                 <div class="flex flex-wrap items-center justify-center gap-2.5 mt-6 max-w-2xl mx-auto">
                     <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Clipadores</span>
                     <span class="px-4 py-2 rounded-full bg-card-soft border border-slate-800 text-sm text-slate-300">Social medias</span>
@@ -520,7 +544,9 @@
                 </div>
             </section>
 
-            <!-- PROCESSO -->
+            <!-- PROCESSO (26/10/2026, ETAPA B2, pedido do Igor -- "copy final do site": os 3
+                 passos ganharam texto novo e o bloco de fechamento que havia depois deles saiu --
+                 os 3 cards já fecham a explicação sozinhos). -->
             <section id="comoFunciona" class="py-16 sm:py-24 border-t section-line">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">COMO FUNCIONA</p>
@@ -535,36 +561,25 @@
                             <h3 class="font-bold text-white text-sm sm:text-base">Cole o link</h3>
                         </div>
                         <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
-                        <p class="text-sm leading-relaxed text-slate-400">Cole o link do conteúdo que você quer reutilizar.</p>
+                        <p class="text-sm leading-relaxed text-slate-400">Cole o link do vídeo ou compartilhe direto do app pelo atalho do celular.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">02</span>
-                            <h3 class="font-bold text-white text-sm sm:text-base">Limpa e prepara</h3>
+                            <h3 class="font-bold text-white text-sm sm:text-base">O KLANGO prepara</h3>
                         </div>
-                        <p class="text-sm leading-relaxed text-slate-400">O KLANGO.MP4 processa o arquivo, remove metadados e prepara uma nova versão em MP4.</p>
+                        <p class="text-sm leading-relaxed text-slate-400">Baixa, remove os metadados e gera um MP4 novo, com hash novo.</p>
                     </div>
 
                     <div class="bg-card-soft rounded-2xl p-6 sm:p-7 relative overflow-hidden glow-hover">
                         <div class="absolute top-0 left-0 right-0 h-px bg-[#19D3AE]/40"></div>
                         <div class="flex items-center gap-3 mb-4">
                             <span class="w-8 h-8 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE] text-[13px] font-extrabold">03</span>
-                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe e publique</h3>
+                            <h3 class="font-bold text-white text-sm sm:text-base">Baixe e edite</h3>
                         </div>
-                        <!-- 22/10/2026 (pedido do Igor, revisão de copy): "editar e adaptar"
-                             aparecia quase igual em mais 2 lugares da página (Hero, FAQ) -- aqui
-                             vira "leve pro seu editor e publique do seu jeito", mesmo sentido, sem
-                             repetir a mesma combinação de palavras pela 3ª vez na mesma página. -->
-                        <p class="text-sm leading-relaxed text-slate-400">Baixe o arquivo e leve pro seu editor — publique do seu jeito.</p>
-                    </div>
-                </div>
-
-                <div class="mt-5 bg-card rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <div>
-                        <h3 class="font-bold text-white">Agora é com você.</h3>
-                        <p class="text-sm leading-relaxed text-slate-400 mt-1">Pegue o vídeo preparado, faça os ajustes que quiser e publique no seu próprio estilo.</p>
+                        <p class="text-sm leading-relaxed text-slate-400">Baixe com o nome que você escolheu e leve pro seu editor.</p>
                     </div>
                 </div>
             </section>
