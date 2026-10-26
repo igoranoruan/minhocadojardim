@@ -22,12 +22,35 @@ def test_hero_aprovado():
     # Linha de preço nova, com "ver planos" como link de texto (reaproveita irParaMeuPlano()).
     assert "5 vídeos grátis por semana · sem cartão ·" in html
 
-    # Animação: <source> apontam pros nomes finais pedidos pelo Igor (arquivos ainda não anexados
-    # neste ambiente -- ver relato da etapa -- mas o HTML já está pronto pra quando chegarem).
-    assert "/static/klango_rodape_animado.mp4" in html
-    assert "/static/klango_rodape_animado_transparente.webm" in html
-    # poster segue sendo a mascote (nunca uma <img> solta exibindo a foto no hero)
-    assert 'poster="/static/mascote-video.jpg"' in html
+    # Animação do topo: arquivos definitivos anexados pelo Igor (commit e77ab46).
+    assert "/static/klango_hero.mp4" in html
+    assert 'poster="/static/klango_hero_poster.jpg"' in html
+
+
+def test_assets_antigos_da_mascote_nao_tem_mais_referencia():
+    """26/10/2026 (ETAPA A): as fotos/animação antigas da mascote (topo, Lote, modal de pagamento)
+    foram trocadas pelas novas ilustrações/animações no estilo do rodapé -- os arquivos antigos
+    continuam em static/ (não apagados, por pedido do Igor), mas nenhuma referência a eles pode
+    sobrar no HTML/JS servido."""
+    html = _html()
+    assert "mascote-video.jpg" not in html
+    assert "mascote-lote.jpg" not in html
+    assert "mascote-pix.jpg" not in html
+    assert "mascote-cartao.jpg" not in html
+    assert "klango_rodape_animado" not in html
+
+
+def test_secao_lote_usa_animacao_em_vez_da_foto_estatica():
+    html = _html()
+    assert "/static/klango_lote.mp4" in html
+    assert 'poster="/static/klango_lote_poster.jpg"' in html
+    assert 'aria-label="Animação: vários vídeos baixados em ZIP"' in html
+
+
+def test_modal_de_pagamento_usa_as_novas_ilustracoes():
+    html = _html()
+    assert 'src="/static/klango_pix.jpg"' in html
+    assert '/static/klango_pix.jpg" : "/static/klango_cartao.jpg"' in html
 
 
 def test_planos_conforme_especificacao():

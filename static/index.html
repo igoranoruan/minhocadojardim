@@ -65,6 +65,22 @@
             .hero-title { font-size: 1.875rem; line-height: 1.1; }
         }
 
+        /* 26/10/2026 (ETAPA A, pedido do Igor): as 2 animações de marca (topo e Lote) são
+           autoplay/muted/loop -- em iPhone no modo de economia de bateria o Safari ainda desenha um
+           botão de play nativo por cima enquanto o vídeo não começa a tocar de fato; como o vídeo já
+           toca sozinho (ou fica na capa/poster, nunca em branco), esse botão só confunde. Escondido
+           via CSS, sem mexer em nenhum atributo do <video> (autoplay/muted/playsinline continuam
+           lá, inclusive pra quando a economia de bateria permitir o autoplay). */
+        video::-webkit-media-controls-start-playback-button { display: none !important; }
+        video::-webkit-media-controls { display: none !important; }
+
+        /* 26/10/2026 (ETAPA A, pedido do Igor, acessibilidade): quem ativou "Reduzir movimento" no
+           sistema operacional não deve ver as 2 animações de marca rodando em loop -- ficam paradas
+           na primeira capa (poster), que já é uma imagem estática representativa. Feito via JS
+           (pausarVideosSeReducedMotion(), chamada no DOMContentLoaded) em vez de CSS, porque
+           autoplay/loop são comportamento do <video>, não de animação CSS -- só .pause() garante que
+           o vídeo realmente pare de rodar. */
+
         /* ---- Direção visual final: grid discreto + glow ambiental de profundidade ----
            Camadas puramente decorativas (position: fixed, z-index: 0, pointer-events: none),
            atrás de todo o conteúdo real (.klango-content, z-index: 1). Não alteram DOM
@@ -347,18 +363,18 @@
                          controles, com a foto da mascote como pôster/fallback enquanto o navegador
                          não consegue tocar o vídeo (a <img> antiga da mascote saiu daqui, só segue
                          como poster=). No mobile (sem grid de 2 colunas) ela cai pro final, depois dos
-                         chips, exatamente a ordem pedida. AINDA PENDENTE: o Igor precisa anexar os 2
-                         arquivos (klango_rodape_animado.mp4 + a versão .webm transparente) -- os
-                         <source> abaixo já apontam pro nome final deles em /static/; assim que os
-                         arquivos chegarem, basta salvá-los em static/ com esse nome exato, sem
-                         precisar tocar neste HTML de novo. Até lá, nenhum <source> carrega e o
-                         `poster` (mascote-video.jpg) continua aparecendo normalmente -- nunca fica em
-                         branco. -->
+                         chips, exatamente a ordem pedida. Arquivo definitivo (klango_hero.mp4 +
+                         klango_hero_poster.jpg), anexado pelo Igor no commit e77ab46 -- aspect-ratio
+                         fixo evita o "pulo" de layout enquanto o vídeo carrega; o botão de play nativo
+                         do iPhone (modo economia de bateria) é escondido via CSS (ver <style>
+                         video::-webkit-media-controls-start-playback-button); com
+                         prefers-reduced-motion:reduce o vídeo fica pausado na primeira capa (ver
+                         pausarVideosSeReducedMotion()). -->
                     <div class="heroVenda mt-6 lg:mt-0 max-w-xl mx-auto sm:mx-0 lg:max-w-none">
                         <video class="w-full h-auto rounded-xl select-none" autoplay muted playsinline loop
-                            poster="/static/mascote-video.jpg" aria-label="Animação do KLANGO.MP4">
-                            <source src="/static/klango_rodape_animado_transparente.webm" type="video/webm">
-                            <source src="/static/klango_rodape_animado.mp4" type="video/mp4">
+                            disablepictureinpicture style="aspect-ratio:1440/528"
+                            poster="/static/klango_hero_poster.jpg" aria-label="Animação do KLANGO.MP4">
+                            <source src="/static/klango_hero.mp4" type="video/mp4">
                         </video>
                     </div>
                 </div>
@@ -583,8 +599,17 @@
                          ("Demonstração ilustrativa.") pra basicamente o mesmo aviso. -->
                     <p class="text-center text-[13px] text-slate-600 mt-5 max-w-md mx-auto">Exemplo ilustrativo.</p>
                     <div class="mt-8">
-                        <img src="/static/mascote-lote.jpg" alt="Mascote do KLANGO.MP4 com vários arquivos MP4 processados, prontos para baixar em ZIP"
-                            class="w-full h-auto rounded-xl select-none" draggable="false">
+                        <!-- 26/10/2026 (ETAPA A, pedido do Igor): troca da foto estática da mascote
+                             pela mesma animação de marca usada no topo (arquivo próprio da seção:
+                             klango_lote.mp4/klango_lote_poster.jpg, anexados no commit e77ab46) --
+                             mesmas propriedades do vídeo do hero (autoplay mudo/loop, aspect-ratio
+                             fixo pra não pular layout, play button nativo do iPhone escondido via
+                             CSS, pausa com prefers-reduced-motion). -->
+                        <video class="w-full h-auto rounded-xl select-none" autoplay muted playsinline loop
+                            disablepictureinpicture style="aspect-ratio:1440/528"
+                            poster="/static/klango_lote_poster.jpg" aria-label="Animação: vários vídeos baixados em ZIP">
+                            <source src="/static/klango_lote.mp4" type="video/mp4">
+                        </video>
                     </div>
                 </div>
             </section>
@@ -1795,7 +1820,12 @@ https://..."></textarea>
                              04/10/2026, ajuste fino: tamanho reduzido ~10% (h-36/w-36 -> h-32/w-32)
                              a pedido do Igor, só pra dar mais respiro no checkout mobile -- mesma
                              posição, mesma arte, mesma proporção (object-contain preserva). -->
-                        <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt=""
+                        <!-- 26/10/2026 (ETAPA A, pedido do Igor): troca das fotos antigas da
+                             mascote (mascote-pix.jpg/mascote-cartao.jpg) pelas novas ilustrações no
+                             estilo do rodapé (klango_pix.jpg/klango_cartao.jpg, mesmo tamanho
+                             700x570, anexadas no commit e77ab46) -- só os nomes dos arquivos mudaram,
+                             nenhuma lógica de pagamento/troca de método foi tocada. -->
+                        <img id="modalMascoteImg" src="/static/klango_pix.jpg" alt=""
                             class="w-full sm:w-32 h-32 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
                     </div>
 
@@ -2057,7 +2087,19 @@ https://..."></textarea>
         aplicarVisibilidadeComentarios();
         if (MOSTRAR_COMENTARIOS) carregarComentarios();
         centralizarCarrosselPlanos();
+        pausarVideosSeReducedMotion();
     });
+
+    // 26/10/2026 (ETAPA A, pedido do Igor, acessibilidade): quem ativou "Reduzir movimento" no
+    // sistema operacional não deve ver as 2 animações de marca (topo e Lote) rodando em loop --
+    // ficam paradas na primeira capa (poster), que já é uma imagem estática representativa. Só
+    // pausa os <video> (nunca remove/troca o poster nem mexe no autoplay/loop dos navegadores que
+    // não respeitam essa preferência); roda uma vez no carregamento, não precisa de listener de
+    // mudança (a preferência quase nunca muda com a página já aberta).
+    function pausarVideosSeReducedMotion() {
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        document.querySelectorAll("video").forEach((v) => v.pause());
+    }
 
     // Carrossel de Planos no mobile (20/10/2026, pedido do Igor): centraliza o card Mensal ao
     // carregar a página, deixando as pontas do Semanal/VIP Batch visíveis dos dois lados (ver
@@ -3624,7 +3666,7 @@ https://..."></textarea>
         // Troca a imagem da mascote junto com o método (ver comentário no <img id="modalMascoteImg">).
         const mascoteImgEl = document.getElementById("modalMascoteImg");
         if (mascoteImgEl) {
-            mascoteImgEl.src = tipo === "pix" ? "/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg";
+            mascoteImgEl.src = tipo === "pix" ? "/static/klango_pix.jpg" : "/static/klango_cartao.jpg";
         }
 
         await criarPaymentEMontarBrick(tipo);
