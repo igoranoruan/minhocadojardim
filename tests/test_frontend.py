@@ -161,10 +161,30 @@ def test_planos_conforme_especificacao():
     assert "R$ 14,90" in html and "R$ 27,90" in html and "R$ 47,90" in html
     # 20/10/2026 (pedido do Igor, 2ª rodada do mesmo dia): cota diária revista pra manter Semanal <
     # Mensal < VIP Batch também no número diário (não só no teto de lote).
-    assert "7 gerações/dia" in html    # Semanal
-    assert "10 gerações/dia" in html   # Mensal
-    assert "15 gerações/dia" in html   # VIP Batch
+    # 26/10/2026 (ETAPA B3, pedido do Igor -- "copy final do site"): "gerações" (jargão) virou
+    # "vídeos" nos textos visíveis dos Planos -- confirmado antes no backend (services/plans.py:
+    # "Cada vídeo processado consome 1 geração"; áudio tem cota própria, separada, em
+    # services/audio_usage.py) que a troca não é enganosa.
+    assert "7 vídeos/dia" in html    # Semanal
+    assert "10 vídeos/dia" in html   # Mensal
+    assert "15 vídeos/dia" in html   # VIP Batch
     assert "ilimitado" not in html.lower()  # nenhum plano é ilimitado
+
+    # Itens dos Planos reescritos na ETAPA B3.
+    assert "Remoção de metadados e hash novo" in html
+    assert "Lotes de até 7 vídeos, 3 lotes por semana" in html
+    assert "Lotes de até 10 vídeos, 5 lotes por semana" in html
+    assert "Lotes de até 15 vídeos, sem limite semanal de lotes" in html
+    assert "Pra uma semana de muito volume." in html
+    assert "Pra quem posta toda semana." in html
+    assert "Pra quem processa lote todo dia." in html
+    assert ">Escolher Semanal<" in html
+    assert ">Quero o Mensal<" in html
+    assert ">Quero o VIP Batch<" in html
+    assert (
+        "Pagamento único no Pix ou cartão · sem renovação automática · acesso liberado assim que o pagamento confirma."
+        in html
+    )
 
     # Os valores antigos (pré-Etapa 4.1) não podem ter sobrado em nenhum lugar da página.
     assert "10 downloads/dia" not in html
@@ -176,6 +196,76 @@ def test_planos_conforme_especificacao():
     # compra), então a garantia verificável aqui é: "Downloads em lote" aparece exatamente uma vez
     # por plano pago, nenhuma a mais — o que também comprova que o Free não ganhou a menção.
     assert html.count("Downloads em lote") == 3
+
+
+def test_faq_reduzido_a_12_perguntas_na_ordem_certa():
+    """26/10/2026 (ETAPA B3, pedido do Igor -- "copy final do site"): FAQ reduzido de 19 perguntas
+    pra 12 sempre visíveis (nesta ordem exata) + 2 em "Ver mais perguntas"."""
+    html = _html()
+    inicio = html.index('<section id="faq"')
+    fim = html.index("</section>", inicio)
+    faq_html = html[inicio:fim]
+
+    perguntas_em_ordem = [
+        "O que é o KLANGO.MP4 e como funciona?",
+        "Quais plataformas são compatíveis?",
+        "O que posso fazer no plano grátis?",
+        "Qual plano devo escolher?",
+        "Como funciona o lote?",
+        "Posso escolher o nome dos arquivos?",
+        "Funciona no celular? Preciso instalar algo?",
+        "O KLANGO pede acesso às minhas redes sociais?",
+        "Meus vídeos ficam guardados? Por quanto tempo?",
+        "O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?",
+        "Como funcionam o pagamento e a validade do plano?",
+        "E se der problema no pagamento ou no vídeo?",
+    ]
+    posicoes = [faq_html.index(p) for p in perguntas_em_ordem]
+    assert posicoes == sorted(posicoes)
+
+    # "Ver mais perguntas": só as 2 que sobraram desta rodada.
+    assert "O que muda tecnicamente no arquivo?" in faq_html
+    assert "Por que o YouTube demora mais?" in faq_html
+
+    # Perguntas antigas que saíram do FAQ (não cobertas pelas 12 + 2 acima).
+    for pergunta_antiga in (
+        "Por que usar o KLANGO.MP4 em vez de uma ferramenta gratuita?",
+        "Quantas gerações grátis eu tenho?",
+        "Preciso instalar alguma coisa?",
+        "Funciona no celular?<i",  # a versão antiga, sem "Preciso instalar algo?" junto
+        "Meus dados e minhas contas ficam seguros?",
+        "O que acontece com o vídeo depois de pronto?",
+        "O KLANGO.MP4 armazena meus vídeos?",
+        "O pagamento é único ou tem renovação automática?",
+        "O plano expira?",
+        "Posso pagar com PIX?",
+        "Posso pagar com cartão?",
+        "Posso ser reembolsado?",
+        "Como funciona o processamento em lote?",
+        "Como funciona o acesso?",
+    ):
+        assert pergunta_antiga not in faq_html
+
+
+def test_comunidade_movida_pra_depois_do_faq_com_texto_novo():
+    html = _html()
+    pos_faq = html.index('<section id="faq"')
+    pos_comunidade = html.index('<section id="comentarios"')
+    pos_cta = html.index('<section id="ctaFinal"')
+    assert pos_faq < pos_comunidade < pos_cta
+
+    assert "Comunidade KLANGO.MP4" in html
+    assert "Usa o KLANGO na sua rotina? Conte como foi. Seu comentário pode aparecer aqui." in html
+    assert "Estamos começando por aqui" not in html
+    assert "O que quem usa está dizendo." not in html
+    assert "Primeiros usuários do KLANGO.MP4" not in html
+
+
+def test_chamada_final_aprovada():
+    html = _html()
+    assert "Teste agora com 5 vídeos grátis por semana." in html
+    assert "Um por vez, sem cartão." in html
+    assert "Comece agora com 5 vídeos grátis por semana." not in html
 
 
 def test_sem_promessa_de_burlar_plataformas():

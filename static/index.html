@@ -649,11 +649,11 @@
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 14,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">7 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>7 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 7 vídeos, 3/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>7 vídeos/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">Lotes de até 7 vídeos, 3 lotes por semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Extração de áudio (MP3) incluída</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 49 gerações no período</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Remoção de metadados e hash novo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 49 vídeos no período</li>
                         </ul>
                         <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): frase de
                              posicionamento -- ajuda a responder "qual desses planos é pra mim" sem
@@ -665,8 +665,8 @@
                              "...com volume") -- cada uma agora aponta pra um motivo DIFERENTE de
                              escolher aquele plano específico. Botão também deixou de só descrever o
                              plano ("Acesso semanal") e virou uma ação em 1ª pessoa, mais direta. -->
-                        <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pra testar sem compromisso.</p>
-                        <button onclick="abrirModalPagamento('weekly')" class="mt-3 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Quero testar</button>
+                        <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pra uma semana de muito volume.</p>
+                        <button onclick="abrirModalPagamento('weekly')" class="mt-3 w-full h-12 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-colors">Escolher Semanal</button>
                     </div>
 
                     <div id="planoMensalCard" class="shrink-0 w-[82%] md:w-auto snap-center bg-card rounded-3xl p-7 flex flex-col border-[#19D3AE]/70 ring-1 ring-[#19D3AE]/50 relative glow-hover">
@@ -686,18 +686,18 @@
                              0,93. -->
                         <div class="text-[13px] font-bold text-[#19D3AE] mt-1">menos de R$ 1 por dia</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 10 vídeos, 5/semana</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>10 vídeos/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">Lotes de até 10 vídeos, 5 lotes por semana</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Extração de áudio (MP3) incluída</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Limpeza de metadados e hash</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 300 gerações no período</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Remoção de metadados e hash novo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-[#19D3AE] mt-0.5"></i>Até 300 vídeos no período</li>
                         </ul>
-                        <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pro seu ritmo de produção de toda semana.</p>
+                        <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pra quem posta toda semana.</p>
                         <!-- 26/10/2026 (pedido do Igor): reforça "pagamento único, sem mensalidade
                              automática" -- real (PIX/cartão via Mercado Pago, sem recorrência; ver
-                             FAQ "O pagamento é único ou tem renovação automática?"). -->
+                             também a pergunta do FAQ sobre pagamento e validade do plano). -->
                         <p class="mt-1 text-[13px] text-slate-600">Pagamento único — sem mensalidade automática.</p>
-                        <button onclick="abrirModalPagamento('monthly')" class="mt-3 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Quero esse</button>
+                        <button onclick="abrirModalPagamento('monthly')" class="mt-3 w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110">Quero o Mensal</button>
                     </div>
 
                     <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 4 da revisão de UX): âmbar trocado
@@ -713,16 +713,20 @@
                         <div class="mt-3 text-4xl font-extrabold text-white">R$ 47,90</div>
                         <div class="text-[13px] text-slate-500 mt-1">30 dias</div>
                         <ul class="mt-6 space-y-3 text-sm text-slate-300 md:flex-1">
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>15 gerações/dia</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">até 15 vídeos, sem limite semanal</span></span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>15 vídeos/dia</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i><span>Downloads em lote, direto do Instagram, TikTok, Pinterest e YouTube<span class="block text-[13px] text-slate-500">Lotes de até 15 vídeos, sem limite semanal de lotes</span></span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Extração de áudio (MP3) incluída</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Limpeza de metadados e hash</li>
-                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Até 450 gerações no período</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Remoção de metadados e hash novo</li>
+                            <li class="flex gap-2"><i class="fa-solid fa-check text-violet-400 mt-0.5"></i>Até 450 vídeos no período</li>
                         </ul>
-                        <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pra quem processa lote todo dia e não quer pensar em limite.</p>
+                        <p class="mt-4 text-[15px] leading-[1.45] text-slate-500">Pra quem processa lote todo dia.</p>
                         <button onclick="abrirModalPagamento('vip_batch')" class="mt-3 w-full h-12 rounded-xl bg-violet-400 hover:bg-violet-300 text-slate-950 font-extrabold text-sm transition-colors">Quero o VIP Batch</button>
                     </div>
                 </div>
+                <!-- 26/10/2026 (ETAPA B3, pedido do Igor -- "copy final do site"): linha de confiança
+                     sobre pagamento/acesso, abaixo dos 3 cards -- reforça o que já é real em outros
+                     pontos do fluxo (modal de pagamento, FAQ). -->
+                <p class="text-center text-[13px] text-slate-500 mt-6">Pagamento único no Pix ou cartão · sem renovação automática · acesso liberado assim que o pagamento confirma.</p>
                 <!-- 02/10/2026 (3ª rodada): "Nomes personalizados por vídeo" (2ª rodada) foi
                      considerado fraco demais pelo Igor -- não comunica "vale a pena pagar". Virou
                      "Até X gerações no período", calculado direto da própria cota já exibida no
@@ -1157,38 +1161,122 @@ https://..."></textarea>
                 </div>
             </section>
 
-            <!-- COMENTÁRIOS (05/10/2026, aprovação do CÉREBRO): área pública -- qualquer visitante
-                 LÊ (GET /api/comments, sem login), só COMENTA quem tem sessão autenticada E plano
-                 pago VIGENTE agora (routes/comments.py -> services/comments.py::create_comment;
-                 se o plano expirar depois, o comentário já publicado continua). Os 5 comentários
-                 "Exemplo" (is_example=true, inseridos pela migration 0009, pra seção não nascer
-                 vazia) levam um selo "Exemplo" visível -- NUNCA apresentados como depoimento real
-                 (mesma régua de honestidade do resto do site, ver services/stats.py). Formulário
-                 sempre visível; quando o visitante não tem plano pago vigente, fica BLOQUEADO com
-                 um aviso em vez de escondido (mesmo espírito do "Lote na Prática": mostra que o
-                 recurso existe). Nome/corpo são renderizados só via textContent (nunca innerHTML
-                 com o texto do usuário) -- são as primeiras strings de visitante publicadas no
-                 site, então nunca confiadas como HTML. -->
-            <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): título/subtítulo viram
-                 dinâmicos (ver carregarComentarios) -- enquanto NENHUM comentário real aprovado
-                 existir, mostram "Primeiros usuários do KLANGO.MP4" (honesto, sem fingir
-                 comunidade que ainda não existe); assim que houver pelo menos 1, voltam sozinhos
-                 pro texto normal "O que quem usa está dizendo.". Texto inicial no HTML já é o
-                 estado vazio (mesma cautela de "statsProcessados": nunca mostrar por um instante
-                 um estado que pode não ser verdade; JS corrige assim que a resposta real chega). -->
-            <!-- Etapa 1 da revisão de UX/copy (19/10/2026, decisão do Igor, dossiê item 3.10): seção
-                 escondida (motivo: mistura elogio curto com reclamação pública, e mostra "Estamos
-                 começando por aqui..." pra quem ainda não viu nenhum comentário real). NADA de
+            <!-- FAQ (26/10/2026, ETAPA B3, pedido do Igor -- "copy final do site": reduzida de 19
+                 perguntas pra 12 sempre visíveis + 2 em "Ver mais perguntas", na ordem exata que o
+                 Igor pediu -- respostas juntadas a partir das perguntas antigas, sem inventar
+                 informação nova; nenhuma pergunta/resposta nova fora as 2 que o próprio Igor
+                 escreveu (itens 3 e 6, abaixo). -->
+            <section id="faq" class="py-16 sm:py-24 border-t section-line">
+                <div class="max-w-3xl mx-auto">
+                    <div class="text-center mb-10">
+                        <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Perguntas frequentes</h2>
+                    </div>
+
+                    <div class="space-y-3">
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que é o KLANGO.MP4 e como funciona?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Baixa vídeos de plataformas compatíveis e prepara uma nova versão em MP4, com limpeza de metadados, pronto pra entrar na sua edição. É só colar o link do vídeo, escolher o nome do arquivo e baixar o resultado.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
+                        </details>
+                        <!-- Item 3: texto exato passado pelo Igor. -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que posso fazer no plano grátis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">5 vídeos por semana, um por vez, sem cartão. Lote e áudio (MP3) são dos planos pagos.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Qual plano devo escolher?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Depende do seu ritmo: o Semanal é pra uma semana de muito volume, o Mensal é pra quem posta toda semana, e o VIP Batch é pra quem processa lote todo dia.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Nos planos pagos, você pode enviar vários vídeos de uma vez, dar um nome diferente para cada arquivo e baixar os resultados todos de uma vez ou individualmente, como preferir. A quantidade de vídeos por operação e por semana varia conforme o plano contratado.</div>
+                        </details>
+                        <!-- Item 6: texto exato passado pelo Igor. -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso escolher o nome dos arquivos?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. Você digita o nome antes de baixar; no lote, um nome por vídeo. Se deixar em branco, o arquivo sai com um nome automático.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Funciona no celular? Preciso instalar algo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não precisa instalar nada — o KLANGO.MP4 funciona direto pelo navegador, no computador ou no celular. No celular, dá pra adicionar um atalho que recebe o link compartilhado direto do app (TikTok, Instagram etc.), sem precisar copiar e colar manualmente — também opcional.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO pede acesso às minhas redes sociais?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 nunca pede login nem senha das suas redes sociais — só o link público do vídeo que você quer baixar. O acesso ao próprio KLANGO é feito por código enviado ao seu e-mail, sem senha cadastrada.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Meus vídeos ficam guardados? Por quanto tempo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo processado fica disponível para download por tempo limitado, por até 30 minutos depois de pronto. Após esse período, o acesso ao download expira e será necessário processar o vídeo novamente para baixá-lo. Não usamos seu vídeo para nenhum outro fim.</div>
+                        </details>
+                        <!-- Item 10: resposta atual, sem mudar (pedido explícito do Igor). -->
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funcionam o pagamento e a validade do plano?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão, processado pelo Mercado Pago — não existe cobrança automática nem renovação. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano); depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">E se der problema no pagamento ou no vídeo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Em caso de cobrança indevida ou problema comprovado no processamento, entre em contato em <strong class="text-slate-200">contato@klango.site</strong> para solicitar o reembolso. Cada caso é avaliado individualmente.</div>
+                        </details>
+                    </div>
+
+                    <!-- "Ver mais perguntas": só as 2 que o Igor pediu nesta etapa (alternarFaqMais(),
+                         perto de centralizarCarrosselPlanos() no <script>). -->
+                    <div id="faqMais" class="hidden space-y-3 mt-3">
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que muda tecnicamente no arquivo?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo não é só copiado: removemos todo metadado original do arquivo (dados EXIF, informações de criação, capítulos) via FFmpeg, e o resultado final sempre ganha um hash (SHA-256) novo, diferente do arquivo original. Quando o vídeo já está num formato compatível, reaproveitamos os dados sem perda de qualidade; quando não está, recodificamos para gerar uma versão nova. Em ambos os casos, o que sai é sempre um MP4 novo, com metadado limpo, pronto para edição.</div>
+                        </details>
+                        <details class="faq-item bg-card rounded-2xl group">
+                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que o YouTube demora mais?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
+                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O YouTube tem uma camada extra de proteção contra automação, então o download de lá passa por uma conexão adicional antes de chegar até você — por isso pode levar até 2 minutos, bem mais que TikTok, Instagram e Pinterest. É normal: não significa erro, só aguarde na tela de processamento.</div>
+                        </details>
+                    </div>
+
+                    <div class="mt-5 text-center">
+                        <button type="button" id="faqToggleBtn" onclick="alternarFaqMais()" class="text-sm font-bold text-[#19D3AE] hover:underline inline-flex items-center gap-1.5 mx-auto">
+                            <span>Ver mais perguntas</span><i class="fa-solid fa-chevron-down text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMUNIDADE (05/10/2026, aprovação do CÉREBRO; reposicionada em 26/10/2026, ETAPA B3,
+                 pedido do Igor -- "copy final do site": vem agora depois do FAQ, não antes, e
+                 título/texto deixam de alternar entre "primeiros usuários"/"o que quem usa diz" --
+                 vira 1 texto fixo que funciona nos dois estados, sem prometer comunidade que ainda
+                 não existe nem soar vazio quando já houver comentários reais). Área pública --
+                 qualquer visitante LÊ (GET /api/comments, sem login), só COMENTA quem tem sessão
+                 autenticada E plano pago VIGENTE agora (routes/comments.py ->
+                 services/comments.py::create_comment; se o plano expirar depois, o comentário já
+                 publicado continua). Os 5 comentários "Exemplo" (is_example=true, inseridos pela
+                 migration 0009, pra seção não nascer vazia) levam um selo "Exemplo" visível -- NUNCA
+                 apresentados como depoimento real (mesma régua de honestidade do resto do site, ver
+                 services/stats.py). Formulário sempre visível; quando o visitante não tem plano
+                 pago vigente, fica BLOQUEADO com um aviso em vez de escondido (mesmo espírito do
+                 "Lote na Prática": mostra que o recurso existe). Nome/corpo são renderizados só via
+                 textContent (nunca innerHTML com o texto do usuário) -- são as primeiras strings de
+                 visitante publicadas no site, então nunca confiadas como HTML.
+
+                 Etapa 1 da revisão de UX/copy (19/10/2026, decisão do Igor, dossiê item 3.10): seção
+                 escondida (motivo: mistura elogio curto com reclamação pública). NADA de
                  backend/tabela/endpoint foi removido ou alterado -- só a constante MOSTRAR_COMENTARIOS
-                 (ver o bloco de script mais abaixo) controla a visibilidade; religar é só trocar pra true.
-                 "hidden" aqui no HTML é só o estado inicial sem flash de conteúdo -- aplicarVisibilidadeComentarios()
-                 no JS é quem de fato decide, e cuida também dos dois links de nav (header/rodapé). -->
+                 (ver o bloco de script mais abaixo) controla a visibilidade; religar é só trocar pra
+                 true. "hidden" aqui no HTML é só o estado inicial sem flash de conteúdo --
+                 aplicarVisibilidadeComentarios() no JS é quem de fato decide, e cuida também dos
+                 dois links de nav (header/rodapé). -->
             <section id="comentarios" class="py-16 sm:py-24 border-t section-line hidden">
                 <div class="max-w-3xl mx-auto text-center">
                     <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">COMUNIDADE</p>
-                    <h2 id="comentariosTitulo" class="text-2xl sm:text-3xl font-extrabold text-white">Primeiros usuários do KLANGO.MP4</h2>
-                    <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos. -->
-                    <p id="comentariosSubtitulo" class="mt-3 text-sm leading-relaxed text-slate-400">Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.</p>
+                    <h2 id="comentariosTitulo" class="text-2xl sm:text-3xl font-extrabold text-white">Comunidade KLANGO.MP4</h2>
+                    <p id="comentariosSubtitulo" class="mt-3 text-sm leading-relaxed text-slate-400">Usa o KLANGO na sua rotina? Conte como foi. Seu comentário pode aparecer aqui.</p>
                 </div>
 
                 <div class="max-w-2xl mx-auto mt-10">
@@ -1218,159 +1306,16 @@ https://..."></textarea>
                 </div>
             </section>
 
-            <!-- FAQ -->
-            <section id="faq" class="py-16 sm:py-24 border-t section-line">
-                <div class="max-w-3xl mx-auto">
-                    <div class="text-center mb-10">
-                        <p class="text-[#19D3AE] text-[13px] font-bold uppercase tracking-wider mb-3">DÚVIDAS</p>
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Perguntas frequentes</h2>
-                    </div>
-
-                    <div class="space-y-3">
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que é o KLANGO.MP4?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <!-- 22/10/2026 (pedido do Igor, revisão de copy): "levar ao seu editor
-                                 e adaptar" repetia a mesma combinação de palavras já usada no Hero
-                                 e em "Como funciona" -- trocado por "pronto pra entrar na sua
-                                 edição", mesmo sentido, vocabulário diferente. -->
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Baixa vídeos de plataformas compatíveis e prepara uma nova versão em MP4, com limpeza de metadados, pronto pra entrar na sua edição.</div>
-                        </details>
-                        <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): nova -- a
-                             objeção mais óbvia de quem chega na página ("por que pagar se existe
-                             grátis?") não tinha resposta em lugar nenhum. Sem atacar concorrente,
-                             sem prometer bypass/detecção -- só o que o produto realmente entrega a
-                             mais (preparo do arquivo, lote nos planos pagos). -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que usar o KLANGO.MP4 em vez de uma ferramenta gratuita?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <!-- 22/10/2026 (pedido do Igor, revisão de copy): mesma troca de
-                                 vocabulário do item acima, pra não repetir "editar e adaptar" uma
-                                 4ª vez na mesma página. -->
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Ferramentas gratuitas geralmente resolvem apenas o download. O KLANGO.MP4 foi feito para quem quer ir além: um arquivo novo, sem os metadados da origem, já pronto pra entrar na sua edição. Nos planos pagos, você também pode processar vários vídeos em lote, sem precisar repetir o processo um por um.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quais plataformas são compatíveis?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">TikTok, Instagram Reels, YouTube Shorts e Pinterest são as plataformas contempladas no fluxo atual. A disponibilidade pode mudar conforme as plataformas alteram seus sistemas.</div>
-                        </details>
-                        <!-- 02/10/2026: movida pra cá (antes vinha lá embaixo, depois das perguntas
-                             de pagamento) -- é uma dúvida sobre confiança/risco do produto, então faz
-                             mais sentido logo ao lado de "quais plataformas são compatíveis". -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 garante que meu conteúdo não será identificado pelas plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 prepara o arquivo para reutilização e edição, mas não garante nem promete que plataformas deixarão de identificar ou classificar um conteúdo.</div>
-                        </details>
-                        <!-- 02/10/2026: nova -- a seção de Planos e o resto do FAQ não diziam em
-                             lugar nenhum o que o plano Free oferece. -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Quantas gerações grátis eu tenho?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sem pagar nada, você tem 5 gerações por semana (sem downloads em lote). Os planos pagos aumentam esse limite e liberam o processamento em lote.</div>
-                        </details>
-                    </div>
-
-                    <!-- 20/10/2026 (pedido do Igor): FAQ tinha 16 perguntas empilhadas, ocupando
-                         "muita parte do site" na rolagem -- as 5 primeiras acima (intro, objeção de
-                         preço, plataformas, confiança/detecção, cota grátis) são as mais relevantes
-                         pra decisão de compra e ficam sempre visíveis; o resto mora aqui, escondido
-                         até o clique em "Ver mais perguntas" (alternarFaqMais(), perto de
-                         centralizarCarrosselPlanos() no <script>). -->
-                    <div id="faqMais" class="hidden space-y-3 mt-3">
-                        <!-- 26/10/2026 (pedido do Igor -- rodada de conversão): 3 perguntas novas.
-                             "É assinatura?" e "Quais redes funcionam?" já existiam em outras palavras
-                             ("O pagamento é único ou tem renovação automática?" / "Quais plataformas
-                             são compatíveis?", ambas nesta mesma seção) -- não duplicadas aqui. -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Preciso instalar alguma coisa?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Não. O KLANGO.MP4 funciona direto pelo navegador, sem instalar programa nem extensão. No celular, dá pra adicionar um atalho que recebe o link compartilhado direto do app (TikTok, Instagram etc.) — também opcional.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Funciona no celular?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim, o site inteiro funciona no navegador do celular. Você também pode compartilhar o vídeo direto do app (TikTok, Instagram etc.) usando o atalho do KLANGO, sem precisar copiar e colar o link manualmente.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Meus dados e minhas contas ficam seguros?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O KLANGO.MP4 nunca pede login nem senha das suas redes sociais — só o link público do vídeo que você quer baixar. O acesso ao próprio KLANGO é feito por código enviado ao seu e-mail, sem senha cadastrada.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Por que o YouTube demora mais que as outras plataformas?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O YouTube tem uma camada extra de proteção contra automação, então o download de lá passa por uma conexão adicional antes de chegar até você — por isso pode levar até 2 minutos, bem mais que TikTok, Instagram e Pinterest. É normal: não significa erro, só aguarde na tela de processamento.</div>
-                        </details>
-                        <!-- 03/10/2026 (aprovação do CÉREBRO, Etapa 3 da revisão de UX): resposta
-                             trocada de uma descrição vaga ("remoção de metadados e foco em
-                             compatibilidade") por detalhe técnico real e verificado no código antes
-                             de escrever (processor/ffmpeg.py): "-map_metadata -1 -map_chapters -1"
-                             SEMPRE presente nas 2 variantes de comando FFmpeg (remux rápido e
-                             recodificação completa), e um SHA-256 novo sempre calculado sobre o
-                             arquivo de saída (processor/service.py::_sha256_of). NÃO afirma que o
-                             vídeo é sempre recodificado do zero -- isso seria falso (o caminho
-                             rápido faz remux com `-c:v copy`/`-c:a copy` quando os codecs já são
-                             compatíveis, sem perda, mas também sem reencode); a resposta reflete
-                             os dois casos reais, com honestidade técnica. -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo não é só copiado: removemos todo metadado original do arquivo (dados EXIF, informações de criação, capítulos) via FFmpeg, e o resultado final sempre ganha um hash (SHA-256) novo, diferente do arquivo original. Quando o vídeo já está num formato compatível, reaproveitamos os dados sem perda de qualidade; quando não está, recodificamos para gerar uma versão nova. Em ambos os casos, o que sai é sempre um MP4 novo, com metadado limpo, pronto para edição.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O que acontece com o vídeo depois de pronto?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O link de download fica disponível por um tempo limitado depois do processamento. Depois desse período, o link deixa de funcionar e você precisa gerar o vídeo novamente para baixá-lo.</div>
-                        </details>
-                        <!-- 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): nova -- dúvida
-                             de confiança sobre o arquivo em si (a pergunta acima só fala do LINK).
-                             Resposta reflete exatamente o comportamento real (services/usage.py::
-                             get_downloadable_generation bloqueia acesso após RESULT_TTL_SECONDS):
-                             NÃO afirma exclusão física automática do servidor, porque essa parte
-                             ainda não existe (ver config.py, comentário da Etapa 8B.4) -- só o
-                             acesso é bloqueado. Nenhuma promessa que o backend não cumpre hoje. -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O KLANGO.MP4 armazena meus vídeos?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O arquivo processado fica disponível para download por tempo limitado, por até 30 minutos depois de pronto. Após esse período, o acesso ao download expira e será necessário processar o vídeo novamente para baixá-lo. Não usamos seu vídeo para nenhum outro fim.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O pagamento é único ou tem renovação automática?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">O pagamento é único, tanto no PIX quanto no cartão. Não existe cobrança automática nem renovação — o acesso fica ativo pelo período contratado e, se quiser continuar depois, basta fazer uma nova compra.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">O plano expira?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. Cada plano fica ativo pelo período contratado (7 ou 30 dias, dependendo do plano). Depois disso, seu acesso volta para o plano Free até uma nova compra.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com PIX?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O PIX é processado pelo Mercado Pago e o acesso é liberado assim que o pagamento é confirmado.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso pagar com cartão?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sim. O cartão também é um pagamento único, processado pelo Mercado Pago — sem cobrança automática.</div>
-                        </details>
-                        <!-- 02/10/2026: nova -- o fluxo de reembolso existe e é testado, mas não
-                             era mencionado em nenhum lugar visível pro usuário. -->
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Posso ser reembolsado?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Em caso de cobrança indevida ou problema comprovado no processamento, entre em contato em <strong class="text-slate-200">contato@klango.site</strong> para solicitar o reembolso. Cada caso é avaliado individualmente.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o processamento em lote?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Nos planos pagos, você pode enviar vários vídeos de uma vez, dar um nome diferente para cada arquivo e baixar os resultados todos de uma vez ou individualmente, como preferir. A quantidade de vídeos por operação e por semana varia conforme o plano contratado.</div>
-                        </details>
-                        <details class="faq-item bg-card rounded-2xl group">
-                            <summary class="cursor-pointer list-none px-6 py-5 flex items-center justify-between gap-4 text-sm font-bold text-white">Como funciona o acesso?<i class="fa-solid fa-plus text-slate-500 transition-transform"></i></summary>
-                            <div class="px-6 pb-6 text-sm text-slate-400 leading-relaxed">Sem senha. Você informa seu e-mail, recebe um código de 6 dígitos e usa esse código para entrar.</div>
-                        </details>
-                    </div>
-
-                    <div class="mt-5 text-center">
-                        <button type="button" id="faqToggleBtn" onclick="alternarFaqMais()" class="text-sm font-bold text-[#19D3AE] hover:underline inline-flex items-center gap-1.5 mx-auto">
-                            <span>Ver mais perguntas</span><i class="fa-solid fa-chevron-down text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- CTA FINAL (26/10/2026, pedido do Igor -- rodada de conversão): última chamada antes
-                 do rodapé, mesmo texto/número real já usado no Hero (5 vídeos grátis por semana, ver
-                 FAQ "Quantas gerações grátis eu tenho?"). Reaproveita focarFormularioDownload(), a
-                 mesma função do botão "Testar grátis" do Hero -- sem duplicar lógica nova. Fica no
-                 funil frio (SECOES_FUNIL_FRIO_IDS): some pra quem já comprou, igual o resto da
-                 vitrine -- quem já é cliente não precisa ver um CTA de "comece agora". -->
+            <!-- CTA FINAL (26/10/2026, pedido do Igor -- rodada de conversão; texto atualizado em
+                 26/10/2026, ETAPA B3, pedido do Igor -- "copy final do site"): última chamada antes
+                 do rodapé, mesmo número real já usado no Hero e no FAQ (5 vídeos grátis por semana).
+                 Reaproveita focarFormularioDownload(), a mesma função do botão "Testar grátis" do
+                 Hero -- sem duplicar lógica nova. Fica no funil frio (SECOES_FUNIL_FRIO_IDS): some
+                 pra quem já comprou, igual o resto da vitrine -- quem já é cliente não precisa ver
+                 um CTA de "comece agora". -->
             <section id="ctaFinal" class="py-16 sm:py-24 border-t section-line text-center">
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-white max-w-lg mx-auto">Comece agora com 5 vídeos grátis por semana.</h2>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white max-w-lg mx-auto">Teste agora com 5 vídeos grátis por semana.</h2>
+                <p class="mt-3 text-sm text-slate-500">Um por vez, sem cartão.</p>
                 <button type="button" onclick="focarFormularioDownload()" class="mt-7 h-14 px-9 bg-gradient-cyber text-slate-950 font-extrabold rounded-xl transition-all hover:brightness-110 active:scale-[.99] text-sm shadow-[0_10px_30px_rgba(25,211,174,0.22)]">
                     Testar grátis
                 </button>
@@ -2295,23 +2240,18 @@ https://..."></textarea>
         return card;
     }
 
-    // 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): título/subtítulo da seção alternam
-    // entre o estado "primeiros usuários" (nenhum comentário real aprovado ainda) e o normal (pelo
-    // menos 1) -- nunca os dois ao mesmo tempo, nunca lista vazia com o título que promete
-    // depoimentos. GET /api/comments já só devolve approved=true/is_example=false (ver
-    // services/comments.py::list_comments), então "comentarios.length" aqui é exatamente a
-    // contagem que decide qual texto mostrar.
+    // 06/10/2026 (rodada de conversão, aprovação do CÉREBRO): título/subtítulo da seção eram
+    // dinâmicos (alternavam conforme existia ou não comentário real aprovado).
+    // 26/10/2026 (ETAPA B3, pedido do Igor -- "copy final do site"): texto fixo agora, funciona
+    // nos dois estados (não promete comunidade vazia nem soa estranho quando já há comentários) --
+    // função mantida (e ainda chamada por carregarComentarios()) só por segurança, caso volte a
+    // precisar de texto dinâmico; hoje os dois ramos escrevem o mesmo texto.
     function atualizarCabecalhoComentarios(temComentarios) {
         const titulo = document.getElementById("comentariosTitulo");
         const subtitulo = document.getElementById("comentariosSubtitulo");
         if (!titulo || !subtitulo) return;
-        if (temComentarios) {
-            titulo.textContent = "O que quem usa está dizendo.";
-            subtitulo.textContent = "Comentários de quem já processa vídeo com o KLANGO.MP4.";
-        } else {
-            titulo.textContent = "Primeiros usuários do KLANGO.MP4";
-            subtitulo.textContent = "Estamos começando por aqui. Teste o KLANGO.MP4 e conte como foi sua experiência — seu comentário pode aparecer nesta seção.";
-        }
+        titulo.textContent = "Comunidade KLANGO.MP4";
+        subtitulo.textContent = "Usa o KLANGO na sua rotina? Conte como foi. Seu comentário pode aparecer aqui.";
     }
 
     async function carregarComentarios() {
