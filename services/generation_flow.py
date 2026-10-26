@@ -27,6 +27,7 @@ com uma limpeza best-effort (result_storage.delete), sem mascarar o GenerationPe
 original.
 """
 import logging
+import resource
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -55,6 +56,24 @@ logger = logging.getLogger("minhoca")
 # Mesmo limite de services.usage.fail_generation (MAX_ERROR_CODE_LENGTH), reaproveitado aqui só
 # para cortar o nome da exceção com segurança — não é uma regra nova, é o limite que já existe.
 _ERROR_CODE_MAX_LENGTH = 64
+
+
+def _log_pico_memoria(etapa: str, generation_id: int) -> None:
+    """26/10/2026 (pedido do Igor -- relatório de pico de memória, investigação de OOM no lote
+    512Mi do Render): `ru_maxrss` é o pico de RSS do PROCESSO inteiro desde que ele subiu (nunca
+    reseta sozinho, só sobe) -- não é "o pico deste item isolado", mas como o processamento é
+    SEQUENCIAL (um item por vez, ver docstring de processor/service.py) e cada chamada aqui é
+    logada nos dois lados (antes/depois de baixar e antes/depois de processar), qualquer salto no
+    valor entre duas linhas consecutivas do log aponta exatamente qual etapa, de qual item,
+    empurrou o processo pra um novo teto -- é a medição real em produção que o sandbox não
+    consegue fazer sozinho (sem rede pra baixar vídeo de teste de 1min/5min do TikTok/Instagram/
+    YouTube). Em Linux, `ru_maxrss` vem em KB (kilobytes), por isso a divisão por 1024 pra MB.
+    Nunca levanta exceção: é só instrumentação, não pode derrubar a geração em si."""
+    try:
+        pico_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+        logger.info("[MEMORIA] geracao=%s etapa=%s pico_rss_mb=%.1f", generation_id, etapa, pico_mb)
+    except Exception:
+        logger.warning("[MEMORIA] falha ao ler pico de RSS (não afeta a geração)", exc_info=True)
 
 
 @dataclass(frozen=True)
@@ -213,8 +232,10 @@ def _execute_reserved(
                 # plataformas -- ver YtDlpDownloader._apply_youtube_proxy) sem adivinhar a origem
                 # pela URL de novo.
                 on_progress("download", None, platform.value)
+            _log_pico_memoria("antes_download", generation_id)
             download_result = download_video(validated.url)
             download_path = download_result.temp_path
+            _log_pico_memoria("depois_download", generation_id)
 
             def _on_processing_progress(percent: float | None) -> None:
                 if on_progress is not None:
@@ -227,6 +248,7 @@ def _execute_reserved(
             # já que não há etapas intermediárias para medir como no FFmpeg); "image_zip" (carrossel
             # do Instagram, mesma data -- "Todas as fotos, num .zip") é o mesmo caminho de "image",
             # só que processa várias imagens dentro de um .zip em vez de uma única.
+            _log_pico_memoria("antes_processamento", generation_id)
             if download_result.media_type == "image":
                 if on_progress is not None:
                     on_progress("processing", None, platform.value)
@@ -237,6 +259,7 @@ def _execute_reserved(
                 processing_result = process_image_zip(download_result.temp_path)
             else:
                 processing_result = process_video(download_result.temp_path, on_progress=_on_processing_progress)
+            _log_pico_memoria("depois_processamento", generation_id)
             output_path = processing_result.output_path
             output_extension = output_path.suffix.lstrip(".").lower() or "mp4"
 

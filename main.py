@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import APP_NAME, APP_VERSION, settings
-from database.session import dispose_engine
+from database.session import dispose_engine, get_sessionmaker
 from download.errors import DownloadError
 from processor.errors import ProcessorError
 from payments.errors import (
@@ -41,7 +41,7 @@ from routes import (
     webhooks,
 )
 from services.audio_flow import AudioPersistenceError
-from services.audio_usage import AudioBatchNotFoundError, AudioDownloadNotFoundError, AudioUsageError
+from services.audio_usage import AudioBatchNotFoundError, AudioDownloadNotFoundError, AudioUsageError, fail_stale_audio_reservations
 from services.batch_filenames import InvalidFilenameError
 from services.auth import AuthError
 from services.comments import CommentError, CommentNotFoundError
@@ -50,7 +50,13 @@ from services.generation_flow import GenerationPersistenceError
 from services.pinterest_board import PinterestBoardError
 from services.referrals import AlreadyClaimedError, InvalidReferralCodeError, SelfReferralError
 from services.share_queue import InvalidShareTokenError
-from services.usage import BatchNotFoundError, GenerationDownloadNotFoundError, QuotaExceededError, UsageError
+from services.usage import (
+    BatchNotFoundError,
+    GenerationDownloadNotFoundError,
+    QuotaExceededError,
+    UsageError,
+    fail_stale_reservations,
+)
 from utils.anon_cookie import AnonymousCookieMiddleware
 from utils.logging_setup import setup_logging
 from utils.origin import OriginProtectionMiddleware
@@ -60,6 +66,33 @@ logger = logging.getLogger("minhoca")
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
+
+
+# 26/10/2026 (pedido do Igor -- investigação de quedas de memória no lote): fail_stale_reservations
+# e fail_stale_audio_reservations (services/usage.py e services/audio_usage.py) já existiam e já
+# eram chamadas de forma OPORTUNISTA -- a cada nova reserva de QUALQUER usuário (ver
+# _sweep_stale_reservations_best_effort/_sweep_stale_best_effort, "sem fila/cron no projeto, a cada
+# nova reserva é o gatilho mais simples"). Isso significa que uma reserva órfã de um lote que caiu
+# por OOM só vira "failed" de verdade (liberando a cota do usuário na hora, visível no histórico)
+# quando ALGUÉM, qualquer usuário, reserva algo de novo -- o que pode demorar, principalmente fora
+# do horário de pico. Esta função roda a MESMA varredura (vídeo + áudio) uma vez, aqui, assim que o
+# processo volta a subir depois de uma queda -- momento exato em que sabemos que pode haver lixo de
+# uma execução anterior interrompida. Nunca bloqueia o startup: qualquer falha (ex.: banco ainda
+# não migrado neste exato instante) só é logada, idêntico ao padrão best-effort que as duas funções
+# já seguem internamente.
+def _sweep_stale_reservations_na_inicializacao() -> None:
+    session = get_sessionmaker()()
+    try:
+        marcadas_video = fail_stale_reservations(session)
+        if marcadas_video:
+            logger.info("[STARTUP] %s reserva(s) de vídeo órfã(s) marcada(s) como failed na subida do servidor", marcadas_video)
+        marcadas_audio = fail_stale_audio_reservations(session)
+        if marcadas_audio:
+            logger.info("[STARTUP] %s reserva(s) de áudio órfã(s) marcada(s) como failed na subida do servidor", marcadas_audio)
+    except Exception:
+        logger.warning("[STARTUP] falha ao varrer reservas órfãs no startup (não bloqueia a subida do servidor)", exc_info=True)
+    finally:
+        session.close()
 
 
 @asynccontextmanager
@@ -73,6 +106,7 @@ async def lifespan(app: FastAPI):
     )
     if settings.using_dev_secrets:
         logger.warning("[STARTUP] usando segredos de DESENVOLVIMENTO (AUTH_SECRET_KEY/IP_HASH_SECRET não definidos)")
+    _sweep_stale_reservations_na_inicializacao()
     yield
     dispose_engine()
     logger.info("[SHUTDOWN] %s encerrado", APP_NAME)

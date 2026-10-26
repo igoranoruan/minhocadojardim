@@ -4745,6 +4745,16 @@ https://..."></textarea>
         status.appendChild(rodape);
 
         let batchIdAtual = null;
+        // 26/10/2026 (pedido do Igor -- queda de memória no meio do lote): o servidor pode cair
+        // (OOM) com o stream SSE ainda aberto -- o fetch() não lança exceção nesse caso, o reader
+        // só recebe "done: true" sem nunca mandar o evento "complete" nem "error". Sem isso, os
+        // itens que ainda estavam "Na fila"/"Baixando.../Processando..." ficavam carregando pra
+        // sempre (sintoma relatado pelo Igor). streamFinalizado só vira true quando o servidor
+        // realmente terminou o lote (evento "complete" ou "error"); posicoesConcluidas registra
+        // quem já recebeu "item_complete" (sucesso OU falha individual), pra distinguir um item já
+        // resolvido de um item que ficou pendurado na queda.
+        let streamFinalizado = false;
+        const posicoesConcluidas = new Set();
 
         function atualizarLinha(position, texto, tipo) {
             const linha = linhas.get(position);
@@ -4778,6 +4788,7 @@ https://..."></textarea>
                     : (dados.message || "Processando...");
                 atualizarLinha(dados.position, mensagem, "normal");
             } else if (tipo === "item_complete") {
+                posicoesConcluidas.add(dados.position);
                 if (dados.status === "completed") {
                     atualizarLinha(dados.position, "Pronto.", "sucesso");
                     const linha = linhas.get(dados.position);
@@ -4802,6 +4813,7 @@ https://..."></textarea>
                 resumoProgresso.textContent = `${dados.completed + dados.failed} de ${dados.total} prontos`
                     + (dados.failed > 0 ? ` (${dados.failed} com erro)` : "");
             } else if (tipo === "complete") {
+                streamFinalizado = true;
                 aviso.remove();
                 resumoProgresso.remove();
                 rodape.innerHTML = "";
@@ -4821,6 +4833,7 @@ https://..."></textarea>
                 }
                 rodape.appendChild(resumo);
             } else if (tipo === "error") {
+                streamFinalizado = true;
                 aviso.remove();
                 resumoProgresso.remove();
                 rodape.innerHTML = "";
@@ -4879,6 +4892,24 @@ https://..."></textarea>
             }
 
             await lerStreamDeLote(response);
+            // 26/10/2026 (pedido do Igor): o stream terminou (reader deu "done") sem nunca mandar
+            // "complete" nem "error" -- o servidor caiu/reiniciou no meio do lote. As reservas
+            // órfãs já são devolvidas no backend (fail_stale_reservations, varredura no startup);
+            // aqui só avisamos o usuário com clareza em vez de deixar os itens pendentes
+            // "carregando" pra sempre. Itens já concluídos (download ou erro individual já
+            // recebido) continuam exatamente como estavam -- nenhuma linha deles é tocada.
+            if (!streamFinalizado) {
+                for (const position of linhas.keys()) {
+                    if (!posicoesConcluidas.has(position)) {
+                        atualizarLinha(position, "Interrompido.", "erro");
+                    }
+                }
+                resumoProgresso.remove();
+                const aviso2 = document.createElement("div");
+                aviso2.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
+                aviso2.textContent = "O processamento foi interrompido. As gerações desse lote foram devolvidas, tente de novo.";
+                rodape.appendChild(aviso2);
+            }
         } catch (err) {
             aviso.remove();
             const erro = document.createElement("div");
@@ -5099,6 +5130,10 @@ https://..."></textarea>
         status.appendChild(rodape);
 
         let batchIdAtual = null;
+        // 26/10/2026 (pedido do Igor -- mesmo tratamento do lote de vídeo, "se houver o mesmo
+        // caso" -- há: o endpoint de áudio usa o mesmo padrão de SSE sobre fetch().
+        let streamFinalizado = false;
+        const posicoesConcluidas = new Set();
 
         function atualizarLinha(position, texto, tipo) {
             const linha = linhas.get(position);
@@ -5131,6 +5166,7 @@ https://..."></textarea>
                     : (dados.message || "Processando...");
                 atualizarLinha(dados.position, mensagem, "normal");
             } else if (tipo === "item_complete") {
+                posicoesConcluidas.add(dados.position);
                 if (dados.status === "completed") {
                     atualizarLinha(dados.position, "Pronto.", "sucesso");
                     const linha = linhas.get(dados.position);
@@ -5157,6 +5193,7 @@ https://..."></textarea>
                 resumoProgresso.textContent = `${dados.completed + dados.failed} de ${dados.total} prontos`
                     + (dados.failed > 0 ? ` (${dados.failed} com erro)` : "");
             } else if (tipo === "complete") {
+                streamFinalizado = true;
                 aviso.remove();
                 resumoProgresso.remove();
                 rodape.innerHTML = "";
@@ -5176,6 +5213,7 @@ https://..."></textarea>
                 }
                 rodape.appendChild(resumo);
             } else if (tipo === "error") {
+                streamFinalizado = true;
                 aviso.remove();
                 resumoProgresso.remove();
                 rodape.innerHTML = "";
@@ -5231,6 +5269,20 @@ https://..."></textarea>
             }
 
             await lerStreamDeLoteAudio(response);
+            // 26/10/2026 (pedido do Igor): mesmo tratamento do lote de vídeo -- stream terminou
+            // sem "complete"/"error" (servidor caiu no meio). Itens já concluídos ficam intactos.
+            if (!streamFinalizado) {
+                for (const position of linhas.keys()) {
+                    if (!posicoesConcluidas.has(position)) {
+                        atualizarLinha(position, "Interrompido.", "erro");
+                    }
+                }
+                resumoProgresso.remove();
+                const aviso2 = document.createElement("div");
+                aviso2.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
+                aviso2.textContent = "O processamento foi interrompido. As extrações desse lote foram devolvidas, tente de novo.";
+                rodape.appendChild(aviso2);
+            }
         } catch (err) {
             aviso.remove();
             const erro = document.createElement("div");

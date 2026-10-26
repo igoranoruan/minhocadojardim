@@ -50,6 +50,19 @@ _KILL_WAIT_SECONDS = 5
 # prazo do timeout — não afeta o timeout em si, só a granularidade da checagem.
 _POLL_INTERVAL_SECONDS = 0.5
 
+# 26/10/2026 (pedido do Igor -- investigação de quedas de memória no lote, 512Mi no Render): sem
+# "-threads", o FFmpeg detecta sozinho o número de CPUs e usa esse valor como teto de threads do
+# encoder (libx264) -- em container com cgroup de memória pequeno mas vários vCPUs visíveis, isso
+# multiplica os buffers internos do encoder (cada thread de libx264 mantém seu próprio lookahead
+# de frames) sem ganho real de velocidade proporcional, só gasto de memória a mais. "1" é o valor
+# mais conservador (sem paralelismo dentro do próprio FFmpeg) -- processamento continua 1 vídeo
+# por vez de qualquer forma (services/generation_flow.py, sem mudança), então o teto real de
+# paralelismo do servidor inteiro não muda, só o paralelismo INTERNO de cada chamada ao FFmpeg.
+# Nas 3 variantes de comando (copy/copy_video_transcode_audio/transcode): "copy" não tem encoder
+# nenhum (stream copy puro, -threads não afeta memória ali, mas não faz mal incluir); as outras
+# duas reencodam pelo menos uma trilha e são onde este limite realmente importa.
+_FFMPEG_THREADS = "1"
+
 
 def build_args(*, executable: str, input_path: Path, output_path: Path, has_audio: bool) -> list[str]:
     """Lista de argumentos do FFmpeg. `has_audio` decide TODO o tratamento de áudio: se False,
@@ -73,6 +86,7 @@ def build_args(*, executable: str, input_path: Path, output_path: Path, has_audi
         "-c:v", "libx264",
         "-preset", "veryfast",
         "-crf", "23",
+        "-threads", _FFMPEG_THREADS,
     ]
     if has_audio:
         args += ["-c:a", "aac"]
@@ -112,6 +126,9 @@ def build_copy_args(*, executable: str, input_path: Path, output_path: Path, has
         "-map_chapters", "-1",
         "-c:v", "copy",
     ]
+    # 26/10/2026: "-threads" (ver _FFMPEG_THREADS) é deliberadamente OMITIDO aqui -- "copy"/"copy"
+    # é stream copy puro (remux), sem nenhum encoder rodando; "-threads" não tem efeito nenhum
+    # (nem em CPU nem em memória) quando não há decodificação/codificação de verdade.
     if has_audio:
         args += ["-c:a", "copy"]
     args += [
@@ -154,7 +171,11 @@ def build_copy_video_transcode_audio_args(
         "-c:v", "copy",
     ]
     if has_audio:
-        args += ["-c:a", "aac"]
+        # 26/10/2026 (pedido do Igor): "-threads" aqui só afeta o encoder de ÁUDIO (o vídeo é
+        # "copy", sem encoder nenhum) -- mesmo raciocínio/valor de build_args, bem mais barato
+        # neste caso (áudio é muito mais leve que vídeo), mas mantido pelo mesmo motivo: nunca
+        # deixar o FFmpeg decidir sozinho quantas threads usar.
+        args += ["-c:a", "aac", "-threads", _FFMPEG_THREADS]
     args += [
         "-movflags", "+faststart",
         "-progress", "pipe:1",
