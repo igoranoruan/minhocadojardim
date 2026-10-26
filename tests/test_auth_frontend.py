@@ -15,7 +15,9 @@ def test_modal_acesso_tem_os_tres_passos():
     html = _html()
     for elemento in ("modalAcesso", "acessoPassoEmail", "acessoPassoCodigo", "acessoPassoConectado", "userEmail", "userCodigo"):
         assert f'id="{elemento}"' in html, elemento
-    for texto in ("Enviar código", "Entrar", "Reenviar código", "Trocar e-mail", "Sair"):
+    # 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): "Trocar e-mail" virou "Usar
+    # outro e-mail" (só texto; voltarParaEmail() não mudou).
+    for texto in ("Enviar código", "Entrar", "Reenviar código", "Usar outro e-mail", "Sair"):
         assert texto in html, texto
     assert 'autocomplete="one-time-code"' in html and 'inputmode="numeric"' in html
 
