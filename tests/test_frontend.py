@@ -22,9 +22,11 @@ def test_hero_aprovado():
     # Linha de preço nova, com "ver planos" como link de texto (reaproveita irParaMeuPlano()).
     assert "5 vídeos grátis por semana · sem cartão ·" in html
 
-    # Animação do topo: arquivos definitivos anexados pelo Igor (commit e77ab46).
+    # Animação do topo: 2 arquivos, um por tamanho de tela (ETAPA B1).
     assert "/static/klango_hero.mp4" in html
     assert 'poster="/static/klango_hero_poster.jpg"' in html
+    assert "/static/klango_hero_mobile.mp4" in html
+    assert 'poster="/static/klango_hero_mobile_poster.jpg"' in html
 
 
 def test_assets_antigos_da_mascote_nao_tem_mais_referencia():
@@ -40,11 +42,44 @@ def test_assets_antigos_da_mascote_nao_tem_mais_referencia():
     assert "klango_rodape_animado" not in html
 
 
-def test_secao_lote_usa_animacao_em_vez_da_foto_estatica():
+def test_secao_lote_usa_video_da_corrida_e_absorve_um_por_um_de_uma_vez():
+    """26/10/2026 (ETAPA B1, pedido do Igor -- "copy final do site"): a caixa de exemplo (campos
+    travados + lista video_01..03 + "Baixar tudo em ZIP") e o vídeo antigo (klango_lote.mp4) saíram
+    da seção de Lote -- no lugar, o vídeo da corrida, seguido pelas 2 caixas "Um por um × De uma
+    vez", que deixaram de ser uma seção própria (#umPorUmDeUmaVez removida)."""
     html = _html()
-    assert "/static/klango_lote.mp4" in html
-    assert 'poster="/static/klango_lote_poster.jpg"' in html
-    assert 'aria-label="Animação: vários vídeos baixados em ZIP"' in html
+    assert "/static/klango_corrida.mp4" in html
+    assert 'poster="/static/klango_corrida_poster.jpg"' in html
+    assert "/static/klango_lote.mp4" not in html
+
+    assert 'id="loteNaPraticaItems"' not in html
+    assert "video_01.mp4" not in html
+
+    assert 'id="umPorUmDeUmaVez"' not in html
+    # "umPorUmDeUmaVez" não pode sobrar em SECOES_FUNIL_FRIO_IDS (só nela, nunca em comentário)
+    inicio = html.index("const SECOES_FUNIL_FRIO_IDS")
+    fim = html.index(";", inicio)
+    assert "umPorUmDeUmaVez" not in html[inicio:fim]
+    # as 2 caixas de comparação continuam na página, agora dentro de #loteNaPratica
+    assert "Cola 1 link por vez" in html
+    assert "Cola todos os links de uma vez" in html
+
+
+def test_secao_antes_depois_usa_video_em_vez_do_carrossel_de_cartoes():
+    html = _html()
+    assert "/static/klango_antes_depois.mp4" in html
+    assert 'poster="/static/klango_antes_depois_poster.jpg"' in html
+    # os 2 cartões antigos (com a grade de detalhes técnicos fictícios) saíram
+    assert "iPhone 13" not in html
+    assert "São Paulo, Brasil" not in html
+    assert "3f2a8f9c" not in html
+
+
+def test_script_unico_de_reproducao_de_videos():
+    html = _html()
+    assert "function inicializarReprodutorDeVideos()" in html
+    assert "IntersectionObserver" in html
+    assert "pausarVideosSeReducedMotion" not in html
 
 
 def test_modal_de_pagamento_usa_as_novas_ilustracoes():
