@@ -160,12 +160,14 @@ def test_script_unico_de_reproducao_de_videos():
     assert "pausarVideosSeReducedMotion" not in html
 
 
-def test_modal_de_pagamento_usa_as_fotos_da_mascote():
-    # 26/10/2026 (pedido do Igor, revertendo a ETAPA A do mesmo dia): Igor não gostou das
-    # ilustrações novas (klango_pix.jpg/klango_cartao.jpg) e pediu para voltar às fotos antigas
-    # da mascote. Os arquivos klango_*.jpg continuam em static/, só não são mais referenciados.
+def test_modal_de_pagamento_sem_imagem_da_mascote():
+    # 26/10/2026 (pedido do Igor, teste visual): a imagem da mascote (pix/cartão) foi removida do
+    # modal pra ver como fica sem ela -- o <img id="modalMascoteImg"> não existe mais na página,
+    # mas a lógica de troca em trocarMetodoPagamento() continua no JS (vira no-op com o elemento
+    # ausente) para voltar a funcionar sozinha se a imagem for reintroduzida depois.
     html = _html()
-    assert 'src="/static/mascote-pix.jpg"' in html
+    assert 'id="modalMascoteImg"' not in html
+    assert 'src="/static/mascote-pix.jpg"' not in html
     assert '/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg"' in html
 
 

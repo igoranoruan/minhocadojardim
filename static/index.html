@@ -1681,26 +1681,14 @@ https://..."></textarea>
                                 <li class="flex items-center gap-2"><i class="fa-solid fa-check text-[#19D3AE] text-[11px]"></i><span id="modalAcessoDias">—</span></li>
                             </ul>
                         </div>
-                        <!-- 04/10/2026 (pedido do Igor): mascote segurando um QR code (PIX) ou um
-                             cartão (cartão de crédito) genéricos -- sem nenhum logo de terceiro (nem
-                             Pix, nem Mastercard/Visa/Mercado Pago), só a marca da própria KLANGO.
-                             Troca de imagem acontece em trocarMetodoPagamento(), junto com a troca
-                             visual dos botões PIX/CARTÃO. object-contain (não crop) pra mascote
-                             inteira continuar visível nos dois formatos de tela.
-                             04/10/2026, ajuste fino: tamanho reduzido ~10% (h-36/w-36 -> h-32/w-32)
-                             a pedido do Igor, só pra dar mais respiro no checkout mobile -- mesma
-                             posição, mesma arte, mesma proporção (object-contain preserva). -->
-                        <!-- 26/10/2026 (ETAPA A, pedido do Igor): troca das 2 fotos antigas da
-                             mascote pelas novas ilustrações no estilo do rodapé (mesmo tamanho
-                             700x570, anexadas no commit e77ab46) -- só os nomes dos arquivos
-                             mudaram (ver trocarMetodoPagamento() para os 2 nomes), nenhuma lógica de
-                             pagamento/troca de método foi tocada.
-                             26/10/2026 (pedido do Igor, mais tarde no mesmo dia): voltou pras fotos
-                             antigas da mascote (mascote-pix.jpg/mascote-cartao.jpg) -- Igor não
-                             gostou das ilustrações novas. Arquivos klango_pix.jpg/klango_cartao.jpg
-                             continuam em static/, não apagados. -->
-                        <img id="modalMascoteImg" src="/static/mascote-pix.jpg" alt=""
-                            class="w-full sm:w-32 h-32 sm:h-auto object-contain rounded-2xl select-none shrink-0" draggable="false">
+                        <!-- 26/10/2026 (pedido do Igor, teste visual): imagem da mascote (pix/cartão)
+                             removida do modal pra ver como fica sem ela -- só o <img>, nenhuma
+                             lógica. trocarMetodoPagamento() continua com o mesmo código de troca de
+                             imagem (ver comentário lá), mas o guard "if (mascoteImgEl)" faz o trecho
+                             virar no-op sem erro, já que o elemento não existe mais aqui. Se Igor
+                             decidir voltar com a imagem, a tag <img> original (elemento
+                             "modalMascoteImg", mascote-pix.jpg / mascote-cartao.jpg) está no
+                             histórico do commit 7904190. -->
                     </div>
 
                     <h4 class="text-[13px] font-bold uppercase tracking-wider text-slate-500 mb-2">Forma de pagamento</h4>
@@ -3573,7 +3561,10 @@ https://..."></textarea>
             pixBtn.className = "py-3 rounded-xl border border-slate-800 bg-[#060b14] text-slate-400 text-[13px] font-extrabold transition-all";
         }
 
-        // Troca a imagem da mascote junto com o método (ver comentário no <img id="modalMascoteImg">).
+        // Troca a imagem da mascote junto com o método -- mantido de propósito (código barato,
+        // não quebra nada) mesmo com a tag <img> do elemento "modalMascoteImg" removida do modal
+        // (26/10/2026, teste visual pedido pelo Igor): o guard abaixo vira no-op sem erro enquanto
+        // a imagem estiver fora; se ela voltar, a troca volta a funcionar sem precisar tocar aqui.
         const mascoteImgEl = document.getElementById("modalMascoteImg");
         if (mascoteImgEl) {
             mascoteImgEl.src = tipo === "pix" ? "/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg";
