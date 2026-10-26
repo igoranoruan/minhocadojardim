@@ -1017,7 +1017,10 @@ https://..."></textarea>
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-share-nodes"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Enviar para o KLANGO</h2>
-                            <p class="text-sm text-slate-400 mt-1">Gere seu token pessoal para compartilhar vídeos direto do Instagram, TikTok, Pinterest ou YouTube — sem usar login nem senha nesses apps.</p>
+                            <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): texto
+                                 reescrito, mesmo sentido (compartilhar vídeo direto do app, sem
+                                 login/senha das redes), antes do botão "Gerar token" abaixo. -->
+                            <p class="text-sm text-slate-400 mt-1">Compartilhe o vídeo direto do TikTok, Instagram, YouTube ou Pinterest e o link cai na sua fila aqui. Sem login nem senha das redes.</p>
                             <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                                 <a href="/atalho-ios" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-apple"></i>Como configurar no iPhone</a>
                                 <a href="/atalho-android" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-[13px] font-bold text-[#19D3AE] hover:underline"><i class="fa-brands fa-android"></i>Como configurar no Android</a>
@@ -1089,7 +1092,10 @@ https://..."></textarea>
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-clock-rotate-left"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Meus últimos downloads</h2>
-                            <p class="text-sm text-slate-400 mt-1">Baixe de novo enquanto o arquivo ainda estiver disponível.</p>
+                            <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): prazo
+                                 explícito (mesmos 30 minutos já confirmados no FAQ) no lugar do texto
+                                 vago de antes. -->
+                            <p class="text-sm text-slate-400 mt-1">Cada arquivo fica disponível por até 30 minutos depois de pronto.</p>
                         </div>
                     </div>
                     <div id="historicoLista" class="space-y-2"></div>
@@ -1129,7 +1135,7 @@ https://..."></textarea>
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-gift"></i></div>
                         <div class="min-w-0">
                             <h2 class="text-base font-extrabold text-white">Indique e ganhe 7 dias</h2>
-                            <p class="text-sm text-slate-400 mt-1">Cada pessoa que assinar um plano pelo seu link soma 7 dias ao seu acesso.</p>
+                            <p class="text-sm text-slate-400 mt-1">Compartilhe seu link. Quando alguém assinar por ele, você ganha 7 dias a mais de acesso.</p>
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2">
@@ -1440,8 +1446,11 @@ https://..."></textarea>
                  pelo CÉREBRO -- título grande, selos de benefício e rótulo acima do campo são só
                  apresentação; pedirCodigo() continua igual, lendo #userEmail normalmente. -->
             <div id="acessoPassoEmail">
-                <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Vamos começar?</h3>
-                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Informe seu e-mail para receber um código de acesso. É rápido e seguro.</p>
+                <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): título/texto do
+                     passo 1 reescritos; chip 2 trocado de "Acesso em segundos" (promessa de tempo)
+                     pra "Código no e-mail" (descreve o mecanismo, não uma velocidade). -->
+                <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Entre sem criar senha.</h3>
+                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Informe seu e-mail e receba um código de 6 dígitos.</p>
 
                 <div class="grid grid-cols-3 gap-2 mb-5">
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
@@ -1449,8 +1458,8 @@ https://..."></textarea>
                         <span class="text-[13px] text-slate-400 leading-tight">Sem senha</span>
                     </div>
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
-                        <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
-                        <span class="text-[13px] text-slate-400 leading-tight">Acesso em segundos</span>
+                        <i class="fa-solid fa-key text-[#19D3AE]"></i>
+                        <span class="text-[13px] text-slate-400 leading-tight">Código no e-mail</span>
                     </div>
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
                         <i class="fa-solid fa-shield-halved text-[#19D3AE]"></i>
@@ -1484,7 +1493,10 @@ https://..."></textarea>
                     <span class="absolute top-0 right-0 w-3 h-3 rounded-full bg-[#19D3AE] border-2 border-[#0b1118]"></span>
                 </div>
                 <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Digite o código</h3>
-                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Enviamos um código de 6 dígitos para<br><strong id="acessoEmailEnviado" class="text-[#19D3AE] font-bold"></strong><br>Ele vale por 10 minutos.</p>
+                <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): texto reescrito
+                     ("Enviamos um código para [e-mail]. Ele vale por 10 minutos."); #acessoEmailEnviado
+                     preservado -- mesmo id, mesmo preenchimento via JS, só o texto ao redor mudou. -->
+                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Enviamos um código para<br><strong id="acessoEmailEnviado" class="text-[#19D3AE] font-bold"></strong>.<br>Ele vale por 10 minutos.</p>
 
                 <input id="userCodigo" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" class="hidden">
                 <div id="acessoCodigoCaixas" class="flex items-center justify-center gap-2">
@@ -1502,7 +1514,7 @@ https://..."></textarea>
                      texto/ícone do mesmo tamanho de sempre. -->
                 <div class="mt-3 flex items-center justify-between text-[13px]">
                     <button id="acessoReenviarBtn" type="button" onclick="pedirCodigo()" class="h-11 text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-rotate-right text-[11px]"></i><span id="acessoReenviarTexto">Reenviar código</span></button>
-                    <button type="button" onclick="voltarParaEmail()" class="h-11 text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-envelope text-[11px]"></i>Trocar e-mail</button>
+                    <button type="button" onclick="voltarParaEmail()" class="h-11 text-slate-400 hover:text-white transition-colors flex items-center gap-1.5"><i class="fa-solid fa-envelope text-[11px]"></i>Usar outro e-mail</button>
                 </div>
 
                 <div class="mt-5 bg-card-soft rounded-xl p-3.5 flex items-start gap-3 text-left">
@@ -1590,17 +1602,25 @@ https://..."></textarea>
          (ver submeterPagamento), sem nenhuma logo sobreposta nele, para não arriscar invalidar a
          leitura do código. -->
     <div id="modalPagamento" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-fade">
-        <div class="bg-card w-full max-w-5xl rounded-3xl border border-[#19D3AE]/20 relative shadow-2xl shadow-[#19D3AE]/5 max-h-[92vh] overflow-y-auto">
+        <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): bloco "Por que escolher
+             o KLANGO.MP4?" (coluna direita inteira) removido -- modal virou 1 coluna só
+             (max-w-5xl -> max-w-2xl, grid de 2 colunas desfeito). Nenhuma lógica de pagamento
+             tocada: só o checkout em si (agora a única coluna) continua, com os mesmos ids de
+             sempre. -->
+        <div class="bg-card w-full max-w-2xl rounded-3xl border border-[#19D3AE]/20 relative shadow-2xl shadow-[#19D3AE]/5 max-h-[92vh] overflow-y-auto">
             <button onclick="fecharModalPagamento()" class="absolute top-4 right-4 sm:top-5 sm:right-5 text-slate-500 hover:text-white transition-colors z-10"><i class="fa-solid fa-xmark text-lg"></i></button>
 
-            <div class="grid grid-cols-1 lg:grid-cols-5">
-                <!-- COLUNA ESQUERDA (~60%): checkout em si -->
-                <div class="lg:col-span-3 p-6 sm:p-8 lg:border-r lg:border-slate-800/80">
+            <div class="grid grid-cols-1">
+                <div class="p-6 sm:p-8">
                     <div class="flex items-center gap-3 mb-5">
                         <div class="w-11 h-11 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-wallet text-[#19D3AE]"></i></div>
                         <div>
-                            <h3 id="modalTitulo" class="text-xl font-bold text-white leading-tight">Escolha como pagar</h3>
-                            <p class="text-[13px] text-slate-500">Finalize seu acesso de forma rápida e segura</p>
+                            <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): título
+                                 e subtítulo reescritos; #modalTitulo preservado (mesmo id, mesmo
+                                 preenchimento via JS em abrirModalPagamento(), só o texto padrão
+                                 mudou). -->
+                            <h3 id="modalTitulo" class="text-xl font-bold text-white leading-tight">Finalize seu acesso</h3>
+                            <p class="text-[13px] text-slate-500">Confira o plano e escolha como pagar.</p>
                         </div>
                     </div>
 
@@ -1666,78 +1686,18 @@ https://..."></textarea>
                     <div id="paymentBrickContainer" class="min-h-[4rem]"></div>
                     <div id="pagamentoStatus" class="mt-3 text-[13px] text-slate-400"></div>
 
-                    <!-- Bloco de segurança: HTML/CSS real (nunca imagem), como pedido. -->
+                    <!-- Bloco de segurança: HTML/CSS real (nunca imagem), como pedido.
+                         26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): texto da
+                         linha reescrito; "O pagamento é único..." (linha solta abaixo) removida por
+                         ficar redundante com o checklist do card do plano, acima ("Pagamento
+                         único"/"Sem renovação automática"), e com este mesmo bloco. -->
                     <div class="flex items-center gap-3 mt-4 p-3.5 rounded-xl border border-slate-800 bg-[#060b14]">
                         <i class="fa-solid fa-lock text-[#19D3AE]"></i>
                         <div class="flex-1 min-w-0">
                             <p class="text-[13px] font-bold text-white">Pagamento seguro</p>
-                            <p class="text-[13px] text-slate-500">Processado com segurança pelo Mercado Pago.</p>
+                            <p class="text-[13px] text-slate-500">Processado pelo Mercado Pago. O acesso é liberado assim que o pagamento confirma.</p>
                         </div>
                         <i class="fa-solid fa-shield-halved text-slate-600"></i>
-                    </div>
-
-                    <p class="text-[13px] text-slate-500 mt-3 leading-relaxed">O pagamento é único. Não há cobrança automática nem renovação.</p>
-                </div>
-
-                <!-- COLUNA DIREITA (~40%): redução de objeções, nunca um segundo formulário. -->
-                <div class="lg:col-span-2 p-6 sm:p-8 bg-[#060b14]/60 rounded-b-3xl lg:rounded-bl-none lg:rounded-r-3xl">
-                    <div class="flex items-center gap-2 mb-1">
-                        <i class="fa-solid fa-bolt text-[#19D3AE]"></i>
-                        <h4 class="text-sm font-bold text-white">Por que escolher o KLANGO.MP4?</h4>
-                    </div>
-                    <p class="text-[13px] text-slate-500 mb-5 leading-relaxed">Mais controle, mais segurança e total liberdade para reutilizar seus vídeos.</p>
-
-                    <ul class="space-y-4 text-sm">
-                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
-                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-shield-halved text-[#19D3AE] text-xs"></i></div>
-                            <div>
-                                <p class="font-bold text-white text-[13px]">Vídeos limpos de metadados</p>
-                                <p class="text-[13px] text-slate-500 mt-0.5">Mais privacidade e segurança para o seu conteúdo.</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
-                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i></div>
-                            <div>
-                                <p class="font-bold text-white text-[13px]">Processamento rápido</p>
-                                <p class="text-[13px] text-slate-500 mt-0.5">Seu vídeo pronto em poucos minutos.</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3 pb-4 border-b border-slate-800/80">
-                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i></div>
-                            <div>
-                                <p class="font-bold text-white text-[13px]">Suporte a várias plataformas</p>
-                                <p class="text-[13px] text-slate-500 mt-0.5">TikTok, Instagram, YouTube Shorts e muito mais.</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <div class="w-9 h-9 shrink-0 rounded-lg bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center"><i class="fa-solid fa-infinity text-[#19D3AE] text-xs"></i></div>
-                            <div>
-                                <!-- 22/10/2026 (pedido do Igor, revisão de copy): "afiliados"
-                                     esquecido aqui na rodada de 20/10/2026 que trocou "Afiliados"
-                                     por "Clipadores" em "Para quem é" -- corrigido pra manter o
-                                     mesmo vocabulário em todo o site. -->
-                                <p class="font-bold text-white text-[13px]">Ideal para criadores e clipadores</p>
-                                <p class="text-[13px] text-slate-500 mt-0.5">Mais praticidade para o seu dia a dia.</p>
-                            </div>
-                        </li>
-                    </ul>
-
-                    <!-- 22/10/2026 (pedido do Igor, revisão de copy): este card repetia, palavra
-                         por palavra, o bloco "Pagamento seguro / Processado com segurança pelo
-                         Mercado Pago" que já aparece na coluna da esquerda, visível ao mesmo tempo
-                         na mesma tela do modal -- removido daqui (fica só uma vez, na coluna do
-                         checkout). -->
-                    <div class="grid grid-cols-2 gap-3 mt-5">
-                        <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
-                            <i class="fa-solid fa-bolt text-[#19D3AE] text-xs"></i>
-                            <p class="text-[13px] font-bold text-white mt-1.5">Acesso imediato</p>
-                            <p class="text-[13px] text-slate-500 mt-0.5">Após a confirmação do pagamento.</p>
-                        </div>
-                        <div class="p-3.5 rounded-xl border border-slate-800 bg-[#0b1220]">
-                            <i class="fa-solid fa-headset text-[#19D3AE] text-xs"></i>
-                            <p class="text-[13px] font-bold text-white mt-1.5">Suporte</p>
-                            <p class="text-[13px] text-slate-500 mt-0.5">Estamos aqui para te ajudar.</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -4940,7 +4900,7 @@ https://..."></textarea>
                 resumoProgresso.remove();
                 const aviso2 = document.createElement("div");
                 aviso2.className = "p-3 rounded-xl bg-red-950/30 border border-red-800/50 text-red-400 text-[13px]";
-                aviso2.textContent = "O processamento foi interrompido. As gerações desse lote foram devolvidas, tente de novo.";
+                aviso2.textContent = "O processamento foi interrompido. Os vídeos desse lote foram devolvidos, tente de novo.";
                 rodape.appendChild(aviso2);
             }
         } catch (err) {

@@ -268,6 +268,46 @@ def test_chamada_final_aprovada():
     assert "Comece agora com 5 vídeos grátis por semana." not in html
 
 
+def test_login_textos_aprovados():
+    """26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): textos do passo de e-mail e
+    do passo de código, só copy -- pedirCodigo()/confirmarCodigo() não foram tocados."""
+    html = _html()
+    assert "Entre sem criar senha." in html
+    assert "Informe seu e-mail e receba um código de 6 dígitos." in html
+    assert "Sem senha" in html
+    assert "Código no e-mail" in html
+    assert "Seus dados protegidos" in html
+    assert "Ele vale por 10 minutos." in html
+    assert ">Usar outro e-mail<" in html
+    assert ">Trocar e-mail<" not in html
+
+
+def test_modal_de_pagamento_textos_e_estrutura_aprovados():
+    """26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): título/subtítulo novos; bloco
+    "Por que escolher o KLANGO.MP4?" (coluna direita inteira) removido -- lógica de pagamento
+    (métodos, Brick, submissão) não foi tocada, só textos/estrutura/CSS do modal."""
+    html = _html()
+    assert "Finalize seu acesso" in html
+    assert "Confira o plano e escolha como pagar." in html
+    assert "Processado pelo Mercado Pago. O acesso é liberado assim que o pagamento confirma." in html
+    assert "Por que escolher o KLANGO.MP4?" not in html
+    assert "Vídeos limpos de metadados" not in html
+    assert "Ideal para criadores e clipadores" not in html
+    assert 'id="paymentBrickContainer"' in html
+    assert 'id="metodoPixBtn"' in html
+    assert 'id="metodoCartaoBtn"' in html
+
+
+def test_area_logada_textos_aprovados():
+    html = _html()
+    assert "Cada arquivo fica disponível por até 30 minutos depois de pronto." in html
+    assert "Compartilhe o vídeo direto do TikTok, Instagram, YouTube ou Pinterest e o link cai na sua fila aqui. Sem login nem senha das redes." in html
+    assert "Compartilhe seu link. Quando alguém assinar por ele, você ganha 7 dias a mais de acesso." in html
+    # 26/10/2026 (ETAPA B4): "gerações" -> "vídeos" também na mensagem de erro do lote.
+    assert "Os vídeos desse lote foram devolvidos, tente de novo." in html
+    assert "As gerações desse lote foram devolvidas" not in html
+
+
 def test_sem_promessa_de_burlar_plataformas():
     html = _html().lower()
     for termo in ("viraliz", "shadowban zero", "burlar"):
