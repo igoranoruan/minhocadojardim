@@ -25,13 +25,21 @@ def test_hero_aprovado():
     assert "sem metadados da origem" in html
     assert "Cole um link, escolha o nome do arquivo e receba seu MP4 pronto para editar." in html
 
-    # Linha de preço nova, com "um por vez" e "ver planos" como link de texto (reaproveita
+    # Linha de preço nova, com "um por vez" e "Ver planos" como link de texto (reaproveita
     # irParaMeuPlano()).
-    assert "5 vídeos grátis por semana · um por vez · sem cartão ·" in html
+    # 27/10/2026 (pedido do Igor, revisão de espaçamento): "Ver planos" saiu de dentro da frase
+    # (quebrava no meio em telas estreitas) e virou uma linha própria -- por isso a frase não
+    # termina mais em "·" seguido do link, e o link ganhou maiúscula por estar numa linha solta.
+    assert "5 vídeos grátis por semana · um por vez · sem cartão</p>" in html
+    assert ">Ver planos</a>" in html
 
     # Chips novos do topo (ETAPA B2) -- "Atalho direto do celular" saiu.
+    # 27/10/2026 (pedido do Igor, revisão de espaçamento): "Lote nos planos pagos" renomeado pra
+    # "Download em lote" e colocado sempre na mesma linha que "Sem anúncio" (antes, no mobile,
+    # cada chip ficava numa linha separada).
     assert "Sem anúncio" in html
-    assert "Lote nos planos pagos" in html
+    assert "Download em lote" in html
+    assert "Lote nos planos pagos" not in html
     assert "TikTok · Reels · Shorts · Pinterest" in html
 
     # Animação do topo: 2 arquivos, um por tamanho de tela (ETAPA B1).
@@ -103,13 +111,15 @@ def test_secao_antes_depois_usa_video_em_vez_do_carrossel_de_cartoes():
 def test_secao_voce_se_reconhece_aprovada():
     """26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): eyebrow virou pergunta-título;
     4 caixas (dor + 2ª linha turquesa com a solução); a dor sobre organizar o que vai postar saiu,
-    substituída por uma sobre metadados."""
+    substituída por uma sobre metadados.
+    27/10/2026 (pedido do Igor, revisão de espaçamento): caixa "Arquivo com nome sem sentido"
+    removida (dor mais fraca que as outras 3) -- sobraram 3 caixas, não mais 4."""
     html = _html()
     assert "Ainda perde tempo baixando vídeo um por um?" in html
     assert "Baixa um vídeo por vez" in html
     assert "Nos planos pagos, cola vários links e baixa tudo junto." in html
-    assert "Arquivo com nome sem sentido" in html
-    assert "Você escolhe o nome antes de baixar." in html
+    assert "Arquivo com nome sem sentido" not in html
+    assert "Você escolhe o nome antes de baixar." not in html
     assert "Site cheio de anúncio e pop-up" in html
     assert "No KLANGO não tem anúncio." in html
     assert "Vídeo vem com os dados da origem" in html
@@ -127,9 +137,11 @@ def test_secao_antes_depois_textos_aprovados():
 
 
 def test_secao_lote_textos_e_botao_ver_planos_aprovados():
-    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): texto encurtado."""
+    """26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor): texto encurtado.
+    27/10/2026 (pedido do Igor, revisão de espaçamento): reescrito de novo -- "...em ZIP ou"
+    quebrava linha sozinho, deixando "individualmente." órfão."""
     html = _html()
-    assert "Processe vários links e baixe os arquivos em ZIP ou individualmente." in html
+    assert "Processe vários links de uma vez e baixe tudo em ZIP ou arquivo por arquivo." in html
     assert "Disponível nos planos pagos." in html
     assert ">Ver planos<" in html
 

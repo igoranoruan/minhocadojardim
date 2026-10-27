@@ -248,8 +248,11 @@
 
                         <!-- Status do plano/limite + formulário: SEMPRE visíveis (inclusive logado),
                              ficam entre os dois blocos "heroVenda" (título/subtítulo acima, linha de
-                             preço/chips/animação abaixo), satisfazendo a ordem pedida pelo Igor. -->
-                        <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-semibold mt-4 sm:mt-6 mb-4 sm:mb-7">
+                             preço/chips/animação abaixo), satisfazendo a ordem pedida pelo Igor.
+                             27/10/2026 (pedido do Igor, revisão de espaçamento): mt-4 -> mt-7 no
+                             mobile -- o selo ficava colado no parágrafo "...pronto para editar."
+                             acima; o novo valor iguala o respiro usado no resto do hero. -->
+                        <div id="statusContaBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-semibold mt-7 sm:mt-8 mb-4 sm:mb-7">
                             <span class="w-2 h-2 rounded-full bg-[#19D3AE]"></span>
                             <span id="statusContaTexto">Pronto para processar</span>
                         </div>
@@ -360,14 +363,25 @@
                              a citar os FORMATOS (Reels, Shorts) em vez dos nomes dos apps duplicados
                              (TikTok/Instagram/YouTube/Pinterest já são o próprio ícone ao lado). -->
                         <div class="heroVenda">
-                            <p class="mt-3 text-[13px] text-slate-500">
-                                5 vídeos grátis por semana · um por vez · sem cartão ·
-                                <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="font-bold text-[#19D3AE] hover:underline">ver planos</a>
+                            <!-- 27/10/2026 (pedido do Igor, revisão de espaçamento): "ver planos"
+                                 saiu de dentro da frase (quebrava no meio em telas estreitas) e virou
+                                 uma linha própria, abaixo da estatística. -->
+                            <p class="mt-3 text-[13px] text-slate-500">5 vídeos grátis por semana · um por vez · sem cartão</p>
+                            <p class="mt-1.5">
+                                <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="text-[13px] font-bold text-[#19D3AE] hover:underline">Ver planos</a>
                             </p>
 
+                            <!-- 27/10/2026 (pedido do Igor, revisão de espaçamento): "Sem anúncio" e
+                                 o chip de lote (antes "Lote nos planos" + "pagos", renomeado pra
+                                 "Download em lote") viraram 1 só item de lista, sempre lado a lado
+                                 na mesma linha -- antes, no mobile, cada um ficava numa linha
+                                 separada. Chip de plataformas continua numa linha própria abaixo,
+                                 como já era. -->
                             <ul class="mt-5 flex flex-col sm:flex-row flex-wrap items-center sm:items-start justify-center sm:justify-start gap-x-5 gap-y-2 text-[13px] text-slate-400">
-                                <li class="flex items-center gap-2"><i class="fa-solid fa-ban text-[#19D3AE] text-xs"></i>Sem anúncio</li>
-                                <li class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Lote nos planos pagos</li>
+                                <li class="flex items-center flex-wrap justify-center sm:justify-start gap-x-5 gap-y-1">
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-ban text-[#19D3AE] text-xs"></i>Sem anúncio</span>
+                                    <span class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-[#19D3AE] text-xs"></i>Download em lote</span>
+                                </li>
                                 <li class="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
                                     <i class="fa-brands fa-tiktok text-[#19D3AE] text-xs"></i><i class="fa-brands fa-instagram text-[#19D3AE] text-xs"></i><i class="fa-brands fa-youtube text-[#19D3AE] text-xs"></i><i class="fa-brands fa-pinterest text-[#19D3AE] text-xs"></i>
                                     <span>TikTok · Reels · Shorts · Pinterest</span>
@@ -419,21 +433,18 @@
                  turquesa (a solução/contraste) abaixo da dor -- a 4ª dor antiga, sobre organização
                  do que vai ser postado, saiu, substituída por uma sobre metadados, que faltava
                  nesta lista apesar de ser um argumento central do produto (ver Antes/Depois). -->
+            <!-- 27/10/2026 (pedido do Igor): card sobre nome de arquivo sem sentido removido --
+                 dor mais fraca que as outras 3. Grid passou de 2x2 (4 itens) pra 1x3 (3 itens) no
+                 desktop -- sm:grid-cols-2 -> sm:grid-cols-3 -- pra não sobrar 1 card desalinhado
+                 numa 2ª linha sozinho. -->
             <section id="voceSeReconhece" class="py-16 sm:py-24 border-t section-line text-center">
                 <h2 class="text-2xl sm:text-3xl font-extrabold text-white max-w-xl mx-auto">Ainda perde tempo baixando vídeo um por um?</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-10 max-w-2xl mx-auto text-left">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 max-w-3xl mx-auto text-left">
                     <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
                         <i class="fa-solid fa-hourglass-half text-[#19D3AE] mt-0.5"></i>
                         <div>
                             <p class="text-sm text-slate-300">Baixa um vídeo por vez</p>
                             <p class="text-[13px] text-[#19D3AE] mt-1">Nos planos pagos, cola vários links e baixa tudo junto.</p>
-                        </div>
-                    </div>
-                    <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
-                        <i class="fa-solid fa-font text-[#19D3AE] mt-0.5"></i>
-                        <div>
-                            <p class="text-sm text-slate-300">Arquivo com nome sem sentido</p>
-                            <p class="text-[13px] text-[#19D3AE] mt-1">Você escolhe o nome antes de baixar.</p>
                         </div>
                     </div>
                     <div class="bg-card-soft rounded-2xl p-5 flex items-start gap-3">
@@ -526,7 +537,11 @@
                         <source src="/static/klango_antes_depois.mp4" type="video/mp4">
                     </video>
                 </div>
-                <p class="text-center text-[13px] text-slate-600 mt-3 max-w-md mx-auto">Exemplo ilustrativo. Aparelho, local, data e nomes são fictícios.</p>
+                <!-- 27/10/2026 (pedido do Igor): frase encurtada -- quebrava feio no mobile
+                     ("Exemplo ilustrativo." isolado numa linha, resto na linha de baixo). Mantive
+                     "dados fictícios" (mesmo mais curto) pra não perder a função de deixar claro que
+                     aparelho/local/data do card no vídeo não são reais. -->
+                <p class="text-center text-[13px] text-slate-600 mt-3 max-w-md mx-auto">Exemplo ilustrativo — dados fictícios.</p>
             </section>
 
             <!-- LOTE NA PRÁTICA (04/10/2026, pedido do CÉREBRO; redesenhada em 05/10/2026;
@@ -542,8 +557,10 @@
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-white">Vários vídeos de uma vez.</h2>
                     <!-- 20/10/2026: fonte normalizada pro padrão da seção Planos.
                          26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor):
-                         texto encurtado. -->
-                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Processe vários links e baixe os arquivos em ZIP ou individualmente.</p>
+                         texto encurtado.
+                         27/10/2026 (pedido do Igor): reescrito de novo -- "...em ZIP ou" quebrava
+                         linha sozinho e deixava "individualmente." órfão na linha de baixo. -->
+                    <p class="mt-3 text-sm leading-relaxed text-slate-400">Processe vários links de uma vez e baixe tudo em ZIP ou arquivo por arquivo.</p>
                     <p class="mt-2 text-[13px] text-slate-500">Disponível nos planos pagos.</p>
                 </div>
 
@@ -628,8 +645,10 @@
                          26/10/2026 (auditoria "refinamento final", aprovação explícita do Igor):
                          "volume sem limite" saiu -- nenhum plano é de uso sem limite algum (todos
                          têm teto diário/semanal/por período em services/plans.py), então a frase
-                         podia sugerir o contrário. -->
-                    <p class="text-sm text-slate-400 mt-3">Do teste grátis ao processamento em lote: escolha o plano ideal para sua rotina.</p>
+                         podia sugerir o contrário.
+                         27/10/2026 (pedido do Igor): frase dividida em 2 linhas (<br>) -- virou
+                         2 frases curtas em vez de 1 só com dois-pontos, mesmo conteúdo. -->
+                    <p class="text-sm text-slate-400 mt-3">Do teste grátis ao processamento em lote.<br>Escolha o plano ideal para sua rotina.</p>
                 </div>
 
                 <!-- 20/10/2026 (pedido do Igor): no mobile, os 3 cards empilhados davam sensação de
