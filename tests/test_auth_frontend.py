@@ -38,19 +38,24 @@ def test_a_sessao_e_descoberta_pelo_me_ao_carregar():
 
 
 def test_e_mail_nao_e_mais_autenticacao_nem_fica_salvo_no_navegador():
-    """localStorage é permitido SÓ para o programa de indicação (Etapa 8, aprovação do CÉREBRO):
+    """localStorage é permitido para o programa de indicação (Etapa 8, aprovação do CÉREBRO):
     guardar o "?ref=CODIGO" até o login (INDICACAO_STORAGE_KEY) e lembrar qual aviso de recompensa
-    já foi mostrado (INDICACAO_ULTIMO_PREMIO_VISTO_KEY) -- e, desde 17/10/2026, o link pendente do
+    já foi mostrado (INDICACAO_ULTIMO_PREMIO_VISTO_KEY); desde 17/10/2026, o link pendente do
     compartilhamento do Android até o login completar (COMPARTILHAR_PENDENTE_STORAGE_KEY, ver
-    routes/share_target.py) -- nenhum dos três tem relação com e-mail/sessão. Qualquer OUTRO uso
-    de localStorage, e sessionStorage por completo, ainda quebram este teste -- a proteção
-    original (nenhum dado de autenticação no navegador) continua de pé."""
+    routes/share_target.py); e desde 27/10/2026 (ETAPA B6, Meta Pixel/LGPD), a escolha de
+    consentimento de cookies (CHAVE_CONSENTIMENTO_COOKIES) e os ids de pagamento já enviados como
+    Purchase pro Pixel, pra nunca duplicar (CHAVE_PURCHASES_PIXEL_ENVIADOS) -- nenhuma dessas
+    chaves tem relação com e-mail/sessão. Qualquer OUTRO uso de localStorage, e sessionStorage por
+    completo, ainda quebram este teste -- a proteção original (nenhum dado de autenticação no
+    navegador) continua de pé."""
     html = _html()
     chamadas_localstorage = re.findall(r"localStorage\.\w+\([^)]*\)", html)
     chaves_aprovadas = (
         "INDICACAO_STORAGE_KEY",
         "INDICACAO_ULTIMO_PREMIO_VISTO_KEY",
         "COMPARTILHAR_PENDENTE_STORAGE_KEY",
+        "CHAVE_CONSENTIMENTO_COOKIES",
+        "CHAVE_PURCHASES_PIXEL_ENVIADOS",
     )
     assert all(any(chave in chamada for chave in chaves_aprovadas) for chamada in chamadas_localstorage)
     assert "sessionStorage" not in html

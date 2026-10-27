@@ -1500,6 +1500,25 @@ https://..."></textarea>
         </div>
     </div>
 
+    <!-- AVISO DE COOKIES / LGPD (ETAPA B6, pedido do Igor, 27/10/2026) -- faixa fixa no rodapé,
+         discreta, pra medir os anúncios de novembro via Meta Pixel (ver <script>, bloco "Meta
+         Pixel + aviso de cookies"). z-30: abaixo de #modalAcesso (z-40) e #modalPagamento (z-50)
+         de propósito, pra nunca cobrir um modal aberto. Começa "hidden" -- só
+         inicializarConsentimentoCookies() (chamada no DOMContentLoaded) decide se ela aparece
+         (sem resposta salva ainda) ou fica escondida (já tinha "aceito"/"recusado" salvo).
+         Nunca cobre o botão "Ver planos" nem nenhum outro conteúdo da página: enquanto visível,
+         ajustarEspacoAvisoCookies() soma a altura real da faixa como padding-bottom do <body>,
+         empurrando o conteúdo pra cima do espaço que ela ocupa. -->
+    <div id="avisoCookies" class="hidden fixed inset-x-0 bottom-0 z-30 p-3 sm:p-4">
+        <div class="max-w-3xl mx-auto bg-card border border-[#172235] rounded-2xl p-4 shadow-2xl flex flex-col sm:flex-row sm:items-center gap-3">
+            <p class="text-[13px] text-slate-300 leading-snug flex-1">Usamos cookies para medir nossos anúncios e melhorar o site. <a href="/privacidade" class="text-[#19D3AE] font-bold hover:underline">Veja a Política de Privacidade.</a></p>
+            <div class="flex items-center gap-2 shrink-0">
+                <button type="button" id="avisoCookiesRecusarBtn" onclick="responderConsentimentoCookies(false)" class="h-10 px-4 rounded-xl border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 font-bold text-[13px] transition-colors">Recusar</button>
+                <button type="button" id="avisoCookiesAceitarBtn" onclick="responderConsentimentoCookies(true)" class="h-10 px-4 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-[13px] transition-colors">Aceitar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE ACESSO -->
     <!-- Ícone integrado à linha do título (em vez de empilhado acima dele) -- corrige o problema
          relatado de o ícone parecer "vagando" sozinho. Reduzido para w-8 h-8 em círculo (era
@@ -1841,6 +1860,197 @@ https://..."></textarea>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script>
 
+    // ==================================================================================
+    // META PIXEL + AVISO DE COOKIES (LGPD) -- ETAPA B6, pedido do Igor, 27/10/2026.
+    // Objetivo: medir os anúncios de novembro. Pixel "Klango" da BM "02 BM - Anúncios", ID
+    // 1733386591088002 -- ID PÚBLICO (não é segredo, por isso pode ficar direto no código).
+    //
+    // Regra central: o Pixel só carrega depois que a pessoa clica em "Aceitar" na faixa de
+    // cookies (#avisoCookies), ou se ela já tinha aceitado numa visita anterior (consentimento
+    // salvo em localStorage). Com "recusado" ou sem resposta nenhuma, o Pixel NUNCA carrega.
+    //
+    // rastrear(evento, dados, opcoes) é a ÚNICA função que o resto do código chama pra disparar
+    // um evento -- sempre um no-op seguro (nunca lança erro, nunca quebra login/pagamento/
+    // qualquer fluxo) se o fbq não existir: bloqueador de anúncio, recusa de cookies, falha de
+    // rede ao carregar fbevents.js, ou a própria pessoa não ter respondido o aviso ainda.
+    // ==================================================================================
+    const META_PIXEL_ID = "1733386591088002";
+    const CHAVE_CONSENTIMENTO_COOKIES = "klango_consentimento";
+    const CHAVE_PURCHASES_PIXEL_ENVIADOS = "klango_pixel_purchases_enviados";
+    let pixelMetaCarregado = false;
+
+    function lerConsentimentoCookies() {
+        try {
+            return localStorage.getItem(CHAVE_CONSENTIMENTO_COOKIES);
+        } catch (err) {
+            // Sem acesso ao localStorage (modo privado, bloqueio do navegador etc.): nunca
+            // quebra -- trata como "sem resposta ainda" (a faixa aparece de novo, pedido exato
+            // do Igor).
+            return null;
+        }
+    }
+
+    function salvarConsentimentoCookies(valor) {
+        try {
+            localStorage.setItem(CHAVE_CONSENTIMENTO_COOKIES, valor);
+        } catch (err) {
+            console.warn("[COOKIES] não foi possível salvar o consentimento:", err);
+        }
+    }
+
+    // Código-base oficial da Meta (fbevents.js) -- não editado, só formatado/indentado aqui
+    // dentro. Só é chamado depois do consentimento (responderConsentimentoCookies) ou, no
+    // carregamento da página, se o consentimento salvo já era "aceito".
+    function carregarMetaPixel() {
+        if (pixelMetaCarregado) return;
+        pixelMetaCarregado = true;
+        try {
+            /* eslint-disable */
+            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+            n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+            document,'script','https://connect.facebook.net/en_US/fbevents.js');
+            /* eslint-enable */
+            fbq('init', META_PIXEL_ID);
+            fbq('track', 'PageView');
+        } catch (err) {
+            console.warn("[PIXEL] falha ao carregar o Meta Pixel:", err);
+        }
+    }
+
+    // Porta de entrada ÚNICA pra disparar qualquer evento do Pixel -- ver regra central no
+    // comentário do topo deste bloco. "opcoes" é usado hoje só para { eventID } (dedupe do
+    // Purchase, ver dispararPurchasePixel()).
+    function rastrear(evento, dados, opcoes) {
+        try {
+            if (typeof window.fbq !== "function") return;
+            window.fbq("track", evento, dados || {}, opcoes || {});
+        } catch (err) {
+            console.warn("[PIXEL] falha ao disparar evento", evento, err);
+        }
+    }
+
+    function jaEnviouPurchasePixel(idPagamento) {
+        if (!idPagamento) return false;
+        try {
+            const enviados = JSON.parse(localStorage.getItem(CHAVE_PURCHASES_PIXEL_ENVIADOS) || "[]");
+            return enviados.includes(idPagamento);
+        } catch (err) {
+            return false;
+        }
+    }
+
+    function marcarPurchasePixelEnviado(idPagamento) {
+        if (!idPagamento) return;
+        try {
+            const enviados = JSON.parse(localStorage.getItem(CHAVE_PURCHASES_PIXEL_ENVIADOS) || "[]");
+            if (!enviados.includes(idPagamento)) {
+                enviados.push(idPagamento);
+                // Mantém só os 50 mais recentes -- nunca cresce pra sempre no localStorage da
+                // pessoa.
+                localStorage.setItem(CHAVE_PURCHASES_PIXEL_ENVIADOS, JSON.stringify(enviados.slice(-50)));
+            }
+        } catch (err) {
+            console.warn("[PIXEL] não foi possível salvar o id do pagamento já enviado:", err);
+        }
+    }
+
+    // Dispara Purchase UMA VEZ por pagamento -- chamada nos 2 pontos de confirmação que já
+    // existem (cartão aprovado e polling do Pix), nunca duplicando a lógica de confirmação em
+    // si. paymentAtual (já existente) é quem tem o valor REAL (amount_cents) vindo do backend
+    // nesse momento -- diferente do InitiateCheckout, que dispara antes desse valor existir.
+    function dispararPurchasePixel() {
+        if (!paymentAtual || !paymentAtual.payment_id) return;
+        const idPagamento = String(paymentAtual.payment_id);
+        if (jaEnviouPurchasePixel(idPagamento)) return;
+        marcarPurchasePixelEnviado(idPagamento);
+        const planoInfo = PLANOS[paymentAtual.plan_code];
+        rastrear(
+            "Purchase",
+            {
+                content_name: planoInfo ? planoInfo.nome : paymentAtual.plan_code,
+                value: (paymentAtual.amount_cents || 0) / 100,
+                currency: "BRL",
+            },
+            { eventID: idPagamento },
+        );
+    }
+
+    // ViewContent: uma vez por visita (variável em memória, não localStorage -- "por visita" é
+    // isso mesmo, recarregar a página conta como nova visita), quando #secaoPlanos entra na
+    // tela.
+    function inicializarRastreioSecaoPlanos() {
+        const secao = document.getElementById("secaoPlanos");
+        if (!secao || !("IntersectionObserver" in window)) return;
+        let jaDisparou = false;
+        const observer = new IntersectionObserver(
+            (entradas) => {
+                entradas.forEach((entrada) => {
+                    if (entrada.isIntersecting && !jaDisparou) {
+                        jaDisparou = true;
+                        rastrear("ViewContent", { content_name: "Planos" });
+                        observer.disconnect();
+                    }
+                });
+            },
+            { threshold: 0.3 },
+        );
+        observer.observe(secao);
+    }
+
+    // Soma/remove a altura real da faixa como padding-bottom do <body> enquanto ela está
+    // visível -- garante que #avisoCookies nunca cobre nada da página (pedido exato do Igor:
+    // "não pode cobrir o botão Ver planos"), sem precisar calcular manualmente a altura em cada
+    // breakpoint (ela muda: 1 ou 2 linhas de texto, mobile ou desktop).
+    function ajustarEspacoAvisoCookies(mostrando) {
+        try {
+            const aviso = document.getElementById("avisoCookies");
+            if (!aviso) return;
+            document.body.style.paddingBottom = mostrando ? aviso.offsetHeight + "px" : "";
+        } catch (err) {
+            // Nunca deixa a página quebrar por causa disto.
+        }
+    }
+
+    function mostrarAvisoCookies() {
+        const aviso = document.getElementById("avisoCookies");
+        if (!aviso) return;
+        aviso.classList.remove("hidden");
+        ajustarEspacoAvisoCookies(true);
+    }
+
+    function esconderAvisoCookies() {
+        const aviso = document.getElementById("avisoCookies");
+        if (!aviso) return;
+        aviso.classList.add("hidden");
+        ajustarEspacoAvisoCookies(false);
+    }
+
+    function responderConsentimentoCookies(aceitou) {
+        salvarConsentimentoCookies(aceitou ? "aceito" : "recusado");
+        esconderAvisoCookies();
+        if (aceitou) carregarMetaPixel();
+    }
+
+    // Chamada no DOMContentLoaded (ver mais abaixo): decide se a faixa aparece (sem resposta
+    // salva ainda) ou fica escondida -- e, se já tinha "aceito" de uma visita anterior, carrega
+    // o Pixel direto, sem esperar um novo clique.
+    function inicializarConsentimentoCookies() {
+        const consentimento = lerConsentimentoCookies();
+        if (consentimento === "aceito") {
+            carregarMetaPixel();
+        } else if (consentimento !== "recusado") {
+            mostrarAvisoCookies();
+        }
+    }
+    // ==================================================================================
+    // FIM do bloco Meta Pixel + aviso de cookies -- o restante do arquivo só CHAMA rastrear()
+    // em pontos específicos (ver CompleteRegistration em confirmarCodigo(), InitiateCheckout em
+    // abrirModalPagamento(), e dispararPurchasePixel() nos 2 pontos de confirmação de
+    // pagamento), sem repetir nenhuma lógica de consentimento/carregamento daqui.
+    // ==================================================================================
+
     // Nome/detalhes são só rótulos de exibição -- nunca o preço, que SEMPRE vem da resposta do
     // backend (POST /api/payments -> amount_cents), nunca calculado ou fixado aqui (Etapa 10.2,
     // item 13: "o valor exibido no frontend deve ser derivado da resposta do backend").
@@ -1861,6 +2071,15 @@ https://..."></textarea>
             detalhes: ["15 gerações/dia", "lote de até 15 (sem limite semanal)", "acesso por 30 dias"]
         }
     };
+
+    // ETAPA B6 (Meta Pixel, pedido do Igor, 27/10/2026): só para o evento InitiateCheckout, que
+    // dispara em abrirModalPagamento() ANTES do preço real chegar do backend (POST /api/payments
+    // só responde depois, de forma assíncrona -- ver criarPaymentEMontarBrick/"Calculando
+    // valor..."). Espelha services/plans.py (Semanal 14.90, Mensal 27.90, VIP Batch 47.90) --
+    // PRECISA ser atualizado manualmente se os preços de lá mudarem. Nenhuma outra parte do site
+    // usa este mapa: Purchase usa o valor real (paymentAtual.amount_cents), que já chegou do
+    // backend nesse momento.
+    const PRECOS_PIXEL_POR_PLANO = { weekly: 14.9, monthly: 27.9, vip_batch: 47.9 };
 
     // Ordem de upgrade dos planos pagos (02/10/2026) -- usada só para decidir quais botões de
     // upgrade mostrar em "Meu acesso" (ver atualizarVisibilidadeSecaoPlanos); não tem relação com
@@ -2004,6 +2223,11 @@ https://..."></textarea>
         if (MOSTRAR_COMENTARIOS) carregarComentarios();
         centralizarCarrosselPlanos();
         inicializarReprodutorDeVideos();
+        // ETAPA B6 (Meta Pixel + aviso de cookies, pedido do Igor, 27/10/2026): decide se a faixa
+        // aparece ou se o Pixel já carrega direto (consentimento salvo de visita anterior), e liga
+        // o observer do ViewContent em #secaoPlanos.
+        inicializarConsentimentoCookies();
+        inicializarRastreioSecaoPlanos();
     });
 
     // 26/10/2026 (ETAPA B1, pedido do Igor -- "copy final do site"): script ÚNICO de reprodução
@@ -3475,6 +3699,8 @@ https://..."></textarea>
 
             mostrarPassoAcesso("acessoPassoConectado");
             mostrarMensagemAcesso("Acesso confirmado.", "sucesso");
+            // ETAPA B6 (Meta Pixel): sem nenhum dado pessoal (nunca e-mail/nome/telefone).
+            rastrear("CompleteRegistration");
         } catch (err) {
             console.error(err);
             mostrarMensagemAcesso("Erro ao falar com o servidor. Tente novamente.", "erro");
@@ -3602,6 +3828,17 @@ https://..."></textarea>
         paymentAtual = null;
 
         const info = PLANOS[plano];
+
+        // ETAPA B6 (Meta Pixel): aqui o modal já vai abrir de fato (sessão confirmada acima), mas
+        // o valor REAL (amount_cents) ainda não existe -- só chega depois, de forma assíncrona, na
+        // resposta de POST /api/payments (ver "Calculando valor..." alguns passos abaixo e
+        // criarPaymentEMontarBrick). Por isso usa PRECOS_PIXEL_POR_PLANO (espelho de
+        // services/plans.py) só para este evento -- o Purchase, mais adiante, usa o valor real.
+        rastrear("InitiateCheckout", {
+            content_name: info.nome,
+            value: PRECOS_PIXEL_POR_PLANO[plano],
+            currency: "BRL",
+        });
 
         document.getElementById("modalPlano").textContent = info.nome;
         // Cada fato do plano vira um selo separado (não mais um texto corrido com "•") -- ver
@@ -3933,6 +4170,11 @@ https://..."></textarea>
 
             if (data.status === "approved") {
                 mostrarStatusPagamento("Pagamento aprovado! Confirmando seu acesso...", "sucesso");
+                // ETAPA B6 (Meta Pixel): valor REAL, de paymentAtual.amount_cents (já veio do
+                // backend nesta altura -- ver criarPaymentEMontarBrick). paymentAtual só é zerado
+                // dentro de fecharModalPagamento(), chamada 1500ms depois disto, então ainda está
+                // válido aqui.
+                dispararPurchasePixel();
                 await validarEmailNoServidor();
                 setTimeout(() => fecharModalPagamento(), 1500);
             } else if (data.status === "pending") {
@@ -4021,6 +4263,9 @@ https://..."></textarea>
                     pararPollingConfirmacaoPix();
                     atualizarStatusContaVisual(data);
                     mostrarStatusPagamento("Pagamento confirmado! Acesso liberado.", "sucesso");
+                    // ETAPA B6 (Meta Pixel): mesmo helper do cartão -- valor REAL de
+                    // paymentAtual.amount_cents, dedupe por paymentAtual.payment_id.
+                    dispararPurchasePixel();
                     setTimeout(() => fecharModalPagamento(), 1500);
                 }
             } catch (err) {

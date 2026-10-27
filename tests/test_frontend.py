@@ -629,3 +629,134 @@ def test_footer_com_icone_do_youtube_ao_lado_de_instagram_e_tiktok():
     assert 'href="https://youtube.com/@klangomp4"' in html
     assert 'aria-label="KLANGO.MP4 no YouTube"' in html
     assert "fa-brands fa-youtube" in html
+
+
+# ---------------------------------------------------------------------- ETAPA B6 (Meta Pixel)
+
+
+def test_aviso_de_cookies_tem_o_texto_e_os_botoes_pedidos():
+    """27/10/2026 (ETAPA B6, pedido do Igor): faixa fixa de rodapé, com o texto exato pedido, link
+    pra /privacidade, e os botões Aceitar/Recusar chamando responderConsentimentoCookies(). Começa
+    escondida (quem decide se mostra é inicializarConsentimentoCookies(), no DOMContentLoaded) e
+    com z-index abaixo dos modais (#modalAcesso e #modalPagamento), pra nunca cobrir um aberto."""
+    html = _html()
+    assert 'id="avisoCookies" class="hidden fixed inset-x-0 bottom-0 z-30' in html
+    assert "Usamos cookies para medir nossos anúncios e melhorar o site." in html
+    assert 'href="/privacidade"' in html and "Veja a Política de Privacidade." in html
+    assert 'onclick="responderConsentimentoCookies(false)"' in html and ">Recusar<" in html
+    assert 'onclick="responderConsentimentoCookies(true)"' in html and ">Aceitar<" in html
+
+
+def test_consentimento_de_cookies_e_salvo_no_localstorage_com_a_chave_certa():
+    """O valor salvo precisa ser exatamente "aceito"/"recusado" na chave "klango_consentimento"
+    (pedido explícito do Igor), protegido por try/catch (não pode quebrar a página se o
+    localStorage falhar -- aí a faixa só reaparece na próxima visita, nada mais)."""
+    html = _html()
+    assert 'CHAVE_CONSENTIMENTO_COOKIES = "klango_consentimento"' in html
+    corpo_salvar = re.search(r"function salvarConsentimentoCookies\(valor\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "try {" in corpo_salvar and "catch (err)" in corpo_salvar
+    assert "localStorage.setItem(CHAVE_CONSENTIMENTO_COOKIES, valor)" in corpo_salvar
+    corpo_ler = re.search(r"function lerConsentimentoCookies\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "try {" in corpo_ler and "catch (err)" in corpo_ler
+    assert "return null;" in corpo_ler  # sem resposta salva (ou erro) -> null, nunca quebra
+
+
+def test_recusar_ou_nao_responder_nunca_carrega_o_pixel():
+    """Regra central do Igor: com "recusado" ou sem resposta nenhuma, o Pixel NUNCA carrega --
+    carregarMetaPixel() só é chamado em responderConsentimentoCookies(true) e, no boot da página,
+    só quando o consentimento salvo já era "aceito"."""
+    html = _html()
+    corpo_responder = re.search(r"function responderConsentimentoCookies\(aceitou\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "if (aceitou) carregarMetaPixel();" in corpo_responder
+    corpo_init = re.search(r"function inicializarConsentimentoCookies\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert 'if (consentimento === "aceito")' in corpo_init
+    assert "carregarMetaPixel();" in corpo_init
+    assert 'mostrarAvisoCookies();' in corpo_init
+
+
+def test_rastrear_e_um_no_op_seguro_quando_o_pixel_nao_existe():
+    """rastrear() é a ÚNICA porta de entrada pro resto do código disparar um evento -- precisa ser
+    sempre um no-op seguro se window.fbq não existir (bloqueador de anúncio, recusa, falha de
+    rede): nunca pode lançar erro nem quebrar login/pagamento."""
+    html = _html()
+    corpo = re.search(r"function rastrear\(evento, dados, opcoes\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "try {" in corpo and "catch (err)" in corpo
+    assert 'if (typeof window.fbq !== "function") return;' in corpo
+
+
+def test_meta_pixel_id_e_inicializacao_oficial():
+    html = _html()
+    assert 'META_PIXEL_ID = "1733386591088002"' in html
+    assert "fbq('init', META_PIXEL_ID)" in html
+    assert "fbq('track', 'PageView')" in html
+    assert "connect.facebook.net/en_US/fbevents.js" in html
+
+
+def test_complete_registration_dispara_no_acesso_confirmado_sem_dado_pessoal():
+    """O evento precisa disparar exatamente onde "Acesso confirmado." já aparece hoje, sem nenhum
+    dado pessoal (nunca e-mail/nome/telefone)."""
+    html = _html()
+    pos = html.index('mostrarMensagemAcesso("Acesso confirmado.", "sucesso");')
+    trecho = html[pos : pos + 200]
+    assert 'rastrear("CompleteRegistration");' in trecho
+
+
+def test_initiate_checkout_dispara_ao_abrir_o_modal_de_pagamento_com_preco_do_mapa_front():
+    """Dentro de abrirModalPagamento(plano), DEPOIS da checagem de sessão (ou seja, só quando o
+    modal realmente abre) -- usa o mapa front-end PRECOS_PIXEL_POR_PLANO porque o valor real
+    (amount_cents) ainda não chegou do backend nesse momento."""
+    html = _html()
+    assert "PRECOS_PIXEL_POR_PLANO = { weekly: 14.9, monthly: 27.9, vip_batch: 47.9 }" in html
+    corpo = re.search(r"async function abrirModalPagamento\(plano\) \{(.*?)\n        const info = PLANOS\[plano\];", html, re.S).group(1)
+    assert "abrirAcesso();" in corpo  # a checagem de sessão continua antes
+    pos_checagem = html.index("planoPendenteAposLogin = plano;")
+    pos_evento = html.index('rastrear("InitiateCheckout"')
+    assert pos_checagem < pos_evento
+    trecho_evento = html[pos_evento : pos_evento + 200]
+    assert "value: PRECOS_PIXEL_POR_PLANO[plano]" in trecho_evento
+    assert 'currency: "BRL"' in trecho_evento
+
+
+def test_purchase_dispara_nos_dois_pontos_de_confirmacao_com_valor_real_e_dedupe():
+    """Purchase precisa disparar nos 2 pontos existentes (cartão aprovado e Pix confirmado), com o
+    valor REAL vindo do backend (paymentAtual.amount_cents), nunca do mapa front-end, e nunca
+    duplicado pro mesmo pagamento (eventID + dedupe em localStorage)."""
+    html = _html()
+    pos_cartao = html.index('mostrarStatusPagamento("Pagamento aprovado! Confirmando seu acesso...", "sucesso");')
+    assert "dispararPurchasePixel();" in html[pos_cartao : pos_cartao + 500]
+    pos_pix = html.index('mostrarStatusPagamento("Pagamento confirmado! Acesso liberado.", "sucesso");')
+    assert "dispararPurchasePixel();" in html[pos_pix : pos_pix + 350]
+
+    corpo = re.search(r"function dispararPurchasePixel\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "if (!paymentAtual || !paymentAtual.payment_id) return;" in corpo
+    assert "if (jaEnviouPurchasePixel(idPagamento)) return;" in corpo
+    assert "marcarPurchasePixelEnviado(idPagamento);" in corpo
+    assert "value: (paymentAtual.amount_cents || 0) / 100" in corpo
+    assert '{ eventID: idPagamento }' in corpo
+
+    corpo_dedupe = re.search(r"function jaEnviouPurchasePixel\(idPagamento\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "try {" in corpo_dedupe and "catch (err)" in corpo_dedupe
+    assert "CHAVE_PURCHASES_PIXEL_ENVIADOS" in corpo_dedupe
+
+
+def test_view_content_observa_a_secao_de_planos_uma_vez_por_visita():
+    html = _html()
+    corpo = re.search(r"function inicializarRastreioSecaoPlanos\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert 'getElementById("secaoPlanos")' in corpo
+    assert "IntersectionObserver" in corpo
+    assert 'rastrear("ViewContent", { content_name: "Planos" });' in corpo
+    assert "observer.disconnect();" in corpo
+
+
+def test_dom_content_loaded_inicializa_consentimento_e_rastreio_de_planos():
+    html = _html()
+    corpo = re.search(r'addEventListener\("DOMContentLoaded", \(\) => \{(.*?)\n    \}\);', html, re.S).group(1)
+    assert "inicializarConsentimentoCookies();" in corpo
+    assert "inicializarRastreioSecaoPlanos();" in corpo
+
+
+def test_politica_de_privacidade_menciona_o_meta_pixel(auth_client):
+    resposta = auth_client.get("/privacidade")
+    assert resposta.status_code == 200
+    assert "Meta Pixel" in resposta.text
+    assert "aviso de cookies" in resposta.text
