@@ -542,3 +542,89 @@ def test_ordem_das_secoes_do_funil_frio():
     ]
     posicoes = [html.index(f'<section id="{i}"') for i in ids_em_ordem]
     assert posicoes == sorted(posicoes)
+
+
+def test_caixa_nao_recebeu_codigo_com_quebra_de_linha():
+    """27/10/2026 (pedido do Igor): a descrição dentro da caixa "Não recebeu o código?" (tela de
+    OTP) quebrava de um jeito estranho em telas estreitas -- agora força a quebra entre "...caixa
+    de entrada" e "(e spam)." com um <br> em vez de depender do wrap automático."""
+    html = _html()
+    assert "Verifique sua caixa de entrada<br>(e spam)." in html
+    assert "Verifique sua caixa de entrada (e spam)." not in html
+
+
+def test_stats_processados_escondido_para_quem_ja_logou():
+    """27/10/2026 (pedido do Igor): "515 vídeos já processados" é prova social pra quem ainda não
+    decidiu assinar -- pra quem já está logado a informação é redundante (o card "Meu acesso" já
+    mostra o que importa), então carregarEstatisticas() nem busca nem exibe o stat nesse caso.
+    Também passou a rodar só depois que a sessão é resolvida (antes rodava em paralelo, sem saber
+    se havia sessão)."""
+    html = _html()
+    corpo = re.search(r"async function carregarEstatisticas\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "if (sessaoEmail) return;" in corpo
+    assert "carregarSessao().then(carregarEstatisticas);" in html
+
+
+def test_selo_de_status_some_so_para_quem_tem_plano_pago():
+    """27/10/2026 (pedido do Igor): o selo "Free · 5 de 5 restantes..." / "VIP Batch · 15 de 15
+    restantes hoje" no topo da página fica redundante assim que o card "Meu acesso" aparece (mesmo
+    plano, mesma informação) -- então some só nesse caso. Pra visitante e pra quem está no Free
+    (sem o card "Meu acesso"), o selo continua a única forma de ver quantos usos restam."""
+    html = _html()
+    corpo = re.search(
+        r"function atualizarVisibilidadeSecaoPlanos\(planoCode\) \{(.*?)\n    \}", html, re.S
+    ).group(1)
+    assert 'statusContaBadge.classList.remove("hidden")' in corpo
+    assert 'statusContaBadge.classList.add("hidden")' in corpo
+
+
+def test_meu_acesso_aparece_antes_do_hero():
+    """27/10/2026 (pedido do Igor): assim que a pessoa loga numa conta com plano pago, o card "Meu
+    acesso" deve ser a primeira coisa na página -- antes ele ficava mais abaixo (depois da vitrine
+    de Planos), então o formulário do hero sempre aparecia primeiro, mesmo pra quem já tinha
+    assinado. Continua "hidden" por padrão (mesma lógica de atualizarVisibilidadeSecaoPlanos()) --
+    só a posição no documento mudou."""
+    html = _html()
+    pos_main = html.index('<main id="topo"')
+    pos_area_assinatura = html.index('<section id="areaAssinatura"')
+    pos_hero_titulo = html.index("Baixe vídeos sem anúncios no site e")
+    assert pos_main < pos_area_assinatura < pos_hero_titulo
+
+
+def test_secao_batch_mostra_formulario_real_com_cadeado_para_quem_nao_tem_lote():
+    """27/10/2026 (pedido do Igor): quem não tem plano com lote (visitante ou Free) passa a ver o
+    formulário de verdade da aba "Vários (lote)" -- mesmos campos, mesmo "+nome" por vídeo, mesma
+    opção de áudio MP3 -- em vez da aba inteira escondida. Um cadeado (#secaoBatchBloqueado) cobre
+    o formulário (#secaoBatchConteudo fica pointer-events-none/dimmed) até a pessoa assinar um
+    plano com lote."""
+    html = _html()
+    assert 'id="secaoBatch" class="hidden relative"' in html
+    assert 'id="secaoBatchConteudo"' in html
+    assert 'id="secaoBatchBloqueado" class="hidden absolute inset-0' in html
+    assert "Disponível nos planos Semanal, Mensal e VIP Batch." in html
+    corpo = re.search(r"function atualizarVisibilidadeBatch\(plano, uso\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert 'secao.classList.remove("hidden")' in corpo
+    assert 'secaoBatchBloqueado.classList.toggle("hidden", !bloqueado)' in corpo
+
+
+def test_fila_do_atalho_nao_processa_automaticamente():
+    """27/10/2026 (pedido do Igor): clicar em "Baixar vídeos"/"Extrair áudios" na fila do atalho
+    ("Enviar para o KLANGO") preenchia a aba de lote E já disparava processarLoteFormato() na
+    sequência, sem deixar a pessoa usar o campo "+nome" (já existente em cada item) pra renomear
+    antes. Agora só preenche e rola até a aba -- quem decide quando processar é a pessoa, no botão
+    #batchButton normal."""
+    html = _html()
+    corpo = re.search(r"async function enviarFilaParaLote\(formato\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert 'selecionarAbaBaixarLote("varios");' in corpo
+    assert "processarLoteFormato();" not in corpo
+
+
+def test_footer_com_icone_do_youtube_ao_lado_de_instagram_e_tiktok():
+    """27/10/2026 (pedido do Igor): rodapé ganhou o ícone/link do YouTube, no mesmo padrão visual
+    dos ícones de Instagram e TikTok já existentes (mesmas classes, mesmo tamanho)."""
+    html = _html()
+    assert 'href="https://www.instagram.com/klango.mp4"' in html
+    assert 'href="https://www.tiktok.com/@klango.mp4"' in html
+    assert 'href="https://youtube.com/@klangomp4"' in html
+    assert 'aria-label="KLANGO.MP4 no YouTube"' in html
+    assert "fa-brands fa-youtube" in html

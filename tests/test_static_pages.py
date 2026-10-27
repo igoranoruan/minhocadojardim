@@ -57,6 +57,19 @@ def test_politica_de_privacidade(auth_client):
     assert "Política de Privacidade" in resposta.text
 
 
+def test_termos_e_privacidade_topicos_com_mais_destaque_e_espacamento(auth_client):
+    """27/10/2026 (pedido do Igor): os títulos numerados (1., 2., ...) de Termos de Uso e
+    Política de Privacidade ganharam mais tamanho/peso e mais espaço entre tópicos -- o negrito já
+    existia, mas o conjunto (tamanho pequeno + pouco respiro) ainda deixava os tópicos visualmente
+    colados uns nos outros."""
+    for rota in ("/termos", "/privacidade"):
+        resposta = auth_client.get(rota)
+        assert resposta.status_code == 200
+        assert "font-size: 1.3rem" in resposta.text
+        assert "margin-top: 3rem" in resposta.text
+        assert "border-bottom: 1px solid #1b2738" in resposta.text
+
+
 def test_pagina_de_configuracao_do_atalho_ios(auth_client):
     """Etapa 4 (15/10/2026) -- instruções de configuração do atalho "Enviar para o KLANGO" no
     iPhone, mesmo padrão de URL limpa de /termos e /privacidade. Passo a passo manual só (16/10/2026

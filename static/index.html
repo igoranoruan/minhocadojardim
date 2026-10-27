@@ -192,6 +192,93 @@
         </div>
 
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
+            <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
+                 Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
+                 está no VIP Batch. Preço nunca aparece aqui hardcoded: o botão só abre o mesmo
+                 abrirModalPagamento(plano) que já busca o preço real no servidor.
+
+                 04/10/2026, redesenho a pedido do Igor (referência visual de um "dashboard de
+                 acesso"): vira um card completo -- badge "ATIVO" (verdadeiro sempre que esta seção
+                 está visível: o backend já resolve plano expirado/revogado pra "free" antes de
+                 chegar aqui, ver comentário de routes/me.py::StatusOut/EntitlementOut -- "Free,
+                 entitlement expirado ou revoked já viram None por conta própria"), descrição da
+                 capacidade de lote do plano, bloco "X de Y restantes" + "Acesso válido até DD/MM",
+                 barra de uso e aviso de renovação da cota. TODOS os valores continuam vindo de
+                 GET /api/me/status (plan/usage/entitlement), preenchidos em
+                 atualizarCardAcessoDetalhes() -- nenhum cálculo de cota/validade/preço é feito
+                 aqui, só formatação de exibição. Nenhum id usado pela lógica existente foi
+                 removido: #assinaturaPlano e #assinaturaUpgrade continuam exatamente como antes
+                 (mesmas funções, atualizarVisibilidadeSecaoPlanos()); #assinaturaStatus já existia
+                 no HTML mas nunca tinha sido preenchido por nenhum JS -- reaproveitado aqui pra
+                 descrição do lote, em vez de criar mais um id.
+
+                 27/10/2026 (pedido do Igor): card movido pra cá, ANTES do hero/formulário individual
+                 -- antes ficava mais abaixo (depois da vitrine de Planos), então mesmo sem nenhuma
+                 seção de funil frio visível pra quem já tem plano pago, a pessoa ainda via o
+                 formulário/selo do hero primeiro e só depois "Meu acesso". Agora é a primeira coisa
+                 na página assim que há sessão com plano pago -- nenhum id/função mudou, só a posição
+                 no documento (continua "hidden" por padrão, mesma lógica de
+                 atualizarVisibilidadeSecaoPlanos()). -->
+            <section id="areaAssinatura" class="hidden pt-6 sm:pt-16 pb-10 sm:pb-14">
+                <div class="bg-card rounded-3xl p-6 sm:p-7 border border-[#19D3AE]/20">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="text-[13px] text-slate-500 uppercase tracking-wider font-bold pt-1.5">Meu acesso</div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-extrabold uppercase tracking-wider shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#19D3AE]"></span> Ativo
+                        </span>
+                    </div>
+
+                    <div id="assinaturaPlano" class="text-xl sm:text-2xl font-extrabold text-white mt-3">—</div>
+
+                    <!-- Bloco "X de Y restantes" + "Acesso válido até" -- grid de 1 coluna no
+                         mobile (nada aperta/estoura horizontalmente) e 2 no sm+, com divisória só
+                         a partir do sm. -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3 mt-5 p-4 rounded-2xl border border-slate-800 bg-[#060b14]">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group text-sm"></i></div>
+                            <div class="min-w-0">
+                                <div id="assinaturaRestantesNumero" class="text-lg font-extrabold text-white leading-tight truncate">—</div>
+                                <div id="assinaturaRestantesLabel" class="text-[13px] text-slate-500 truncate">—</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 min-w-0 sm:border-l sm:border-slate-800 sm:pl-4">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-calendar-check text-sm"></i></div>
+                            <div class="min-w-0">
+                                <div class="text-[13px] text-slate-500">Acesso válido até</div>
+                                <div id="assinaturaValidadeData" class="text-base font-extrabold text-[#19D3AE] truncate">—</div>
+                                <!-- Etapa 3 (dossiê, 4.2): até 7 dias pra expirar, destaca em âmbar
+                                     (classe trocada em JS) + este link "Renovar" aparece -- reaproveita
+                                     o MESMO checkout de sempre (abrirModalPagamento), comprando o
+                                     mesmo plano de novo (planos são compra única, sem renovação
+                                     automática -- "Renovar" aqui É comprar de novo). -->
+                                <button type="button" id="assinaturaRenovarBtn" onclick="renovarPlanoAtual()" class="hidden mt-1 text-[13px] font-bold text-amber-400 hover:underline">Renovar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de uso: um segmento por unidade da cota quando ela é pequena (até 20,
+                         cobre os 3 planos atuais -- 5/10/15 por dia), senão vira uma barra contínua
+                         proporcional -- nunca estoura a largura disponível (ver
+                         atualizarCardAcessoDetalhes()). -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span id="assinaturaUsoLabel" class="text-[13px] font-bold text-slate-400">Uso de hoje</span>
+                            <span id="assinaturaUsoFracao" class="text-[13px] font-bold text-slate-500 shrink-0">—</span>
+                        </div>
+                        <div id="assinaturaUsoBarra" class="flex gap-1"></div>
+                    </div>
+
+                    <!-- Só aparece quando o período da cota é conhecido (dia/semana) -- nunca um
+                         texto de renovação genérico/inventado (ver atualizarCardAcessoDetalhes()). -->
+                    <div id="assinaturaRenova" class="hidden flex items-center gap-2 mt-4 text-[13px] text-slate-500">
+                        <i class="fa-regular fa-clock"></i>
+                        <span id="assinaturaRenovaTexto"></span>
+                    </div>
+
+                    <div id="assinaturaUpgrade" class="hidden flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-5 pt-5 border-t border-slate-800"></div>
+                </div>
+            </section>
+
             <!-- HERO (04/10/2026, refinamento da primeira dobra pedido pelo CÉREBRO por escrito --
                  documento "IMPLEMENTAÇÃO DA NOVA HOME"): eyebrow "FERRAMENTA PARA REUTILIZAÇÃO DE
                  CONTEÚDO" removido por ser redundante com a própria headline logo abaixo. Nova
@@ -779,85 +866,6 @@
                      10x30=300, 15x30=450. -->
             </section>
 
-            <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
-                 Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
-                 está no VIP Batch. Preço nunca aparece aqui hardcoded: o botão só abre o mesmo
-                 abrirModalPagamento(plano) que já busca o preço real no servidor.
-
-                 04/10/2026, redesenho a pedido do Igor (referência visual de um "dashboard de
-                 acesso"): vira um card completo -- badge "ATIVO" (verdadeiro sempre que esta seção
-                 está visível: o backend já resolve plano expirado/revogado pra "free" antes de
-                 chegar aqui, ver comentário de routes/me.py::StatusOut/EntitlementOut -- "Free,
-                 entitlement expirado ou revoked já viram None por conta própria"), descrição da
-                 capacidade de lote do plano, bloco "X de Y restantes" + "Acesso válido até DD/MM",
-                 barra de uso e aviso de renovação da cota. TODOS os valores continuam vindo de
-                 GET /api/me/status (plan/usage/entitlement), preenchidos em
-                 atualizarCardAcessoDetalhes() -- nenhum cálculo de cota/validade/preço é feito
-                 aqui, só formatação de exibição. Nenhum id usado pela lógica existente foi
-                 removido: #assinaturaPlano e #assinaturaUpgrade continuam exatamente como antes
-                 (mesmas funções, atualizarVisibilidadeSecaoPlanos()); #assinaturaStatus já existia
-                 no HTML mas nunca tinha sido preenchido por nenhum JS -- reaproveitado aqui pra
-                 descrição do lote, em vez de criar mais um id. -->
-            <section id="areaAssinatura" class="hidden py-16 sm:py-24">
-                <div class="bg-card rounded-3xl p-6 sm:p-7 border border-[#19D3AE]/20">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="text-[13px] text-slate-500 uppercase tracking-wider font-bold pt-1.5">Meu acesso</div>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-extrabold uppercase tracking-wider shrink-0">
-                            <span class="w-1.5 h-1.5 rounded-full bg-[#19D3AE]"></span> Ativo
-                        </span>
-                    </div>
-
-                    <div id="assinaturaPlano" class="text-xl sm:text-2xl font-extrabold text-white mt-3">—</div>
-
-                    <!-- Bloco "X de Y restantes" + "Acesso válido até" -- grid de 1 coluna no
-                         mobile (nada aperta/estoura horizontalmente) e 2 no sm+, com divisória só
-                         a partir do sm. -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3 mt-5 p-4 rounded-2xl border border-slate-800 bg-[#060b14]">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group text-sm"></i></div>
-                            <div class="min-w-0">
-                                <div id="assinaturaRestantesNumero" class="text-lg font-extrabold text-white leading-tight truncate">—</div>
-                                <div id="assinaturaRestantesLabel" class="text-[13px] text-slate-500 truncate">—</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 min-w-0 sm:border-l sm:border-slate-800 sm:pl-4">
-                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-calendar-check text-sm"></i></div>
-                            <div class="min-w-0">
-                                <div class="text-[13px] text-slate-500">Acesso válido até</div>
-                                <div id="assinaturaValidadeData" class="text-base font-extrabold text-[#19D3AE] truncate">—</div>
-                                <!-- Etapa 3 (dossiê, 4.2): até 7 dias pra expirar, destaca em âmbar
-                                     (classe trocada em JS) + este link "Renovar" aparece -- reaproveita
-                                     o MESMO checkout de sempre (abrirModalPagamento), comprando o
-                                     mesmo plano de novo (planos são compra única, sem renovação
-                                     automática -- "Renovar" aqui É comprar de novo). -->
-                                <button type="button" id="assinaturaRenovarBtn" onclick="renovarPlanoAtual()" class="hidden mt-1 text-[13px] font-bold text-amber-400 hover:underline">Renovar</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Barra de uso: um segmento por unidade da cota quando ela é pequena (até 20,
-                         cobre os 3 planos atuais -- 5/10/15 por dia), senão vira uma barra contínua
-                         proporcional -- nunca estoura a largura disponível (ver
-                         atualizarCardAcessoDetalhes()). -->
-                    <div class="mt-5">
-                        <div class="flex items-center justify-between gap-2 mb-2">
-                            <span id="assinaturaUsoLabel" class="text-[13px] font-bold text-slate-400">Uso de hoje</span>
-                            <span id="assinaturaUsoFracao" class="text-[13px] font-bold text-slate-500 shrink-0">—</span>
-                        </div>
-                        <div id="assinaturaUsoBarra" class="flex gap-1"></div>
-                    </div>
-
-                    <!-- Só aparece quando o período da cota é conhecido (dia/semana) -- nunca um
-                         texto de renovação genérico/inventado (ver atualizarCardAcessoDetalhes()). -->
-                    <div id="assinaturaRenova" class="hidden flex items-center gap-2 mt-4 text-[13px] text-slate-500">
-                        <i class="fa-regular fa-clock"></i>
-                        <span id="assinaturaRenovaTexto"></span>
-                    </div>
-
-                    <div id="assinaturaUpgrade" class="hidden flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-5 pt-5 border-t border-slate-800"></div>
-                </div>
-            </section>
-
             <!-- BAIXAR EM LOTE -- card único com abas (Etapa 4, dossiê 4.1/4.3/4.4, 20/10/2026):
                  "Processamento em lote" e "Importar pasta do Pinterest" eram 2 cards/seções
                  separados, um embaixo do outro, com cabeçalho duplicado -- o dossiê pede 1 card só,
@@ -905,17 +913,23 @@
                              violeta volta a ser exclusividade do selo/card do plano VIP; aqui
                              (lote, disponível em 3 planos, não só VIP Batch) é cor primária padrão
                              = verde-água. -->
-                        <div id="secaoBatch" class="hidden">
+                        <!-- 27/10/2026 (pedido do Igor): #secaoBatch deixou de ficar inteiramente
+                             "hidden" pra quem não tem plano com lote (Free/visitante) -- agora mostra
+                             o formulário REAL (mesmos campos, mesmo "+nome" por vídeo, mesmo toggle de
+                             áudio) com um cadeado por cima (#secaoBatchBloqueado), pra quem ainda não
+                             assinou enxergar exatamente o que vai usar ao assinar. Quem decide
+                             bloqueado/liberado continua sendo só atualizarVisibilidadeBatch() (ver
+                             JS) -- nenhum endpoint/gate novo, e o formulário real continua
+                             pointer-events-none (visualmente inerte) enquanto bloqueado, então não dá
+                             pra processar nada sem plano -- o backend também já recusaria. -->
+                        <div id="secaoBatch" class="hidden relative">
+                            <div id="secaoBatchConteudo">
                             <p id="batchLimiteTexto" class="text-sm text-slate-400 mb-4">Adicione vários vídeos de uma vez. Você pode dar um nome diferente para cada arquivo.</p>
 
                             <!-- Toggle de formato do LOTE (Parte B, extração de áudio -- autorização
                                  do CÉREBRO, 11/10/2026): mesmo padrão do toggle individual
                                  (formatoVideoBtn/formatoAudioBtn), "Vídeo (MP4)" sempre como padrão
-                                 -- quem nunca tocar aqui nunca muda de fluxo. Esta aba (#secaoBatch)
-                                 já só aparece pra quem tem plano pago com lote habilitado (gate
-                                 pré-existente, não alterado por esta etapa) -- por isso a regra
-                                 "nunca esconder a opção de áudio do Free" já está satisfeita: não
-                                 existe Free vendo esta aba para esconder algo dele. -->
+                                 -- quem nunca tocar aqui nunca muda de fluxo. -->
                             <div class="flex gap-2 mb-4">
                                 <button type="button" id="formatoVideoBtnLote" onclick="selecionarFormatoLote('video')"
                                     class="flex-1 h-10 rounded-xl border text-[13px] font-bold transition-colors bg-[#19D3AE] text-slate-950 border-[#19D3AE]">
@@ -962,6 +976,18 @@ https://..."></textarea>
 
                             <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Baixar 1 vídeo</button>
                             <div id="batchStatus" class="mt-4 text-sm"></div>
+                            </div>
+
+                            <!-- Cadeado (Free/visitante/plano sem lote) -- igual em espírito ao
+                                 #pinterestBoardBloqueado, mas em CAMADA por cima do formulário real
+                                 (#secaoBatchConteudo, dimmed + pointer-events-none via JS) em vez de
+                                 substituí-lo, pra deixar visível o que a pessoa vai usar ao assinar. -->
+                            <div id="secaoBatchBloqueado" class="hidden absolute inset-0 rounded-2xl bg-[#060b14]/92 backdrop-blur-[2px] flex flex-col items-center justify-center text-center p-6">
+                                <i class="fa-solid fa-lock text-slate-400 text-xl mb-3"></i>
+                                <p class="text-sm text-white font-bold max-w-[16rem]">Baixe vários vídeos de uma vez, com opção de extrair só o áudio em MP3.</p>
+                                <p class="text-[13px] text-slate-400 mt-1 max-w-[16rem]">Disponível nos planos Semanal, Mensal e VIP Batch.</p>
+                                <a href="#secaoPlanos" onclick="irParaMeuPlano(); return false;" class="inline-block mt-4 h-11 leading-[44px] px-5 rounded-xl bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold text-[13px] transition-colors">Ver planos</a>
+                            </div>
                         </div>
                     </div>
 
@@ -1406,6 +1432,10 @@ https://..."></textarea>
                     <div class="flex items-center gap-2.5">
                         <a href="https://www.instagram.com/klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no Instagram" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-instagram text-sm"></i></a>
                         <a href="https://www.tiktok.com/@klango.mp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no TikTok" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-tiktok text-sm"></i></a>
+                        <!-- 27/10/2026 (pedido do Igor): ícone do YouTube adicionado ao lado do
+                             Instagram/TikTok -- mesmo padrão visual dos outros 2, sem nenhuma
+                             mudança neles. -->
+                        <a href="https://youtube.com/@klangomp4" target="_blank" rel="noopener noreferrer" aria-label="KLANGO.MP4 no YouTube" class="w-9 h-9 rounded-lg bg-card-soft border border-slate-800 flex items-center justify-center text-slate-400 hover:text-[#19D3AE] hover:border-[#19D3AE]/40 transition-colors"><i class="fa-brands fa-youtube text-sm"></i></a>
                     </div>
                 </div>
 
@@ -1571,7 +1601,7 @@ https://..."></textarea>
                     <i class="fa-solid fa-shield-halved text-[#19D3AE] mt-0.5"></i>
                     <div>
                         <p class="text-[13px] font-bold text-white">Não recebeu o código?</p>
-                        <p class="text-[13px] text-slate-500 mt-0.5">Verifique sua caixa de entrada (e spam).</p>
+                        <p class="text-[13px] text-slate-500 mt-0.5">Verifique sua caixa de entrada<br>(e spam).</p>
                     </div>
                 </div>
             </div>
@@ -1959,8 +1989,11 @@ https://..."></textarea>
         registrarServiceWorkerPwa();
         inicializarBatch();
         inicializarLotePreview();
-        carregarSessao();
-        carregarEstatisticas();
+        // 27/10/2026 (pedido do Igor): carregarEstatisticas() precisa saber se há sessão ativa
+        // (pra esconder o stat de "vídeos já processados" de quem já logou -- ver comentário
+        // dentro da função), então só roda depois que carregarSessao() resolve, em vez de disparar
+        // em paralelo como antes.
+        carregarSessao().then(carregarEstatisticas);
         aplicarVisibilidadeComentarios();
         if (MOSTRAR_COMENTARIOS) carregarComentarios();
         centralizarCarrosselPlanos();
@@ -2252,6 +2285,10 @@ https://..."></textarea>
     const LIMIAR_EXIBICAO_STATS_PROCESSADOS = 300;
 
     async function carregarEstatisticas() {
+        // 27/10/2026 (pedido do Igor): o stat de "vídeos já processados" é prova social pra quem
+        // ainda não decidiu assinar -- pra quem já está logado, a informação é redundante (o card
+        // "Meu acesso" já mostra o que importa pra essa pessoa), então nem busca nem exibe.
+        if (sessaoEmail) return;
         try {
             const resposta = await fetch("/api/stats");
             if (!resposta.ok) return;
@@ -2814,16 +2851,24 @@ https://..."></textarea>
         const areaAssinatura = document.getElementById("areaAssinatura");
         const assinaturaPlano = document.getElementById("assinaturaPlano");
         const assinaturaUpgrade = document.getElementById("assinaturaUpgrade");
+        // 27/10/2026 (pedido do Igor): o selo "Free · 5 de 5 restantes..." / "VIP Batch · 15 de 15
+        // restantes hoje" no topo da página é o único indicador de cota pra visitante e pra quem
+        // está no Free -- continua sempre visível pra esses dois casos. Mas pra quem JÁ tem plano
+        // pago (mesmo "pago" decidido aqui embaixo, quando o card "Meu acesso" aparece), a mesma
+        // informação já está dentro do card, então o selo vira repetição e some.
+        const statusContaBadge = document.getElementById("statusContaBadge");
         if (!secaoPlanos || !areaAssinatura || !assinaturaPlano || !assinaturaUpgrade) return;
 
         if (planoCode === "free" || !PLANOS[planoCode]) {
             secaoPlanos.classList.remove("hidden");
             areaAssinatura.classList.add("hidden");
+            if (statusContaBadge) statusContaBadge.classList.remove("hidden");
             return;
         }
 
         secaoPlanos.classList.add("hidden");
         areaAssinatura.classList.remove("hidden");
+        if (statusContaBadge) statusContaBadge.classList.add("hidden");
         assinaturaPlano.textContent = `Plano ${PLANOS[planoCode].nome}`;
 
         const indiceAtual = ORDEM_PLANOS_PAGOS.indexOf(planoCode);
@@ -3062,8 +3107,19 @@ https://..."></textarea>
         loteSemTeto = semTeto;
         limiteLotePlano = LIMITE_LOTE_POR_PLANO[plano.code] ?? 0;
         limiteLoteAtual = semTeto ? Number.MAX_SAFE_INTEGER : limiteLotePlano;
+        // 27/10/2026 (pedido do Igor): #secaoBatch deixa de ficar "hidden" inteira pra quem não tem
+        // lote -- agora sempre aparece (assim que o status real responde, igual ao Pinterest), e só
+        // alterna entre o formulário de verdade (liberado) e o mesmo formulário com cadeado por
+        // cima (bloqueado, #secaoBatchBloqueado + conteúdo dimmed/pointer-events-none).
         const secao = document.getElementById("secaoBatch");
-        if (secao) secao.classList.toggle("hidden", limiteLoteAtual <= 0);
+        const secaoBatchConteudo = document.getElementById("secaoBatchConteudo");
+        const secaoBatchBloqueado = document.getElementById("secaoBatchBloqueado");
+        const bloqueado = limiteLoteAtual <= 0;
+        if (secao) secao.classList.remove("hidden");
+        if (secaoBatchConteudo) secaoBatchConteudo.classList.toggle("pointer-events-none", bloqueado);
+        if (secaoBatchConteudo) secaoBatchConteudo.classList.toggle("opacity-40", bloqueado);
+        if (secaoBatchConteudo) secaoBatchConteudo.setAttribute("aria-hidden", bloqueado ? "true" : "false");
+        if (secaoBatchBloqueado) secaoBatchBloqueado.classList.toggle("hidden", !bloqueado);
 
         // Etapa 4 (dossiê, 4.3): selo de plano (ex.: "VIP BATCH", #batchPlanoTag) removido --
         // o contador agora é só texto normal (ver atualizarContagemLote()). Saldo diário de
@@ -3100,9 +3156,18 @@ https://..."></textarea>
     }
 
     function esconderBatch() {
+        // 27/10/2026 (pedido do Igor): mesmo raciocínio de sempre (cadeado aparece JÁ no logout,
+        // sem esperar a resposta assíncrona de carregarStatusConta() logo em seguida) -- só que
+        // agora o estado imediato é "bloqueado com formulário visível por baixo", não mais
+        // totalmente escondido (ver atualizarVisibilidadeBatch()).
         limiteLoteAtual = 0;
         const secao = document.getElementById("secaoBatch");
-        if (secao) secao.classList.add("hidden");
+        const secaoBatchConteudo = document.getElementById("secaoBatchConteudo");
+        const secaoBatchBloqueado = document.getElementById("secaoBatchBloqueado");
+        if (secao) secao.classList.remove("hidden");
+        if (secaoBatchConteudo) secaoBatchConteudo.classList.add("pointer-events-none", "opacity-40");
+        if (secaoBatchConteudo) secaoBatchConteudo.setAttribute("aria-hidden", "true");
+        if (secaoBatchBloqueado) secaoBatchBloqueado.classList.remove("hidden");
         atualizarVisibilidadeSecaoBaixarLote();
     }
 
@@ -6106,7 +6171,11 @@ https://..."></textarea>
             if (cardBaixarLote) cardBaixarLote.classList.remove("hidden");
             selecionarAbaBaixarLote("varios");
             secaoBatch.scrollIntoView({ behavior: "smooth", block: "start" });
-            processarLoteFormato();
+            // 27/10/2026 (pedido do Igor): antes, processarLoteFormato() disparava sozinho aqui,
+            // logo depois de preencher os campos -- a pessoa nunca tinha chance de usar o campo
+            // "+nome" (já existente em cada item, via criarCampoLote) pra renomear antes do
+            // processamento começar. Agora só preenche e rola até a aba; quem decide quando começar
+            // é a pessoa, apertando o botão "Baixar" (#batchButton) normal da aba de lote.
         }
 
         setStatusAtalhoFila(
