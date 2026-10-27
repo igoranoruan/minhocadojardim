@@ -748,11 +748,34 @@ def test_view_content_observa_a_secao_de_planos_uma_vez_por_visita():
     assert "observer.disconnect();" in corpo
 
 
+def test_view_content_so_conta_disparado_quando_o_pixel_ja_existe():
+    """ETAPA B6.1 (correção, achado na revisão): se a pessoa rolar até #secaoPlanos ANTES de
+    aceitar os cookies, o ViewContent não pode ser perdido pra sempre -- jaDisparou só pode virar
+    true (e o observer só pode desconectar) quando window.fbq já existe de verdade."""
+    html = _html()
+    corpo = re.search(r"function inicializarRastreioSecaoPlanos\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert 'entrada.isIntersecting && !jaDisparou && typeof window.fbq === "function"' in corpo
+
+
 def test_dom_content_loaded_inicializa_consentimento_e_rastreio_de_planos():
     html = _html()
     corpo = re.search(r'addEventListener\("DOMContentLoaded", \(\) => \{(.*?)\n    \}\);', html, re.S).group(1)
     assert "inicializarConsentimentoCookies();" in corpo
     assert "inicializarRastreioSecaoPlanos();" in corpo
+
+
+def test_carrossel_de_planos_centraliza_so_o_carrossel_sem_rolar_a_janela():
+    """ETAPA B6.1 (bug grave achado na revisão): scrollIntoView({block: "nearest"}) rolava a
+    JANELA inteira na vertical (o card Mensal fica abaixo da dobra no celular), fazendo a página
+    pular sozinha pra #secaoPlanos assim que carregava. Agora mexe só no scrollLeft do contêiner
+    horizontal (o próprio pai de #planoMensalCard, que tem overflow-x-auto), nunca em
+    scrollIntoView."""
+    html = _html()
+    corpo = re.search(r"function centralizarCarrosselPlanos\(\) \{(.*?)\n    \}", html, re.S).group(1)
+    assert "scrollIntoView" not in corpo
+    assert 'const trilho = cardMensal.parentElement;' in corpo
+    assert "trilho.scrollLeft" in corpo
+    assert "getBoundingClientRect" in corpo
 
 
 def test_politica_de_privacidade_menciona_o_meta_pixel(auth_client):

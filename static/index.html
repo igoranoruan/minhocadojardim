@@ -1987,7 +1987,11 @@ https://..."></textarea>
         const observer = new IntersectionObserver(
             (entradas) => {
                 entradas.forEach((entrada) => {
-                    if (entrada.isIntersecting && !jaDisparou) {
+                    // Correção (ETAPA B6.1, achado na revisão): só marca como disparado/desconecta
+                    // quando o Pixel já existe de verdade -- antes, jaDisparou virava true mesmo
+                    // sem o fbq existir (antes do "Aceitar"), perdendo o ViewContent pra sempre se a
+                    // pessoa só aceitasse os cookies depois de já ter passado pelos planos.
+                    if (entrada.isIntersecting && !jaDisparou && typeof window.fbq === "function") {
                         jaDisparou = true;
                         rastrear("ViewContent", { content_name: "Planos" });
                         observer.disconnect();
@@ -2291,7 +2295,17 @@ https://..."></textarea>
     function centralizarCarrosselPlanos() {
         if (!window.matchMedia("(max-width: 767px)").matches) return;
         const cardMensal = document.getElementById("planoMensalCard");
-        if (cardMensal) cardMensal.scrollIntoView({ behavior: "auto", inline: "center", block: "nearest" });
+        if (!cardMensal) return;
+        const trilho = cardMensal.parentElement; // o contêiner com overflow-x-auto (ver <div ... overflow-x-auto ...> dentro de #secaoPlanos)
+        if (!trilho) return;
+        // Correção (ETAPA B6.1, achado na revisão): a rolagem automática usada antes aqui, com a
+        // opção "block: nearest", também rolava a JANELA inteira na vertical (o card fica abaixo da
+        // dobra), fazendo a página pular sozinha pra #secaoPlanos assim que carregava no celular.
+        // Agora só mexe no scrollLeft do próprio carrossel horizontal -- getBoundingClientRect em
+        // vez de offsetLeft porque o card não é necessariamente posicionado relativo ao trilho via
+        // offsetParent.
+        const deltaEsquerda = cardMensal.getBoundingClientRect().left - trilho.getBoundingClientRect().left;
+        trilho.scrollLeft += deltaEsquerda - (trilho.clientWidth - cardMensal.clientWidth) / 2;
     }
 
     // FAQ "ver mais/ver menos" (20/10/2026, pedido do Igor): a seção tinha 16 perguntas
