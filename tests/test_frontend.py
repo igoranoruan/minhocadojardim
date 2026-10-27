@@ -109,23 +109,24 @@ def test_secao_antes_depois_usa_video_em_vez_do_carrossel_de_cartoes():
 
 
 def test_secao_voce_se_reconhece_aprovada():
-    """26/10/2026 (ETAPA B2, pedido do Igor -- "copy final do site"): eyebrow virou pergunta-título;
-    4 caixas (dor + 2ª linha turquesa com a solução); a dor sobre organizar o que vai postar saiu,
-    substituída por uma sobre metadados.
-    27/10/2026 (pedido do Igor, revisão de espaçamento): caixa "Arquivo com nome sem sentido"
-    removida (dor mais fraca que as outras 3) -- sobraram 3 caixas, não mais 4."""
+    """27/10/2026 (ETAPA B5, pedido do Igor): o bloco "Ainda perde tempo baixando vídeo um por
+    um?" (3 caixas de dor + frase solta) foi substituído pela demonstração real do atalho "Enviar
+    para o KLANGO" -- vídeo gravado no iPhone (muted/playsinline/loop/preload="none", mesmo padrão
+    dos outros vídeos da página) + 3 passos numerados + CTA "Ver planos". Mesmo id
+    (#voceSeReconhece), só o conteúdo mudou."""
     html = _html()
-    assert "Ainda perde tempo baixando vídeo um por um?" in html
-    assert "Baixa um vídeo por vez" in html
-    assert "Nos planos pagos, cola vários links e baixa tudo junto." in html
-    assert "Arquivo com nome sem sentido" not in html
-    assert "Você escolhe o nome antes de baixar." not in html
-    assert "Site cheio de anúncio e pop-up" in html
-    assert "No KLANGO não tem anúncio." in html
-    assert "Vídeo vem com os dados da origem" in html
-    assert "Sai um MP4 novo, sem os metadados." in html
-    assert "Não consegue organizar o que vai postar" not in html
-    assert "O KLANGO resolve isso em um lugar só." in html
+    assert "Ainda perde tempo baixando vídeo um por um?" not in html
+    assert "Site cheio de anúncio e pop-up" not in html
+    assert "O KLANGO resolve isso em um lugar só." not in html
+    assert "DIRETO DO CELULAR" in html
+    assert "Compartilhou, tá na fila." in html
+    assert "O link cai direto na sua fila, sem copiar e colar." in html
+    assert 'poster="/static/klango_atalho_demo_poster.jpg"' in html
+    assert '<source src="/static/klango_atalho_demo.mp4" type="video/mp4">' in html
+    assert "Compartilhe</b> do app que você já usa." in html
+    assert "Os links chegam</b> sozinhos na sua fila." in html
+    assert "Baixe tudo em ZIP</b>, já com os nomes." in html
+    assert "Atalho em qualquer conta. Fila inteira em ZIP nos planos pagos." in html
 
 
 def test_secao_antes_depois_textos_aprovados():
