@@ -98,7 +98,13 @@ def _status_local(status_mp: str | None) -> str:
 
 
 def charge(
-    db: Session, payment: Payment, *, method: str, brick_data: dict, now: datetime | None = None,
+    db: Session,
+    payment: Payment,
+    *,
+    method: str,
+    brick_data: dict,
+    device_session_id: str | None = None,
+    now: datetime | None = None,
 ) -> ChargeResult:
     """Cobra um Payment "pending" já resolvido por ownership (ver
     payments.service.get_owned_pending_payment, chamada pela rota ANTES desta função).
@@ -107,6 +113,11 @@ def charge(
     validado AQUI contra payment.method, ANTES de qualquer chamada ao Mercado Pago: uma
     inconsistência (Payment criado como "pix" submetido como cartão, ou vice-versa) nunca chega
     a ser cobrada -- levanta PaymentMethodMismatchError, erro controlado, sem tocar o gateway.
+
+    `device_session_id` (28/10/2026, investigação do bug de cartão em aba anônima/privada,
+    aprovação do Igor): repassado tal como veio de routes/payments.py (window.MP_DEVICE_SESSION_ID
+    do script de antifraude do Mercado Pago) para payments.client.create_payment, que o envia no
+    cabeçalho X-meli-session-id -- opcional, None quando o frontend não tinha o valor.
 
     Grava em Payment: mp_payment_id, status (approved/pending/rejected -- ver _status_local),
     status_detail, e approved_at (só quando status == "approved"; None em pending/rejected).
@@ -119,7 +130,9 @@ def charge(
         )
 
     payload = _build_payload(payment, brick_data)
-    resposta = client.create_payment(payload, idempotency_key=payment.external_reference)
+    resposta = client.create_payment(
+        payload, idempotency_key=payment.external_reference, device_session_id=device_session_id,
+    )
     corpo = resposta.get("response") or {}
 
     mp_payment_id = corpo.get("id")

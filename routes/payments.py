@@ -69,6 +69,12 @@ class SubmitPaymentBody(BaseModel):
     token: str | None = None
     installments: int | None = None
     issuer_id: str | None = None
+    # 28/10/2026 (investigação do bug de cartão em aba anônima/privada, aprovação do Igor):
+    # window.MP_DEVICE_SESSION_ID, gerado pelo script de antifraude do próprio Mercado Pago no
+    # frontend (ver static/index.html, <script .../v2/security.js>). Opcional -- None quando o
+    # script não carregou (ex.: bloqueador de anúncios); o pagamento nunca falha por causa deste
+    # campo, ver payments/gateway.py::charge e payments/client.py::create_payment.
+    device_session_id: str | None = None
 
 
 class PaymentOut(BaseModel):
@@ -177,7 +183,9 @@ def submit_payment(
         "installments": body.installments,
         "issuer_id": body.issuer_id,
     }
-    resultado = charge(db, payment, method=body.method, brick_data=brick_data)
+    resultado = charge(
+        db, payment, method=body.method, brick_data=brick_data, device_session_id=body.device_session_id,
+    )
     return SubmitPaymentOut(
         payment_id=resultado.payment.id,
         status=resultado.payment.status,

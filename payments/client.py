@@ -21,18 +21,28 @@ from payments.errors import PaymentGatewayError
 logger = logging.getLogger("minhoca")
 
 
-def create_payment(payment_data: dict, *, idempotency_key: str) -> dict:
+def create_payment(payment_data: dict, *, idempotency_key: str, device_session_id: str | None = None) -> dict:
     """Chama POST /v1/payments com o `payment_data` já pronto (payments/gateway.py decide o
     conteúdo) e `X-Idempotency-Key: idempotency_key` (payments/gateway.py sempre passa
     Payment.external_reference -- ver seu docstring para o porquê). Devolve o dicionário de
     resposta do SDK (`{"status": <http status>, "response": {...}}`), sem interpretar nada dele.
+
+    `device_session_id` (28/10/2026, investigação do bug de cartão em aba anônima/privada,
+    aprovação do Igor): quando presente, vai no cabeçalho X-meli-session-id -- é o ID de
+    dispositivo que o script de antifraude do próprio Mercado Pago gera no navegador
+    (window.MP_DEVICE_SESSION_ID, ver static/index.html), prática recomendada na documentação
+    oficial deles para reduzir recusa indevida por antifraude. Opcional: quando None (frontend sem
+    o valor), o cabeçalho simplesmente não é enviado -- nunca bloqueia o pagamento por causa disso.
 
     Levanta PaymentGatewayError se a CHAMADA em si falhar (exceção do SDK/rede) -- nunca por uma
     recusa de pagamento em si, que chega aqui como uma resposta HTTP normal (201/200 com
     response["status"] == "rejected", por exemplo)."""
     sdk = mercadopago.SDK(get_settings().mp_access_token)
     request_options = mercadopago.config.RequestOptions()
-    request_options.custom_headers = {"x-idempotency-key": idempotency_key}
+    headers = {"x-idempotency-key": idempotency_key}
+    if device_session_id:
+        headers["x-meli-session-id"] = device_session_id
+    request_options.custom_headers = headers
 
     # DIAGNÓSTICO TEMPORÁRIO (28/10/2026, pedido do suporte do Mercado Pago -- investigação do
     # Payment #31, que voltou "pending_waiting_transfer"/"Transferência bancária" pro Mercado
@@ -44,12 +54,13 @@ def create_payment(payment_data: dict, *, idempotency_key: str) -> dict:
     # já chega errada do Brick. Tirar depois que o caso for resolvido.
     logger.info(
         "[PAYMENT][diagnostico] enviando ao Mercado Pago: payment_method_id=%r installments=%r "
-        "issuer_id=%r tem_token=%s external_reference=%r",
+        "issuer_id=%r tem_token=%s external_reference=%r tem_device_session_id=%s",
         payment_data.get("payment_method_id"),
         payment_data.get("installments"),
         payment_data.get("issuer_id"),
         bool(payment_data.get("token")),
         payment_data.get("external_reference"),
+        bool(device_session_id),
     )
 
     try:

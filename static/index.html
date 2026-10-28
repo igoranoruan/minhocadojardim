@@ -1858,6 +1858,19 @@ https://..."></textarea>
     </div>
 
     <script src="https://sdk.mercadopago.com/js/v2"></script>
+    <!-- 28/10/2026 (investigação do bug de cartão com o Igor -- aba anônima/privada, confirmado
+         reproduzindo tanto no Safari/iOS quanto no Chrome/Android): script de prevenção a fraude
+         do próprio Mercado Pago. Gera window.MP_DEVICE_SESSION_ID, que identifica o
+         navegador/dispositivo para o antifraude deles -- documentação oficial deles recomenda
+         enviar esse ID no cabeçalho X-meli-session-id de toda chamada a POST /v1/payments (ver
+         payments/client.py::create_payment e submeterPagamento abaixo). Hipótese: em aba
+         anônima/privada, o armazenamento que esse mecanismo usa pra identificar a sessão fica
+         bloqueado/isolado (comportamento padrão de navegação privada), o que pode tanto atrapalhar
+         a própria validação do Brick quanto fazer o antifraude recusar por falta de confiança no
+         dispositivo. Não é garantido resolver os dois sintomas observados (erro "Dado obrigatório"
+         e recusa silenciosa), mas é prática oficial documentada do Mercado Pago, sem nenhum efeito
+         colateral conhecido -- só adiciona um dado a mais na cobrança. -->
+    <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
     <script>
 
     // ==================================================================================
@@ -4222,7 +4235,14 @@ https://..."></textarea>
             payer: formData.payer,
             token: formData.token || null,
             installments: formData.installments || null,
-            issuer_id: formData.issuer_id || null
+            issuer_id: formData.issuer_id || null,
+            // 28/10/2026 (ver comentário grande junto do <script src=".../v2/security.js"> no fim
+            // do <body>): window.MP_DEVICE_SESSION_ID é gerado por aquele script do próprio
+            // Mercado Pago -- aqui só repassamos o valor (se existir) pro backend, que decide o
+            // que fazer com ele. Nunca inventado/calculado por nós; null quando o script não
+            // carregou ainda ou falhou (ex.: bloqueado por um bloqueador de anúncios) -- nesse caso
+            // o pagamento segue normalmente, só sem esse dado extra.
+            device_session_id: window.MP_DEVICE_SESSION_ID || null
         };
 
         try {
