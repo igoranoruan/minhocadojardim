@@ -44,9 +44,11 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
             # o preço antigo de antes do reajuste de 22/10/2026 -- migration de DADO, nenhuma
             # tabela/coluna nova, aprovação do Igor); 0015 (cancela o Payment #30, travado em
             # "pending" por reaproveitamento de idempotency key -- migration de DADO, nenhuma
-            # tabela/coluna nova, aprovação do Igor, 27/10/2026) -- teste atualizado nesta data só
-            # pra acompanhar o head real, sem nenhuma mudança de regra de negócio.
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0015"
+            # tabela/coluna nova, aprovação do Igor, 27/10/2026); 0016 (cancela o Payment #31,
+            # mesma causa raiz -- migration de DADO, nenhuma tabela/coluna nova, aprovação do
+            # Igor, 28/10/2026) -- teste atualizado nesta data só pra acompanhar o head real, sem
+            # nenhuma mudança de regra de negócio.
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0016"
     finally:
         eng.dispose()
 

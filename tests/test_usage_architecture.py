@@ -149,9 +149,10 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
     share_tokens/share_queue_items -- atalho "Enviar para o KLANGO", 15/10/2026; 0014
     cancela Payments "pending" com o preço antigo de antes do reajuste -- migration de dado,
     aprovação do Igor, 22/10/2026; 0015 cancela o Payment #30, travado em "pending" por
-    reaproveitamento de idempotency key -- migration de dado, aprovação do Igor, 27/10/2026) --
+    reaproveitamento de idempotency key -- migration de dado, aprovação do Igor, 27/10/2026; 0016
+    cancela o Payment #31, mesma causa -- migration de dado, aprovação do Igor, 28/10/2026) --
     nenhuma delas foi criada por esta camada; uma
-    16ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
+    17ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -169,6 +170,7 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
         "0013_share_queue.py",
         "0014_cancela_pendentes_preco_antigo.py",
         "0015_cancela_payment_travado_idempotencia.py",
+        "0016_cancela_payment_31_travado_idempotencia.py",
     ]
     assert set(Base.metadata.tables) == {
         "users", "payments", "entitlements", "generations", "batches", "payment_events",

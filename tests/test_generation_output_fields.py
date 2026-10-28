@@ -41,7 +41,7 @@ def test_nenhum_campo_proibido_foi_adicionado(engine):
 
 # ============================================================================ migration aplicável / banco sobe
 def test_migration_0003_esta_no_historico_e_o_head_atual_e_posterior(db_url, alembic_cfg):
-    """0003 continua no histórico (esta suíte é sobre ELA); o head hoje é 0015 (Etapa 9.3:
+    """0003 continua no histórico (esta suíte é sobre ELA); o head hoje é 0016 (Etapa 9.3:
     0004 display_filename, 0005 request_fingerprint; Free anônimo -- aprovação do CÉREBRO:
     0006 anonymous_identities; suporte a imagem -- aprovação do CÉREBRO: 0007 output_extension;
     programa de indicação -- aprovação do CÉREBRO: 0008 referrals; 0009/0010 área de comentários
@@ -50,7 +50,8 @@ def test_migration_0003_esta_no_historico_e_o_head_atual_e_posterior(db_url, ale
     share_tokens/share_queue_items -- atalho "Enviar para o KLANGO", 15/10/2026; 0014 cancela
     Payments "pending" com o preço antigo de antes do reajuste -- migration de dado, aprovação do
     Igor, 22/10/2026; 0015 cancela o Payment #30, travado em "pending" por reaproveitamento de
-    idempotency key -- migration de dado, aprovação do Igor, 27/10/2026) -- ver
+    idempotency key -- migration de dado, aprovação do Igor, 27/10/2026; 0016 cancela o Payment
+    #31, mesma causa -- migration de dado, aprovação do Igor, 28/10/2026) -- ver
     tests/test_db_migrations.py."""
     command.upgrade(alembic_cfg, "head")
     from database.session import create_db_engine
@@ -58,7 +59,7 @@ def test_migration_0003_esta_no_historico_e_o_head_atual_e_posterior(db_url, ale
     eng = create_db_engine(db_url)
     try:
         with eng.connect() as conn:
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0015"
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0016"
     finally:
         eng.dispose()
 
