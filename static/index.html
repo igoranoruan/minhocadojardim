@@ -3775,11 +3775,24 @@ https://..."></textarea>
     }
 
     // ---- Checkout Mercado Pago: Payment Brick (Etapa 10.2) ----
-    // Fluxo: abrirModalPagamento(plano) -> escolhe método (pix por padrão) -> criarPaymentEMontarBrick
-    // -> POST /api/payments (cria o Payment interno, Payment.method já fixado) -> monta o Payment
-    // Brick restrito a esse método -> onSubmit -> POST /api/payments/{id}/submit -> cobra de verdade.
-    // Nunca calculamos preço aqui: o valor exibido (#modalValor) vem sempre de amount_cents da
-    // resposta de POST /api/payments.
+    // Fluxo: abrirModalPagamento(plano) -> escolhe método (CARTÃO por padrão, desde 28/10/2026 --
+    // ver nota abaixo) -> criarPaymentEMontarBrick -> POST /api/payments (cria o Payment interno,
+    // Payment.method já fixado) -> monta o Payment Brick restrito a esse método -> onSubmit ->
+    // POST /api/payments/{id}/submit -> cobra de verdade. Nunca calculamos preço aqui: o valor
+    // exibido (#modalValor) vem sempre de amount_cents da resposta de POST /api/payments.
+    //
+    // 28/10/2026 (pedido do Igor, achado junto na investigação do bug do Payment Brick no
+    // Safari/iOS): o modal abria SEMPRE em Pix por padrão, criando um Payment de Pix (e ligando o
+    // e-mail automático que o Mercado Pago manda nesse momento) mesmo quando a pessoa só queria
+    // pagar no cartão -- confirmado tanto por vários Payments "pending" de Pix nunca usados no
+    // banco quanto por um e-mail real recebido pelo Igor num teste em que a intenção era testar o
+    // cartão. Duas mudanças: (1) o modal agora abre direto no Cartão (trocarMetodoPagamento abaixo
+    // chamado com "credit_card"); (2) escolher Pix não cria mais o Payment/QR sozinho -- só mostra
+    // um botão de confirmação (mostrarConfirmacaoPix/confirmarGerarPix, abaixo), e o Payment real
+    // só nasce quando a pessoa confirma de propósito. Isso também elimina, pro Cartão, o padrão de
+    // "monta e desmonta um Brick de Pix bem antes de montar o de Cartão" que acontecia toda vez que
+    // o modal abria -- um dos pontos que o suporte do Mercado Pago pediu pra investigar como
+    // possível gatilho do bug do Safari (não confirmado como causa, mas eliminado de qualquer jeito).
 
     function formatarReais(amountCents) {
         return (amountCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -3884,7 +3897,7 @@ https://..."></textarea>
         document.getElementById("modalPagamento").classList.remove("hidden");
         document.getElementById("modalPagamento").classList.add("flex");
 
-        await trocarMetodoPagamento("pix");
+        await trocarMetodoPagamento("credit_card");
     }
 
     async function trocarMetodoPagamento(tipo) {
@@ -3911,7 +3924,45 @@ https://..."></textarea>
             mascoteImgEl.src = tipo === "pix" ? "/static/mascote-pix.jpg" : "/static/mascote-cartao.jpg";
         }
 
+        metodoAtual = tipo;
+
+        if (tipo === "pix") {
+            // 28/10/2026 (pedido do Igor -- ver nota grande acima de abrirModalPagamento): Pix não
+            // cria mais o Payment/QR sozinho ao trocar de aba. Desmonta um Brick anterior (se a
+            // pessoa veio do Cartão, onde o Brick já estava montado) e mostra só um botão de
+            // confirmação dentro do mesmo container -- o backend (POST /api/payments) só é chamado
+            // se a pessoa realmente clicar "Gerar código Pix" (ver confirmarGerarPix).
+            pararObservadorParcelamento();
+            if (brickAtual) {
+                try { brickAtual.unmount(); } catch (err) { console.warn(err); }
+                brickAtual = null;
+            }
+            paymentAtual = null;
+            document.getElementById("modalValor").textContent = "—";
+            document.getElementById("modalValor").classList.remove("animate-pulse");
+            mostrarConfirmacaoPix();
+            return;
+        }
+
         await criarPaymentEMontarBrick(tipo);
+    }
+
+    // 28/10/2026 (pedido do Igor): tela de confirmação mostrada dentro do próprio
+    // #paymentBrickContainer quando a aba Pix é escolhida -- HTML nosso, não do Brick (o Brick só é
+    // criado depois do clique, dentro de confirmarGerarPix). Mesmo texto de botão/ícone usado nos
+    // outros CTAs de pagamento do modal, pra não introduzir um estilo novo.
+    function mostrarConfirmacaoPix() {
+        mostrarStatusPagamento("");
+        document.getElementById("paymentBrickContainer").innerHTML =
+            `<div class="rounded-2xl border border-slate-800 bg-[#060b14] p-5 text-center">` +
+            `<p class="text-[13px] text-slate-400 mb-4">O código Pix só é gerado depois que você confirmar aqui, pra não gerar uma cobrança que você não vai usar.</p>` +
+            `<button type="button" onclick="confirmarGerarPix()" class="w-full h-12 rounded-xl bg-gradient-cyber text-slate-950 font-extrabold text-sm transition-all hover:brightness-110"><i class="fa-solid fa-qrcode mr-2"></i>Gerar código Pix</button>` +
+            `</div>`;
+    }
+
+    async function confirmarGerarPix() {
+        if (metodoAtual !== "pix") return; // guarda contra clique perdido se a pessoa já trocou de aba
+        await criarPaymentEMontarBrick("pix");
     }
 
     async function criarPaymentEMontarBrick(metodo) {

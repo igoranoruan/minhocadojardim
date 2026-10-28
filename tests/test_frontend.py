@@ -352,6 +352,39 @@ def test_modal_de_pagamento_textos_e_estrutura_aprovados():
     assert 'id="metodoCartaoBtn"' in html
 
 
+def test_modal_de_pagamento_abre_no_cartao_e_pix_exige_confirmacao():
+    """28/10/2026 (pedido do Igor): o modal gerava um Payment de Pix sozinho assim que abria
+    (trocarMetodoPagamento("pix") chamado incondicionalmente no fim de abrirModalPagamento) --
+    gerava e-mails do Mercado Pago e Payments "pending" nunca usados mesmo quando a pessoa só
+    queria pagar no cartão. Agora o modal abre direto no Cartão (que continua criando o
+    Payment/Brick automaticamente, igual o Pix fazia antes) e o Pix só cria o Payment/QR depois
+    de um clique explícito de confirmação."""
+    html = _html()
+
+    corpo_abrir = re.search(
+        r"async function abrirModalPagamento\(plano\) \{(.*?)\n    \}", html, re.S
+    ).group(1)
+    assert 'await trocarMetodoPagamento("credit_card");' in corpo_abrir
+    assert 'await trocarMetodoPagamento("pix");' not in corpo_abrir
+
+    corpo_trocar = re.search(
+        r"async function trocarMetodoPagamento\(tipo\) \{(.*?)\n    \}\n\n"
+        r"    // 28/10/2026 \(pedido do Igor\): tela de confirma",
+        html, re.S,
+    ).group(1)
+    assert "mostrarConfirmacaoPix();" in corpo_trocar
+    assert "return;" in corpo_trocar  # sai ANTES de chamar criarPaymentEMontarBrick quando é Pix
+
+    assert "function mostrarConfirmacaoPix()" in html
+    assert "Gerar código Pix" in html
+    assert 'onclick="confirmarGerarPix()"' in html
+
+    corpo_confirmar = re.search(
+        r"async function confirmarGerarPix\(\) \{(.*?)\n    \}", html, re.S
+    ).group(1)
+    assert 'await criarPaymentEMontarBrick("pix");' in corpo_confirmar
+
+
 def test_area_logada_textos_aprovados():
     html = _html()
     assert "Cada arquivo fica disponível por até 30 minutos depois de pronto." in html
