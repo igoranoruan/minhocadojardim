@@ -4029,12 +4029,22 @@ https://..."></textarea>
                 }
             },
             callbacks: {
-                onReady: () => iniciarObservadorParcelamento(),
+                onReady: () => {
+                    // DIAGNÓSTICO TEMPORÁRIO (27/10/2026, investigando com o Igor o bug do cartão
+                    // no Payment Brick -- "Dado obrigatório" no celular, "Pagar" sem efeito no
+                    // computador): logs só de observação, não mudam nenhum comportamento. Tirar
+                    // depois que o problema for identificado.
+                    console.log("[brick-diagnostico] onReady");
+                    iniciarObservadorParcelamento();
+                },
                 onError: (error) => {
-                    console.error(error);
+                    console.error("[brick-diagnostico] onError", error);
                     mostrarStatusPagamento("Não foi possível carregar o formulário de pagamento.", "erro");
                 },
-                onSubmit: ({ formData }) => submeterPagamento(formData)
+                onSubmit: ({ formData }) => {
+                    console.log("[brick-diagnostico] onSubmit chamado", formData);
+                    return submeterPagamento(formData);
+                }
             }
         });
     }
