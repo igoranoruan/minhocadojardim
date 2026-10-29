@@ -65,6 +65,18 @@ def test_recusa_conta_que_ja_pagou_alguma_vez(factory, session):
         grant_trial_entitlement(session, user_id=usuario.id, now=NOW)
 
 
+def test_recusa_conta_com_varios_entitlements_sem_erro_500(factory, session):
+    """Regressão (produção, 29/10/2026): conta com 2+ entitlements (comprou mais de uma vez)
+    estourava MultipleResultsFound -> 500 em POST /api/trial/redeem, em vez da recusa amigável."""
+    usuario = factory.user()
+    give(factory, session, usuario, "weekly", now=NOW - 60 * DIA)
+    give(factory, session, usuario, "monthly", now=NOW - 30 * DIA)
+    with pytest.raises(TrialAlreadyGrantedError):
+        grant_trial_entitlement(session, user_id=usuario.id, now=NOW)
+    with pytest.raises(TrialNotEligibleError):
+        redeem_trial(session, user=usuario, campaign="ig-teste", device_id=_device(), ip="203.0.113.10", now=NOW)
+
+
 def test_recusa_se_ja_tem_plano_pago_vigente_nao_empilha(factory, session):
     """Trava pedida pelo Igor: "não deve empilhar com plano pago" (mensagem amigável, nunca
     silenciosamente empilhado depois)."""

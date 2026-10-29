@@ -259,8 +259,11 @@ def grant_trial_entitlement(db: Session, *, user_id: int, now: datetime | None =
     try:
         lock_user_row(db, user_id)
 
+        # .limit(1): só importa SE existe alguma linha -- sem o limit, uma conta com 2+
+        # entitlements (ex.: comprou mais de uma vez) estourava MultipleResultsFound (500 em
+        # produção, 29/10/2026) em vez de cair na recusa amigável logo abaixo.
         ja_existe = db.execute(
-            select(Entitlement.id).where(Entitlement.user_id == user_id)
+            select(Entitlement.id).where(Entitlement.user_id == user_id).limit(1)
         ).scalar_one_or_none()
         if ja_existe is not None:
             db.rollback()  # nada a gravar: só libera o lock
