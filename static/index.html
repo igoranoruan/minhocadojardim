@@ -191,6 +191,23 @@
             </a>
         </div>
 
+        <!-- ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor,
+             29/10/2026): faixa que aparece só depois do login, quando existe um "?c=" de campanha
+             ainda não resgatado (guardado em TRIAL_CAMPANHA_STORAGE_KEY por
+             capturarCodigoTesteDaUrl() -- mesmo padrão de bannerFilaAtalho acima/INDICACAO_
+             STORAGE_KEY). mostrarBannerAtivarTeste()/esconderBannerAtivarTeste() controlam a
+             visibilidade; ativarTesteVip() chama POST /api/trial/redeem. Nunca resgata sozinho:
+             a pessoa sempre decide clicando no botão. -->
+        <div id="bannerAtivarTeste" class="hidden border-b border-[#19D3AE]/20 bg-[#19D3AE]/10">
+            <div class="max-w-6xl mx-auto px-5 sm:px-8 py-3 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-center sm:text-left">
+                <span class="text-[13px] font-bold text-[#19D3AE] flex items-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> Você tem um teste VIP de 24h disponível.
+                </span>
+                <button type="button" id="ativarTesteBtn" onclick="ativarTesteVip()" class="h-9 px-4 rounded-full bg-[#19D3AE] text-slate-950 font-extrabold text-[13px] whitespace-nowrap">Ativar meu teste VIP de 24h</button>
+                <span id="ativarTesteStatus" class="text-[13px] text-slate-400"></span>
+            </div>
+        </div>
+
         <main id="topo" class="max-w-6xl mx-auto px-5 sm:px-8">
             <!-- MEU ACESSO (02/10/2026: quem já tem plano pago ativo não vê mais a vitrine de
                  Planos inteira de novo -- só este resumo, com opção de upgrade pra quem ainda não
@@ -276,6 +293,71 @@
                     </div>
 
                     <div id="assinaturaUpgrade" class="hidden flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-5 pt-5 border-t border-slate-800"></div>
+                </div>
+            </section>
+
+            <!-- ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor,
+                 29/10/2026): card próprio pra quem está no plano trial_vip -- MESMO lugar/visual
+                 de #areaAssinatura acima (card "Meu acesso"), mas nunca os dois visíveis juntos
+                 (atualizarVisibilidadeSecaoPlanos() decide qual dos três estados mostrar: vitrine
+                 de Planos / "Meu acesso" pago / este card de teste). Sem botão de "Fazer upgrade
+                 para Teste VIP" (não existe -- trial_vip nunca entra em PLANOS nem em
+                 ORDEM_PLANOS_PAGOS, de propósito, pedido explícito do Igor: esse objeto também
+                 alimenta os botões de compra/upgrade) e sem "Renovar" (teste não é recomprável).
+                 Em vez disso, um botão discreto "Assinar agora" (texto, não um CTA grande) que só
+                 rola até a vitrine de Planos -- o teste é pra EXPERIMENTAR, não pra vender aqui
+                 dentro do próprio card. -->
+            <section id="areaTesteVip" class="hidden pt-6 sm:pt-16 pb-10 sm:pb-14">
+                <div class="bg-card rounded-3xl p-6 sm:p-7 border border-[#19D3AE]/20">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="text-[13px] text-slate-500 uppercase tracking-wider font-bold pt-1.5">Teste VIP</div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#19D3AE]/10 border border-[#19D3AE]/30 text-[#19D3AE] text-[13px] font-extrabold uppercase tracking-wider shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#19D3AE] animate-pulse"></span> Teste
+                        </span>
+                    </div>
+
+                    <div id="testeVipTitulo" class="text-xl sm:text-2xl font-extrabold text-white mt-3">Teste VIP de 24h</div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3 mt-5 p-4 rounded-2xl border border-slate-800 bg-[#060b14]">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-layer-group text-sm"></i></div>
+                            <div class="min-w-0">
+                                <div id="testeVipRestantesNumero" class="text-lg font-extrabold text-white leading-tight truncate">—</div>
+                                <div class="text-[13px] text-slate-500 truncate">vídeos restantes no teste</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 min-w-0 sm:border-l sm:border-slate-800 sm:pl-4">
+                            <div class="w-10 h-10 shrink-0 rounded-xl bg-[#19D3AE]/10 border border-[#19D3AE]/30 flex items-center justify-center text-[#19D3AE]"><i class="fa-solid fa-hourglass-half text-sm"></i></div>
+                            <div class="min-w-0">
+                                <div class="text-[13px] text-slate-500">Tempo restante</div>
+                                <div id="testeVipFaltamHoras" class="text-base font-extrabold text-[#19D3AE] truncate">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="mt-4 text-[13px] text-slate-500">Lote, extração de áudio e atalho de compartilhamento liberados durante o teste.</p>
+
+                    <div class="mt-5 pt-5 border-t border-slate-800 text-center sm:text-left">
+                        <button type="button" onclick="document.getElementById('secaoPlanos').scrollIntoView({behavior:'smooth'})" class="text-[13px] font-bold text-slate-400 hover:text-[#19D3AE] hover:underline">Assinar agora</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ETAPA B7: card de oferta mostrado UMA VEZ, só pra quem tinha um teste VIP ativo e
+                 ele acabou de expirar (ver TRIAL_ATIVO_STORAGE_KEY/verificarOfertaPosTesteExpirado()
+                 -- nunca aparece pra quem nunca testou). Semanal em destaque (R$ 14,90), mesmo
+                 preço/plano da vitrine abaixo -- este card nunca inventa preço, só repete o botão
+                 de sempre (abrirModalPagamento). -->
+            <section id="ofertaTesteExpirado" class="hidden pt-6 sm:pt-10">
+                <div class="bg-card rounded-3xl p-6 sm:p-7 border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <div class="text-base font-extrabold text-white">Seu teste VIP de 24h acabou.</div>
+                        <p class="text-[13px] text-slate-400 mt-1">Continue com lote, áudio e atalho por <span class="text-amber-400 font-bold">R$ 14,90/semana</span>.</p>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <button type="button" onclick="abrirModalPagamento('weekly')" class="h-11 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[13px] whitespace-nowrap transition-colors">Continuar por R$ 14,90</button>
+                        <button type="button" onclick="document.getElementById('secaoPlanos').scrollIntoView({behavior:'smooth'})" class="h-11 px-4 rounded-xl border border-slate-700 text-slate-300 hover:border-slate-500 font-bold text-[13px] whitespace-nowrap transition-colors">Ver planos</button>
+                    </div>
                 </div>
             </section>
 
@@ -2110,7 +2192,12 @@ https://..."></textarea>
     // continua exclusivamente em services/usage.py::reserve_batch no backend -- uma tentativa
     // de enviar mais itens do que o real é sempre recusada lá, mesmo que este número aqui
     // estivesse desatualizado.
-    const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15 };
+    // ETAPA B7 (teste VIP de 24h, pedido e aprovação do Igor, 29/10/2026): trial_vip NUNCA entra
+    // no objeto PLANOS acima (pedido explícito do Igor -- PLANOS alimenta botões de compra/
+    // upgrade), mas este mapa aqui é só de EXIBIÇÃO do teto de itens por lote (nunca a regra em
+    // si, que é sempre services/usage.py::reserve_batch no backend) -- objeto diferente, seguro
+    // adicionar. Espelha services/plans.py::TRIAL_VIP_PLAN.max_batch_size (10).
+    const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15, trial_vip: 10 };
     let limiteLoteAtual = 0; // 0 = lote indisponível (sem sessão, Free, ou status ainda não carregado)
     let loteSemTeto = false; // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO exibido
                                 // (limiteLoteAtual já vira Number.MAX_SAFE_INTEGER -- isto evita
@@ -2226,6 +2313,7 @@ https://..."></textarea>
 
     document.addEventListener("DOMContentLoaded", () => {
         capturarCodigoIndicacaoDaUrl();
+        capturarCodigoTesteDaUrl(); // ETAPA B7, pedido do Igor, 29/10/2026 -- "?c=" de campanha do teste VIP
         capturarAutoFluxoAtalhoDaUrl();
         capturarCompartilharPendenteDaUrl();
         registrarServiceWorkerPwa();
@@ -2235,7 +2323,12 @@ https://..."></textarea>
         // (pra esconder o stat de "vídeos já processados" de quem já logou -- ver comentário
         // dentro da função), então só roda depois que carregarSessao() resolve, em vez de disparar
         // em paralelo como antes.
-        carregarSessao().then(carregarEstatisticas);
+        carregarSessao().then((logado) => {
+            // ETAPA B7 (pedido do Igor, 29/10/2026): "?c=" pendente sem sessão -> abre o login
+            // sozinho (a pessoa só precisa clicar "Ativar..." depois que o login resolver).
+            autoAbrirLoginSeTestePendente(logado);
+            carregarEstatisticas();
+        });
         aplicarVisibilidadeComentarios();
         if (MOSTRAR_COMENTARIOS) carregarComentarios();
         centralizarCarrosselPlanos();
@@ -2473,6 +2566,230 @@ https://..."></textarea>
         }
     }
 
+    // ============================================================================================
+    // ETAPA B7 -- "Teste VIP de 24h" por link de campanha (pedido e aprovação do Igor, 29/10/2026)
+    //
+    // POST /api/trial/redeem (services/trial.py) é a ÚNICA fonte de verdade sobre elegibilidade --
+    // tudo aqui é só: capturar o "?c=" da URL, guardar um id de aparelho (hasheado só no backend,
+    // nunca lido/interpretado aqui), mostrar o botão de ativação, e refletir o resultado já
+    // decidido por GET /api/me/status (plano "trial_vip", ver atualizarVisibilidadeSecaoPlanos()/
+    // atualizarCardTesteVip() acima). Mesmo padrão de localStorage de INDICACAO_STORAGE_KEY/
+    // COMPARTILHAR_PENDENTE_STORAGE_KEY: só conveniência deste navegador, nunca lido pelo backend.
+    // ============================================================================================
+    const TRIAL_CAMPANHA_STORAGE_KEY = "klango_trial_campanha";
+    const TRIAL_DEVICE_ID_STORAGE_KEY = "klango_trial_device_id";
+    // Guarda {expires_at} enquanto o plano efetivo confirmado é trial_vip -- única forma (sem
+    // tocar o backend) de distinguir, quando o status volta a "free", "o teste desta pessoa acabou
+    // agora" (mostra a faixa de oferta) de "esta pessoa nunca testou" (nunca mostra nada) --
+    // ver verificarOfertaPosTesteExpirado().
+    const TRIAL_ATIVO_STORAGE_KEY = "klango_trial_ativo";
+
+    function capturarCodigoTesteDaUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const campanha = params.get("c");
+        if (!campanha) return;
+        try {
+            localStorage.setItem(TRIAL_CAMPANHA_STORAGE_KEY, campanha);
+        } catch (err) {
+            console.warn("[TESTE_VIP] não foi possível guardar a campanha:", err);
+        }
+        params.delete("c");
+        const novaQuery = params.toString();
+        const novaUrl = window.location.pathname + (novaQuery ? `?${novaQuery}` : "") + window.location.hash;
+        window.history.replaceState({}, "", novaUrl);
+    }
+
+    function obterCampanhaTestePendente() {
+        try {
+            return localStorage.getItem(TRIAL_CAMPANHA_STORAGE_KEY);
+        } catch (err) {
+            return null;
+        }
+    }
+
+    function limparCampanhaTestePendente() {
+        try {
+            localStorage.removeItem(TRIAL_CAMPANHA_STORAGE_KEY);
+        } catch (err) {
+            // ignorado
+        }
+    }
+
+    // Id aleatório gerado UMA VEZ por navegador/aparelho (nunca por sessão) e reaproveitado em
+    // toda tentativa de resgate -- o próprio valor nunca é interpretado aqui; services/trial.py só
+    // grava o HASH dele (utils.security.hash_device_id), nunca o valor cru. crypto.randomUUID()
+    // (disponível em qualquer navegador moderno, HTTPS) com um fallback simples para o raro caso
+    // de não existir.
+    function obterOuCriarDeviceIdTeste() {
+        let id;
+        try {
+            id = localStorage.getItem(TRIAL_DEVICE_ID_STORAGE_KEY);
+            if (!id) {
+                id = (window.crypto && typeof window.crypto.randomUUID === "function")
+                    ? window.crypto.randomUUID()
+                    : `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                localStorage.setItem(TRIAL_DEVICE_ID_STORAGE_KEY, id);
+            }
+        } catch (err) {
+            // Sem localStorage (modo privado restrito): id só desta chamada, nunca persistido --
+            // a trava de aparelho fica mais fraca neste caso (aceito, ver aprovação do Igor:
+            // "trava de aparelho mais fraca no modo anônimo: aceito, porque a conta e o IP
+            // seguram"), mas o resgate em si continua funcionando.
+            id = `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        }
+        return id;
+    }
+
+    // Chamada depois de QUALQUER login resolvido (aplicarSessao()) -- se havia um "?c=" pendente
+    // deste navegador, mostra a faixa "Ativar meu teste VIP de 24h" (nunca resgata sozinho: a
+    // pessoa sempre decide clicando). Se não havia campanha pendente, a faixa simplesmente nunca
+    // aparece -- nenhuma mudança para quem chegou pelo site normal, sem link de campanha.
+    function mostrarAtivacaoTesteSePendente() {
+        const campanha = obterCampanhaTestePendente();
+        const banner = document.getElementById("bannerAtivarTeste");
+        if (!campanha || !banner) return;
+        banner.classList.remove("hidden");
+    }
+
+    function esconderBannerAtivarTeste() {
+        const banner = document.getElementById("bannerAtivarTeste");
+        if (banner) banner.classList.add("hidden");
+    }
+
+    // "?c=..." sem sessão: abre o login por e-mail de sempre (abrirAcesso(), fluxo já existente) e
+    // "volta ao resgate" depois (mostrarAtivacaoTesteSePendente(), chamada por aplicarSessao() logo
+    // que o login resolve) -- pedido exato do Igor. Chamada só depois que carregarSessao() já
+    // confirmou que NÃO há sessão (nunca interrompe quem já está logado).
+    function autoAbrirLoginSeTestePendente(logado) {
+        if (logado) return;
+        if (!obterCampanhaTestePendente()) return;
+        abrirAcesso();
+    }
+
+    async function ativarTesteVip() {
+        const campanha = obterCampanhaTestePendente();
+        if (!campanha) return;
+        const botao = document.getElementById("ativarTesteBtn");
+        const statusEl = document.getElementById("ativarTesteStatus");
+        if (statusEl) statusEl.textContent = "";
+        if (botao) botao.disabled = true;
+        try {
+            const res = await fetch("/api/trial/redeem", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ campaign: campanha, device_id: obterOuCriarDeviceIdTeste() }),
+            });
+            let dados = {};
+            try { dados = await res.json(); } catch (err) { /* corpo pode não ser JSON */ }
+
+            // Qualquer resultado (sucesso, recusa de elegibilidade, link inválido) consome a
+            // campanha pendente -- nunca insiste de novo a cada carregamento de página, mesmo
+            // padrão de tentarReivindicarIndicacao() acima: nada aqui é um erro "tentar de novo".
+            limparCampanhaTestePendente();
+
+            if (!res.ok) {
+                // 429 (rate limit) é o único caso em que "tentar de novo mais tarde" faz sentido de
+                // verdade -- mas a campanha já foi limpa acima, então mesmo essa tentativa futura
+                // precisaria de um novo link; aceito (recusa curta e educada, pedido do Igor).
+                if (statusEl) statusEl.textContent = dados.detail || "Não foi possível ativar o teste agora.";
+                return;
+            }
+
+            esconderBannerAtivarTeste();
+            // ETAPA B6 (Meta Pixel): sem nenhum dado pessoal, valor 0 (teste não é venda).
+            rastrear("StartTrial", { value: 0, currency: "BRL", content_name: "Teste VIP 24h" });
+            carregarStatusConta(); // atualiza toda a tela pro novo estado trial_vip
+        } catch (err) {
+            console.error(err);
+            if (statusEl) statusEl.textContent = "Erro ao se conectar ao servidor.";
+        } finally {
+            if (botao) botao.disabled = false;
+        }
+    }
+
+    // "Xh" (ou "X min" com menos de 1h) até entitlement.expires_at -- mesma ideia de
+    // formatarDiasRestantes() acima, só em horas/minutos (o teste dura 24h, dias não fariam
+    // sentido aqui). testeVipExpiraEm (abaixo) guarda o último valor conhecido pra um
+    // setInterval poder atualizar o texto sozinho entre uma chamada a /api/me/status e a próxima,
+    // sem bater na rede de novo.
+    let testeVipExpiraEm = null;
+
+    function formatarHorasRestantes(value) {
+        if (!value) return "—";
+        const expiraEm = new Date(value);
+        if (Number.isNaN(expiraEm.getTime())) return "—";
+        const msRestantes = expiraEm.getTime() - Date.now();
+        if (msRestantes <= 0) return "Expirado";
+        const horas = Math.floor(msRestantes / (1000 * 60 * 60));
+        const minutos = Math.floor((msRestantes % (1000 * 60 * 60)) / (1000 * 60));
+        return horas >= 1 ? `${horas}h${String(minutos).padStart(2, "0")}min` : `${minutos} min`;
+    }
+
+    // Preenche o card #areaTesteVip -- SÓ exibição (uso.remaining/limit e entitlement.expires_at já
+    // vêm prontos de /api/me/status, nenhum cálculo de cota/validade novo é feito aqui), mesmo
+    // padrão de atualizarCardAcessoDetalhes() para o card de plano pago. Chamada sempre (mesmo com
+    // o card escondido) -- inofensivo, mesma disciplina já usada no resto da tela.
+    function atualizarCardTesteVip(plano, uso, entitlement) {
+        const restantesEl = document.getElementById("testeVipRestantesNumero");
+        const faltamEl = document.getElementById("testeVipFaltamHoras");
+        if (!restantesEl || !faltamEl) return;
+
+        restantesEl.textContent = (uso && typeof uso.remaining === "number" && typeof uso.limit === "number")
+            ? `${uso.remaining} de ${uso.limit}`
+            : "—";
+
+        testeVipExpiraEm = entitlement && entitlement.expires_at ? entitlement.expires_at : null;
+        faltamEl.textContent = testeVipExpiraEm ? formatarHorasRestantes(testeVipExpiraEm) : "—";
+    }
+
+    // Atualiza só o TEXTO do "faltam Xh" a cada minuto, sem bater na rede de novo -- evita o
+    // número congelado entre uma chamada a carregarStatusConta() e a próxima (que só acontece em
+    // pontos específicos: login, F5, resgate). Não faz nada fora do plano trial_vip.
+    setInterval(() => {
+        if (planoAtualCode !== "trial_vip" || !testeVipExpiraEm) return;
+        const faltamEl = document.getElementById("testeVipFaltamHoras");
+        if (faltamEl) faltamEl.textContent = formatarHorasRestantes(testeVipExpiraEm);
+    }, 60000);
+
+    // Detecta a transição trial_vip -> free (teste que ACABOU DE expirar) e mostra a faixa de
+    // oferta UMA VEZ -- nunca para quem nunca testou (TRIAL_ATIVO_STORAGE_KEY só existe no
+    // navegador de quem já esteve confirmadamente em trial_vip). "Expirado por tempo" e "cota
+    // zerada" não se distinguem aqui (nem precisam: o backend já decidiu "free" de qualquer jeito,
+    // ver services/usage.py::_compute_allowance) -- qualquer volta a "free" depois de ter estado em
+    // trial_vip conta como "o teste acabou" para este aviso.
+    function verificarOfertaPosTesteExpirado(planoCode) {
+        let estavaEmTeste = null;
+        try {
+            estavaEmTeste = localStorage.getItem(TRIAL_ATIVO_STORAGE_KEY);
+        } catch (err) {
+            return;
+        }
+
+        if (planoCode === "trial_vip") {
+            try {
+                localStorage.setItem(TRIAL_ATIVO_STORAGE_KEY, "1");
+            } catch (err) {
+                // ignorado
+            }
+            return;
+        }
+
+        if (!estavaEmTeste) return; // nunca testou (ou o aviso já foi mostrado e consumido) -- nada a fazer.
+
+        try {
+            localStorage.removeItem(TRIAL_ATIVO_STORAGE_KEY);
+        } catch (err) {
+            // ignorado
+        }
+        // Qualquer plano PAGO depois do teste (upgrade de verdade durante ou logo após as 24h) não
+        // é "o teste acabou, sem ação" -- é uma venda; a faixa de oferta não faz sentido aqui.
+        if (planoCode !== "free") return;
+
+        const banner = document.getElementById("ofertaTesteExpirado");
+        if (banner) banner.classList.remove("hidden");
+    }
+
     async function carregarIndicacao() {
         const secao = document.getElementById("secaoIndicacao");
         const input = document.getElementById("indicacaoLinkInput");
@@ -2630,7 +2947,12 @@ https://..."></textarea>
     function atualizarVisibilidadeFormComentario(plano) {
         const ativo = document.getElementById("comentarioFormAtivo");
         const bloqueado = document.getElementById("comentarioFormBloqueado");
-        const liberado = !!plano && plano.code !== "free";
+        // ETAPA B7 (29/10/2026, mesma régua de services/comments.py::create_comment): trial_vip
+        // nunca pode comentar -- não é cliente pagante, mesmo tendo acesso às ferramentas. Sem
+        // esta exclusão, o formulário apareceria liberado pro teste e o backend recusaria na hora
+        // de enviar (NoActivePlanError), uma inconsistência visível que o próprio backend já foi
+        // corrigido pra evitar.
+        const liberado = !!plano && plano.code !== "free" && plano.code !== "trial_vip";
         if (ativo) ativo.classList.toggle("hidden", !liberado);
         if (bloqueado) bloqueado.classList.toggle("hidden", liberado);
     }
@@ -2997,8 +3319,14 @@ https://..."></textarea>
     // (#areaAssinatura, já visível nesse caso); pra quem está no Free (sem plano pago ainda), não
     // existe card pra mostrar -- vai direto pra vitrine de Planos, mesmo destino de "Ver planos".
     function irParaMeuPlano() {
-        const pago = !!sessaoEmail && !!planoAtualCode && planoAtualCode !== "free" && !!PLANOS[planoAtualCode];
-        const idAlvo = pago ? "areaAssinatura" : "secaoPlanos";
+        // ETAPA B7 (pedido do Igor, 29/10/2026): trial_vip tem seu PRÓPRIO card (#areaTesteVip,
+        // nunca #areaAssinatura -- ver atualizarVisibilidadeSecaoPlanos()), tratado explicitamente
+        // ANTES do teste genérico de "tem PLANOS[codigo]" abaixo (trial_vip nunca está em PLANOS).
+        const idAlvo = planoAtualCode === "trial_vip"
+            ? "areaTesteVip"
+            : (!!sessaoEmail && !!planoAtualCode && planoAtualCode !== "free" && !!PLANOS[planoAtualCode])
+                ? "areaAssinatura"
+                : "secaoPlanos";
         mostrarSecaoSeEscondida(idAlvo);
         const el = document.getElementById(idAlvo);
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -3025,6 +3353,9 @@ https://..."></textarea>
         carregarHistoricoGeracoes();
         tentarReivindicarIndicacao();
         carregarIndicacao();
+        // ETAPA B7 (pedido do Igor, 29/10/2026): "?c=" pendente + login acabado de resolver -> mostra
+        // a faixa "Ativar meu teste VIP de 24h" (nunca resgata sozinho, só o clique na faixa faz isso).
+        mostrarAtivacaoTesteSePendente();
         // 11/10/2026 (correção pedida pelo CÉREBRO): a seção "Importar pasta do Pinterest" busca
         // seu PRÓPRIO status (ver comentário acima de #secaoPinterestBoard) -- sem esta chamada
         // aqui, ela só atualizava no DOMContentLoaded da página, ficando presa no estado de antes
@@ -3052,6 +3383,7 @@ https://..."></textarea>
         esconderHistorico();
         esconderIndicacao();
         esconderAtalho();
+        esconderBannerAtivarTeste(); // ETAPA B7, pedido do Igor, 29/10/2026 -- nunca mostrar sem sessão
         // Mesmo raciocínio de esconderBatch() acima, para o bloco de áudio individual: sessaoEmail
         // já é null nesta linha, então o cadeado aparece JÁ NO LOGOUT, sem esperar a resposta
         // assíncrona de carregarStatusConta() mais abaixo (que ainda confirmaria o mesmo resultado).
@@ -3114,7 +3446,23 @@ https://..."></textarea>
         // pago (mesmo "pago" decidido aqui embaixo, quando o card "Meu acesso" aparece), a mesma
         // informação já está dentro do card, então o selo vira repetição e some.
         const statusContaBadge = document.getElementById("statusContaBadge");
+        // ETAPA B7 (teste VIP de 24h, pedido e aprovação do Igor, 29/10/2026): terceiro estado,
+        // nem "vitrine de Planos" (Free) nem "Meu acesso" (plano pago) -- card próprio
+        // (#areaTesteVip, ver atualizarCardTesteVip()), sem a vitrine de compra por baixo (o
+        // botão discreto "Assinar agora" dentro do card é o único caminho pra ela durante o
+        // teste). Checado ANTES do "free || !PLANOS[planoCode]" abaixo, porque trial_vip também
+        // não está em PLANOS (de propósito) e cairia nesse ramo por engano.
+        const areaTesteVip = document.getElementById("areaTesteVip");
         if (!secaoPlanos || !areaAssinatura || !assinaturaPlano || !assinaturaUpgrade) return;
+
+        if (planoCode === "trial_vip") {
+            secaoPlanos.classList.add("hidden");
+            areaAssinatura.classList.add("hidden");
+            if (areaTesteVip) areaTesteVip.classList.remove("hidden");
+            if (statusContaBadge) statusContaBadge.classList.add("hidden");
+            return;
+        }
+        if (areaTesteVip) areaTesteVip.classList.add("hidden");
 
         if (planoCode === "free" || !PLANOS[planoCode]) {
             secaoPlanos.classList.remove("hidden");
@@ -3333,6 +3681,12 @@ https://..."></textarea>
 
         atualizarVisibilidadeSecaoPlanos(plano.code);
         atualizarCardAcessoDetalhes(plano, uso, data.entitlement);
+        // ETAPA B7 (teste VIP de 24h, pedido e aprovação do Igor, 29/10/2026): preenche o card
+        // próprio do teste (sempre chamada, mesmo padrão de atualizarCardAcessoDetalhes acima --
+        // inofensivo/sem custo quando o card está escondido) e decide se a faixa de oferta
+        // pós-teste precisa aparecer (transição trial_vip -> free detectada via localStorage).
+        atualizarCardTesteVip(plano, uso, data.entitlement);
+        verificarOfertaPosTesteExpirado(plano.code);
         atualizarVisibilidadeFunilFrio(plano.code);
 
         // Etapa 3 (dossiê, 4.2): "a mesma informação aparece 3 vezes no topo" -- #statusContaValidade
@@ -4579,6 +4933,21 @@ https://..."></textarea>
                 );
                 return;
             }
+            // ETAPA B7 (pedido do Igor, 29/10/2026): trial_vip tratado explicitamente, igual aos
+            // outros ramos acima -- sem isso, caía no ramo "Free" logo abaixo, cujo botão rola até
+            // #secaoPlanos, que fica ESCONDIDA pra quem está em teste (atualizarVisibilidadeSecaoPlanos),
+            // um botão morto. A cota do teste é de 24h TOTAL (não volta amanhã), então o texto
+            // também não pode prometer renovação.
+            if (planoAtualCode === "trial_vip") {
+                setStatusBox(
+                    '<p class="font-bold mb-1">Limite do teste VIP atingido.</p>' +
+                    '<p class="text-[13px] mb-3">Seu teste de 24h usa uma cota única -- assine para continuar processando agora.</p>' +
+                    '<button onclick="document.getElementById(\'areaTesteVip\').scrollIntoView({behavior:\'smooth\'})" ' +
+                    'class="py-2 px-4 bg-amber-500 text-gray-950 font-bold text-[13px] rounded-xl shadow-md">Ver meu teste</button>',
+                    "warning"
+                );
+                return;
+            }
             // Free (planoAtualCode === "free"/null): comportamento original, intacto. Etapa 1
             // (dossiê, glossário): "gerações" (jargão) vira "vídeos".
             setStatusBox(
@@ -4615,7 +4984,13 @@ https://..."></textarea>
     // verdade -- isso continua 100% no backend (services/audio_usage.py); aqui só decide o que
     // MOSTRAR antes de qualquer chamada à API.
     function usuarioTemPlanoPagoAtivo() {
-        return !!sessaoEmail && !!planoAtualCode && !!PLANOS[planoAtualCode];
+        // ETAPA B7 (teste VIP de 24h, pedido e aprovação do Igor, 29/10/2026): trial_vip dá acesso
+        // à extração de áudio (parte do que o teste oferece), mas NUNCA entra no objeto PLANOS
+        // (pedido explícito do Igor) -- por isso precisa de uma checagem própria aqui, em vez de
+        // só !!PLANOS[planoAtualCode]. O NOME da função continua "...PagoAtivo" (nenhum outro
+        // chamador foi afetado), mas trial_vip nunca é cobrado -- mesma distinção que o backend já
+        // faz entre "tem acesso" (purchasable=false) e "é pagante" (ver services/plans.py).
+        return !!sessaoEmail && !!planoAtualCode && (!!PLANOS[planoAtualCode] || planoAtualCode === "trial_vip");
     }
 
     function selecionarFormatoIndividual(formato) {

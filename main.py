@@ -223,6 +223,17 @@ async def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/teste", include_in_schema=False)
+async def teste_vip_landing() -> FileResponse:
+    """ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor, 29/10/2026):
+    URL de campanha (ex.: klango.site/teste?c=ig-teste), sempre serve a MESMA página principal
+    (SPA de arquivo único, mesmo padrão de "/" acima) -- a captura do "?c=" e o fluxo de resgate
+    (login se preciso, depois POST /api/trial/redeem) são só JS dentro de static/index.html, que
+    lê a própria URL (window.location) independente de qual rota serviu o arquivo. Nenhuma lógica
+    de negócio aqui: quem decide elegibilidade/travas é sempre services/trial.py."""
+    return FileResponse(STATIC_DIR / "index.html")
+
+
 @app.get("/termos", include_in_schema=False)
 async def termos_de_uso() -> FileResponse:
     """Termos de Uso (02/10/2026) -- link removido do rodapé em versão anterior do site porque a
