@@ -125,6 +125,31 @@ def test_free_e_plano_desconhecido_e_usuario_inexistente(factory, session):
     assert _todos(session, usuario) == []
 
 
+# ============================================================================ ETAPA B7 (teste VIP de 24h, condição 2 da aprovação do Igor)
+def test_grant_entitlement_recusa_trial_vip_mesmo_com_payment_de_verdade(factory, session):
+    """grant_entitlement (caminho de PAGAMENTO) nunca pode conceder trial_vip -- mesmo que alguém
+    engane o Payment com plan_code="trial_vip" (payments/service.py::create_payment já recusa
+    criar esse Payment antes disso, ver tests/test_payments_service.py, mas esta é a segunda
+    camada de defesa, direto no serviço de entitlement)."""
+    usuario = factory.user()
+    pagamento = factory.payment(usuario, plan_code="trial_vip", amount_cents=1, status="approved")
+    with pytest.raises(InvalidEntitlementRequestError):
+        grant_entitlement(session, user_id=usuario.id, payment_id=pagamento.id, plan_code="trial_vip", now=NOW)
+    assert _todos(session, usuario) == []
+
+
+def test_grant_referral_milestone_recusa_plano_de_destino_trial_vip(factory, session):
+    from services.entitlements import grant_referral_milestone
+
+    usuario = factory.user()
+    vigente = give(factory, session, usuario, "weekly", now=NOW)
+    with pytest.raises(InvalidEntitlementRequestError):
+        grant_referral_milestone(
+            session, user_id=usuario.id, entitlement_id=vigente.id, new_plan_code="trial_vip",
+            reverse_days=0, reward_days=30, now=NOW,
+        )
+
+
 def test_compute_next_window_e_so_leitura(factory, session):
     usuario = factory.user()
     give(factory, session, usuario, "weekly")

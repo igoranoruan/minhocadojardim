@@ -61,6 +61,16 @@ def test_plano_free_e_recusado(factory, session):
         create_payment(session, user_id=usuario.id, plan_code="free", method="pix")
 
 
+def test_plano_trial_vip_e_recusado(factory, session):
+    """ETAPA B7 (teste VIP de 24h, condição 1 da aprovação do Igor): trial_vip dá acesso mas não é
+    vendável -- ninguém pode "comprar" um teste (purchasable=False, mesmo com paid=True por já ter
+    duration_days). Única forma de conceder é services/entitlements.py::grant_trial_entitlement,
+    chamada só por services/trial.py::redeem_trial -- nunca por aqui."""
+    usuario = factory.user()
+    with pytest.raises(PlanNotPurchasableError):
+        create_payment(session, user_id=usuario.id, plan_code="trial_vip", method="pix")
+
+
 def test_metodo_invalido_e_recusado(factory, session):
     usuario = factory.user()
     with pytest.raises(InvalidPaymentMethodError):

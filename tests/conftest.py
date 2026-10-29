@@ -148,6 +148,24 @@ class Factory:
         data.update(overrides)
         return self._persist(Entitlement(**data))
 
+    def trial_entitlement(self, user: User | None = None, **overrides) -> Entitlement:
+        """ETAPA B7 (teste VIP de 24h): entitlement SEM Payment (payment_id=None), plan_code
+        'trial_vip' -- o único caso em que a tabela permite isso (ver
+        database/models/entitlement.py, CHECK ck_entitlements_payment_id_so_para_planos_pagos)."""
+        user = user or self.user()
+        now = utcnow()
+        data = dict(
+            user_id=user.id,
+            plan_code="trial_vip",
+            payment_id=None,
+            duration_days=1,
+            starts_at=now,
+            expires_at=now + timedelta(days=1),
+            status="granted",
+        )
+        data.update(overrides)
+        return self._persist(Entitlement(**data))
+
     def batch(self, user: User | None = None, **overrides) -> Batch:
         user = user or self.user()
         data = dict(user_id=user.id, request_id=f"batch-{self._next()}", item_count=3)

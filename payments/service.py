@@ -59,7 +59,13 @@ def create_payment(
     futura precise mudar a assinatura só para adicionar isso.
     """
     plan = get_plan(plan_code)  # levanta UnknownPlanError (services.plans) se não existir -- nunca interceptada aqui
-    if not plan.paid:
+    # ETAPA B7 (29/10/2026): checa `purchasable`, não mais `paid` -- `trial_vip` é `paid=True`
+    # (tem janela de acesso de verdade) mas `purchasable=False` (nunca vendável). Antes desta
+    # troca, um plan_code="trial_vip" aqui teria passado pela checagem de `paid` sem ser barrado
+    # -- esta é a correção exata desse ponto (nenhum outro comportamento mudou: todo plano que já
+    # era comprável continua sendo, só "free", que também tem `purchasable=False`, e agora
+    # `trial_vip` ficam de fora).
+    if not plan.purchasable:
         raise PlanNotPurchasableError(f"O plano {plan_code!r} não pode ser comprado.")
     if method not in PAYMENT_METHODS:
         raise InvalidPaymentMethodError(f"Método de pagamento inválido: {method!r}")

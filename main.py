@@ -38,6 +38,7 @@ from routes import (
     share_ext,
     share_target,
     stats,
+    trial,
     webhooks,
 )
 from services.audio_flow import AudioPersistenceError
@@ -50,6 +51,7 @@ from services.generation_flow import GenerationPersistenceError
 from services.pinterest_board import PinterestBoardError
 from services.referrals import AlreadyClaimedError, InvalidReferralCodeError, SelfReferralError
 from services.share_queue import InvalidShareTokenError
+from services.trial import TrialError
 from services.usage import (
     BatchNotFoundError,
     GenerationDownloadNotFoundError,
@@ -194,6 +196,10 @@ app.add_exception_handler(AudioBatchNotFoundError, audio.audio_batch_not_found_h
 # routes/share_ext.py).
 app.add_exception_handler(InvalidShareTokenError, share_ext.share_token_error_handler)
 
+# Teste VIP de 24h por link de campanha (ETAPA B7, pedido e aprovação do Igor, 29/10/2026) --
+# tradução para HTTP, sem nenhuma regra de negócio aqui -- ver services/trial.py.
+app.add_exception_handler(TrialError, trial.trial_error_handler)
+
 # Rotas da API.
 app.include_router(health.router)
 app.include_router(auth.router)
@@ -208,6 +214,7 @@ app.include_router(audio.router)
 app.include_router(share.router)
 app.include_router(share_ext.router)
 app.include_router(share_target.router)
+app.include_router(trial.router)
 
 
 @app.get("/", include_in_schema=False)

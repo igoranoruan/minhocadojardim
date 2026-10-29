@@ -38,14 +38,19 @@ from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from config import AUDIO_EXTRACTIONS_PER_DAY, GENERATION_RESERVATION_TTL_SECONDS, get_settings
+from config import (
+    AUDIO_EXTRACTIONS_PER_DAY,
+    GENERATION_RESERVATION_TTL_SECONDS,
+    TRIAL_AUDIO_EXTRACTIONS_TOTAL,
+    get_settings,
+)
 from database.models import User
 from database.models.audio_batch import AudioBatch
 from database.models.audio_extraction import AudioExtraction
 from services import result_storage
 from services.entitlements import get_current_entitlement
 from services.locks import lock_user_row
-from services.plans import FREE_PLAN, Plan, get_plan
+from services.plans import FREE_PLAN, TRIAL_VIP, Plan, get_plan
 from utils.time_sp import resolve_now, sp_day
 
 logger = logging.getLogger("minhoca")
@@ -214,24 +219,33 @@ def _is_admin(db: Session, user_id: int) -> bool:
 # ------------------------------------------------------------------------------ cálculo do saldo
 def _compute_allowance(db: Session, user_id: int, now: datetime, plan: Plan) -> AudioAllowance:
     """Plano já resolvido (reaproveitado de quem já chamou _effective_plan -- evita repetir a
-    resolução de entitlement). Só leitura (quem reserva chama já com o lock)."""
+    resolução de entitlement). Só leitura (quem reserva chama já com o lock).
+
+    ETAPA B7 (29/10/2026): `trial_vip` usa um limite PRÓPRIO (TRIAL_AUDIO_EXTRACTIONS_TOTAL=5,
+    config.py) e conta SEM filtro de `period_day` -- é um total único das 24h do teste, nunca "5
+    por dia" (um resgate perto da meia-noite dobraria a cota se usasse o mesmo filtro diário dos
+    planos pagos). Seguro contar sem filtro de data pelo mesmo motivo de
+    services/usage.py::_count_batches_total: quem está efetivamente no trial_vip agora nunca
+    teve uma extração de áudio antes (Free nunca passa de _require_paid_plan, e qualquer plano
+    pago anterior já teria bloqueado o resgate do teste em grant_trial_entitlement) -- "todas as
+    extrações do usuário" e "as extrações só deste teste" são sempre o mesmo número."""
+    is_trial = plan.code == TRIAL_VIP
+    limit = TRIAL_AUDIO_EXTRACTIONS_TOTAL if is_trial else AUDIO_EXTRACTIONS_PER_DAY
     today = sp_day(now)
     stale_before = now - timedelta(seconds=GENERATION_RESERVATION_TTL_SECONDS)
     counts = or_(
         AudioExtraction.status == "completed",
         and_(AudioExtraction.status == "reserved", AudioExtraction.created_at > stale_before),
     )
-    query = (
-        select(func.count())
-        .select_from(AudioExtraction)
-        .where(AudioExtraction.user_id == user_id, AudioExtraction.period_day == today, counts)
-    )
+    query = select(func.count()).select_from(AudioExtraction).where(AudioExtraction.user_id == user_id, counts)
+    if not is_trial:
+        query = query.where(AudioExtraction.period_day == today)
     used = db.execute(query).scalar_one()
     return AudioAllowance(
         plan=plan,
-        limit=AUDIO_EXTRACTIONS_PER_DAY,
+        limit=limit,
         used=used,
-        remaining=max(0, AUDIO_EXTRACTIONS_PER_DAY - used),
+        remaining=max(0, limit - used),
         period_day=today,
         unlimited=_is_admin(db, user_id),
     )

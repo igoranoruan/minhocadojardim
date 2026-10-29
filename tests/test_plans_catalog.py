@@ -8,6 +8,8 @@ from services.plans import (
     MONTHLY,
     MONTHLY_PLAN,
     PLANS,
+    TRIAL_VIP,
+    TRIAL_VIP_PLAN,
     UnknownPlanError,
     VIP_BATCH,
     VIP_BATCH_PLAN,
@@ -73,10 +75,13 @@ def test_vip_15_por_dia_30_dias_r_47_90_batch_ilimitado_maximo_15():
 
 
 def test_todos_os_planos_pagos_permitem_batch_so_o_free_nao():
+    # ETAPA B7 (29/10/2026): trial_vip TAMBÉM permite lote (1 operação de até 10 vídeos, ver
+    # test_plano_trial_vip_24h abaixo) -- entra neste conjunto de propósito, só o Free fica fora.
     assert {p.code for p in PLANS.values() if p.batch_enabled} == {
         WEEKLY,
         MONTHLY,
         VIP_BATCH,
+        TRIAL_VIP,
     }
     assert not FREE_PLAN.batch_enabled
 
@@ -102,6 +107,9 @@ def test_nenhum_plano_tem_cota_de_geracoes_ilimitada_e_dinheiro_e_sempre_inteiro
 def test_get_plan_e_paid_plans():
     assert get_plan("weekly") is WEEKLY_PLAN
     assert get_plan("free") is FREE_PLAN
+    assert get_plan("trial_vip") is TRIAL_VIP_PLAN
+    # paid_plans() filtra por `purchasable`, não por `paid` (ETAPA B7) -- trial_vip é paid=True
+    # mas purchasable=False, então o resultado não muda.
     assert [p.code for p in paid_plans()] == [WEEKLY, MONTHLY, VIP_BATCH]
 
     with pytest.raises(UnknownPlanError):
@@ -111,3 +119,35 @@ def test_get_plan_e_paid_plans():
 def test_o_plano_e_imutavel():
     with pytest.raises(Exception):
         WEEKLY_PLAN.limit = 99  # dataclass congelada
+
+
+# ------------------------------------------------------------------- ETAPA B7 (teste VIP de 24h)
+def test_plano_trial_vip_24h():
+    """pedido/aprovação do Igor, 29/10/2026: 10 vídeos, 1 lote de até 10, 24h, não vendável."""
+    assert (TRIAL_VIP_PLAN.code, TRIAL_VIP_PLAN.limit, TRIAL_VIP_PLAN.period) == (TRIAL_VIP, 10, "trial")
+    assert (TRIAL_VIP_PLAN.duration_days, TRIAL_VIP_PLAN.price_cents) == (1, 0)
+    assert TRIAL_VIP_PLAN.batch_enabled
+    assert TRIAL_VIP_PLAN.max_batch_size == 10
+    assert TRIAL_VIP_PLAN.batch_limit == 1
+    assert TRIAL_VIP_PLAN.batch_period == "trial"
+
+
+def test_trial_vip_tem_acesso_mas_nao_e_vendavel():
+    """A distinção pedida pelo Igor (29/10/2026, condição 1 da aprovação): trial_vip precisa dar
+    ACESSO de verdade (paid=True -- é isso que libera lote/áudio/atalho pelos MESMOS pontos de
+    checagem dos planos comprados) mas NUNCA pode ser tratado como venda/cliente pagante
+    (purchasable=False -- fora de paid_plans(), e payments/service.py::create_payment recusa
+    comprá-lo, ver tests/test_payments_service.py)."""
+    assert TRIAL_VIP_PLAN.paid is True
+    assert TRIAL_VIP_PLAN.purchasable is False
+    assert TRIAL_VIP not in {p.code for p in paid_plans()}
+
+    # Free também nunca foi vendável -- explícito desde esta etapa (antes, só `paid=False` já
+    # bastava para o create_payment recusar; agora que ele checa `purchasable`, Free precisa
+    # continuar com purchasable=False por conta própria).
+    assert FREE_PLAN.purchasable is False
+
+    # Os 3 planos comprados de hoje continuam purchasable=True, sem mudança nenhuma.
+    assert WEEKLY_PLAN.purchasable is True
+    assert MONTHLY_PLAN.purchasable is True
+    assert VIP_BATCH_PLAN.purchasable is True

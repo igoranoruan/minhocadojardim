@@ -12,6 +12,7 @@ APP_TABLES = {
     "payment_events",
     "login_codes",
     "auth_sessions",
+    "trial_redemptions",
 }
 
 
@@ -46,9 +47,11 @@ def test_alembic_upgrade_cria_todas_as_tabelas(db_url, alembic_cfg):
             # "pending" por reaproveitamento de idempotency key -- migration de DADO, nenhuma
             # tabela/coluna nova, aprovação do Igor, 27/10/2026); 0016 (cancela o Payment #31,
             # mesma causa raiz -- migration de DADO, nenhuma tabela/coluna nova, aprovação do
-            # Igor, 28/10/2026) -- teste atualizado nesta data só pra acompanhar o head real, sem
-            # nenhuma mudança de regra de negócio.
-            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0016"
+            # Igor, 28/10/2026); 0017 (ETAPA B7, teste VIP de 24h -- entitlements.payment_id
+            # passa a NULLABLE só para plan_code='trial_vip' + tabela nova trial_redemptions,
+            # pedido e aprovação do Igor, 29/10/2026) -- teste atualizado nesta data só pra
+            # acompanhar o head real, sem nenhuma mudança de regra de negócio.
+            assert conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == "0017"
     finally:
         eng.dispose()
 
