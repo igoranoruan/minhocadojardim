@@ -1636,8 +1636,12 @@ https://..."></textarea>
                 <!-- 26/10/2026 (ETAPA B4, pedido do Igor -- "copy final do site"): título/texto do
                      passo 1 reescritos; chip 2 trocado de "Acesso em segundos" (promessa de tempo)
                      pra "Código no e-mail" (descreve o mecanismo, não uma velocidade). -->
-                <h3 class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Entre sem criar senha.</h3>
-                <p class="text-sm text-slate-400 mb-5 leading-relaxed">Informe seu e-mail e receba um código de 6 dígitos.</p>
+                <!-- 29/10/2026 (ETAPA B7, pedido do Igor): ids adicionados só pra
+                     autoAbrirLoginSeTestePendente() trocar o texto quando a janela abre por causa
+                     de um teste VIP pendente. abrirAcesso() sempre restaura o texto padrão abaixo
+                     (TEXTO_ACESSO_PADRAO), então qualquer outra abertura continua igual a hoje. -->
+                <h3 id="acessoTitulo" class="text-xl sm:text-2xl font-extrabold text-white mb-1.5">Entre sem criar senha.</h3>
+                <p id="acessoSubtitulo" class="text-sm text-slate-400 mb-5 leading-relaxed">Informe seu e-mail e receba um código de 6 dígitos.</p>
 
                 <div class="grid grid-cols-3 gap-2 mb-5">
                     <div class="bg-card-soft rounded-xl p-3 flex flex-col items-center text-center gap-1.5">
@@ -2660,10 +2664,30 @@ https://..."></textarea>
     // "volta ao resgate" depois (mostrarAtivacaoTesteSePendente(), chamada por aplicarSessao() logo
     // que o login resolve) -- pedido exato do Igor. Chamada só depois que carregarSessao() já
     // confirmou que NÃO há sessão (nunca interrompe quem já está logado).
+    // Título/subtítulo do passo "e-mail" da janela de acesso (#acessoTitulo/#acessoSubtitulo).
+    // PADRAO é exatamente o texto que já estava no HTML; TESTE_VIP só aparece quando a janela
+    // abre sozinha por causa de um "?c=" pendente (pedido do Igor, 29/10/2026).
+    const TEXTO_ACESSO_PADRAO = {
+        titulo: "Entre sem criar senha.",
+        subtitulo: "Informe seu e-mail e receba um código de 6 dígitos.",
+    };
+    const TEXTO_ACESSO_TESTE_VIP = {
+        titulo: "Seu teste VIP de 24h está te esperando",
+        subtitulo: "Entre com seu e-mail para ativar. Sem senha, só um código de 6 dígitos.",
+    };
+
+    function definirTextoAcesso(texto) {
+        const tituloEl = document.getElementById("acessoTitulo");
+        const subtituloEl = document.getElementById("acessoSubtitulo");
+        if (tituloEl) tituloEl.textContent = texto.titulo;
+        if (subtituloEl) subtituloEl.textContent = texto.subtitulo;
+    }
+
     function autoAbrirLoginSeTestePendente(logado) {
         if (logado) return;
         if (!obterCampanhaTestePendente()) return;
-        abrirAcesso();
+        abrirAcesso(); // sempre restaura o texto padrão primeiro...
+        definirTextoAcesso(TEXTO_ACESSO_TESTE_VIP); // ...e só aqui troca pro texto do teste
     }
 
     async function ativarTesteVip() {
@@ -6204,6 +6228,10 @@ https://..."></textarea>
             // ficava visível embaixo do botão da próxima vez que o modal abria -- a mensagem de
             // status é sempre de UMA tentativa específica, nunca deve sobreviver a uma nova abertura.
             mostrarMensagemAcesso("");
+            // ETAPA B7 (pedido do Igor, 29/10/2026): toda abertura volta ao texto padrão --
+            // autoAbrirLoginSeTestePendente() troca o texto DEPOIS de chamar esta função, só no
+            // caso do teste VIP pendente.
+            definirTextoAcesso(TEXTO_ACESSO_PADRAO);
             modal.classList.remove("hidden");
             modal.classList.add("flex");
             if (sessaoEmail) {
