@@ -44,10 +44,15 @@ def test_e_mail_nao_e_mais_autenticacao_nem_fica_salvo_no_navegador():
     compartilhamento do Android até o login completar (COMPARTILHAR_PENDENTE_STORAGE_KEY, ver
     routes/share_target.py); e desde 27/10/2026 (ETAPA B6, Meta Pixel/LGPD), a escolha de
     consentimento de cookies (CHAVE_CONSENTIMENTO_COOKIES) e os ids de pagamento já enviados como
-    Purchase pro Pixel, pra nunca duplicar (CHAVE_PURCHASES_PIXEL_ENVIADOS) -- nenhuma dessas
-    chaves tem relação com e-mail/sessão. Qualquer OUTRO uso de localStorage, e sessionStorage por
-    completo, ainda quebram este teste -- a proteção original (nenhum dado de autenticação no
-    navegador) continua de pé."""
+    Purchase pro Pixel, pra nunca duplicar (CHAVE_PURCHASES_PIXEL_ENVIADOS); e desde 29/10/2026
+    (ETAPA B7, teste VIP de 24h, pedido e aprovação do Igor), o "?c=" de campanha pendente até o
+    login completar (TRIAL_CAMPANHA_STORAGE_KEY, mesmo padrão de INDICACAO_STORAGE_KEY acima), um
+    id de aparelho aleatório só pra trava de abuso do resgate -- nunca interpretado no navegador,
+    services/trial.py só grava o HASH dele (TRIAL_DEVICE_ID_STORAGE_KEY), e a flag de "já esteve
+    em trial_vip" usada só pra decidir se mostra a faixa de oferta quando o teste expira
+    (TRIAL_ATIVO_STORAGE_KEY) -- nenhuma dessas chaves tem relação com e-mail/sessão. Qualquer
+    OUTRO uso de localStorage, e sessionStorage por completo, ainda quebram este teste -- a
+    proteção original (nenhum dado de autenticação no navegador) continua de pé."""
     html = _html()
     chamadas_localstorage = re.findall(r"localStorage\.\w+\([^)]*\)", html)
     chaves_aprovadas = (
@@ -56,6 +61,9 @@ def test_e_mail_nao_e_mais_autenticacao_nem_fica_salvo_no_navegador():
         "COMPARTILHAR_PENDENTE_STORAGE_KEY",
         "CHAVE_CONSENTIMENTO_COOKIES",
         "CHAVE_PURCHASES_PIXEL_ENVIADOS",
+        "TRIAL_CAMPANHA_STORAGE_KEY",
+        "TRIAL_DEVICE_ID_STORAGE_KEY",
+        "TRIAL_ATIVO_STORAGE_KEY",
     )
     assert all(any(chave in chamada for chave in chaves_aprovadas) for chamada in chamadas_localstorage)
     assert "sessionStorage" not in html

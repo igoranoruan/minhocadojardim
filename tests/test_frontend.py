@@ -592,11 +592,19 @@ def test_stats_processados_escondido_para_quem_ja_logou():
     decidiu assinar -- pra quem já está logado a informação é redundante (o card "Meu acesso" já
     mostra o que importa), então carregarEstatisticas() nem busca nem exibe o stat nesse caso.
     Também passou a rodar só depois que a sessão é resolvida (antes rodava em paralelo, sem saber
-    se havia sessão)."""
+    se havia sessão).
+
+    29/10/2026 (ETAPA B7, pedido do Igor): carregarSessao().then(carregarEstatisticas) virou
+    carregarSessao().then((logado) => {...}) porque autoAbrirLoginSeTestePendente() (teste VIP de
+    24h) também precisa saber se há sessão -- mesma ordem de execução de antes (continua rodando
+    só depois que a sessão resolve), só que carregarEstatisticas() agora é chamada de dentro do
+    callback em vez de ser a própria referência passada a .then()."""
     html = _html()
     corpo = re.search(r"async function carregarEstatisticas\(\) \{(.*?)\n    \}", html, re.S).group(1)
     assert "if (sessaoEmail) return;" in corpo
-    assert "carregarSessao().then(carregarEstatisticas);" in html
+    chamada = re.search(r"carregarSessao\(\)\.then\(\(logado\) => \{(.*?)\n        \}\);", html, re.S)
+    assert chamada is not None
+    assert "carregarEstatisticas();" in chamada.group(1)
 
 
 def test_selo_de_status_some_so_para_quem_tem_plano_pago():
