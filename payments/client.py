@@ -44,43 +44,11 @@ def create_payment(payment_data: dict, *, idempotency_key: str, device_session_i
         headers["x-meli-session-id"] = device_session_id
     request_options.custom_headers = headers
 
-    # DIAGNÓSTICO TEMPORÁRIO (28/10/2026, pedido do suporte do Mercado Pago -- investigação do
-    # Payment #31, que voltou "pending_waiting_transfer"/"Transferência bancária" pro Mercado
-    # Pago mesmo tendo sido submetido como cartão de crédito pelo Payment Brick): loga só os
-    # campos NÃO sensíveis do payload que de fato saiu daqui pro Mercado Pago -- nunca o token,
-    # nunca o payer (tem CPF), nunca o número de cartão (que nem chega até aqui -- fica só no
-    # Brick/iframe deles). Objetivo: comparar isso com o que o formData do onSubmit no frontend
-    # logou (console [brick-diagnostico]), pra achar se a divergência nasce no nosso payload ou
-    # já chega errada do Brick. Tirar depois que o caso for resolvido.
-    logger.info(
-        "[PAYMENT][diagnostico] enviando ao Mercado Pago: payment_method_id=%r installments=%r "
-        "issuer_id=%r tem_token=%s external_reference=%r tem_device_session_id=%s",
-        payment_data.get("payment_method_id"),
-        payment_data.get("installments"),
-        payment_data.get("issuer_id"),
-        bool(payment_data.get("token")),
-        payment_data.get("external_reference"),
-        bool(device_session_id),
-    )
-
     try:
         resultado = sdk.payment().create(payment_data, request_options)
     except Exception as exc:  # falha de comunicação com o Mercado Pago (rede, timeout, SDK) -- nunca uma recusa de pagamento
         logger.error("[PAYMENT] falha ao chamar o Mercado Pago: %s", exc.__class__.__name__, exc_info=True)
         raise PaymentGatewayError("Não foi possível se comunicar com o Mercado Pago.") from exc
-
-    # Mesmo diagnóstico temporário acima: o que o Mercado Pago devolveu de volta, pros mesmos
-    # campos que o suporte deles pediu (payment_method_id e payment_type_id da resposta).
-    corpo_resposta = resultado.get("response") or {}
-    logger.info(
-        "[PAYMENT][diagnostico] resposta do Mercado Pago: id=%r status=%r status_detail=%r "
-        "payment_method_id=%r payment_type_id=%r",
-        corpo_resposta.get("id"),
-        corpo_resposta.get("status"),
-        corpo_resposta.get("status_detail"),
-        corpo_resposta.get("payment_method_id"),
-        corpo_resposta.get("payment_type_id"),
-    )
 
     return resultado
 
