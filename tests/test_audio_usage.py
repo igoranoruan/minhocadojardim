@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 
 from config import AUDIO_EXTRACTIONS_PER_DAY
 from database.models import AudioExtraction, Generation
-from helpers_usage import NOW, give
+from helpers_usage import NOW, give, sp
 from services.audio_usage import (
     AudioConcurrentOperationError,
     AudioNotAllowedError,
@@ -99,6 +99,34 @@ def test_limite_diario_reseta_no_dia_seguinte(factory, session):
     # e uma nova reserva amanhã é aceita normalmente (dia novo, contador novo)
     reserva = reserve_audio_extraction(session, user_id=usuario.id, request_id="r-amanha", now=amanha)
     assert reserva.created is True
+
+
+# ============================================================================ teste VIP 24h: 5 no total, nunca por dia (ETAPA B7, pedido do Igor)
+def test_trial_vip_e_5_no_total_nao_reinicia_a_meia_noite(factory, session):
+    usuario = factory.user()
+    factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + DIA)
+    saldo = get_audio_allowance(session, usuario.id, now=NOW)
+    assert (saldo.plan.code, saldo.limit, saldo.remaining) == ("trial_vip", 5, 5)
+
+    fim_do_dia = sp(2026, 9, 23, 23, 59, 59)
+    for i in range(5):
+        _completar(session, usuario.id, f"trial-audio-{i}", now=fim_do_dia)
+    with pytest.raises(AudioQuotaExceededError):
+        reserve_audio_extraction(session, user_id=usuario.id, request_id="trial-audio-6", now=fim_do_dia)
+
+    # mesmo cruzando a meia-noite de São Paulo (reiniciaria um plano pago comum), a cota do teste
+    # continua esgotada -- é um TOTAL de 24h desde o resgate, não "5 por dia de calendário".
+    depois_da_meia_noite = sp(2026, 9, 24, 0, 0, 1)
+    saldo_depois = get_audio_allowance(session, usuario.id, now=depois_da_meia_noite)
+    assert (saldo_depois.used, saldo_depois.remaining) == (5, 0)
+
+
+def test_trial_vip_expirado_volta_a_bloquear_como_free(factory, session):
+    usuario = factory.user()
+    factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + DIA)
+    _completar(session, usuario.id, "trial-audio-0", now=NOW)
+    with pytest.raises(AudioNotAllowedError):
+        get_audio_allowance(session, usuario.id, now=NOW + DIA + timedelta(seconds=1))
 
 
 # ============================================================================ falha não conta no limite

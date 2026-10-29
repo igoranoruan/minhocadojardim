@@ -151,6 +151,25 @@ def test_pagina_inicial_tem_os_dois_botoes_da_fila_do_atalho(auth_client):
     assert "Enviar fila para o lote" not in resposta.text
 
 
+def test_pagina_de_campanha_do_teste_vip(auth_client):
+    """ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor, 29/10/2026):
+    /teste serve a MESMA SPA de "/" (mesmo padrão de /termos e /privacidade acima, ver main.py) --
+    a captura do "?c=" e o resgate são só JS dentro do arquivo, então o teste confere que a rota
+    devolve a página certa e que o JS que lê a campanha está presente (nenhuma lógica de negócio
+    nova nesta rota -- isso é responsabilidade de services/trial.py, já coberto em
+    tests/test_trial.py)."""
+    resposta = auth_client.get("/teste")
+    assert resposta.status_code == 200
+    assert "KLANGO.MP4" in resposta.text
+    assert "capturarCodigoTesteDaUrl" in resposta.text
+    assert "ativarTesteVip" in resposta.text
+    # Texto próprio da janela de acesso quando ela abre por causa do teste pendente (pedido do
+    # Igor, 29/10/2026) -- o texto padrão continua no HTML para o login normal.
+    assert "Seu teste VIP de 24h está te esperando" in resposta.text
+    assert "Entre com seu e-mail para ativar. Sem senha, só um código de 6 dígitos." in resposta.text
+    assert "Entre sem criar senha." in resposta.text
+
+
 def test_rodape_da_pagina_inicial_linka_as_paginas_legais(auth_client):
     """Regressão: o rodapé já teve a coluna "Legal" removida de propósito porque as páginas não
     existiam (ver histórico em static/index.html) -- agora que existem, os links precisam estar

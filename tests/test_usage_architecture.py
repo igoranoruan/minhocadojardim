@@ -150,9 +150,11 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
     cancela Payments "pending" com o preço antigo de antes do reajuste -- migration de dado,
     aprovação do Igor, 22/10/2026; 0015 cancela o Payment #30, travado em "pending" por
     reaproveitamento de idempotency key -- migration de dado, aprovação do Igor, 27/10/2026; 0016
-    cancela o Payment #31, mesma causa -- migration de dado, aprovação do Igor, 28/10/2026) --
+    cancela o Payment #31, mesma causa -- migration de dado, aprovação do Igor, 28/10/2026; 0017
+    teste VIP de 24h (ETAPA B7) -- entitlements.payment_id passa a NULLABLE só para plan_code=
+    'trial_vip' + tabela nova trial_redemptions, pedido e aprovação do Igor, 29/10/2026) --
     nenhuma delas foi criada por esta camada; uma
-    17ª migration ou uma tabela nova aqui ainda quebrariam este teste."""
+    18ª migration ou outra tabela nova aqui ainda quebrariam este teste."""
     versoes = sorted(p.name for p in (ROOT / "migrations" / "versions").glob("*.py"))
     assert versoes == [
         "0001_estrutura_inicial.py",
@@ -171,11 +173,13 @@ def test_a_etapa_4_nao_criou_tabelas_nem_migration():
         "0014_cancela_pendentes_preco_antigo.py",
         "0015_cancela_payment_travado_idempotencia.py",
         "0016_cancela_payment_31_travado_idempotencia.py",
+        "0017_teste_vip_24h.py",
     ]
     assert set(Base.metadata.tables) == {
         "users", "payments", "entitlements", "generations", "batches", "payment_events",
         "login_codes", "auth_sessions", "anonymous_identities", "referrals", "comments",
         "audio_batches", "audio_extractions", "share_tokens", "share_queue_items",
+        "trial_redemptions",
     }
 
 

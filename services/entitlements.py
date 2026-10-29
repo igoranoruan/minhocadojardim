@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from database.models import Entitlement, Payment
 from services import entitlement_chain as chain
 from services.locks import UserNotFoundError, lock_user_row  # noqa: F401  (UserNotFoundError reexportado)
-from services.plans import get_plan
+from services.plans import TRIAL_VIP, TRIAL_VIP_PLAN, get_plan
 from utils.time_sp import resolve_now
 
 logger = logging.getLogger("minhoca")
@@ -46,6 +46,18 @@ class EntitlementNotFoundError(EntitlementError):
 
 class InvalidEntitlementRequestError(EntitlementError):
     pass
+
+
+class TrialAlreadyGrantedError(EntitlementError):
+    """ETAPA B7 (29/10/2026): este user_id já tem (ou já teve) QUALQUER entitlement -- teste
+    anterior, plano pago vigente, futuro, expirado ou revogado. Cobre, numa única checagem, as
+    três travas "1 por conta pra sempre" / "quem já pagou não pode" / "não empilha com pago" (ver
+    grant_trial_entitlement). services/trial.py traduz para a mensagem genérica e educada pedida
+    pelo Igor, sem revelar qual das três situações é o caso real."""
+
+    def __init__(self, user_id: int) -> None:
+        self.user_id = user_id
+        super().__init__(f"Usuário {user_id} já tem (ou já teve) um entitlement -- sem direito a teste VIP.")
 
 
 @dataclass(frozen=True)
@@ -140,8 +152,15 @@ def grant_entitlement(
     Sem acesso vigente agora (usuário Free, ou só com acessos futuros pendentes): comportamento
     ORIGINAL preservado -- empilha depois do último acesso já concedido."""
     plan = get_plan(plan_code)
-    if not plan.paid:
-        raise InvalidEntitlementRequestError("O plano Free não gera entitlement.")
+    # ETAPA B7 (29/10/2026): checa `purchasable`, não mais `paid` -- esta função SEMPRE exige um
+    # Payment (parâmetro obrigatório, FK NOT NULL quando o plano não é trial_vip, ver
+    # database/models/entitlement.py), então nunca deveria conceder um plano não vendável de
+    # qualquer forma (Free -- igual a antes -- ou trial_vip, que tem seu PRÓPRIO caminho, sem
+    # Payment nenhum: grant_trial_entitlement, abaixo). `paid` sozinho não bastaria mais depois
+    # desta etapa: trial_vip é `paid=True` (precisa ser, para o resto do sistema tratá-lo como
+    # acesso de verdade), mas NUNCA pode nascer por aqui.
+    if not plan.purchasable:
+        raise InvalidEntitlementRequestError(f"O plano {plan_code!r} não pode ser concedido por pagamento.")
     now = resolve_now(now)
     try:
         lock_user_row(db, user_id)
@@ -202,6 +221,67 @@ def grant_entitlement(
             raise
         db.commit()
         return existing
+    except Exception:
+        db.rollback()
+        raise
+
+
+def grant_trial_entitlement(db: Session, *, user_id: int, now: datetime | None = None) -> Entitlement:
+    """ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor, 29/10/2026):
+    concede o entitlement do plano `trial_vip`, SEM NENHUM Payment (`payment_id` fica NULL -- ver
+    database/models/entitlement.py, CHECK `ck_entitlements_payment_id_so_para_planos_pagos`).
+
+    Único chamador: services/trial.py::redeem_trial, depois de TODAS as travas de abuso
+    específicas do pedido já terem passado (conta/e-mail, aparelho, IP, e-mail descartável, rate
+    limit -- nenhuma delas é repetida aqui). Esta função só garante a regra final e ESTRUTURAL,
+    direto na tabela: recusa (TrialAlreadyGrantedError) se `user_id` já tiver QUALQUER
+    entitlement, de qualquer plano, qualquer status, criado a qualquer momento. Essa ÚNICA
+    checagem cobre as três regras do pedido ao mesmo tempo:
+    - "1 teste por conta, para sempre" -- um teste anterior já deixou uma linha aqui.
+    - "conta que já pagou alguma vez também não pode" -- um pagamento aprovado SEMPRE deixa uma
+      linha aqui (grant_entitlement, acima, é o único outro gravador desta tabela).
+    - "não deve empilhar com plano pago" -- um plano pago vigente (ou mesmo futuro, já
+      empilhado) também já é uma linha aqui.
+    Por isso NÃO reaproveita `_valid_granted`/`get_current_entitlement` (que só enxergam
+    `status='granted'` e ainda não expirado) -- a regra do teste é deliberadamente mais larga
+    ("qualquer entitlement que já existiu"), nunca só "o vigente agora". Nunca decide "qual dos
+    dois vale" como `grant_entitlement` faz num upgrade: aqui não há ambiguidade nenhuma para
+    decidir -- qualquer linha prévia já recusa, ponto final.
+
+    Se o usuário pagar de verdade DURANTE o teste, é `grant_entitlement` (chamado pelo fluxo de
+    pagamento normal, nunca por este módulo) quem decide a troca imediata -- já funciona sem
+    nenhuma mudança aqui, porque `grant_entitlement` não olha o `plan_code` do entitlement vigente
+    para decidir se encerra ou não.
+
+    Mesma segurança de `grant_entitlement`: trava o usuário (`lock_user_row`), tudo numa única
+    transação."""
+    now = resolve_now(now)
+    try:
+        lock_user_row(db, user_id)
+
+        ja_existe = db.execute(
+            select(Entitlement.id).where(Entitlement.user_id == user_id)
+        ).scalar_one_or_none()
+        if ja_existe is not None:
+            db.rollback()  # nada a gravar: só libera o lock
+            raise TrialAlreadyGrantedError(user_id)
+
+        entitlement = Entitlement(
+            user_id=user_id,
+            plan_code=TRIAL_VIP,
+            payment_id=None,
+            duration_days=TRIAL_VIP_PLAN.duration_days,
+            starts_at=now,
+            expires_at=now + timedelta(days=TRIAL_VIP_PLAN.duration_days),
+            status="granted",
+        )
+        db.add(entitlement)
+        db.flush()
+        db.commit()
+        logger.info("[ENTITLEMENT] teste VIP de 24h concedido user_id=%s id=%s", user_id, entitlement.id)
+        return entitlement
+    except TrialAlreadyGrantedError:
+        raise
     except Exception:
         db.rollback()
         raise
@@ -290,8 +370,12 @@ def grant_referral_milestone(
     if reverse_days < 0:
         raise InvalidEntitlementRequestError("reverse_days não pode ser negativo.")
     plan = get_plan(new_plan_code)
-    if not plan.paid:
-        raise InvalidEntitlementRequestError("O plano de destino do marco de indicação precisa ser pago.")
+    # ETAPA B7 (29/10/2026): checa `purchasable`, mesma razão de grant_entitlement acima -- um
+    # marco de indicação nunca deveria poder "promover" alguém para trial_vip (REFERRAL_MILESTONE_
+    # PLAN_CODE é "vip_batch", fixo em config.py, então isto nunca disparava na prática -- é
+    # defesa em profundidade, não a correção de um bug observado).
+    if not plan.purchasable:
+        raise InvalidEntitlementRequestError("O plano de destino do marco de indicação precisa ser vendável.")
     now = resolve_now(now)
     try:
         lock_user_row(db, user_id)

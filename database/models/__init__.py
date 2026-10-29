@@ -13,6 +13,7 @@ from database.models.payment_event import PaymentEvent
 from database.models.referral import Referral
 from database.models.share_queue_item import ShareQueueItem
 from database.models.share_token import ShareToken
+from database.models.trial_redemption import TrialRedemption
 from database.models.user import User
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "Referral",
     "ShareQueueItem",
     "ShareToken",
+    "TrialRedemption",
     "User",
 ]

@@ -228,6 +228,16 @@ def _compute_allowance(db: Session, user_id: int, now: datetime) -> Allowance:
     query = select(func.count()).select_from(Generation).where(Generation.user_id == user_id, counts)
     if plan.period == "week":
         query = query.where(Generation.plan_code == FREE, Generation.period_week == week)
+    elif plan.period == "trial":
+        # ETAPA B7 (29/10/2026): o teto do teste é um TOTAL ÚNICO de 24h desde o resgate, nunca
+        # por dia/semana de CALENDÁRIO (sp_day/sp_week_start) -- um resgate perto da meia-noite
+        # dobraria a cota se caísse no filtro de `period_day`/`period_week` como os planos pagos
+        # normais. Sem filtro de período nenhum aqui: conta TODAS as gerações `trial_vip` deste
+        # usuário, de sempre -- seguro porque "1 teste por conta, para sempre"
+        # (grant_trial_entitlement) garante que só existe UM entitlement trial_vip na vida de
+        # cada conta, então "todas as gerações trial_vip do usuário" É, por construção, "todas as
+        # gerações deste único teste".
+        query = query.where(Generation.plan_code == plan.code)
     else:
         query = query.where(Generation.plan_code != FREE, Generation.period_day == today)
     used = db.execute(query).scalar_one()
@@ -280,6 +290,22 @@ def _count_batches_in_week(db: Session, user_id: int, now: datetime) -> int:
     ).scalar_one()
 
 
+def _count_batches_total(db: Session, user_id: int) -> int:
+    """ETAPA B7 (29/10/2026): TOTAL de operações de lote deste usuário, de sempre -- sem janela de
+    calendário nenhuma (mesmo raciocínio do `plan.period == "trial"` em `_compute_allowance`: o
+    teto do teste é 1 operação na VIDA do teste, não "1 por semana", e um resgate perto da virada
+    da semana comercial dobraria a cota se usasse `_count_batches_in_week`). Seguro contar sem
+    filtro de data: um usuário só chega a ter `batch_period == "trial"` quando o plano efetivo é
+    `trial_vip`, que só existe uma vez por conta, para sempre (grant_trial_entitlement recusa se
+    já existir qualquer entitlement anterior -- inclusive de plano pago, que é a ÚNICA forma de já
+    ter uma operação de lote registrada). Ou seja: quem está efetivamente no teste agora nunca
+    teve uma operação de lote antes -- "todas as operações do usuário" e "as operações só deste
+    teste" são sempre o mesmo número. `Batch` não precisa de uma coluna `plan_code` para isso."""
+    return db.execute(
+        select(func.count()).select_from(Batch).where(Batch.user_id == user_id)
+    ).scalar_one()
+
+
 def _compute_batch_allowance(db: Session, user_id: int, plan: Plan, now: datetime) -> BatchAllowance:
     """Cota de operações de lote do plano EFETIVO já resolvido (reaproveitado de quem já chamou
     _compute_allowance -- evita repetir a resolução de entitlement). Só leitura."""
@@ -288,7 +314,11 @@ def _compute_batch_allowance(db: Session, user_id: int, plan: Plan, now: datetim
         return BatchAllowance(plan=plan, limit=0, used=0, remaining=0, period_start=period_start)
     if plan.batch_limit is None:  # VIP Batch: ilimitado -- nenhuma consulta ao banco é necessária
         return BatchAllowance(plan=plan, limit=None, used=0, remaining=None, period_start=period_start)
-    used = _count_batches_in_week(db, user_id, now)
+    used = (
+        _count_batches_total(db, user_id)
+        if plan.batch_period == "trial"
+        else _count_batches_in_week(db, user_id, now)
+    )
     return BatchAllowance(
         plan=plan, limit=plan.batch_limit, used=used,
         remaining=max(0, plan.batch_limit - used), period_start=period_start,

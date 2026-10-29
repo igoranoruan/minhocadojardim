@@ -13,12 +13,14 @@ Além disso, cada chamada aceita de batch consome 1 operação da cota semanal d
 A reserva é tudo ou nada: se faltar saldo de vídeos ou de operações, nada é gravado.
 """
 
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import func, select
 
 import services.usage as usage_service
 from database.models import Batch, Generation
-from helpers_usage import NOW, consume, give
+from helpers_usage import NOW, consume, give, sp
 from services.plans import PLANS
 from services.usage import (
     BatchNotAllowedError,
@@ -38,7 +40,13 @@ from services.usage import (
 PAID_PLANS = [
     (code, plano.limit, plano.max_batch_size)
     for code, plano in PLANS.items()
-    if plano.paid
+    # ETAPA B7 (29/10/2026): filtra por `purchasable`, não por `paid` -- trial_vip é `paid=True`
+    # mas nunca é concedido por `give()` (que passa por um Payment de verdade/grant_entitlement,
+    # e grant_entitlement recusa qualquer plano não `purchasable`). Sem este filtro, a fixture
+    # `paid_user` abaixo tentaria `give(factory, session, usuario, "trial_vip")` e quebraria com
+    # InvalidEntitlementRequestError -- o teste do plano de teste tem arquivo próprio
+    # (tests/test_trial.py), com sua PRÓPRIA forma de conceder (grant_trial_entitlement).
+    if plano.purchasable
 ]
 
 
@@ -351,6 +359,30 @@ def test_vip_tem_operacoes_de_batch_ilimitadas(vip, session):
     assert allowance.used == 0
 
     assert _n(session, Batch) == 10
+
+
+def test_trial_vip_tem_1_operacao_de_batch_no_total_nao_por_semana(factory, session):
+    """ETAPA B7 (condição 3 da aprovação do Igor): "o 1 lote de até 10 do teste também precisa ser
+    um TOTAL de 24h, como vídeo e áudio, não por semana de calendário" -- batch_period="trial" em
+    services/plans.py::TRIAL_VIP_PLAN, _count_batches_total em services/usage.py."""
+    # resgate perto da virada da semana comercial de SP (domingo 23h) -- as 24h do teste atravessam
+    # a virada de semana (segunda 00h), que reiniciaria a cota de um plano pago comum.
+    inicio = sp(2026, 9, 27, 23, 0)  # domingo 23h
+    usuario = factory.user()
+    factory.trial_entitlement(usuario, starts_at=inicio, expires_at=inicio + timedelta(days=1))
+
+    resultado = _lote(session, usuario, "trial-batch-1", 10, now=inicio + timedelta(minutes=30))  # ainda domingo
+    assert resultado.created and len(resultado.generation_ids) == 10
+
+    allowance = get_batch_allowance(session, usuario.id, now=inicio + timedelta(minutes=30))
+    assert (allowance.limit, allowance.used, allowance.remaining) == (1, 1, 0)
+
+    # já é segunda-feira (semana comercial NOVA), ainda dentro das 24h do teste: a operação de lote
+    # continua esgotada -- é 1 no total da vida do teste, nunca 1/semana de calendário.
+    segunda_seguinte = sp(2026, 9, 28, 1, 0)
+    with pytest.raises(BatchQuotaExceededError):
+        _lote(session, usuario, "trial-batch-2", 1, now=segunda_seguinte)
+    assert _n(session, Batch) == 1
 
 
 def test_cota_de_operacoes_de_batch_e_independente_da_cota_de_videos(

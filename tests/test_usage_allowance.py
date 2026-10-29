@@ -1,6 +1,6 @@
 """Plano efetivo, limites e saldo: Free por semana (SP), pagos por dia (SP), stacking e isolamento."""
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -170,6 +170,30 @@ def test_pago_dia_seguinte_dentro_da_validade_volta_a_ter_o_limite_cheio(factory
     consume(session, usuario, 10, now=NOW)
     assert get_allowance(session, usuario.id, now=NOW).remaining == 0
     assert get_allowance(session, usuario.id, now=NOW + 1 * DIA).remaining == 10
+
+
+# ============================================================================ teste VIP 24h: total único, nunca por calendário (ETAPA B7, condição 3 da aprovação do Igor)
+def test_trial_vip_e_10_no_total_nao_reinicia_a_meia_noite(factory, session):
+    usuario = factory.user()
+    factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + DIA)
+    a = get_allowance(session, usuario.id, now=NOW)
+    assert (a.plan.code, a.limit, a.remaining, a.plan.period) == ("trial_vip", 10, 10, "trial")
+
+    consume(session, usuario, 10, now=sp(2026, 9, 23, 23, 59, 59), prefix="trial")
+    # mesmo cruzando a meia-noite de São Paulo (o que reiniciaria um plano pago comum), a cota do
+    # teste continua esgotada -- é um TOTAL de 24h desde o resgate, não "por dia de calendário".
+    assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 0, 0, 1)).remaining == 0
+
+
+def test_trial_vip_expira_em_24h_e_volta_a_free(factory, session):
+    usuario = factory.user()
+    factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + DIA)
+    consume(session, usuario, 3, now=NOW, prefix="trial")
+    um_segundo = timedelta(seconds=1)
+    assert get_allowance(session, usuario.id, now=NOW + DIA - um_segundo).plan.code == "trial_vip"
+
+    depois = get_allowance(session, usuario.id, now=NOW + DIA + um_segundo)
+    assert (depois.plan.code, depois.limit, depois.remaining) == ("free", 5, 5)  # Free de novo, cota cheia
 
 
 # ============================================================================ isolamento Free x pago

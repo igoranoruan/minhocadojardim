@@ -35,6 +35,7 @@ from sqlalchemy.orm import Session
 
 from database.models import Comment
 from services.entitlements import get_current_entitlement
+from services.plans import TRIAL_VIP
 
 MAX_AUTHOR_NAME_LENGTH = 80
 MAX_BODY_LENGTH = 500
@@ -86,14 +87,22 @@ def list_pending_comments(db: Session) -> list[Comment]:
 def create_comment(db: Session, *, user_id: int, author_name: str, body: str) -> Comment:
     """Cria um comentário REAL, sempre approved=False (fila de moderação). Levanta
     NoActivePlanError se o usuário não tiver plano pago vigente agora -- a checagem é SEMPRE no
-    instante do post, nunca "já teve algum dia"."""
+    instante do post, nunca "já teve algum dia".
+
+    ETAPA B7 (29/10/2026, condição 1 da aprovação do Igor): um entitlement vigente de `trial_vip`
+    NÃO conta como "plano pago" aqui -- é a MESMA régua de honestidade que todo este módulo já
+    segue (ver docstring do arquivo, "depoimento apresentado como genuíno"/CDC Art. 37): deixar
+    quem está só testando de graça publicar um comentário que parece de cliente pagante seria
+    exatamente o tipo de aparência enganosa que a fila de moderação (e a remoção do selo
+    "Exemplo") já foram desenhadas para evitar."""
     author_name = author_name.strip()
     body = body.strip()
     if not author_name or len(author_name) > MAX_AUTHOR_NAME_LENGTH:
         raise InvalidCommentError(f"Nome deve ter de 1 a {MAX_AUTHOR_NAME_LENGTH} caracteres.")
     if not body or len(body) > MAX_BODY_LENGTH:
         raise InvalidCommentError(f"Comentário deve ter de 1 a {MAX_BODY_LENGTH} caracteres.")
-    if get_current_entitlement(db, user_id) is None:
+    entitlement = get_current_entitlement(db, user_id)
+    if entitlement is None or entitlement.plan_code == TRIAL_VIP:
         raise NoActivePlanError()
     comment = Comment(user_id=user_id, author_name=author_name, body=body, is_example=False, approved=False)
     db.add(comment)

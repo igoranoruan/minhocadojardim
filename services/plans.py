@@ -45,8 +45,24 @@ Regras de batch:
 `batch_limit=None` significa operações de batch ilimitadas.
 
 Códigos usados em generations.plan_code, entitlements.plan_code e payments.plan_code:
-free, weekly, monthly, vip_batch.
-"""
+free, weekly, monthly, vip_batch, trial_vip.
+
+ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor, 29/10/2026): plano
+`trial_vip` -- 10 vídeos, 1 lote de até 10, 5 extrações de áudio, TODOS num total único de 24h
+(nunca por dia/semana de calendário, ver `period`/`batch_period` abaixo e services/usage.py e
+services/audio_usage.py). NÃO vendável (`purchasable=False`) -- nunca aparece em checkout, nunca
+pode ser comprado (ver payments/service.py::create_payment, que agora checa `purchasable`, não
+mais `paid`).
+
+`paid` (duration_days is not None) continua significando exatamente o que já significava: "este
+plano tem uma janela de acesso e consome o bucket de cota de plano pago" -- é por isso que
+`trial_vip.paid` é True (dá acesso de verdade a lote/áudio/atalho, via os mesmos pontos de
+checagem que os planos comprados já usam) e PRECISA continuar sendo True para o teste funcionar.
+`purchasable`, campo NOVO, é a resposta à pergunta DIFERENTE "isto é vendido/é receita?" -- True
+para todo plano comprável de hoje (Semanal, Mensal, VIP Batch), False só para `trial_vip`. Nenhum
+dos dois substitui o outro; cada um dos dois guards existentes (grant_entitlement/
+grant_referral_milestone em services/entitlements.py, create_payment em payments/service.py)
+passou a checar o que sempre devia ter checado."""
 
 from dataclasses import dataclass
 from typing import Literal
@@ -56,6 +72,7 @@ FREE = "free"
 WEEKLY = "weekly"
 MONTHLY = "monthly"
 VIP_BATCH = "vip_batch"
+TRIAL_VIP = "trial_vip"
 
 
 @dataclass(frozen=True)
@@ -65,10 +82,11 @@ class Plan:
     price_cents: int  # dinheiro sempre em centavos (nunca float)
     duration_days: int | None  # None = Free (não é comprado)
     limit: int  # gerações por período
-    period: Literal["week", "day"]  # Free: semana; pagos: dia
+    period: Literal["week", "day", "trial"]  # Free: semana; pagos: dia; trial_vip: total de 24h
     max_batch_size: int = 0  # máximo de vídeos em uma operação de batch; 0 = sem batch
     batch_limit: int | None = 0  # operações de batch por período; None = ilimitado
-    batch_period: Literal["week"] = "week"  # período da cota de operações de batch
+    batch_period: Literal["week", "trial"] = "week"  # período da cota de operações de batch
+    purchasable: bool = True  # False = nunca aparece em checkout, nunca pode ser comprado (trial_vip)
 
     @property
     def paid(self) -> bool:
@@ -88,6 +106,10 @@ FREE_PLAN = Plan(
     "week",
     max_batch_size=0,
     batch_limit=0,
+    # ETAPA B7 (29/10/2026): explícito -- Free nunca foi vendável (já era barrado por `paid=False`
+    # em payments/service.py::create_payment, que agora checa `purchasable`; precisa continuar
+    # barrado também por este campo, senão create_payment pararia de recusar "free").
+    purchasable=False,
 )
 
 WEEKLY_PLAN = Plan(
@@ -127,6 +149,26 @@ VIP_BATCH_PLAN = Plan(
 )
 
 
+# ETAPA B7 (teste VIP de 24h, pedido e aprovação do Igor, 29/10/2026): 10 vídeos, 1 lote de até
+# 10, 5 extrações de áudio -- TOTAIS únicos em 24h (period/batch_period="trial"), nunca por
+# dia/semana de calendário (ver docstring do módulo). duration_days=1 (24h cabe exato num dia
+# inteiro -- nenhum campo fracionário precisou ser inventado). price_cents=0 e purchasable=False:
+# nunca vendável, nunca aparece em checkout (payments/service.py::create_payment recusa comprar
+# qualquer plano com purchasable=False).
+TRIAL_VIP_PLAN = Plan(
+    TRIAL_VIP,
+    "Teste VIP de 24h",
+    0,
+    1,
+    10,
+    "trial",
+    max_batch_size=10,
+    batch_limit=1,
+    batch_period="trial",
+    purchasable=False,
+)
+
+
 PLANS: dict[str, Plan] = {
     p.code: p
     for p in (
@@ -134,6 +176,7 @@ PLANS: dict[str, Plan] = {
         WEEKLY_PLAN,
         MONTHLY_PLAN,
         VIP_BATCH_PLAN,
+        TRIAL_VIP_PLAN,
     )
 }
 
@@ -150,4 +193,8 @@ def get_plan(code: str) -> Plan:
 
 
 def paid_plans() -> tuple[Plan, ...]:
-    return tuple(p for p in PLANS.values() if p.paid)
+    """Planos que valem a pena mostrar/vender no checkout -- por isso filtra por `purchasable`
+    (não por `paid`, ETAPA B7, 29/10/2026): `trial_vip` é `paid=True` (tem janela de acesso), mas
+    `purchasable=False` (nunca vendável) -- continua de fora daqui, exatamente como antes desta
+    etapa (o resultado desta função não mudou: [WEEKLY, MONTHLY, VIP_BATCH], mesma ordem)."""
+    return tuple(p for p in PLANS.values() if p.purchasable)

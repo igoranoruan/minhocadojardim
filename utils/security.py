@@ -44,6 +44,16 @@ def hash_ip(ip: str, secret: str) -> str:
     return _hmac_hex(secret, "ip", ip)
 
 
+def hash_device_id(device_id: str, secret: str) -> str:
+    """HMAC-SHA256 (64 hex) do identificador de aparelho (ETAPA B7, teste VIP de 24h) -- MESMO
+    segredo de hash_ip (settings.ip_hash_secret: já existe, já é de uso exclusivamente interno,
+    nenhum segredo novo precisa ser provisionado), mas rótulo PRÓPRIO ("device-id" em vez de "ip")
+    -- os dois HMACs nunca colidem, mesmo que, por coincidência, IP e device_id crus fossem o
+    mesmo texto. O valor cru (gerado pelo FRONTEND, guardado em localStorage/cookie) nunca chega a
+    ser persistido; só este hash, em database/models/trial_redemption.py."""
+    return _hmac_hex(secret, "device-id", device_id)
+
+
 def generate_session_token() -> str:
     return secrets.token_urlsafe(SESSION_TOKEN_BYTES)
 

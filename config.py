@@ -427,6 +427,49 @@ def load_settings() -> Settings:
     )
 
 
+# ----------------------------------------------------------------------------- teste VIP de 24h (ETAPA B7, pedido do Igor, 29/10/2026)
+# Resgate de teste por link de campanha (klango.site/teste?c=CAMPANHA): plano "trial_vip" NÃO
+# vendável (services/plans.py), 24h de acesso, concedido por services/trial.py -- NUNCA por
+# payments/ (sem Mercado Pago envolvido nesta etapa). Ver database/models/trial_redemption.py
+# (migration 0017) para o ledger de abuso/medição.
+
+# "5 extrações de áudio" (TOTAL único do teste, de sempre -- NUNCA por dia, ao contrário de
+# AUDIO_EXTRACTIONS_PER_DAY, que é a cota dos planos pagos de verdade): constante PRÓPRIA, nunca
+# reaproveitando AUDIO_EXTRACTIONS_PER_DAY, porque são duas regras de contagem diferentes (ver
+# services/audio_usage.py::_compute_allowance).
+TRIAL_AUDIO_EXTRACTIONS_TOTAL = 5
+
+# Formato aceito para "?c=" -- só letras, números e hífen, nunca vazio (InvalidCampaignCodeError
+# em services/trial.py se não bater).
+TRIAL_CAMPAIGN_CODE_MAX_LENGTH = 40
+
+# "1 teste por aparelho": identificador aleatório gerado pelo FRONTEND (localStorage/cookie, nunca
+# pelo backend) -- aqui só o teto de tamanho aceito no corpo de POST /api/trial/redeem; o valor
+# em si nunca é gravado cru (services/trial.py grava só o hash, com utils.security.hash_device_id,
+# reaproveitando o MESMO segredo de settings.ip_hash_secret que já protege o hash de IP -- rótulo
+# HMAC diferente, "device-id" em vez de "ip", nunca o mesmo namespace).
+TRIAL_DEVICE_ID_MAX_LENGTH = 128
+
+# "No máximo 2 testes por IP a cada 30 dias" (pedido do Igor).
+TRIAL_MAX_REDEMPTIONS_PER_IP = 2
+TRIAL_IP_WINDOW_DAYS = 30
+
+# Rate limit da rota de resgate -- mesmo padrão EM MEMÓRIA de SHARE_QUEUE_RATE_LIMIT_PER_HOUR/
+# BOARD_LIST_RATE_LIMIT_PER_HOUR (1 única instância Render, 1 único processo uvicorn): protege
+# contra um script/bot martelando a rota, não é uma trava de negócio (essa é
+# TRIAL_MAX_REDEMPTIONS_PER_IP, acima, no banco).
+TRIAL_REDEEM_RATE_LIMIT_PER_HOUR = 20
+
+# "Bloquear domínios de e-mail descartável" -- lista PEQUENA e FECHADA de propósito (pedido do
+# Igor: fácil de ampliar depois, não precisa ser exaustiva agora). Comparação sempre por domínio
+# normalizado (minúsculo, depois do "@") em services/trial.py -- nunca por substring.
+TRIAL_DISPOSABLE_EMAIL_DOMAINS = frozenset({
+    "mailinator.com", "10minutemail.com", "guerrillamail.com", "tempmail.com",
+    "yopmail.com", "trashmail.com", "getnada.com", "sharklasers.com",
+    "throwawaymail.com", "temp-mail.org",
+})
+
+
 settings = load_settings()
 
 
