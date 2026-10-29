@@ -3,6 +3,8 @@ grant_trial_entitlement (services/entitlements.py) + travas de abuso e orquestra
 (services/trial.py).
 
 Mesmo padrão de banco real via migrations de tests/test_entitlements.py (helpers_usage.NOW/DIA)."""
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import select
 
@@ -94,12 +96,13 @@ def test_pagar_durante_o_teste_troca_na_hora_sem_mudanca_em_grant_entitlement(fa
     teste do Igor): grant_entitlement (fluxo de pagamento normal) já sabe encerrar o trial_vip
     vigente na hora e começar o novo plano pago -- SEM nenhuma mudança em grant_entitlement."""
     usuario = factory.user()
+    uma_hora = timedelta(hours=1)
     teste = grant_trial_entitlement(session, user_id=usuario.id, now=NOW)
-    pago = give(factory, session, usuario, "weekly", now=NOW + 3600)  # 1h depois, durante o teste
+    pago = give(factory, session, usuario, "weekly", now=NOW + uma_hora)  # 1h depois, durante o teste
     session.refresh(teste)
     session.refresh(pago)
-    assert teste.expires_at == NOW + 3600  # encerrado na hora da troca, não em NOW+24h
-    assert (pago.starts_at, pago.expires_at) == (NOW + 3600, NOW + 3600 + 7 * DIA)
+    assert teste.expires_at == NOW + uma_hora  # encerrado na hora da troca, não em NOW+24h
+    assert (pago.starts_at, pago.expires_at) == (NOW + uma_hora, NOW + uma_hora + 7 * DIA)
 
 
 def _todos(session, usuario):

@@ -24,6 +24,7 @@ EXPECTED_TABLES = {
     "audio_extractions",  # extração de áudio -- autorização do CÉREBRO, migration 0012
     "share_tokens",  # atalho "Enviar para o KLANGO" -- aprovação do CÉREBRO, migration 0013
     "share_queue_items",  # atalho "Enviar para o KLANGO" -- aprovação do CÉREBRO, migration 0013
+    "trial_redemptions",  # teste VIP de 24h -- ETAPA B7, pedido e aprovação do Igor, migration 0017
 }
 
 

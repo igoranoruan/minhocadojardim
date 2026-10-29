@@ -1,6 +1,6 @@
 """Plano efetivo, limites e saldo: Free por semana (SP), pagos por dia (SP), stacking e isolamento."""
 import logging
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 from sqlalchemy import select
@@ -189,9 +189,10 @@ def test_trial_vip_expira_em_24h_e_volta_a_free(factory, session):
     usuario = factory.user()
     factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + DIA)
     consume(session, usuario, 3, now=NOW, prefix="trial")
-    assert get_allowance(session, usuario.id, now=NOW + DIA - 1).plan.code == "trial_vip"
+    um_segundo = timedelta(seconds=1)
+    assert get_allowance(session, usuario.id, now=NOW + DIA - um_segundo).plan.code == "trial_vip"
 
-    depois = get_allowance(session, usuario.id, now=NOW + DIA + 1)
+    depois = get_allowance(session, usuario.id, now=NOW + DIA + um_segundo)
     assert (depois.plan.code, depois.limit, depois.remaining) == ("free", 5, 5)  # Free de novo, cota cheia
 
 
