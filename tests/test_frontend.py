@@ -824,3 +824,19 @@ def test_politica_de_privacidade_menciona_o_meta_pixel(auth_client):
     assert resposta.status_code == 200
     assert "Meta Pixel" in resposta.text
     assert "aviso de cookies" in resposta.text
+
+
+def test_opcao_nomear_com_arroba_do_criador_desmarcada_por_padrao():
+    """ETAPA B8 (pedido do Igor, 01/11/2026): checkbox "Nomear com o @ do criador" no avulso e no
+    lote, DESMARCADO por padrão (nenhum atributo `checked` no HTML), e o flag `name_by_creator`
+    enviado nas duas requisições de vídeo."""
+    html = _html()
+    for id_checkbox in ("nomeCriadorIndividual", "nomeCriadorLote"):
+        tag = re.search(rf'<input id="{id_checkbox}"[^>]*>', html, re.S)
+        assert tag is not None, id_checkbox
+        assert 'type="checkbox"' in tag.group(0)
+        assert "checked" not in tag.group(0).replace("this.checked", "")
+    assert 'name_by_creator: nomearPeloCriadorMarcado("nomeCriadorIndividual")' in html
+    assert 'name_by_creator: nomearPeloCriadorMarcado("nomeCriadorLote")' in html
+    assert "@ do criador" in html
+

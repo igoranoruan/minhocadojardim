@@ -466,6 +466,17 @@
                             </button>
                         </div>
 
+                        <!-- ETAPA B8 (pedido do Igor, 01/11/2026): "Nomear com o @ do criador" --
+                             DESMARCADA por padrão. Só vale para vídeo e só quando o campo de nome
+                             fica vazio (nome digitado sempre vence). Some no modo "Só áudio"
+                             (selecionarFormatoIndividual). Mesma preferência do lote
+                             (#nomeCriadorLote), lembrada neste navegador (CRIADOR_NOME_STORAGE_KEY). -->
+                        <label id="nomeCriadorIndividualWrap" class="mt-3 flex items-start gap-2 cursor-pointer select-none text-[13px] text-slate-400">
+                            <input id="nomeCriadorIndividual" type="checkbox" onchange="salvarPreferenciaNomeCriador(this.checked)"
+                                class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-700 bg-[#060b14] accent-[#19D3AE]">
+                            <span>Nomear com o <span class="text-slate-200 font-bold">@ do criador</span> <span class="text-slate-500">(quando você não digitar um nome)</span></span>
+                        </label>
+
                         <!-- EXTRAÇÃO DE ÁUDIO -- Parte A (individual), autorização do CÉREBRO, 11/10/2026.
                              Bloco ISOLADO: só a alternância Vídeo (MP4) / Só áudio (MP3) -- nada da
                              mecânica de "Processar e baixar" acima foi tocado (processarIndividual()
@@ -1061,6 +1072,16 @@ https://..."></textarea>
                                     <button type="button" onclick="fecharColarVariosLote()" class="h-10 px-4 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 font-bold text-[13px] transition-colors">Cancelar</button>
                                 </div>
                             </div>
+
+                            <!-- ETAPA B8 (pedido do Igor, 01/11/2026): mesma opção da geração
+                                 avulsa, valendo para o lote inteiro -- itens sem nome viram
+                                 "@criador.mp4"; repetições do mesmo @ viram "@criador 2.mp4".
+                                 Desmarcada por padrão; some no modo "Só áudio". -->
+                            <label id="nomeCriadorLoteWrap" class="mt-3 flex items-start gap-2 cursor-pointer select-none text-[13px] text-slate-400">
+                                <input id="nomeCriadorLote" type="checkbox" onchange="salvarPreferenciaNomeCriador(this.checked)"
+                                    class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-700 bg-[#060b14] accent-[#19D3AE]">
+                                <span>Nomear com o <span class="text-slate-200 font-bold">@ do criador</span> <span class="text-slate-500">(vídeos sem nome; repetidos viram @nome 2, @nome 3...)</span></span>
+                            </label>
 
                             <button id="batchButton" onclick="processarLoteFormato()" class="w-full mt-3 h-12 bg-[#19D3AE] hover:bg-[#19D3AE]/80 text-slate-950 font-extrabold rounded-xl text-sm transition-colors"><i class="fa-solid fa-gears mr-1"></i>Baixar 1 vídeo</button>
                             <div id="batchStatus" class="mt-4 text-sm"></div>
@@ -2318,6 +2339,7 @@ https://..."></textarea>
     document.addEventListener("DOMContentLoaded", () => {
         capturarCodigoIndicacaoDaUrl();
         capturarCodigoTesteDaUrl(); // ETAPA B7, pedido do Igor, 29/10/2026 -- "?c=" de campanha do teste VIP
+        inicializarOpcaoNomeCriador(); // ETAPA B8, pedido do Igor, 01/11/2026 -- checkbox "@ do criador"
         capturarAutoFluxoAtalhoDaUrl();
         capturarCompartilharPendenteDaUrl();
         registrarServiceWorkerPwa();
@@ -2812,6 +2834,51 @@ https://..."></textarea>
 
         const banner = document.getElementById("ofertaTesteExpirado");
         if (banner) banner.classList.remove("hidden");
+    }
+
+    // ============================================================================================
+    // ETAPA B8 -- opção "Nomear com o @ do criador" (pedido do Igor, 01/11/2026)
+    //
+    // DESMARCADA por padrão. Uma única preferência para os dois checkboxes (avulso e lote), lembrada
+    // só neste navegador -- conveniência de interface, mesmo padrão de INDICACAO_STORAGE_KEY (nada de
+    // e-mail/sessão aqui). Quem decide o nome de verdade é o backend (services/creator_filename.py):
+    // o site só envia `name_by_creator: true/false`.
+    // ============================================================================================
+    const CRIADOR_NOME_STORAGE_KEY = "klango_nome_criador";
+
+    function lerPreferenciaNomeCriador() {
+        try {
+            return localStorage.getItem(CRIADOR_NOME_STORAGE_KEY) === "1";
+        } catch (err) {
+            return false; // sem localStorage: fica sempre desmarcada, o padrão
+        }
+    }
+
+    function salvarPreferenciaNomeCriador(marcado) {
+        try {
+            if (marcado) localStorage.setItem(CRIADOR_NOME_STORAGE_KEY, "1");
+            else localStorage.removeItem(CRIADOR_NOME_STORAGE_KEY);
+        } catch (err) {
+            // sem localStorage: a escolha vale só até recarregar a página
+        }
+        // Mantém os dois checkboxes iguais (a mesma preferência aparece nos dois lugares).
+        ["nomeCriadorIndividual", "nomeCriadorLote"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.checked = !!marcado;
+        });
+    }
+
+    function inicializarOpcaoNomeCriador() {
+        const marcado = lerPreferenciaNomeCriador();
+        ["nomeCriadorIndividual", "nomeCriadorLote"].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.checked = marcado;
+        });
+    }
+
+    function nomearPeloCriadorMarcado(id) {
+        const el = document.getElementById(id);
+        return !!(el && el.checked);
     }
 
     async function carregarIndicacao() {
@@ -4763,7 +4830,12 @@ https://..."></textarea>
                 method: "POST",
                 credentials: "same-origin",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ url: urlInput, filename: filenameInput })
+                body: JSON.stringify({
+                    url: urlInput,
+                    filename: filenameInput,
+                    // ETAPA B8: opção "Nomear com o @ do criador" (desmarcada por padrão).
+                    name_by_creator: nomearPeloCriadorMarcado("nomeCriadorIndividual"),
+                })
             });
 
             if (!response.ok) {
@@ -5034,6 +5106,9 @@ https://..."></textarea>
             filenameInput.placeholder = "Nome do arquivo (opcional)";
             downloadButton.innerHTML = '<i class="fa-solid fa-download"></i> Processar e baixar';
         }
+        // ETAPA B8: a opção "@ do criador" só vale para vídeo nesta etapa.
+        const nomeCriadorWrap = document.getElementById("nomeCriadorIndividualWrap");
+        if (nomeCriadorWrap) nomeCriadorWrap.classList.toggle("hidden", formato === "audio");
 
         atualizarVisibilidadeAudioIndividual();
     }
@@ -5766,7 +5841,9 @@ https://..."></textarea>
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     request_id: gerarRequestIdLote(),
-                    items: entries.map(item => ({ url: item.url, filename: item.filename }))
+                    items: entries.map(item => ({ url: item.url, filename: item.filename })),
+                    // ETAPA B8: opção "Nomear com o @ do criador" (desmarcada por padrão).
+                    name_by_creator: nomearPeloCriadorMarcado("nomeCriadorLote"),
                 })
             });
 
@@ -5842,6 +5919,9 @@ https://..."></textarea>
         const btnAudio = document.getElementById("formatoAudioBtnLote");
         if (btnVideo) btnVideo.className = formato === "video" ? ativo : inativo;
         if (btnAudio) btnAudio.className = formato === "audio" ? ativo : inativo;
+        // ETAPA B8: a opção "@ do criador" só vale para vídeo nesta etapa.
+        const nomeCriadorLoteWrap = document.getElementById("nomeCriadorLoteWrap");
+        if (nomeCriadorLoteWrap) nomeCriadorLoteWrap.classList.toggle("hidden", formato === "audio");
         atualizarVisibilidadeAudioLote();
     }
 

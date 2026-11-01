@@ -14,6 +14,10 @@ class RawDownload:
 
     path: Path
     duration_seconds: float | None
+    # ETAPA B8 (01/11/2026): @ do criador (sem "@"), quando a plataforma informa -- ver
+    # download/creator_handle.py. Default None: todo downloader/fallback existente (ex.:
+    # image_fallback.fetch_post_image) continua construindo RawDownload sem conhecer este campo.
+    creator_handle: str | None = None
 
 
 class PlatformDownloader(ABC):

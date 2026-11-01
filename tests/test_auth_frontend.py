@@ -50,7 +50,9 @@ def test_e_mail_nao_e_mais_autenticacao_nem_fica_salvo_no_navegador():
     id de aparelho aleatório só pra trava de abuso do resgate -- nunca interpretado no navegador,
     services/trial.py só grava o HASH dele (TRIAL_DEVICE_ID_STORAGE_KEY), e a flag de "já esteve
     em trial_vip" usada só pra decidir se mostra a faixa de oferta quando o teste expira
-    (TRIAL_ATIVO_STORAGE_KEY) -- nenhuma dessas chaves tem relação com e-mail/sessão. Qualquer
+    (TRIAL_ATIVO_STORAGE_KEY); e desde 01/11/2026 (ETAPA B8, pedido do Igor) a preferência do
+    checkbox "Nomear com o @ do criador" (CRIADOR_NOME_STORAGE_KEY, só "1" ou nada) -- nenhuma
+    dessas chaves tem relação com e-mail/sessão. Qualquer
     OUTRO uso de localStorage, e sessionStorage por completo, ainda quebram este teste -- a
     proteção original (nenhum dado de autenticação no navegador) continua de pé."""
     html = _html()
@@ -64,6 +66,7 @@ def test_e_mail_nao_e_mais_autenticacao_nem_fica_salvo_no_navegador():
         "TRIAL_CAMPANHA_STORAGE_KEY",
         "TRIAL_DEVICE_ID_STORAGE_KEY",
         "TRIAL_ATIVO_STORAGE_KEY",
+        "CRIADOR_NOME_STORAGE_KEY",
     )
     assert all(any(chave in chamada for chave in chaves_aprovadas) for chamada in chamadas_localstorage)
     assert "sessionStorage" not in html

@@ -86,6 +86,9 @@ class CreateGenerationBody(BaseModel):
     # persistido em Generation.display_filename; usado pelo download individual, que já lia esse
     # campo há tempo (routes/generations.py, GET /generations/{id}/download).
     filename: str | None = Field(default=None, max_length=200)
+    # ETAPA B8 (01/11/2026): opção "Nomear com o @ do criador" -- desmarcada por padrão (pedido do
+    # Igor). Sem nome digitado, o arquivo vira "@criador.mp4" quando a plataforma informa o @.
+    name_by_creator: bool = False
 
 
 class BatchItemBody(BaseModel):
@@ -101,6 +104,9 @@ class CreateBatchBody(BaseModel):
     # é regra de negócio e continua exclusivamente em reserve_batch/services.plans; não duplicado
     # aqui (correção da Etapa 9.3: um teto arbitrário no Pydantic já existiu e foi removido).
     items: list[BatchItemBody] = Field(min_length=1)
+    # ETAPA B8 (01/11/2026): mesma opção da geração avulsa, valendo para o lote inteiro --
+    # repetições do mesmo @ viram "@criador 2.mp4", "@criador 3.mp4"... (services/creator_filename.py).
+    name_by_creator: bool = False
 
 
 def _code_for(exc: BaseException) -> str:
@@ -210,6 +216,7 @@ def _sse_event(event: str, data: dict) -> str:
 def _run_generation_in_background(
     engine_bind, url: str, filename: str | None, user_id: int,
     event_queue: "queue.Queue[tuple[str, dict] | None]",
+    name_by_creator: bool = False,
 ) -> None:
     """Roda numa thread própria (daemon: nunca impede o processo de encerrar), com sua PRÓPRIA
     Session -- nunca a mesma nem compartilhada com a thread que monta a resposta (Session não é
@@ -248,18 +255,24 @@ def _run_generation_in_background(
             tipo_evento = "progress" if stage == "processing" else "status"
             event_queue.put((tipo_evento, {"stage": stage, "percent": percent, "message": mensagem}))
 
-        outcome = generate_from_url(session, user=user, url=url, filename=filename, on_progress=on_progress)
-        event_queue.put((
-            "complete",
-            {
-                "generation_id": outcome.generation_id,
-                "status": outcome.status,
-                "platform": outcome.platform,
-                "size_bytes": outcome.size_bytes,
-                "duration_seconds": outcome.duration_seconds,
-                "output_sha256": outcome.output_sha256,
-            },
-        ))
+        outcome = generate_from_url(
+            session, user=user, url=url, filename=filename, on_progress=on_progress,
+            name_by_creator=name_by_creator,
+        )
+        payload_completo = {
+            "generation_id": outcome.generation_id,
+            "status": outcome.status,
+            "platform": outcome.platform,
+            "size_bytes": outcome.size_bytes,
+            "duration_seconds": outcome.duration_seconds,
+            "output_sha256": outcome.output_sha256,
+        }
+        # ETAPA B8: nome final quando veio do @ do criador (só informativo -- o download em si já
+        # usa Generation.display_filename). A chave só aparece nesse caso: o evento continua
+        # IDÊNTICO ao de sempre para todo o resto (opção desmarcada, nome digitado, sem @).
+        if outcome.display_filename is not None:
+            payload_completo["filename"] = outcome.display_filename
+        event_queue.put(("complete", payload_completo))
     except Exception as exc:
         event_queue.put(("error", _error_payload_for(exc)))
     finally:
@@ -267,11 +280,13 @@ def _run_generation_in_background(
         event_queue.put(None)  # sinaliza o fim do stream para _stream_generation
 
 
-def _stream_generation(engine_bind, url: str, filename: str | None, user_id: int) -> Iterator[str]:
+def _stream_generation(
+    engine_bind, url: str, filename: str | None, user_id: int, name_by_creator: bool = False,
+) -> Iterator[str]:
     event_queue: "queue.Queue[tuple[str, dict] | None]" = queue.Queue()
     thread = threading.Thread(
         target=_run_generation_in_background,
-        args=(engine_bind, url, filename, user_id, event_queue),
+        args=(engine_bind, url, filename, user_id, event_queue, name_by_creator),
         daemon=True,
     )
     thread.start()
@@ -295,7 +310,7 @@ def create_generation(
     -- ver _run_generation_in_background. Toda a orquestração real mora em
     _run_generation_in_background/_stream_generation, acima."""
     return StreamingResponse(
-        _stream_generation(db.get_bind(), body.url, body.filename, user.id),
+        _stream_generation(db.get_bind(), body.url, body.filename, user.id, body.name_by_creator),
         media_type="text/event-stream",
         headers=NO_STORE,
     )
@@ -304,6 +319,7 @@ def create_generation(
 def _run_batch_in_background(
     engine_bind, items: list[dict], request_id: str, user_id: int,
     event_queue: "queue.Queue[tuple[str, dict] | None]",
+    name_by_creator: bool = False,
 ) -> None:
     """Mesmo padrão de _run_generation_in_background (Session própria da thread, a partir da
     MESMA engine que a rota recebeu via Depends(get_session) -- ver o comentário daquela função,
@@ -355,7 +371,9 @@ def _run_batch_in_background(
                 "stage": stage, "percent": percent, "message": mensagem,
             }))
 
-        resultados = run_batch(session, items=pares, on_item_progress=on_item_progress)
+        resultados = run_batch(
+            session, items=pares, on_item_progress=on_item_progress, name_by_creator=name_by_creator,
+        )
 
         concluidos = falhados = 0
         for resultado in resultados:
@@ -370,7 +388,9 @@ def _run_batch_in_background(
                     "size_bytes": resultado.outcome.size_bytes,
                     "duration_seconds": resultado.outcome.duration_seconds,
                     "output_sha256": resultado.outcome.output_sha256,
-                    "filename": nome,
+                    # ETAPA B8: nome final (digitado, ou "@criador..." quando gerado depois do
+                    # download); sem nenhum dos dois, o mesmo None de sempre.
+                    "filename": resultado.outcome.display_filename or nome,
                 }
             else:
                 falhados += 1
@@ -403,11 +423,13 @@ def _run_batch_in_background(
         event_queue.put(None)
 
 
-def _stream_batch(engine_bind, items: list[dict], request_id: str, user_id: int) -> Iterator[str]:
+def _stream_batch(
+    engine_bind, items: list[dict], request_id: str, user_id: int, name_by_creator: bool = False,
+) -> Iterator[str]:
     event_queue: "queue.Queue[tuple[str, dict] | None]" = queue.Queue()
     thread = threading.Thread(
         target=_run_batch_in_background,
-        args=(engine_bind, items, request_id, user_id, event_queue),
+        args=(engine_bind, items, request_id, user_id, event_queue, name_by_creator),
         daemon=True,
     )
     thread.start()
@@ -440,7 +462,7 @@ def create_batch(
     """
     items = [{"url": item.url, "filename": item.filename} for item in body.items]
     return StreamingResponse(
-        _stream_batch(db.get_bind(), items, body.request_id, user.id),
+        _stream_batch(db.get_bind(), items, body.request_id, user.id, body.name_by_creator),
         media_type="text/event-stream",
         headers=NO_STORE,
     )

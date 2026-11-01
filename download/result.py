@@ -27,3 +27,8 @@ class DownloadResult:
     # que decide isto de verdade, via download.file_validation.detect_media_type) passa "image"
     # explicitamente.
     media_type: str = "video"
+    # ETAPA B8 (opção "Nomear com o @ do criador", pedido do Igor, 01/11/2026): @ do criador
+    # original, sem o "@" (ver download/creator_handle.py), ou None quando a plataforma não informa
+    # (Pinterest, fallback de imagem). Só informação: quem decide se vira nome de arquivo é
+    # services/generation_flow.py. Default None preserva todo código/teste existente.
+    creator_handle: str | None = None

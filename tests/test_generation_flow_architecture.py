@@ -62,12 +62,16 @@ def test_rota_nao_aceita_identidade_do_corpo():
     1777e59 ("nome de arquivo opcional no processamento individual") -- mesmo campo que o item de
     lote já tinha desde a Etapa 9.3, sem nenhuma relação com identidade/autenticação. O que este
     teste realmente protege (pelo nome e pelo comentário original) é que NENHUM campo de identidade
-    (user_id/email/account_id) seja aceito no corpo -- isso continua garantido abaixo."""
+    (user_id/email/account_id) seja aceito no corpo -- isso continua garantido abaixo.
+
+    01/11/2026 (ETAPA B8, pedido do Igor): `name_by_creator` (bool, opção "Nomear com o @ do
+    criador") entrou no corpo pelo mesmo motivo -- é preferência de nome de arquivo, sem nenhuma
+    relação com identidade."""
     fonte = ROUTE_FILE.read_text(encoding="utf-8")
     tree = ast.parse(fonte)
     modelo = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == "CreateGenerationBody")
     campos = [n.target.id for n in modelo.body if isinstance(n, ast.AnnAssign)]
-    assert campos == ["url", "filename"]
+    assert campos == ["url", "filename", "name_by_creator"]
     assert not any(campo in campos for campo in ("user_id", "email", "account_id"))
     assert "get_current_user" in fonte  # identidade vem exclusivamente da sessão
 
