@@ -263,6 +263,7 @@ def download_video(url: str) -> DownloadResult:
             duration_seconds=raw.duration_seconds,
             container_format=raw.path.suffix.lstrip("."),
             media_type=media_type,
+            creator_handle=raw.creator_handle,  # ETAPA B8: só repassa, ver download/creator_handle.py
         )
     except DownloadError:
         cleanup(stub)

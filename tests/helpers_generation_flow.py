@@ -47,10 +47,15 @@ def anon_user_id_from_cookie(session, cookie_value: str) -> int:
     ).scalar_one()
 
 
-def fake_download_result(temp_path: Path, *, platform: Platform = Platform.TIKTOK, size=999, duration=10.0) -> DownloadResult:
+def fake_download_result(
+    temp_path: Path, *, platform: Platform = Platform.TIKTOK, size=999, duration=10.0,
+    creator_handle: str | None = None,
+) -> DownloadResult:
+    # creator_handle (ETAPA B8, 01/11/2026): @ do criador que a plataforma "informou" -- default
+    # None preserva todo teste existente.
     return DownloadResult(
         platform=platform, temp_path=temp_path, size_bytes=size,
-        duration_seconds=duration, container_format="mp4",
+        duration_seconds=duration, container_format="mp4", creator_handle=creator_handle,
     )
 
 

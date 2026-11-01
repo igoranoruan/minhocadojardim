@@ -48,6 +48,7 @@ from processor.image_zip_service import process_image_zip
 from processor.service import process_video
 from services import result_storage
 from services.batch_filenames import sanitize_batch_filename
+from services.creator_filename import CreatorFilenameAllocator
 from services.usage import complete_generation, fail_generation, reserve_generation
 from utils.time_sp import resolve_now
 
@@ -92,6 +93,11 @@ class GenerationOutcome:
     # nenhuma mudança, todo código/teste existente que já constrói um GenerationOutcome sem
     # conhecer este campo.
     output_extension: str = "mp4"
+    # ETAPA B8 (opção "Nomear com o @ do criador", 01/11/2026): nome decidido DEPOIS do download
+    # (ex.: "@klango.mp4"), já gravado em Generation.display_filename. None quando a opção estava
+    # desmarcada, a pessoa digitou um nome, ou a plataforma não informou o @. Default None preserva
+    # todo código/teste existente.
+    display_filename: str | None = None
 
 
 class GenerationPersistenceError(Exception):
@@ -146,6 +152,7 @@ def _mark_failed(db: Session, generation_id: int, original_exc: BaseException) -
 def generate_from_url(
     db: Session, *, user: User, url: str, filename: str | None = None,
     on_progress: Callable[[str, float | None, str], None] | None = None,
+    name_by_creator: bool = False,
 ) -> GenerationOutcome:
     """Executa o fluxo completo de UMA geração individual para `user`.
 
@@ -183,7 +190,12 @@ def generate_from_url(
     AQUI, pela mesma função usada no lote (services.batch_filenames.sanitize_batch_filename),
     ANTES de qualquer reserva -- um nome inválido levanta InvalidFilenameError sem consumir cota,
     igual à regra já aplicada ao lote (routes/generations.py). O valor sanitizado é gravado em
-    Generation.display_filename (reserve_generation) e é o que o download individual já usa."""
+    Generation.display_filename (reserve_generation) e é o que o download individual já usa.
+
+    `name_by_creator` (ETAPA B8, 01/11/2026, default False = comportamento de sempre): com a opção
+    marcada e SEM nome digitado, o arquivo vira "@criador.mp4" quando a plataforma informa o @
+    (ver services/creator_filename.py); senão continua o padrão "klango-xxxx". Nome digitado
+    sempre vence."""
     validated = validate_url(url)
     platform: Platform = detect_platform(validated.url)
     display_filename = sanitize_batch_filename(filename)
@@ -195,7 +207,11 @@ def generate_from_url(
         db, user_id=user.id, request_id=uuid.uuid4().hex, platform=platform.value,
         display_filename=display_filename,
     )
-    outcome = _execute_reserved(db, generation_id=reservation.generation_id, url=validated.url, on_progress=on_progress)
+    creator_name_for = CreatorFilenameAllocator().allocate if name_by_creator and display_filename is None else None
+    outcome = _execute_reserved(
+        db, generation_id=reservation.generation_id, url=validated.url, on_progress=on_progress,
+        creator_name_for=creator_name_for,
+    )
     logger.info(
         "[GENERATION] concluída id=%s user_id=%s plataforma=%s bytes=%s",
         outcome.generation_id, user.id, outcome.platform, outcome.size_bytes,
@@ -206,6 +222,7 @@ def generate_from_url(
 def _execute_reserved(
     db: Session, *, generation_id: int, url: str,
     on_progress: Callable[[str, float | None, str], None] | None = None,
+    creator_name_for: Callable[[str], str] | None = None,
 ) -> GenerationOutcome:
     """Núcleo reutilizável (Etapa 9.3): download -> processamento -> storage -> complete/fail,
     para uma Generation JÁ RESERVADA (`generation_id`). Não reserva nada, não conhece usuário nem
@@ -215,7 +232,12 @@ def _execute_reserved(
 
     Chamar validate_url/detect_platform de novo aqui (já feitos uma vez por quem reservou, no caso
     da geração avulsa) é intencional e inofensivo -- o mesmo padrão que download_video já tem
-    internamente (também revalida a URL); nenhuma chamada de rede acontece nesta validação."""
+    internamente (também revalida a URL); nenhuma chamada de rede acontece nesta validação.
+
+    `creator_name_for` (ETAPA B8): quando informado (opção marcada e sem nome digitado -- quem
+    chama decide), recebe o @ do criador e devolve o nome final. Só é chamado DEPOIS de o resultado
+    já estar salvo no storage, logo antes de complete_generation -- uma falha antes disso nunca
+    "gasta" um número da sequência do lote ("@x 2" sem existir "@x 3" depois de um item falho)."""
     validated = validate_url(url)
     platform: Platform = detect_platform(validated.url)
 
@@ -289,6 +311,9 @@ def _execute_reserved(
         # depender de duas leituras de relógio separadas.
         now = resolve_now()
         output_expires_at = now + timedelta(seconds=RESULT_TTL_SECONDS)
+        nome_criador: str | None = None
+        if creator_name_for is not None and download_result.creator_handle:
+            nome_criador = creator_name_for(download_result.creator_handle)
         try:
             complete_generation(
                 db, generation_id,
@@ -298,6 +323,7 @@ def _execute_reserved(
                 output_expires_at=output_expires_at,
                 output_storage_key=storage_key,
                 output_extension=output_extension,
+                display_filename=nome_criador,
                 now=now,
             )
         except Exception as persistence_exc:
@@ -333,6 +359,7 @@ def _execute_reserved(
         duration_seconds=processing_result.duration_seconds,
         output_sha256=processing_result.output_sha256,
         output_extension=output_extension,
+        display_filename=nome_criador,
     )
 
 
@@ -356,6 +383,7 @@ def run_batch(
     *,
     items: list[tuple[int, str]],
     on_item_progress: Callable[[int, int, str, float | None, str], None] | None = None,
+    name_by_creator: bool = False,
 ) -> list[BatchItemOutcome]:
     """Processa, SEQUENCIALMENTE (download/FFmpeg são pesados; nenhum paralelismo aqui, mesma
     postura de download/processor), cada item `(generation_id, url)` de um lote JÁ RESERVADO por
@@ -380,9 +408,22 @@ def run_batch(
     JÁ NÃO está mais "reserved" (completed ou failed de uma tentativa anterior -- ex.: o processo
     caiu no meio do lote e foi reenviado), run_batch NÃO reprocessa (não baixa/gera de novo) --
     apenas relata o estado já gravado, exatamente como reserve_generation já faz para o request_id
-    repetido da geração avulsa (nunca reexecuta um efeito colateral que já aconteceu)."""
+    repetido da geração avulsa (nunca reexecuta um efeito colateral que já aconteceu).
+
+    `name_by_creator` (ETAPA B8, 01/11/2026, default False = comportamento de sempre): itens SEM
+    nome digitado viram "@criador.mp4", e repetições do mesmo @ no lote viram "@criador 2.mp4",
+    "@criador 3.mp4"... na ordem dos itens. O alocador começa já conhecendo TODOS os nomes do lote
+    (digitados, ou gerados numa execução anterior do mesmo request_id), então um nome automático
+    nunca repete um nome que já existe no lote."""
     resultados: list[BatchItemOutcome] = []
     total = len(items)
+    alocador: CreatorFilenameAllocator | None = None
+    if name_by_creator:
+        nomes_existentes = []
+        for generation_id, _url in items:
+            existente = db.get(Generation, generation_id)
+            nomes_existentes.append(existente.display_filename if existente is not None else None)
+        alocador = CreatorFilenameAllocator(nomes_existentes)
     for position, (generation_id, url) in enumerate(items, start=1):
         generation = db.get(Generation, generation_id)
         if generation is not None and generation.status != "reserved":
@@ -395,6 +436,7 @@ def run_batch(
                     duration_seconds=(generation.duration_ms or 0) / 1000,
                     output_sha256=generation.output_sha256 or "",
                     output_extension=generation.output_extension or "mp4",
+                    display_filename=generation.display_filename,
                 )
                 resultados.append(BatchItemOutcome(position, generation_id, True, outcome, None))
             else:  # "failed"
@@ -408,8 +450,14 @@ def run_batch(
             if on_item_progress is not None:
                 on_item_progress(_position, _gid, stage, percent, platform)
 
+        creator_name_for = None
+        if alocador is not None and (generation is None or generation.display_filename is None):
+            creator_name_for = alocador.allocate
         try:
-            outcome = _execute_reserved(db, generation_id=generation_id, url=url, on_progress=_progress)
+            outcome = _execute_reserved(
+                db, generation_id=generation_id, url=url, on_progress=_progress,
+                creator_name_for=creator_name_for,
+            )
             resultados.append(BatchItemOutcome(position, generation_id, True, outcome, None))
         except GenerationPersistenceError:
             raise

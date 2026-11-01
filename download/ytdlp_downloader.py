@@ -39,6 +39,7 @@ from yt_dlp.networking.impersonate import ImpersonateTarget
 
 from config import DOWNLOAD_CONNECT_TIMEOUT_SECONDS, MAX_VIDEO_SIZE_BYTES, get_settings
 from download.base import PlatformDownloader, RawDownload
+from download.creator_handle import extract_creator_handle
 from download.errors import DownloadFailedError, DownloadTimeoutError, NoVideoInPostError, VideoTooLargeError
 from download.platform import Platform
 
@@ -258,7 +259,16 @@ class YtDlpDownloader(PlatformDownloader):
 
         duration = info.get("duration") if isinstance(info, dict) else None
         path = self._resolve_output_path(dest_stub)
-        return RawDownload(path=path, duration_seconds=float(duration) if duration else None)
+        # ETAPA B8 (01/11/2026): @ do criador, lido do MESMO `info` (nenhuma chamada a mais). Uma
+        # falha aqui nunca derruba um download que já deu certo -- só fica sem @.
+        try:
+            creator_handle = extract_creator_handle(self.platform, info)
+        except Exception:
+            logger.warning("[DOWNLOAD] falha ao ler o @ do criador plataforma=%s", self.platform.value, exc_info=True)
+            creator_handle = None
+        return RawDownload(
+            path=path, duration_seconds=float(duration) if duration else None, creator_handle=creator_handle,
+        )
 
     def _resolve_output_path(self, dest_stub: Path) -> Path:
         directory = dest_stub.parent

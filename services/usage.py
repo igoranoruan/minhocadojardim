@@ -649,9 +649,15 @@ def complete_generation(
     output_expires_at: datetime | None = None,
     output_storage_key: str | None = None,
     output_extension: str | None = None,
+    display_filename: str | None = None,
     now: datetime | None = None,
 ) -> None:
     """reserved -> completed (continua contando). Não precisa do lock: nunca aumenta o consumo.
+
+    display_filename (ETAPA B8, opção "Nomear com o @ do criador", 01/11/2026): nome decidido só
+    DEPOIS do download (o @ só existe na resposta da plataforma). Só é gravado quando informado --
+    None (todo chamador existente) NÃO toca a coluna, então um nome digitado na reserva nunca é
+    apagado por aqui.
 
     output_size_bytes/output_expires_at/output_storage_key (Etapa 8B.1/8B.2) descrevem o
     resultado disponível para download, quando existir — todos opcionais/None por padrão, sem
@@ -665,20 +671,23 @@ def complete_generation(
     get_downloadable_generation/get_downloadable_batch_generations, abaixo), então nenhuma geração
     de vídeo (antiga ou nova) muda de comportamento."""
     now = resolve_now(now)
+    valores = dict(
+        status="completed",
+        finished_at=_utc(now),
+        output_sha256=output_sha256,
+        duration_ms=duration_ms,
+        output_size_bytes=output_size_bytes,
+        output_expires_at=output_expires_at,
+        output_storage_key=output_storage_key,
+        output_extension=output_extension,
+    )
+    if display_filename is not None:
+        valores["display_filename"] = display_filename
     try:
         result = db.execute(
             update(Generation)
             .where(Generation.id == generation_id, Generation.status == "reserved")
-            .values(
-                status="completed",
-                finished_at=_utc(now),
-                output_sha256=output_sha256,
-                duration_ms=duration_ms,
-                output_size_bytes=output_size_bytes,
-                output_expires_at=output_expires_at,
-                output_storage_key=output_storage_key,
-                output_extension=output_extension,
-            )
+            .values(**valores)
         )
         if result.rowcount != 1:
             raise GenerationStateError(f"A geração {generation_id} não está reservada (ou não existe).")
