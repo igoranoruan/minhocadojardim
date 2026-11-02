@@ -71,6 +71,31 @@ class DownloadFailedError(DownloadError):
     user_message = GENERIC_USER_MESSAGE
 
 
+class RestrictedContentError(DownloadError):
+    """02/11/2026 (pedido do Igor -- 1 em cada 4 falhas do Instagram em produção): a plataforma
+    recusou o post por RESTRIÇÃO DE PÚBLICO (conteúdo sensível/limite de idade), que só abre para
+    quem está logado. Mensagens REAIS vistas nos logs: Instagram "This content isn't available to
+    everyone: It can't be seen by certain audiences."; TikTok "This post may not be comfortable for
+    some audiences. Log in for access." O KLANGO baixa sem login, então não há como baixar -- a
+    mensagem explica isso em vez do genérico, para a pessoa não achar que é defeito do site."""
+
+    user_message = (
+        "Este vídeo tem restrição de público na plataforma (conteúdo sensível ou limite de idade) "
+        "e só abre com login. Não conseguimos baixá-lo."
+    )
+
+
+class ContentNotAccessibleError(DownloadError):
+    """02/11/2026: o Instagram devolveu "empty media response" (a própria mensagem do yt-dlp diz
+    para conferir se o post abre SEM login) e o fallback de imagem também não achou nada na página
+    pública -- o post é privado, tem restrição de público ou exige login. Ver download/service.py."""
+
+    user_message = (
+        "Não conseguimos acessar este post: ele pode ser privado, ter restrição de público "
+        "ou só abrir com login na plataforma."
+    )
+
+
 class NoVideoInPostError(DownloadError):
     """Sinal específico do yt-dlp: o post/pin não tem vídeo nenhum (só imagem) -- TikTok,
     Instagram e Pinterest (03/10/2026, aprovação do CÉREBRO, depois de confirmar em produção que

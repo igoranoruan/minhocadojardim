@@ -376,6 +376,11 @@ class BatchItemOutcome:
     ok: bool
     outcome: GenerationOutcome | None
     error_code: str | None
+    # 02/11/2026 (pedido do Igor): mensagem SEGURA para o usuário (DownloadError/ProcessorError.
+    # user_message -- nunca o detalhe técnico), para o lote mostrar o motivo real (ex.: restrição
+    # de público no Instagram) em vez de um texto fixo. None quando não há uma (sucesso, item já
+    # finalizado numa execução anterior, ou falha inesperada). Default preserva quem não conhece.
+    error_message: str | None = None
 
 
 def run_batch(
@@ -466,5 +471,6 @@ def run_batch(
                 "[GENERATION] item %s/%s do lote (geração %s) falhou: %s",
                 position, total, generation_id, exc.__class__.__name__, exc_info=True,
             )
-            resultados.append(BatchItemOutcome(position, generation_id, False, None, _error_code_for(exc)))
+            mensagem = exc.user_message if isinstance(exc, (DownloadError, ProcessorError)) else None
+            resultados.append(BatchItemOutcome(position, generation_id, False, None, _error_code_for(exc), mensagem))
     return resultados

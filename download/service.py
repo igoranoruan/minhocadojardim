@@ -27,6 +27,7 @@ from urllib.parse import urlsplit
 from config import DOWNLOAD_TIMEOUT_SECONDS, MAX_VIDEO_DURATION_SECONDS
 from download.base import PlatformDownloader, RawDownload
 from download.errors import (
+    ContentNotAccessibleError,
     DownloadError,
     DownloadFailedError,
     DownloadTimeoutError,
@@ -45,7 +46,7 @@ from download.platform import Platform, detect_platform
 from download.result import DownloadResult
 from download.tempfiles import cleanup, new_temp_stub
 from download.url_safety import resolve_redirect_chain, validate_url
-from download.ytdlp_downloader import YtDlpDownloader, YtDlpSpec
+from download.ytdlp_downloader import REASON_EMPTY_MEDIA, YtDlpDownloader, YtDlpSpec
 
 logger = logging.getLogger("minhoca")
 
@@ -238,14 +239,23 @@ def download_video(url: str) -> DownloadResult:
     try:
         try:
             raw = _download_with_timeout(lambda: downloader.download(validated.url, stub))
-        except NoVideoInPostError:
+        except NoVideoInPostError as sem_video:
             # Post/pin sem vídeo nenhum (só imagem) -- TikTok, Instagram e Pinterest (03/10/2026,
             # aprovação do CÉREBRO). O yt-dlp já confirmou (download/ytdlp_downloader.py) que não
             # há vídeo; tentamos ler a imagem publicada na própria página pública do post (
             # download/image_fallback.py) ANTES de desistir. Nenhuma mudança de comportamento para
             # qualquer outro motivo de falha -- este bloco só é alcançado por esta exceção
             # específica, nunca por vídeo privado/removido/timeout/etc.
-            raw = _download_with_timeout(lambda: fetch_post_image(validated.url, stub))
+            try:
+                raw = _download_with_timeout(lambda: fetch_post_image(validated.url, stub))
+            except DownloadFailedError:
+                # 02/11/2026: "empty media response" + nenhuma imagem na página pública = post
+                # privado, com restrição de público ou que exige login (é o que a própria mensagem
+                # do yt-dlp sugere). Mensagem clara em vez da genérica. Post só-imagem de verdade
+                # continua indo pelo fallback normalmente; qualquer outro motivo segue como antes.
+                if sem_video.detail == REASON_EMPTY_MEDIA:
+                    raise ContentNotAccessibleError(sem_video.detail) from None
+                raise
         _check_duration(raw)
         media_type = detect_media_type(raw.path)
         if media_type == "video":

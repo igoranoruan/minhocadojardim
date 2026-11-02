@@ -12,7 +12,13 @@ import pytest
 import yt_dlp
 from yt_dlp.networking.impersonate import ImpersonateTarget
 
-from download.errors import DownloadFailedError, DownloadTimeoutError, VideoTooLargeError
+from download.errors import (
+    DownloadFailedError,
+    DownloadTimeoutError,
+    NoVideoInPostError,
+    RestrictedContentError,
+    VideoTooLargeError,
+)
 from download.platform import Platform
 from download.ytdlp_downloader import YtDlpDownloader, YtDlpSpec
 
@@ -135,6 +141,12 @@ def test_arquivo_part_nao_e_considerado_saida_valida(tmp_path):
         ("ERROR: [download] The download has exceeded the specified filesize limit", VideoTooLargeError),
         ("urlopen error timed out", DownloadTimeoutError),
         ("ERROR: Unsupported URL", DownloadFailedError),
+        # 02/11/2026 (pedido do Igor): mensagens REAIS dos logs de produção -- restrição de público.
+        ("ERROR: [Instagram] DeXVBLTNVS_: This content isn't available to everyone: It can't be seen by certain audiences.", RestrictedContentError),
+        ("ERROR: [TikTok] 7694523807972838676: This post may not be comfortable for some audiences. Log in for access. Use --cookies-from-browser", RestrictedContentError),
+        # "empty media response": continua indo para o fallback de imagem (NoVideoInPostError).
+        ("ERROR: [Instagram] DdnouPis83F: Instagram sent an empty media response. Check if this post is accessible", NoVideoInPostError),
+        ("ERROR: [Instagram] De4xGliJByz: There is no video in this post", NoVideoInPostError),
     ],
 )
 def test_categorizacao_de_erros_do_yt_dlp(tmp_path, mensagem, esperado):
@@ -222,3 +234,17 @@ def test_proxy_sem_porta_fica_desligado_mesmo_com_host(tmp_path, use_settings):
     downloader = YtDlpDownloader(_spec(Platform.YOUTUBE, ("Youtube",)))
     options = downloader._build_options(tmp_path / "stub")
     assert "proxy" not in options
+
+
+def test_restricao_de_publico_tem_mensagem_clara_sem_detalhe_tecnico(tmp_path):
+    stub = tmp_path / "restrito"
+    downloader = YtDlpDownloader(_spec())
+    erro_ydl = yt_dlp.utils.DownloadError(
+        "ERROR: [Instagram] DfKw_ouhnRJ: This content isn't available to everyone: It can't be seen by certain audiences."
+    )
+    with patch("download.ytdlp_downloader.yt_dlp.YoutubeDL", return_value=_mock_ydl(side_effect=erro_ydl)):
+        with pytest.raises(RestrictedContentError) as capturado:
+            downloader.download("https://www.instagram.com/reel/DfKw_ouhnRJ/", stub)
+    assert "restrição de público" in capturado.value.user_message
+    assert "DfKw_ouhnRJ" not in capturado.value.user_message
+

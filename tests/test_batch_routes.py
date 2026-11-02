@@ -599,3 +599,30 @@ def test_download_individual_de_item_de_lote_continua_funcionando(auth_client, f
     download = auth_client.get(f"/api/generations/{item['generation_id']}/download")
     assert download.status_code == 200
     assert download.headers["content-type"] == "video/mp4"
+
+
+def test_item_com_restricao_de_publico_manda_o_motivo_no_evento(auth_client, factory, session, tmp_path):
+    """02/11/2026 (pedido do Igor): o lote mostra o motivo real (restrição de público) em vez do
+    texto fixo; item que falha por motivo genérico continua sem `message` específica."""
+    from download.errors import RestrictedContentError
+
+    usuario = factory.user()
+    login_directly(auth_client, session, usuario)
+    give(factory, session, usuario, "weekly", now=resolve_now())
+    pares_arquivo = _arquivos(tmp_path, 1)
+    urls = ["https://www.instagram.com/reel/A/", "https://www.instagram.com/reel/B/", "https://www.instagram.com/reel/C/"]
+
+    with patch("services.generation_flow.download_video", side_effect=[
+        RestrictedContentError("restrição de público (só abre com login)"),
+        fake_download_result(pares_arquivo[0][0], platform=Platform.INSTAGRAM),
+        DownloadFailedError("falha qualquer"),
+    ]), patch("services.generation_flow.process_video", return_value=fake_processing_result(pares_arquivo[0][1])):
+        resposta = auth_client.post("/api/download-batch", json=_body("restrito", urls))
+
+    itens = {d["position"]: d for t, d in _eventos(resposta) if t == "item_complete"}
+    assert itens[1]["status"] == "failed"
+    assert "restrição de público" in itens[1]["message"]
+    assert itens[1]["error_code"] == "RestrictedContentError"
+    assert itens[2]["status"] == "completed"
+    assert itens[3]["message"] == DownloadFailedError.user_message  # genérico, como sempre
+

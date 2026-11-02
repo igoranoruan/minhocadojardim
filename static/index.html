@@ -5777,7 +5777,9 @@ https://..."></textarea>
                         linha.acao.appendChild(link);
                     }
                 } else {
-                    atualizarLinha(dados.position, "Não foi possível preparar este vídeo.", "erro");
+                    // 02/11/2026 (pedido do Igor): motivo real quando o servidor manda um (ex.: Reel com
+                    // restrição de público no Instagram); senão, o texto genérico de sempre.
+                    atualizarLinha(dados.position, dados.message || "Não foi possível preparar este vídeo.", "erro");
                 }
             } else if (tipo === "batch_progress") {
                 // Etapa 4 (dossiê, 4.3): resumo geral agora é um elemento PRÓPRIO (resumoProgresso),
