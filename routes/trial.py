@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from config import TRIAL_CAMPAIGN_CODE_MAX_LENGTH, TRIAL_DEVICE_ID_MAX_LENGTH
 from database.models import User
 from database.session import get_session
-from routes.deps import client_ip, get_current_user
+from routes.deps import client_ip_with_source, get_current_user, mask_ip
 from services.trial import (
     InvalidCampaignCodeError,
     TrialError,
@@ -79,7 +79,10 @@ def redeem_trial_route(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ) -> RedeemTrialOut:
+    ip, fonte = client_ip_with_source(request)
+    # 02/11/2026 (IP real, pedido do Igor): só a FONTE e o IP mascarado -- ver routes/deps.py.
+    logger.info("[IP] rota=trial fonte=%s ip=%s", fonte, mask_ip(ip))
     resultado = redeem_trial(
-        db, user=user, campaign=body.campaign, device_id=body.device_id, ip=client_ip(request),
+        db, user=user, campaign=body.campaign, device_id=body.device_id, ip=ip,
     )
     return RedeemTrialOut(expires_at=resultado.expires_at)

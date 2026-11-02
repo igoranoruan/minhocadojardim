@@ -1,4 +1,5 @@
 """Dependências compartilhadas das rotas (sessão do usuário, sender de e-mail, IP)."""
+import ipaddress
 import logging
 
 from fastapi import Depends, Request
@@ -29,9 +30,85 @@ def get_email_sender(cfg: Settings = Depends(get_settings)) -> EmailSender:
         return UnavailableEmailSender(str(exc))
 
 
+# IP real do cliente atrás do proxy do Render (pedido e aprovação do Igor, 02/11/2026).
+#
+# Problema encontrado em produção: `request.client.host` é o nó do balanceador interno do Render
+# (10.x.x.x -- visto nos logs: ~10 IPs internos diferentes para o MESMO visitante), nunca o IP de
+# quem acessou. As travas por IP (teste VIP: N por IP a cada 30 dias; código de login: N por IP por
+# hora) estavam valendo para o site INTEIRO, não por pessoa.
+#
+# Regra: os cabeçalhos de encaminhamento SÓ são lidos quando a conexão vem de rede privada (o
+# proxy do Render). Conexão direta de um IP público (ou o TestClient, cujo host nem é IP) usa o
+# próprio host e ignora qualquer cabeçalho -- um cliente nunca escolhe o próprio IP mandando um
+# cabeçalho, a não ser passando pelo proxy. Ordem de preferência:
+# 1. CF-Connecting-IP: o Render fica atrás da Cloudflare, que SOBRESCREVE este cabeçalho com o
+#    IP que de fato se conectou a ela (um valor mandado pelo cliente não sobrevive).
+# 2. True-Client-IP: mesmo papel (alias da Cloudflare).
+# 3. X-Forwarded-For, PRIMEIRA entrada: segundo a equipe do Render, "the first IP in the list
+#    [is] the real client IP" (feedback.render.com, 2021). É o mais fraco dos três: um teste
+#    público relatou que o Render só acrescenta a este cabeçalho, então a 1ª entrada poderia ser
+#    forjada -- por isso fica por último.
+# 4. Nenhum válido: o próprio host (comportamento de antes).
+# Qual fonte foi usada sai no log (client_ip_with_source + mask_ip), com o IP mascarado.
+_FORWARDED_IP_HEADERS = ("cf-connecting-ip", "true-client-ip")
+
+
+def _valid_ip(value: str | None) -> str | None:
+    if not value:
+        return None
+    candidate = value.strip()
+    try:
+        ipaddress.ip_address(candidate)
+    except ValueError:
+        return None
+    return candidate
+
+
+def _is_private_peer(host: str | None) -> bool:
+    try:
+        endereco = ipaddress.ip_address(host or "")
+    except ValueError:
+        return False
+    return endereco.is_private or endereco.is_loopback
+
+
+def client_ip_with_source(request: Request) -> tuple[str | None, str]:
+    """(IP, fonte). Fonte: "cf-connecting-ip", "true-client-ip", "x-forwarded-for", "peer" ou
+    "none" -- só para log/diagnóstico; quem usa o IP chama client_ip()."""
+    peer = request.client.host if request.client else None
+    if _is_private_peer(peer):
+        for header in _FORWARDED_IP_HEADERS:
+            ip = _valid_ip(request.headers.get(header))
+            if ip:
+                return ip, header
+        primeiro = (request.headers.get("x-forwarded-for") or "").split(",")[0]
+        ip = _valid_ip(primeiro)
+        if ip:
+            return ip, "x-forwarded-for"
+    if peer:
+        return peer, "peer"
+    return None, "none"
+
+
 def client_ip(request: Request) -> str | None:
-    """IP de quem chamou. Atrás do proxy do Render isto exige configuração (checklist da Etapa 18)."""
-    return request.client.host if request.client else None
+    """IP de quem chamou -- o IP REAL do cliente quando a requisição passa pelo proxy do Render
+    (ver comentário acima). Usado pelas travas por IP (login e teste VIP), sempre só como hash."""
+    return client_ip_with_source(request)[0]
+
+
+def mask_ip(ip: str | None) -> str:
+    """IP mascarado para log (nunca o IP inteiro): IPv4 "187.12.x.x"; IPv6 só os 2 primeiros grupos."""
+    if not ip:
+        return "-"
+    try:
+        endereco = ipaddress.ip_address(ip)
+    except ValueError:
+        return "?"
+    if endereco.version == 4:
+        a, b, *_ = ip.split(".")
+        return f"{a}.{b}.x.x"
+    grupos = endereco.exploded.split(":")
+    return f"{grupos[0]}:{grupos[1]}:x"
 
 
 def get_current_user(
