@@ -8,6 +8,8 @@ POST /api/auth/logout         encerra a sessão (repetir é seguro)
 Toda resposta daqui leva Cache-Control: no-store. Erros: {"detail": "...", "code": "..."}.
 A checagem de Origin é feita uma vez só, pelo middleware (utils/origin.py).
 """
+import logging
+
 from fastapi import APIRouter, Depends, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -18,9 +20,11 @@ from sqlalchemy.orm import Session
 from config import Settings, get_settings
 from database.models import User
 from database.session import get_session
-from routes.deps import client_ip, get_current_user, get_email_sender
+from routes.deps import client_ip_with_source, get_current_user, get_email_sender, mask_ip
 from services.auth import AuthError, request_login_code, revoke_session, verify_login_code
 from services.mailer import EmailSender
+
+logger = logging.getLogger("minhoca")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -75,7 +79,11 @@ def request_code(
     sender: EmailSender = Depends(get_email_sender),
     cfg: Settings = Depends(get_settings),
 ) -> JSONResponse:
-    issued = request_login_code(db, email=body.email, ip=client_ip(request), sender=sender, cfg=cfg)
+    ip, fonte = client_ip_with_source(request)
+    # 02/11/2026 (IP real, pedido do Igor): só a FONTE e o IP mascarado ("187.12.x.x") -- evidência
+    # de que a trava por IP passou a ver o cliente, não o proxy do Render.
+    logger.info("[IP] rota=login fonte=%s ip=%s", fonte, mask_ip(ip))
+    issued = request_login_code(db, email=body.email, ip=ip, sender=sender, cfg=cfg)
     return JSONResponse(
         {"status": "sent", "expires_in": issued.expires_in, "resend_after": issued.resend_after},
         headers=NO_STORE,
