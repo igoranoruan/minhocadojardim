@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import select
 
 import services.trial as trial_service
-from config import get_settings
+from config import TRIAL_MAX_REDEMPTIONS_PER_IP, get_settings
 from database.models import Entitlement, TrialRedemption
 from helpers_usage import DIA, NOW, give, raw_entitlement
 from services.entitlements import TrialAlreadyGrantedError, grant_trial_entitlement
@@ -173,26 +173,35 @@ def test_segundo_resgate_no_mesmo_aparelho_e_recusado_mesmo_em_conta_diferente(f
     assert _todos(session, segunda_conta) == []
 
 
-def test_terceiro_resgate_do_mesmo_ip_em_30_dias_e_recusado(factory, session):
-    """Trava pedida pelo Igor: "no máximo 2 testes por IP a cada 30 dias"."""
-    ip = "203.0.113.55"
-    redeem_trial(session, user=factory.user(), campaign="ig-a", device_id=_device(1), ip=ip, now=NOW)
-    redeem_trial(session, user=factory.user(), campaign="ig-b", device_id=_device(2), ip=ip, now=NOW + DIA)
+def test_limite_por_ip_combinado_com_o_igor():
+    """02/11/2026 (pedido e aprovação do Igor): 2 -> 5 por IP a cada 30 dias (operadoras de celular
+    compartilham IP). Contas e aparelhos continuam com 1 teste cada."""
+    assert TRIAL_MAX_REDEMPTIONS_PER_IP == 5
 
-    terceira_conta = factory.user()
+
+def test_resgate_alem_do_limite_do_mesmo_ip_em_30_dias_e_recusado(factory, session):
+    """Trava pedida pelo Igor: "no máximo N testes por IP a cada 30 dias" (N = TRIAL_MAX_REDEMPTIONS_PER_IP)."""
+    ip = "203.0.113.55"
+    for i in range(TRIAL_MAX_REDEMPTIONS_PER_IP):
+        redeem_trial(session, user=factory.user(), campaign="ig-a", device_id=_device(i + 1), ip=ip, now=NOW + i * DIA)
+
+    conta_excedente = factory.user()
     with pytest.raises(TrialNotEligibleError):
-        redeem_trial(session, user=terceira_conta, campaign="ig-c", device_id=_device(3), ip=ip, now=NOW + 2 * DIA)
-    assert _todos(session, terceira_conta) == []
+        redeem_trial(
+            session, user=conta_excedente, campaign="ig-c", device_id=_device(99), ip=ip,
+            now=NOW + TRIAL_MAX_REDEMPTIONS_PER_IP * DIA,
+        )
+    assert _todos(session, conta_excedente) == []
 
 
 def test_mesmo_ip_apos_30_dias_e_permitido(factory, session):
     ip = "203.0.113.55"
-    redeem_trial(session, user=factory.user(), campaign="ig-a", device_id=_device(1), ip=ip, now=NOW)
-    redeem_trial(session, user=factory.user(), campaign="ig-b", device_id=_device(2), ip=ip, now=NOW + DIA)
+    for i in range(TRIAL_MAX_REDEMPTIONS_PER_IP):
+        redeem_trial(session, user=factory.user(), campaign="ig-a", device_id=_device(i + 1), ip=ip, now=NOW)
 
-    terceira_conta = factory.user()
+    conta_seguinte = factory.user()
     resultado = redeem_trial(
-        session, user=terceira_conta, campaign="ig-c", device_id=_device(3), ip=ip, now=NOW + 31 * DIA,
+        session, user=conta_seguinte, campaign="ig-c", device_id=_device(99), ip=ip, now=NOW + 31 * DIA,
     )
     assert resultado.entitlement_id is not None
 

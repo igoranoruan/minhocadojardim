@@ -467,8 +467,11 @@ TRIAL_CAMPAIGN_CODE_MAX_LENGTH = 40
 # HMAC diferente, "device-id" em vez de "ip", nunca o mesmo namespace).
 TRIAL_DEVICE_ID_MAX_LENGTH = 128
 
-# "No máximo 2 testes por IP a cada 30 dias" (pedido do Igor).
-TRIAL_MAX_REDEMPTIONS_PER_IP = 2
+# "No máximo N testes por IP a cada 30 dias" (pedido do Igor; N era 2 até 02/11/2026).
+# 02/11/2026 (pedido e aprovação do Igor): 2 -> 5. O público do teste usa o celular, e operadoras
+# compartilham o mesmo IP entre muitos clientes (CGNAT) -- com 2, gente diferente na mesma
+# operadora seria recusada. As travas por CONTA e por APARELHO continuam iguais.
+TRIAL_MAX_REDEMPTIONS_PER_IP = 5
 TRIAL_IP_WINDOW_DAYS = 30
 
 # Rate limit da rota de resgate -- mesmo padrão EM MEMÓRIA de SHARE_QUEUE_RATE_LIMIT_PER_HOUR/
