@@ -17,6 +17,7 @@ ficar no mesmo volume que PROCESSING_TEMP_DIR (ver comentário em config.py).
 """
 import logging
 import re
+import time
 import uuid
 from pathlib import Path
 
@@ -109,3 +110,42 @@ def delete(storage_key: str, extension: str = "mp4") -> None:
                         "key=%r extensao=%r", storage_key, extension)
     except OSError:
         logger.warning("[RESULT_STORAGE] falha ao remover key=%s", storage_key)
+
+
+def sweep_expired(max_age_seconds: float, *, now: float | None = None) -> tuple[int, int]:
+    """Apaga do storage os resultados (vídeo, imagem, áudio) mais velhos que `max_age_seconds`,
+    pela data de modificação do arquivo. Devolve (arquivos apagados, bytes liberados).
+
+    Pedido e aprovação do Igor (02/11/2026) -- a "etapa 8B.4" que ficou pendente: o link de download
+    expira em RESULT_TTL_SECONDS (30 min, checado no banco por services.usage), mas o ARQUIVO ficava
+    no disco até o servidor reiniciar. Quem chama (main.py) passa TTL + uma folga, então nada que
+    ainda pode ser baixado é apagado. A data usada é o mtime: rename() em save() preserva o mtime de
+    quando o processamento terminou de escrever o arquivo (~ finished_at da geração).
+
+    Só toca arquivos com o nome EXATO que save() gera (<32 hex>.<extensão permitida>) -- qualquer
+    outro arquivo no diretório é ignorado. Nunca levanta: um arquivo que não pôde ser apagado só é
+    logado (mesmo padrão de delete()). Apagar um arquivo que está sendo baixado naquele instante é
+    seguro no Linux: o download em andamento continua lendo até o fim."""
+    agora = time.time() if now is None else now
+    directory = Path(RESULT_STORAGE_DIR)
+    if not directory.is_dir():
+        return 0, 0
+    apagados = 0
+    liberados = 0
+    for path in directory.iterdir():
+        stem, ponto, extensao = path.name.rpartition(".")
+        if not ponto or not _KEY_RE.fullmatch(stem) or extensao not in _ALLOWED_EXTENSIONS:
+            continue
+        try:
+            info = path.stat()
+            if not path.is_file() or agora - info.st_mtime <= max_age_seconds:
+                continue
+            path.unlink()
+            apagados += 1
+            liberados += info.st_size
+        except FileNotFoundError:
+            continue  # já removido por outra varredura/delete() -- nada a fazer
+        except OSError:
+            logger.warning("[RESULT_STORAGE] falha ao apagar resultado vencido %s", path.name, exc_info=True)
+    return apagados, liberados
+
