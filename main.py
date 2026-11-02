@@ -4,6 +4,7 @@ Este arquivo só monta a aplicação: logs, rotas e frontend.
 Regras de negócio ficam em services/, downloads em download/, FFmpeg em processor/.
 """
 import logging
+import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -12,7 +13,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import APP_NAME, APP_VERSION, settings
+from config import (
+    APP_NAME,
+    APP_VERSION,
+    RESULT_SWEEP_GRACE_SECONDS,
+    RESULT_SWEEP_INTERVAL_SECONDS,
+    RESULT_TTL_SECONDS,
+    settings,
+)
 from database.session import dispose_engine, get_sessionmaker
 from download.errors import DownloadError
 from processor.errors import ProcessorError
@@ -41,6 +49,7 @@ from routes import (
     trial,
     webhooks,
 )
+from services import result_storage
 from services.audio_flow import AudioPersistenceError
 from services.audio_usage import AudioBatchNotFoundError, AudioDownloadNotFoundError, AudioUsageError, fail_stale_audio_reservations
 from services.batch_filenames import InvalidFilenameError
@@ -97,6 +106,30 @@ def _sweep_stale_reservations_na_inicializacao() -> None:
         session.close()
 
 
+# Limpeza dos vídeos/áudios vencidos (pedido e aprovação do Igor, 02/11/2026): o arquivo pronto
+# ficava no disco até o servidor reiniciar, mesmo depois do link expirar (30 min) -- com ~100
+# usuários do teste VIP o disco efêmero do Render poderia encher no meio do teste. Uma varredura
+# na subida e depois a cada RESULT_SWEEP_INTERVAL_SECONDS, numa thread daemon própria (nunca
+# bloqueia requisições; a varredura só lista e apaga arquivos, sem banco). Mesmo padrão "sem
+# fila/cron no projeto" das varreduras de reservas acima.
+def _varrer_resultados_vencidos() -> None:
+    try:
+        apagados, liberados = result_storage.sweep_expired(RESULT_TTL_SECONDS + RESULT_SWEEP_GRACE_SECONDS)
+        if apagados:
+            logger.info(
+                "[LIMPEZA] %s resultado(s) vencido(s) apagado(s), %.1f MB liberados",
+                apagados, liberados / 1048576,
+            )
+    except Exception:
+        logger.warning("[LIMPEZA] falha na varredura de resultados vencidos (tenta de novo no próximo ciclo)", exc_info=True)
+
+
+def _loop_limpeza_resultados(parar: threading.Event, intervalo: float) -> None:
+    _varrer_resultados_vencidos()  # na subida
+    while not parar.wait(intervalo):
+        _varrer_resultados_vencidos()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(
@@ -109,7 +142,16 @@ async def lifespan(app: FastAPI):
     if settings.using_dev_secrets:
         logger.warning("[STARTUP] usando segredos de DESENVOLVIMENTO (AUTH_SECRET_KEY/IP_HASH_SECRET não definidos)")
     _sweep_stale_reservations_na_inicializacao()
+    parar_limpeza = threading.Event()
+    threading.Thread(
+        target=_loop_limpeza_resultados,
+        args=(parar_limpeza, RESULT_SWEEP_INTERVAL_SECONDS),
+        name="limpeza-resultados",
+        daemon=True,
+    ).start()
+    logger.info("[LIMPEZA] varredura de resultados vencidos ativa (a cada %ss)", RESULT_SWEEP_INTERVAL_SECONDS)
     yield
+    parar_limpeza.set()
     dispose_engine()
     logger.info("[SHUTDOWN] %s encerrado", APP_NAME)
 

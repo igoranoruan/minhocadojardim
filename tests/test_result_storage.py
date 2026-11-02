@@ -1,5 +1,6 @@
 """services/result_storage.py: save/exists/delete (Etapa 8B.2). Puro filesystem, sem banco."""
 import ast
+import os
 from pathlib import Path
 
 import pytest
@@ -184,7 +185,8 @@ def test_result_storage_interface_e_minima():
     """save/exists/delete (Etapa 8B.2) + resolve_path (Etapa 8B.3) -- nada de load/open/stream."""
     tree = ast.parse(RESULT_STORAGE_FILE.read_text(encoding="utf-8"))
     funcoes_publicas = {n.name for n in tree.body if isinstance(n, ast.FunctionDef) and not n.name.startswith("_")}
-    assert funcoes_publicas == {"save", "exists", "delete", "resolve_path"}
+    # sweep_expired (02/11/2026, pedido e aprovação do Igor): a expiração por TTL que a 8B.4 previa.
+    assert funcoes_publicas == {"save", "exists", "delete", "resolve_path", "sweep_expired"}
 
 
 def test_result_storage_nunca_usa_shell_ou_os_system():
@@ -202,3 +204,56 @@ def test_save_e_resolve_path_aceitam_extensao_mp3(tmp_path):
     caminho = result_storage.resolve_path(chave, extension="mp3")
     assert caminho.name == f"{chave}.mp3"
     assert caminho.read_bytes() == b"bytes do mp3 processado"
+
+
+# ============================================================================ sweep_expired() (02/11/2026, pedido e aprovação do Igor)
+def _salvo_com_idade(tmp_path, idade_segundos, *, extension="mp4", agora=1_000_000.0, nome="origem"):
+    origem = _arquivo(tmp_path, nome=f"{nome}.{extension}", conteudo=b"x" * 10)
+    chave = result_storage.save(origem, size_bytes=10, extension=extension)
+    caminho = Path(result_storage.RESULT_STORAGE_DIR) / f"{chave}.{extension}"
+    os.utime(caminho, (agora - idade_segundos, agora - idade_segundos))
+    return chave
+
+
+def test_sweep_apaga_so_os_vencidos(tmp_path):
+    agora = 1_000_000.0
+    velho = _salvo_com_idade(tmp_path, 3601, agora=agora, nome="a")
+    novo = _salvo_com_idade(tmp_path, 60, agora=agora, nome="b")
+    assert result_storage.sweep_expired(3600, now=agora) == (1, 10)
+    assert not result_storage.exists(velho)
+    assert result_storage.exists(novo)
+
+
+def test_sweep_cobre_video_imagem_e_audio(tmp_path):
+    agora = 1_000_000.0
+    chaves = [
+        (_salvo_com_idade(tmp_path, 7200, extension=ext, agora=agora, nome=f"f{i}"), ext)
+        for i, ext in enumerate(["mp4", "jpg", "mp3", "zip"])
+    ]
+    assert result_storage.sweep_expired(3600, now=agora)[0] == 4
+    assert not any(result_storage.exists(chave, ext) for chave, ext in chaves)
+
+
+def test_sweep_ignora_arquivos_que_nao_foram_gerados_pelo_save(tmp_path):
+    agora = 1_000_000.0
+    diretorio = Path(result_storage.RESULT_STORAGE_DIR)
+    diretorio.mkdir(parents=True, exist_ok=True)
+    estranhos = [diretorio / "leia-me.txt", diretorio / ("a" * 32 + ".exe"), diretorio / "nao-e-chave.mp4"]
+    for arquivo in estranhos:
+        arquivo.write_bytes(b"x")
+        os.utime(arquivo, (agora - 99999, agora - 99999))
+    assert result_storage.sweep_expired(60, now=agora) == (0, 0)
+    assert all(arquivo.exists() for arquivo in estranhos)
+
+
+def test_sweep_sem_diretorio_nao_falha():
+    assert result_storage.sweep_expired(60) == (0, 0)
+
+
+def test_sweep_no_limite_exato_nao_apaga(tmp_path):
+    """Idade igual ao limite ainda não venceu (só apaga o que PASSOU do limite)."""
+    agora = 1_000_000.0
+    chave = _salvo_com_idade(tmp_path, 3600, agora=agora)
+    assert result_storage.sweep_expired(3600, now=agora) == (0, 0)
+    assert result_storage.exists(chave)
+

@@ -159,6 +159,12 @@ RESULT_STORAGE_DIR = "./tmp/results"
 # diferente). A limpeza por TTL em si ainda não existe (isso é Etapa 8B.4); por enquanto só a
 # constante e o cálculo de output_expires_at (finished_at + este TTL) existem.
 RESULT_TTL_SECONDS = 30 * 60
+# Limpeza dos resultados vencidos (pedido e aprovação do Igor, 02/11/2026 -- a "8B.4" acima): uma
+# varredura na subida do servidor e depois a cada RESULT_SWEEP_INTERVAL_SECONDS apaga do disco os
+# arquivos mais velhos que RESULT_TTL_SECONDS + RESULT_SWEEP_GRACE_SECONDS. A folga garante que
+# nada ainda baixável seja apagado (o banco já recusa o download depois do TTL de qualquer jeito).
+RESULT_SWEEP_INTERVAL_SECONDS = 5 * 60
+RESULT_SWEEP_GRACE_SECONDS = 5 * 60
 
 # ----------------------------------------------------------------------------- indicação (Etapa 8)
 # Programa de indicação (revisão de UX, aprovação do CÉREBRO, 03/10/2026): quem indica ganha dias
