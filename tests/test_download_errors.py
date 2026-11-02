@@ -2,7 +2,9 @@
 import pytest
 
 from download.errors import (
+    ContentNotAccessibleError,
     DownloadError,
+    RestrictedContentError,
     DownloadFailedError,
     DownloadTimeoutError,
     GENERIC_USER_MESSAGE,
@@ -18,6 +20,7 @@ from download.errors import (
 SUBCLASSES = [
     InvalidUrlError, UnsupportedPlatformError, SsrfBlockedError, TooManyRedirectsError,
     DownloadTimeoutError, VideoTooLargeError, VideoTooLongError, DownloadFailedError, InvalidFileError,
+    RestrictedContentError, ContentNotAccessibleError,
 ]
 
 

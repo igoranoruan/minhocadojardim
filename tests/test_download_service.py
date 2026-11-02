@@ -11,7 +11,9 @@ import pytest
 import download.service as service_module
 from download.base import PlatformDownloader, RawDownload
 from download.errors import (
+    ContentNotAccessibleError,
     DownloadFailedError,
+    NoVideoInPostError,
     DownloadTimeoutError,
     InvalidFileError,
     SsrfBlockedError,
@@ -554,3 +556,29 @@ def test_timeout_interrompe_a_espera_do_chamador(registry, monkeypatch):
     with pytest.raises(DownloadTimeoutError):
         download_video("https://www.tiktok.com/@a/video/1")
     assert time.monotonic() - inicio < 1.0  # não esperou os 2s do downloader
+
+
+# ------------------------------------------------------------------ 02/11/2026: post inacessível (pedido do Igor)
+def test_resposta_vazia_sem_imagem_na_pagina_vira_mensagem_de_post_inacessivel(registry, monkeypatch, tmp_path):
+    """Instagram "empty media response" + fallback de imagem sem nada = privado/restrito/exige
+    login -> mensagem clara, e os temporários continuam sendo limpos."""
+    from download.ytdlp_downloader import REASON_EMPTY_MEDIA
+
+    _sem_ssrf(monkeypatch)
+    registry[Platform.INSTAGRAM].error = NoVideoInPostError(REASON_EMPTY_MEDIA)
+    with patch("download.service.fetch_post_image", side_effect=DownloadFailedError("nenhuma imagem")):
+        with pytest.raises(ContentNotAccessibleError) as capturado:
+            download_video("https://www.instagram.com/reel/DdnouPis83F/")
+    assert "privado" in capturado.value.user_message
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_post_so_imagem_sem_imagem_encontrada_continua_com_o_erro_de_antes(registry, monkeypatch):
+    """"There is no video in this post" + fallback falhando: comportamento de sempre (genérico)."""
+    _sem_ssrf(monkeypatch)
+    registry[Platform.INSTAGRAM].error = NoVideoInPostError("post sem vídeo (conteúdo é imagem)")
+    with patch("download.service.fetch_post_image", side_effect=DownloadFailedError("nenhuma imagem")):
+        with pytest.raises(DownloadFailedError) as capturado:
+            download_video("https://www.instagram.com/p/De4xGliJByz/")
+    assert not isinstance(capturado.value, ContentNotAccessibleError)
+

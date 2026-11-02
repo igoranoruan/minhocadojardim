@@ -40,7 +40,13 @@ from yt_dlp.networking.impersonate import ImpersonateTarget
 from config import DOWNLOAD_CONNECT_TIMEOUT_SECONDS, MAX_VIDEO_SIZE_BYTES, get_settings
 from download.base import PlatformDownloader, RawDownload
 from download.creator_handle import extract_creator_handle
-from download.errors import DownloadFailedError, DownloadTimeoutError, NoVideoInPostError, VideoTooLargeError
+from download.errors import (
+    DownloadFailedError,
+    DownloadTimeoutError,
+    NoVideoInPostError,
+    RestrictedContentError,
+    VideoTooLargeError,
+)
 from download.platform import Platform
 
 logger = logging.getLogger("minhoca")
@@ -48,7 +54,18 @@ logger = logging.getLogger("minhoca")
 # Motivos técnicos (log) categorizados a partir da mensagem do yt-dlp — a mensagem crua NUNCA
 # chega ao usuário (DownloadError.user_message já é genérica) nem é logada por inteiro aqui,
 # porque pode conter a URL ou detalhes internos da plataforma.
+# Motivos com tratamento próprio (comparados por igualdade em _error_for_reason / download/service.py).
+REASON_RESTRICTED_AUDIENCE = "restrição de público (só abre com login)"
+REASON_EMPTY_MEDIA = "resposta vazia da plataforma (imagem, privado ou exige login)"
+
 _REASON_KEYWORDS: tuple[tuple[str, str], ...] = (
+    # 02/11/2026 (pedido do Igor): restrição de público -- PRIMEIRO da lista, para nunca cair num
+    # motivo genérico. Mensagens reais dos logs de produção (ver download/errors.py::
+    # RestrictedContentError). "Log in for access" do TikTok não casa com "login" (tem espaço), por
+    # isso o trecho específico.
+    ("isn't available to everyone", REASON_RESTRICTED_AUDIENCE),
+    ("can't be seen by certain audiences", REASON_RESTRICTED_AUDIENCE),
+    ("not be comfortable for some audiences", REASON_RESTRICTED_AUDIENCE),
     ("login", "conteúdo exige login na plataforma de origem"),
     ("sign in", "conteúdo exige login na plataforma de origem"),
     ("private", "conteúdo indisponível ou privado"),
@@ -72,7 +89,11 @@ _REASON_KEYWORDS: tuple[tuple[str, str], ...] = (
     # o MESMO fallback de imagem aqui (download/image_fallback.py usa uma via totalmente diferente,
     # a página pública, não essa API), em vez de desistir direto -- pior caso, o fallback também
     # falha e o usuário recebe exatamente o mesmo erro genérico de antes, sem nenhuma perda.
-    ("sent an empty media response", "post sem vídeo (conteúdo é imagem)"),
+    # 02/11/2026: motivo PRÓPRIO (antes era o mesmo de "post sem vídeo") -- o tratamento continua
+    # igual (tenta o fallback de imagem, ver _error_for_reason), mas se o fallback também falhar,
+    # download/service.py troca o erro genérico por ContentNotAccessibleError (privado/restrito/
+    # exige login), que é o que a própria mensagem do yt-dlp sugere. O log também fica correto.
+    ("sent an empty media response", REASON_EMPTY_MEDIA),
 )
 
 
@@ -215,8 +236,10 @@ class YtDlpDownloader(PlatformDownloader):
             return VideoTooLargeError(reason)
         if reason == "tempo de rede esgotado":
             return DownloadTimeoutError(reason)
-        if reason == "post sem vídeo (conteúdo é imagem)":
+        if reason in ("post sem vídeo (conteúdo é imagem)", REASON_EMPTY_MEDIA):
             return NoVideoInPostError(reason)
+        if reason == REASON_RESTRICTED_AUDIENCE:
+            return RestrictedContentError(reason)
         return DownloadFailedError(reason)
 
     def _cleanup_stub_files(self, dest_stub: Path) -> None:

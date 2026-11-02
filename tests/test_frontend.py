@@ -840,3 +840,10 @@ def test_opcao_nomear_com_arroba_do_criador_desmarcada_por_padrao():
     assert 'name_by_creator: nomearPeloCriadorMarcado("nomeCriadorLote")' in html
     assert "@ do criador" in html
 
+
+def test_lote_mostra_o_motivo_do_erro_quando_o_servidor_manda():
+    """02/11/2026 (pedido do Igor): item com erro mostra `dados.message` (ex.: restrição de público
+    no Instagram), com o texto genérico de sempre como reserva."""
+    html = _html()
+    assert 'atualizarLinha(dados.position, dados.message || "Não foi possível preparar este vídeo.", "erro");' in html
+

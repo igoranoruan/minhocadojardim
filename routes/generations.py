@@ -399,6 +399,9 @@ def _run_batch_in_background(
                     "generation_id": resultado.generation_id,
                     "status": "failed",
                     "error_code": resultado.error_code,
+                    # 02/11/2026: motivo seguro para o usuário (ex.: restrição de público); None
+                    # mantém o texto genérico de sempre no site.
+                    "message": resultado.error_message,
                     "filename": nome,
                 }
             event_queue.put(("item_complete", payload))
