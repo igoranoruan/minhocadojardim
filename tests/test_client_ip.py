@@ -53,10 +53,17 @@ def test_ipv6_valido_e_aceito():
 
 
 # ============================================================================ falsificação
-def test_conexao_direta_de_ip_publico_ignora_cabecalhos():
-    """Quem NÃO passa pelo proxy (peer público) não escolhe o próprio IP mandando cabeçalho."""
-    req = _req("203.0.113.9", {"CF-Connecting-IP": "1.1.1.1", "X-Forwarded-For": "1.1.1.1"})
-    assert client_ip_with_source(req) == ("203.0.113.9", "peer")
+@pytest.mark.parametrize("peer", ["8.8.8.8", "203.0.113.9", "100.64.0.1"])
+def test_conexao_direta_de_ip_nao_interno_ignora_cabecalhos(peer):
+    """Quem NÃO passa pelo proxy (peer fora das redes internas -- público, documentação ou CGNAT)
+    não escolhe o próprio IP mandando cabeçalho."""
+    req = _req(peer, {"CF-Connecting-IP": "1.1.1.1", "X-Forwarded-For": "1.1.1.1"})
+    assert client_ip_with_source(req) == (peer, "peer")
+
+
+def test_redes_internas_reconhecidas():
+    for peer in ("10.31.27.51", "172.20.0.5", "192.168.1.10", "127.0.0.1"):
+        assert client_ip_with_source(_req(peer, {"CF-Connecting-IP": "187.12.34.56"}))[1] == "cf-connecting-ip"
 
 
 def test_peer_que_nem_e_ip_ignora_cabecalhos():

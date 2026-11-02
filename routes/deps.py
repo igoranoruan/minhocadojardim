@@ -64,12 +64,20 @@ def _valid_ip(value: str | None) -> str | None:
     return candidate
 
 
+# Só as faixas de rede interna de verdade (o proxy do Render chega por 10.x). Lista explícita em vez
+# de `ip.is_private`, que também considera "privadas" faixas de documentação/reservadas.
+_INTERNAL_NETWORKS = tuple(
+    ipaddress.ip_network(rede)
+    for rede in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "::1/128", "fc00::/7")
+)
+
+
 def _is_private_peer(host: str | None) -> bool:
     try:
         endereco = ipaddress.ip_address(host or "")
     except ValueError:
         return False
-    return endereco.is_private or endereco.is_loopback
+    return any(endereco in rede for rede in _INTERNAL_NETWORKS)
 
 
 def client_ip_with_source(request: Request) -> tuple[str | None, str]:
