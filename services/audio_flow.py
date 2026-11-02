@@ -29,7 +29,7 @@ from database.models import User
 from database.models.audio_extraction import AudioExtraction
 from download.audio_page_links import AudioPageLinkError, is_audio_page_link
 from download.audio_service import download_audio_source
-from download.errors import DownloadError
+from download.errors import DownloadError, ServerBusyError
 from download.platform import Platform, detect_platform
 from download.url_safety import validate_url
 from processor.audio_service import process_audio
@@ -37,6 +37,7 @@ from processor.errors import ProcessorError
 from services import result_storage
 from services.audio_usage import complete_audio_extraction, fail_audio_extraction, reserve_audio_extraction
 from services.batch_filenames import sanitize_batch_filename
+from services.processing_queue import QueueWaitTimeoutError, processing_slot
 from utils.time_sp import resolve_now
 
 logger = logging.getLogger("minhoca")
@@ -238,9 +239,22 @@ def extract_audio_from_url(
         db, user_id=user.id, request_id=f"audio-{uuid.uuid4().hex}",
         platform=platform.value, display_filename=display_filename,
     )
-    outcome = execute_reserved_audio_extraction(
-        db, extraction_id=reservation.extraction_id, url=validated.url, on_progress=on_progress,
-    )
+    # Fila de processamento (pedido e aprovação do Igor, 02/11/2026 -- services/processing_queue.py):
+    # mesma vaga compartilhada com o vídeo. Passou do teto de espera, a extração vira failed (limite
+    # diário devolvido) com a mensagem de servidor ocupado.
+    def _avisar_fila() -> None:
+        if on_progress is not None:
+            on_progress("queue", None, platform.value)
+
+    try:
+        with processing_slot(on_wait=_avisar_fila, label=f"audio={reservation.extraction_id}"):
+            outcome = execute_reserved_audio_extraction(
+                db, extraction_id=reservation.extraction_id, url=validated.url, on_progress=on_progress,
+            )
+    except QueueWaitTimeoutError:
+        ocupado = ServerBusyError("fila de processamento cheia")
+        _mark_failed(db, reservation.extraction_id, ocupado)
+        raise ocupado from None
     logger.info(
         "[AUDIO] extração concluída id=%s user_id=%s plataforma=%s bytes=%s",
         outcome.extraction_id, user.id, outcome.platform, outcome.size_bytes,
@@ -284,7 +298,43 @@ def run_audio_batch(
 
     Reexecução idempotente: para um item cuja AudioExtraction já não está mais "reserved"
     (completed/failed de uma tentativa anterior), NÃO reprocessa -- só relata o estado já
-    gravado, mesmo contrato de run_batch."""
+    gravado, mesmo contrato de run_batch.
+
+    Fila de processamento (02/11/2026): mesma regra de services.generation_flow.run_batch -- o lote
+    ocupa UMA vaga do começo ao fim; passou do teto de espera, os itens ainda pendentes viram failed
+    (limite diário devolvido)."""
+    pendentes = [
+        (posicao, eid) for posicao, (eid, _url) in enumerate(items, start=1)
+        if (e := db.get(AudioExtraction, eid)) is None or e.status == "reserved"
+    ]
+    if not pendentes:
+        return _run_audio_batch_items(db, items=items, on_item_progress=on_item_progress)
+
+    primeira_posicao, primeiro_id = pendentes[0]
+
+    def _avisar_fila() -> None:
+        if on_item_progress is not None:
+            on_item_progress(primeira_posicao, primeiro_id, "queue", None, "")
+
+    try:
+        with processing_slot(on_wait=_avisar_fila, label=f"lote de áudio com {len(items)} itens"):
+            return _run_audio_batch_items(db, items=items, on_item_progress=on_item_progress)
+    except QueueWaitTimeoutError:
+        ocupado = ServerBusyError("fila de processamento cheia")
+        for _posicao, eid in pendentes:
+            _mark_failed(db, eid, ocupado)
+        db.expire_all()  # mesmo motivo de generation_flow.run_batch: nunca reprocessar por cache velho
+        return _run_audio_batch_items(db, items=items, on_item_progress=on_item_progress)
+
+
+def _run_audio_batch_items(
+    db: Session,
+    *,
+    items: list[tuple[int, str]],
+    on_item_progress=None,
+) -> list[AudioBatchItemOutcome]:
+    """Corpo de run_audio_batch, separado só para rodar dentro da vaga da fila (comportamento
+    idêntico ao de antes da fila)."""
     resultados: list[AudioBatchItemOutcome] = []
     total = len(items)
     for position, (extraction_id, url) in enumerate(items, start=1):

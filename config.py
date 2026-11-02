@@ -166,6 +166,17 @@ RESULT_TTL_SECONDS = 30 * 60
 RESULT_SWEEP_INTERVAL_SECONDS = 5 * 60
 RESULT_SWEEP_GRACE_SECONDS = 5 * 60
 
+# ----------------------------------------------------------------------------- fila de processamento
+# Pedido e aprovação do Igor (02/11/2026): no máximo 3 downloads+processamentos ao mesmo tempo no
+# servidor inteiro (vídeo e áudio somados) -- ver services/processing_queue.py. Quem passa disso
+# espera ("Na fila…", aviso a cada PROCESSING_QUEUE_POLL_SECONDS) por até
+# PROCESSING_QUEUE_MAX_WAIT_SECONDS; depois, falha com "servidor ocupado" e a cota volta. 10 min de
+# espera + até ~6 min de trabalho ficam bem abaixo de GENERATION_RESERVATION_TTL_SECONDS (35 min):
+# uma reserva nunca vence enquanto espera.
+MAX_CONCURRENT_PROCESSING = 3
+PROCESSING_QUEUE_MAX_WAIT_SECONDS = 10 * 60
+PROCESSING_QUEUE_POLL_SECONDS = 15
+
 # ----------------------------------------------------------------------------- indicação (Etapa 8)
 # Programa de indicação (revisão de UX, aprovação do CÉREBRO, 03/10/2026): quem indica ganha dias
 # extras de plano quando a pessoa indicada faz o PRIMEIRO pagamento aprovado (nunca no cadastro,

@@ -246,7 +246,10 @@ def _run_generation_in_background(
             # só "Baixando seu vídeo..." parado por mais de um minuto e achava que tinha travado
             # (relato real do Igor em 02/10/2026) -- esta mensagem só existe para gerenciar essa
             # expectativa; não muda a duração real do download.
-            if stage == "download" and platform == "youtube":
+            if stage == "queue":
+                # Fila de processamento (02/11/2026, services/processing_queue.py).
+                mensagem = "Na fila… muitos pedidos agora, já já começa."
+            elif stage == "download" and platform == "youtube":
                 mensagem = "Baixando do YouTube... pode levar até 2 minutos, aguarde."
             elif stage == "download":
                 mensagem = "Baixando seu vídeo..."
@@ -357,7 +360,10 @@ def _run_batch_in_background(
             position: int, generation_id: int, stage: str, percent: float | None, platform: str,
         ) -> None:
             # Mesmo aviso específico do YouTube da geração avulsa, acima -- ver aquele comentário.
-            if stage == "download" and platform == "youtube":
+            if stage == "queue":
+                # Fila de processamento (02/11/2026, services/processing_queue.py).
+                mensagem = "Na fila… muitos pedidos agora, já já começa."
+            elif stage == "download" and platform == "youtube":
                 mensagem = "Baixando do YouTube... pode levar até 2 minutos, aguarde."
             elif stage == "download":
                 mensagem = "Baixando..."
