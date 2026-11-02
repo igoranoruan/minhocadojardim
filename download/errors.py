@@ -96,6 +96,15 @@ class ContentNotAccessibleError(DownloadError):
     )
 
 
+class ServerBusyError(DownloadError):
+    """02/11/2026 (pedido do Igor, fila de processamento): esperou PROCESSING_QUEUE_MAX_WAIT_SECONDS
+    sem vaga na fila (services/processing_queue.py) -- o item é marcado como falho (a cota volta)
+    com esta mensagem. Fica aqui (e não em services/) porque as rotas de geração/áudio já traduzem
+    qualquer DownloadError para a mensagem amigável ao usuário."""
+
+    user_message = "O servidor está com muitos pedidos agora. Tente de novo em alguns minutos."
+
+
 class NoVideoInPostError(DownloadError):
     """Sinal específico do yt-dlp: o post/pin não tem vídeo nenhum (só imagem) -- TikTok,
     Instagram e Pinterest (03/10/2026, aprovação do CÉREBRO, depois de confirmar em produção que

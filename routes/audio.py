@@ -309,7 +309,10 @@ def _run_audio_batch_in_background(
         def on_item_progress(
             position: int, extraction_id: int, stage: str, percent: float | None, platform: str,
         ) -> None:
-            if stage == "download" and platform == "youtube":
+            if stage == "queue":
+                # Fila de processamento (02/11/2026, services/processing_queue.py).
+                mensagem = "Na fila… muitos pedidos agora, já já começa."
+            elif stage == "download" and platform == "youtube":
                 mensagem = "Baixando do YouTube... pode levar até 2 minutos, aguarde."
             elif stage == "download":
                 mensagem = "Baixando..."

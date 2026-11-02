@@ -30,6 +30,7 @@ import logging
 import resource
 import uuid
 from collections.abc import Callable
+import dataclasses
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -38,7 +39,7 @@ from sqlalchemy.orm import Session
 
 from config import RESULT_TTL_SECONDS
 from database.models import Generation, User
-from download.errors import DownloadError
+from download.errors import DownloadError, ServerBusyError
 from download.platform import Platform, detect_platform
 from download.service import download_video
 from download.url_safety import validate_url
@@ -49,6 +50,7 @@ from processor.service import process_video
 from services import result_storage
 from services.batch_filenames import sanitize_batch_filename
 from services.creator_filename import CreatorFilenameAllocator
+from services.processing_queue import QueueWaitTimeoutError, processing_slot
 from services.usage import complete_generation, fail_generation, reserve_generation
 from utils.time_sp import resolve_now
 
@@ -208,10 +210,25 @@ def generate_from_url(
         display_filename=display_filename,
     )
     creator_name_for = CreatorFilenameAllocator().allocate if name_by_creator and display_filename is None else None
-    outcome = _execute_reserved(
-        db, generation_id=reservation.generation_id, url=validated.url, on_progress=on_progress,
-        creator_name_for=creator_name_for,
-    )
+
+    # Fila de processamento (pedido e aprovação do Igor, 02/11/2026 -- services/processing_queue.py):
+    # no máximo N downloads+processamentos ao mesmo tempo no servidor. Sem vaga, avisa "Na fila…"
+    # (stage "queue") até entrar; passou do teto de espera, a geração vira failed (cota devolvida)
+    # com a mensagem de servidor ocupado.
+    def _avisar_fila() -> None:
+        if on_progress is not None:
+            on_progress("queue", None, platform.value)
+
+    try:
+        with processing_slot(on_wait=_avisar_fila, label=f"geracao={reservation.generation_id}"):
+            outcome = _execute_reserved(
+                db, generation_id=reservation.generation_id, url=validated.url, on_progress=on_progress,
+                creator_name_for=creator_name_for,
+            )
+    except QueueWaitTimeoutError:
+        ocupado = ServerBusyError("fila de processamento cheia")
+        _mark_failed(db, reservation.generation_id, ocupado)
+        raise ocupado from None
     logger.info(
         "[GENERATION] concluída id=%s user_id=%s plataforma=%s bytes=%s",
         outcome.generation_id, user.id, outcome.platform, outcome.size_bytes,
@@ -420,6 +437,53 @@ def run_batch(
     "@criador 3.mp4"... na ordem dos itens. O alocador começa já conhecendo TODOS os nomes do lote
     (digitados, ou gerados numa execução anterior do mesmo request_id), então um nome automático
     nunca repete um nome que já existe no lote."""
+    # Fila de processamento (02/11/2026): o lote ocupa UMA vaga do começo ao fim (os itens já rodam
+    # um por vez) -- nunca volta para o fim da fila a cada item. Sem vaga, avisa "Na fila…" no
+    # primeiro item ainda pendente; passou do teto de espera, todos os itens ainda pendentes viram
+    # failed (cota devolvida) com a mensagem de servidor ocupado. Lote só com itens já finalizados
+    # (repetição do mesmo request_id) não espera vaga nenhuma.
+    pendentes = [
+        (posicao, gid) for posicao, (gid, _url) in enumerate(items, start=1)
+        if (g := db.get(Generation, gid)) is None or g.status == "reserved"
+    ]
+    if not pendentes:
+        return _run_batch_items(db, items=items, on_item_progress=on_item_progress, name_by_creator=name_by_creator)
+
+    primeira_posicao, primeiro_id = pendentes[0]
+
+    def _avisar_fila() -> None:
+        if on_item_progress is not None:
+            on_item_progress(primeira_posicao, primeiro_id, "queue", None, "")
+
+    try:
+        with processing_slot(on_wait=_avisar_fila, label=f"lote com {len(items)} itens"):
+            return _run_batch_items(db, items=items, on_item_progress=on_item_progress, name_by_creator=name_by_creator)
+    except QueueWaitTimeoutError:
+        ocupado = ServerBusyError("fila de processamento cheia")
+        ids_pendentes = {gid for _posicao, gid in pendentes}
+        for gid in ids_pendentes:
+            _mark_failed(db, gid, ocupado)
+        # fail_generation grava com UPDATE direto: sem isto, a sessão (expire_on_commit=False nas
+        # rotas) ainda enxergaria "reserved" em memória e o relato abaixo PROCESSARIA os itens.
+        db.expire_all()
+        # Todos os itens já estão finalizados agora: o caminho normal só RELATA o estado gravado
+        # (nada é baixado/processado) -- e os que acabaram de falhar ganham a mensagem amigável.
+        relatados = _run_batch_items(db, items=items, on_item_progress=on_item_progress, name_by_creator=name_by_creator)
+        return [
+            dataclasses.replace(r, error_message=ocupado.user_message) if r.generation_id in ids_pendentes else r
+            for r in relatados
+        ]
+
+
+def _run_batch_items(
+    db: Session,
+    *,
+    items: list[tuple[int, str]],
+    on_item_progress: Callable[[int, int, str, float | None, str], None] | None = None,
+    name_by_creator: bool = False,
+) -> list[BatchItemOutcome]:
+    """Corpo de run_batch (processa os itens, um por vez) -- separado só para rodar dentro da vaga
+    da fila. Comportamento IDÊNTICO ao de antes da fila."""
     resultados: list[BatchItemOutcome] = []
     total = len(items)
     alocador: CreatorFilenameAllocator | None = None
