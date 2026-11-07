@@ -75,7 +75,7 @@ def test_vip_15_por_dia_30_dias_r_47_90_batch_ilimitado_maximo_15():
 
 
 def test_todos_os_planos_pagos_permitem_batch_so_o_free_nao():
-    # ETAPA B7 (29/10/2026): trial_vip TAMBÉM permite lote (1 operação de até 10 vídeos, ver
+    # ETAPA B7 (29/10/2026): trial_vip TAMBÉM permite lote (lotes de até 15 vídeos desde 07/11/2026, ver
     # test_plano_trial_vip_24h abaixo) -- entra neste conjunto de propósito, só o Free fica fora.
     assert {p.code for p in PLANS.values() if p.batch_enabled} == {
         WEEKLY,
@@ -123,12 +123,13 @@ def test_o_plano_e_imutavel():
 
 # ------------------------------------------------------------------- ETAPA B7 (teste VIP de 24h)
 def test_plano_trial_vip_24h():
-    """pedido/aprovação do Igor, 29/10/2026: 10 vídeos, 1 lote de até 10, 24h, não vendável."""
-    assert (TRIAL_VIP_PLAN.code, TRIAL_VIP_PLAN.limit, TRIAL_VIP_PLAN.period) == (TRIAL_VIP, 10, "trial")
+    """Pedido do Igor (07/11/2026): espelha o VIP Batch -- 15 vídeos no total das 24h, lotes
+    ilimitados de até 15 (só os vídeos limitam), não vendável. Antes (29/10): 10 vídeos, 1 lote."""
+    assert (TRIAL_VIP_PLAN.code, TRIAL_VIP_PLAN.limit, TRIAL_VIP_PLAN.period) == (TRIAL_VIP, 15, "trial")
     assert (TRIAL_VIP_PLAN.duration_days, TRIAL_VIP_PLAN.price_cents) == (1, 0)
     assert TRIAL_VIP_PLAN.batch_enabled
-    assert TRIAL_VIP_PLAN.max_batch_size == 10
-    assert TRIAL_VIP_PLAN.batch_limit == 1
+    assert TRIAL_VIP_PLAN.max_batch_size == 15
+    assert TRIAL_VIP_PLAN.batch_limit is None
     assert TRIAL_VIP_PLAN.batch_period == "trial"
 
 

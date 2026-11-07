@@ -2222,7 +2222,7 @@ https://..."></textarea>
     // upgrade), mas este mapa aqui é só de EXIBIÇÃO do teto de itens por lote (nunca a regra em
     // si, que é sempre services/usage.py::reserve_batch no backend) -- objeto diferente, seguro
     // adicionar. Espelha services/plans.py::TRIAL_VIP_PLAN.max_batch_size (10).
-    const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15, trial_vip: 10 };
+    const LIMITE_LOTE_POR_PLANO = { free: 0, weekly: 5, monthly: 5, vip_batch: 15, trial_vip: 15 }; // trial_vip 10 -> 15 em 07/11/2026 (pedido do Igor)
     let limiteLoteAtual = 0; // 0 = lote indisponível (sem sessão, Free, ou status ainda não carregado)
     let loteSemTeto = false; // conta admin (uso.unlimited, 11/10/2026): só controla TEXTO exibido
                                 // (limiteLoteAtual já vira Number.MAX_SAFE_INTEGER -- isto evita

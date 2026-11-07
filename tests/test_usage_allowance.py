@@ -173,13 +173,13 @@ def test_pago_dia_seguinte_dentro_da_validade_volta_a_ter_o_limite_cheio(factory
 
 
 # ============================================================================ teste VIP 24h: total único, nunca por calendário (ETAPA B7, condição 3 da aprovação do Igor)
-def test_trial_vip_e_10_no_total_nao_reinicia_a_meia_noite(factory, session):
+def test_trial_vip_e_15_no_total_nao_reinicia_a_meia_noite(factory, session):
     usuario = factory.user()
     factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + DIA)
     a = get_allowance(session, usuario.id, now=NOW)
-    assert (a.plan.code, a.limit, a.remaining, a.plan.period) == ("trial_vip", 10, 10, "trial")
+    assert (a.plan.code, a.limit, a.remaining, a.plan.period) == ("trial_vip", 15, 15, "trial")
 
-    consume(session, usuario, 10, now=sp(2026, 9, 23, 23, 59, 59), prefix="trial")
+    consume(session, usuario, 15, now=sp(2026, 9, 23, 23, 59, 59), prefix="trial")
     # mesmo cruzando a meia-noite de São Paulo (o que reiniciaria um plano pago comum), a cota do
     # teste continua esgotada -- é um TOTAL de 24h desde o resgate, não "por dia de calendário".
     assert get_allowance(session, usuario.id, now=sp(2026, 9, 24, 0, 0, 1)).remaining == 0
