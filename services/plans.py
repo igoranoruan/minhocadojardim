@@ -48,7 +48,9 @@ Códigos usados em generations.plan_code, entitlements.plan_code e payments.plan
 free, weekly, monthly, vip_batch, trial_vip.
 
 ETAPA B7 (teste VIP de 24h por link de campanha, pedido e aprovação do Igor, 29/10/2026): plano
-`trial_vip` -- 10 vídeos, 1 lote de até 10, 5 extrações de áudio, TODOS num total único de 24h
+`trial_vip` -- 15 vídeos, lotes ilimitados de até 15, 5 extrações de áudio, num total único de 24h
+(07/11/2026, pedido do Igor: era 10 vídeos e 1 lote de até 10 -- agora espelha o VIP Batch, com os
+15 vídeos como único teto)
 (nunca por dia/semana de calendário, ver `period`/`batch_period` abaixo e services/usage.py e
 services/audio_usage.py). NÃO vendável (`purchasable=False`) -- nunca aparece em checkout, nunca
 pode ser comprado (ver payments/service.py::create_payment, que agora checa `purchasable`, não
@@ -155,15 +157,19 @@ VIP_BATCH_PLAN = Plan(
 # inteiro -- nenhum campo fracionário precisou ser inventado). price_cents=0 e purchasable=False:
 # nunca vendável, nunca aparece em checkout (payments/service.py::create_payment recusa comprar
 # qualquer plano com purchasable=False).
+# 07/11/2026 (pedido do Igor): o teste espelha o VIP Batch -- 15 vídeos (TOTAL das 24h, nunca por
+# dia), lotes ILIMITADOS de até 15 (batch_limit=None, mesmo tratamento do VIP Batch em
+# services/usage.py: só a cota de vídeos limita). Antes: 10 vídeos, 1 lote de até 10. Áudio segue
+# 5 no total (TRIAL_AUDIO_EXTRACTIONS_TOTAL, config.py).
 TRIAL_VIP_PLAN = Plan(
     TRIAL_VIP,
     "Teste VIP de 24h",
     0,
     1,
-    10,
+    15,
     "trial",
-    max_batch_size=10,
-    batch_limit=1,
+    max_batch_size=15,
+    batch_limit=None,
     batch_period="trial",
     purchasable=False,
 )

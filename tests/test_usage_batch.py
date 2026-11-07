@@ -361,28 +361,37 @@ def test_vip_tem_operacoes_de_batch_ilimitadas(vip, session):
     assert _n(session, Batch) == 10
 
 
-def test_trial_vip_tem_1_operacao_de_batch_no_total_nao_por_semana(factory, session):
-    """ETAPA B7 (condição 3 da aprovação do Igor): "o 1 lote de até 10 do teste também precisa ser
-    um TOTAL de 24h, como vídeo e áudio, não por semana de calendário" -- batch_period="trial" em
-    services/plans.py::TRIAL_VIP_PLAN, _count_batches_total em services/usage.py."""
-    # resgate perto da virada da semana comercial de SP (domingo 23h) -- as 24h do teste atravessam
-    # a virada de semana (segunda 00h), que reiniciaria a cota de um plano pago comum.
-    inicio = sp(2026, 9, 27, 23, 0)  # domingo 23h
+def test_trial_vip_lotes_ilimitados_so_os_15_videos_limitam(factory, session):
+    """Pedido do Igor (07/11/2026): o teste espelha o VIP Batch -- lotes quantas vezes quiser, de
+    até 15 cada, e o ÚNICO teto é o de 15 vídeos no total das 24h (que atravessa a virada da
+    semana/dia sem reiniciar). Antes: 1 lote de até 10."""
+    inicio = sp(2026, 9, 27, 23, 0)  # domingo 23h: as 24h do teste atravessam a virada da semana
     usuario = factory.user()
     factory.trial_entitlement(usuario, starts_at=inicio, expires_at=inicio + timedelta(days=1))
 
-    resultado = _lote(session, usuario, "trial-batch-1", 10, now=inicio + timedelta(minutes=30))  # ainda domingo
-    assert resultado.created and len(resultado.generation_ids) == 10
-
     allowance = get_batch_allowance(session, usuario.id, now=inicio + timedelta(minutes=30))
-    assert (allowance.limit, allowance.used, allowance.remaining) == (1, 1, 0)
+    assert allowance.unlimited and allowance.limit is None
 
-    # já é segunda-feira (semana comercial NOVA), ainda dentro das 24h do teste: a operação de lote
-    # continua esgotada -- é 1 no total da vida do teste, nunca 1/semana de calendário.
-    segunda_seguinte = sp(2026, 9, 28, 1, 0)
-    with pytest.raises(BatchQuotaExceededError):
-        _lote(session, usuario, "trial-batch-2", 1, now=segunda_seguinte)
-    assert _n(session, Batch) == 1
+    # Tudo dentro de 35 min (GENERATION_RESERVATION_TTL_SECONDS): reservas mais velhas que isso sem
+    # concluir são tratadas como órfãs e deixam de contar -- aqui os itens ficam "reserved" (não
+    # baixamos nada), então os lotes precisam estar dentro dessa janela para o teste valer. Em uso
+    # real os itens já estariam "completed" e contariam sempre.
+    assert len(_lote(session, usuario, "trial-batch-1", 8, now=inicio + timedelta(minutes=40)).generation_ids) == 8
+    segunda_seguinte = sp(2026, 9, 28, 0, 1)  # semana/dia novos (passou da meia-noite), ainda dentro das 24h
+    assert len(_lote(session, usuario, "trial-batch-2", 7, now=segunda_seguinte).generation_ids) == 7
+
+    # 15 vídeos usados: qualquer lote a mais é recusado pela cota de VÍDEOS (nunca pela de lotes).
+    with pytest.raises(QuotaExceededError):
+        _lote(session, usuario, "trial-batch-3", 1, now=sp(2026, 9, 28, 0, 2))
+    assert _n(session, Batch) == 2
+
+
+def test_trial_vip_lote_maximo_e_15(factory, session):
+    usuario = factory.user()
+    factory.trial_entitlement(usuario, starts_at=NOW, expires_at=NOW + timedelta(days=1))
+    with pytest.raises(InvalidBatchSizeError):
+        _lote(session, usuario, "trial-grande", 16, now=NOW)
+    assert len(_lote(session, usuario, "trial-cheio", 15, now=NOW).generation_ids) == 15
 
 
 def test_cota_de_operacoes_de_batch_e_independente_da_cota_de_videos(
