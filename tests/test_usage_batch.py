@@ -372,13 +372,17 @@ def test_trial_vip_lotes_ilimitados_so_os_15_videos_limitam(factory, session):
     allowance = get_batch_allowance(session, usuario.id, now=inicio + timedelta(minutes=30))
     assert allowance.unlimited and allowance.limit is None
 
-    assert len(_lote(session, usuario, "trial-batch-1", 8, now=inicio + timedelta(minutes=30)).generation_ids) == 8
-    segunda_seguinte = sp(2026, 9, 28, 1, 0)  # semana/dia novos, ainda dentro das 24h
+    # Tudo dentro de 35 min (GENERATION_RESERVATION_TTL_SECONDS): reservas mais velhas que isso sem
+    # concluir são tratadas como órfãs e deixam de contar -- aqui os itens ficam "reserved" (não
+    # baixamos nada), então os lotes precisam estar dentro dessa janela para o teste valer. Em uso
+    # real os itens já estariam "completed" e contariam sempre.
+    assert len(_lote(session, usuario, "trial-batch-1", 8, now=inicio + timedelta(minutes=40)).generation_ids) == 8
+    segunda_seguinte = sp(2026, 9, 28, 0, 1)  # semana/dia novos (passou da meia-noite), ainda dentro das 24h
     assert len(_lote(session, usuario, "trial-batch-2", 7, now=segunda_seguinte).generation_ids) == 7
 
     # 15 vídeos usados: qualquer lote a mais é recusado pela cota de VÍDEOS (nunca pela de lotes).
     with pytest.raises(QuotaExceededError):
-        _lote(session, usuario, "trial-batch-3", 1, now=segunda_seguinte)
+        _lote(session, usuario, "trial-batch-3", 1, now=sp(2026, 9, 28, 0, 2))
     assert _n(session, Batch) == 2
 
 
